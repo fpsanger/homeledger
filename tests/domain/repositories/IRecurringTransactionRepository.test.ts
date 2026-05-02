@@ -1,7 +1,7 @@
 import type { IRecurringTransactionRepository, RecurringTransactionRecord } from "../../../src/domain/repositories/IRecurringTransactionRepository";
 
 class MockRecurringTransactionRepository implements IRecurringTransactionRepository {
-  async findActiveByWorkspaceAndMonth(_workspaceId: string, _year: number, _month: number): Promise<RecurringTransactionRecord[]> { return []; }
+  async findActiveByPersonAndMonth(_personId: string, _year: number, _month: number): Promise<RecurringTransactionRecord[]> { return []; }
   async save(r: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">): Promise<RecurringTransactionRecord> {
     return { ...r, createdAt: new Date(), updatedAt: new Date() };
   }

@@ -6,12 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  OWNER
-  ADMIN
-  MEMBER
-}
-
 enum TransactionType {
   INCOME
   EXPENSE
@@ -26,58 +20,22 @@ enum PaymentMethod {
   BOLETO
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  ownedWorkspaces     Workspace[]       @relation("WorkspaceOwner")
-  memberships         WorkspaceMember[] @relation("Member")
-  invitedMemberships  WorkspaceMember[] @relation("InvitedBy")
-  createdTransactions Transaction[]
-}
-
-model Workspace {
+model Person {
   id        String   @id @default(uuid())
   name      String
-  ownerId   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  owner                 User                   @relation("WorkspaceOwner", fields: [ownerId], references: [id])
-  members               WorkspaceMember[]
-  categories            Category[]
   transactions          Transaction[]
   creditCardPurchases   CreditCardPurchase[]
   recurringTransactions RecurringTransaction[]
 }
 
-model WorkspaceMember {
-  id          String   @id @default(uuid())
-  workspaceId String
-  userId      String
-  role        Role
-  invitedById String?
-  joinedAt    DateTime @default(now())
-
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user      User      @relation("Member", fields: [userId], references: [id])
-  invitedBy User?     @relation("InvitedBy", fields: [invitedById], references: [id])
-
-  @@unique([workspaceId, userId])
-}
-
 model Category {
-  id          String   @id @default(uuid())
-  workspaceId String
-  name        String
-  parentId    String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  name      String
+  parentId  String?
+  createdAt DateTime @default(now())
 
-  workspace             Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children              Category[]             @relation("CategoryHierarchy")
   transactions          Transaction[]
@@ -87,25 +45,23 @@ model Category {
 
 model Transaction {
   id            String          @id @default(uuid())
-  workspaceId   String
+  personId      String
   type          TransactionType
   amount        Decimal         @db.Decimal(15, 2)
   date          DateTime
   description   String
   paymentMethod PaymentMethod
   categoryId    String?
-  createdById   String
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdBy User      @relation(fields: [createdById], references: [id])
+  person   Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }
 
 model CreditCardPurchase {
   id                   String   @id @default(uuid())
-  workspaceId          String
+  personId             String
   description          String
   totalAmount          Decimal  @db.Decimal(15, 2)
   numberOfInstallments Int
@@ -113,7 +69,7 @@ model CreditCardPurchase {
   categoryId           String?
   createdAt            DateTime @default(now())
 
-  workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  person       Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
   category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   installments Installment[]
 }
@@ -134,7 +90,7 @@ model Installment {
 
 model RecurringTransaction {
   id            String          @id @default(uuid())
-  workspaceId   String
+  personId      String
   type          TransactionType
   amount        Decimal         @db.Decimal(15, 2)
   description   String
@@ -145,6 +101,6 @@ model RecurringTransaction {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  person   Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 }

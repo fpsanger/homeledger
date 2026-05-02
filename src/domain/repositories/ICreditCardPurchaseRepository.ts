@@ -1,6 +1,6 @@
 export interface CreditCardPurchaseRecord {
   id: string;
-  workspaceId: string;
+  personId: string;
   description: string;
   totalAmount: number;
   numberOfInstallments: number;
@@ -24,6 +24,6 @@ export interface ICreditCardPurchaseRepository {
     purchase: Omit<CreditCardPurchaseRecord, "createdAt">,
     installments: Omit<InstallmentRecord, "id">[]
   ): Promise<CreditCardPurchaseRecord>;
-  findInstallmentsByMonth(workspaceId: string, year: number, month: number): Promise<InstallmentRecord[]>;
+  findInstallmentsByMonth(personId: string, year: number, month: number): Promise<InstallmentRecord[]>;
   markInstallmentPaid(installmentId: string): Promise<void>;
 }

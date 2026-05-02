@@ -1,6 +1,6 @@
 export interface RecurringTransactionRecord {
   id: string;
-  workspaceId: string;
+  personId: string;
   type: "INCOME" | "EXPENSE";
   amount: number;
   description: string;
@@ -13,7 +13,7 @@ export interface RecurringTransactionRecord {
 }
 
 export interface IRecurringTransactionRepository {
-  findActiveByWorkspaceAndMonth(workspaceId: string, year: number, month: number): Promise<RecurringTransactionRecord[]>;
+  findActiveByPersonAndMonth(personId: string, year: number, month: number): Promise<RecurringTransactionRecord[]>;
   save(record: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">): Promise<RecurringTransactionRecord>;
   delete(id: string): Promise<void>;
 }

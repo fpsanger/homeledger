@@ -82,6 +82,7 @@ model Category {
   children              Category[]             @relation("CategoryHierarchy")
   transactions          Transaction[]
   recurringTransactions RecurringTransaction[]
+  creditCardPurchases   CreditCardPurchase[]
 }
 
 model Transaction {
@@ -113,6 +114,7 @@ model CreditCardPurchase {
   createdAt            DateTime @default(now())
 
   workspace    Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   installments Installment[]
 }
 

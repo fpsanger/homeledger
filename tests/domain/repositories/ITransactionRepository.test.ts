@@ -7,6 +7,13 @@ class InMemoryTransactionRepository implements ITransactionRepository {
     return this.store.find((t) => t.id === id) ?? null;
   }
 
+  async findByMonth(year: number, month: number): Promise<TransactionRecord[]> {
+    return this.store.filter((t) => {
+      const d = new Date(t.date);
+      return d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
+    });
+  }
+
   async findByPersonAndMonth(personId: string, year: number, month: number): Promise<TransactionRecord[]> {
     return this.store.filter((t) => {
       const d = new Date(t.date);

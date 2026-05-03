@@ -262,20 +262,20 @@ describe("InstallmentPurchase service", () => {
   });
 
   describe("cancelInstallmentPurchase", () => {
-    const makeInstallmentDraft = (overrides = {}) => ({
-      personId: "person-1",
+    const makeInstallmentRecord = (overrides = {}) => ({
+      id: "inst-1",
+      creditCardPurchaseId: "purchase-1",
       installmentNumber: 1,
       amount: 100,
       dueYear: 2026,
       dueMonth: 5,
       isPaid: false,
       isCanceled: false,
-      categoryId: null,
       ...overrides,
     });
 
     it("marks all installments as canceled", () => {
-      const installments = [makeInstallmentDraft({ installmentNumber: 1 }), makeInstallmentDraft({ installmentNumber: 2 })];
+      const installments = [makeInstallmentRecord({ installmentNumber: 1 }), makeInstallmentRecord({ installmentNumber: 2 })];
 
       const canceled = cancelInstallmentPurchase(installments);
 
@@ -286,8 +286,8 @@ describe("InstallmentPurchase service", () => {
 
     it("cancels all installments regardless of paid status", () => {
       const installments = [
-        makeInstallmentDraft({ isPaid: true }),
-        makeInstallmentDraft({ isPaid: false }),
+        makeInstallmentRecord({ isPaid: true }),
+        makeInstallmentRecord({ isPaid: false }),
       ];
 
       const canceled = cancelInstallmentPurchase(installments);
@@ -299,7 +299,7 @@ describe("InstallmentPurchase service", () => {
     });
 
     it("preserves all original installment fields after cancellation", () => {
-      const installments = [makeInstallmentDraft({ installmentNumber: 3, amount: 150, dueMonth: 7 })];
+      const installments = [makeInstallmentRecord({ installmentNumber: 3, amount: 150, dueMonth: 7 })];
 
       const canceled = cancelInstallmentPurchase(installments);
 

@@ -32,5 +32,6 @@ export interface ICreditCardPurchaseRepository {
     month: number,
   ): Promise<InstallmentRecord[]>;
   markInstallmentPaid(installmentId: string): Promise<void>;
-  cancelPurchase(purchaseId: string): Promise<void>;
+  findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
+  updateInstallments(installments: InstallmentRecord[]): Promise<void>;
 }

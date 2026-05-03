@@ -22,7 +22,10 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
     return [];
   }
   async markInstallmentPaid(_installmentId: string): Promise<void> {}
-  async cancelPurchase(_purchaseId: string): Promise<void> {}
+  async findByPurchaseId(_purchaseId: string): Promise<InstallmentRecord[]> {
+    return [];
+  }
+  async updateInstallments(_installments: InstallmentRecord[]): Promise<void> {}
 }
 
 describe("ICreditCardPurchaseRepository interface", () => {
@@ -30,8 +33,13 @@ describe("ICreditCardPurchaseRepository interface", () => {
     expect(new MockCreditCardPurchaseRepository()).toBeDefined();
   });
 
-  it("cancelPurchase is part of the contract", async () => {
+  it("findByPurchaseId is part of the contract", async () => {
     const repo = new MockCreditCardPurchaseRepository();
-    await expect(repo.cancelPurchase("purchase-1")).resolves.toBeUndefined();
+    await expect(repo.findByPurchaseId("purchase-1")).resolves.toEqual([]);
+  });
+
+  it("updateInstallments is part of the contract", async () => {
+    const repo = new MockCreditCardPurchaseRepository();
+    await expect(repo.updateInstallments([])).resolves.toBeUndefined();
   });
 });

@@ -1,3 +1,5 @@
+import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
+
 export type InstallmentDraft = {
   personId: string;
   installmentNumber: number;
@@ -107,6 +109,7 @@ export function createInstallmentPurchase(
     throw new Error("Amount must be positive");
   }
 
+  // Single-charge purchases use createExpense, not this function. Installment purchases require splitting.
   if (input.numberOfInstallments <= 1) {
     throw new Error("Number of installments must be greater than 1");
   }
@@ -132,7 +135,7 @@ export function createInstallmentPurchase(
 }
 
 export function cancelInstallmentPurchase(
-  installments: InstallmentDraft[],
-): (InstallmentDraft & { isCanceled: true })[] {
+  installments: InstallmentRecord[],
+): (InstallmentRecord & { isCanceled: true })[] {
   return installments.map((inst) => ({ ...inst, isCanceled: true as const }));
 }

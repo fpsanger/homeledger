@@ -1,14 +1,26 @@
-import type { ICreditCardPurchaseRepository, CreditCardPurchaseRecord, InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
+import type {
+  CreditCardPurchaseRecord,
+  ICreditCardPurchaseRepository,
+  InstallmentRecord,
+} from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
 
 class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository {
   async save(
     purchase: Omit<CreditCardPurchaseRecord, "createdAt">,
-    _installments: Omit<InstallmentRecord, "id">[]
+    _installments: Omit<InstallmentRecord, "id">[],
   ): Promise<CreditCardPurchaseRecord> {
     return { ...purchase, createdAt: new Date() };
   }
-  async findAllInstallmentsByMonth(_year: number, _month: number): Promise<InstallmentRecord[]> { return []; }
-  async findInstallmentsByMonth(_personId: string, _year: number, _month: number): Promise<InstallmentRecord[]> { return []; }
+  async findAllInstallmentsByMonth(_year: number, _month: number): Promise<InstallmentRecord[]> {
+    return [];
+  }
+  async findInstallmentsByMonth(
+    _personId: string,
+    _year: number,
+    _month: number,
+  ): Promise<InstallmentRecord[]> {
+    return [];
+  }
   async markInstallmentPaid(_installmentId: string): Promise<void> {}
 }
 

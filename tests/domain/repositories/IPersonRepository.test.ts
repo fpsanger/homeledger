@@ -1,4 +1,7 @@
-import type { IPersonRepository, PersonRecord } from "../../../src/domain/repositories/IPersonRepository";
+import type {
+  IPersonRepository,
+  PersonRecord,
+} from "../../../src/domain/repositories/IPersonRepository";
 
 class InMemoryPersonRepository implements IPersonRepository {
   private store: PersonRecord[] = [];

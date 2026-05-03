@@ -1,8 +1,8 @@
 import {
-  isCircularReference,
   buildCategoryTree,
-  computeUpdatedPaths,
   canDeleteCategory,
+  computeUpdatedPaths,
+  isCircularReference,
   isLeafCategory,
   validateExpenseCategory,
 } from "../../../src/domain/services/CategoryTree";
@@ -218,14 +218,12 @@ describe("Category-Expense integration", () => {
     });
 
     it("throws when categoryId does not exist in category list", () => {
-      expect(() => validateExpenseCategory("cat-999", categories)).toThrow(
-        "Category not found"
-      );
+      expect(() => validateExpenseCategory("cat-999", categories)).toThrow("Category not found");
     });
 
     it("throws when categoryId points to a non-leaf category", () => {
       expect(() => validateExpenseCategory("cat-1", categories)).toThrow(
-        "Expense must use the most specific category"
+        "Expense must use the most specific category",
       );
     });
   });

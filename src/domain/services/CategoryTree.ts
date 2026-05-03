@@ -8,7 +8,7 @@ export type CategoryTreeNode = {
 export function isCircularReference(
   categoryId: string,
   newParentId: string,
-  categories: CategoryRecord[]
+  categories: CategoryRecord[],
 ): boolean {
   if (categoryId === newParentId) return true;
 
@@ -24,23 +24,17 @@ export function isCircularReference(
   return false;
 }
 
-export function canDeleteCategory(
-  categoryId: string,
-  categories: CategoryRecord[]
-): boolean {
+export function canDeleteCategory(categoryId: string, categories: CategoryRecord[]): boolean {
   return !categories.some((c) => c.parentId === categoryId);
 }
 
-export function isLeafCategory(
-  categoryId: string,
-  categories: CategoryRecord[]
-): boolean {
+export function isLeafCategory(categoryId: string, categories: CategoryRecord[]): boolean {
   return canDeleteCategory(categoryId, categories);
 }
 
 export function validateExpenseCategory(
   categoryId: string | null,
-  categories: CategoryRecord[]
+  categories: CategoryRecord[],
 ): void {
   if (categoryId === null) return;
 
@@ -55,7 +49,7 @@ export function validateExpenseCategory(
 export function computeUpdatedPaths(
   categoryId: string,
   newParent: CategoryRecord | null,
-  categories: CategoryRecord[]
+  categories: CategoryRecord[],
 ): CategoryRecord[] {
   const target = categories.find((c) => c.id === categoryId);
   if (!target) return categories;
@@ -70,9 +64,7 @@ export function computeUpdatedPaths(
     level: newLevel,
   };
 
-  const withUpdatedTarget = categories.map((c) =>
-    c.id === categoryId ? updatedTarget : c
-  );
+  const withUpdatedTarget = categories.map((c) => (c.id === categoryId ? updatedTarget : c));
 
   return cascadeDescendants(categoryId, updatedTarget, withUpdatedTarget);
 }
@@ -80,7 +72,7 @@ export function computeUpdatedPaths(
 function cascadeDescendants(
   parentId: string,
   updatedParent: CategoryRecord,
-  categories: CategoryRecord[]
+  categories: CategoryRecord[],
 ): CategoryRecord[] {
   const children = categories.filter((c) => c.parentId === parentId);
   let result = categories;
@@ -103,10 +95,7 @@ export function buildCategoryTree(categories: CategoryRecord[]): CategoryTreeNod
   return roots.map((root) => buildNode(root, categories));
 }
 
-function buildNode(
-  category: CategoryRecord,
-  all: CategoryRecord[]
-): CategoryTreeNode {
+function buildNode(category: CategoryRecord, all: CategoryRecord[]): CategoryTreeNode {
   const children = all
     .filter((c) => c.parentId === category.id)
     .map((child) => buildNode(child, all));

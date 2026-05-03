@@ -1,4 +1,7 @@
-import type { ITransactionRepository, TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../../src/domain/repositories/ITransactionRepository";
 
 class InMemoryTransactionRepository implements ITransactionRepository {
   private store: TransactionRecord[] = [];
@@ -14,10 +17,16 @@ class InMemoryTransactionRepository implements ITransactionRepository {
     });
   }
 
-  async findByPersonAndMonth(personId: string, year: number, month: number): Promise<TransactionRecord[]> {
+  async findByPersonAndMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<TransactionRecord[]> {
     return this.store.filter((t) => {
       const d = new Date(t.date);
-      return t.personId === personId && d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
+      return (
+        t.personId === personId && d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month
+      );
     });
   }
 
@@ -37,7 +46,9 @@ class InMemoryTransactionRepository implements ITransactionRepository {
   }
 }
 
-const makeExpense = (overrides: Partial<TransactionRecord> = {}): Omit<TransactionRecord, "createdAt" | "updatedAt"> => ({
+const makeExpense = (
+  overrides: Partial<TransactionRecord> = {},
+): Omit<TransactionRecord, "createdAt" | "updatedAt"> => ({
   id: "txn-1",
   personId: "person-1",
   type: "EXPENSE",

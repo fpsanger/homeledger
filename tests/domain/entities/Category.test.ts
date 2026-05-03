@@ -30,9 +30,9 @@ describe("Category entity", () => {
     });
 
     it("requires a householdId", () => {
-      expect(() =>
-        createCategory({ ...baseCategory, householdId: "" })
-      ).toThrow("Household is required");
+      expect(() => createCategory({ ...baseCategory, householdId: "" })).toThrow(
+        "Household is required",
+      );
     });
 
     it("does not accept workspaceId", () => {
@@ -43,15 +43,11 @@ describe("Category entity", () => {
     });
 
     it("throws when name is empty", () => {
-      expect(() => createCategory({ ...baseCategory, name: "" })).toThrow(
-        "Name is required"
-      );
+      expect(() => createCategory({ ...baseCategory, name: "" })).toThrow("Name is required");
     });
 
     it("throws when name is only whitespace", () => {
-      expect(() => createCategory({ ...baseCategory, name: "   " })).toThrow(
-        "Name is required"
-      );
+      expect(() => createCategory({ ...baseCategory, name: "   " })).toThrow("Name is required");
     });
 
     it("trims whitespace from name", () => {

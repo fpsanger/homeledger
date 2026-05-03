@@ -13,7 +13,13 @@ export interface RecurringTransactionRecord {
 }
 
 export interface IRecurringTransactionRepository {
-  findActiveByPersonAndMonth(personId: string, year: number, month: number): Promise<RecurringTransactionRecord[]>;
-  save(record: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">): Promise<RecurringTransactionRecord>;
+  findActiveByPersonAndMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<RecurringTransactionRecord[]>;
+  save(
+    record: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">,
+  ): Promise<RecurringTransactionRecord>;
   delete(id: string): Promise<void>;
 }

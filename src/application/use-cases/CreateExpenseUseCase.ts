@@ -1,5 +1,8 @@
 import { createExpense } from "../../domain/entities/Transaction";
-import type { ITransactionRepository, TransactionRecord } from "../../domain/repositories/ITransactionRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../domain/repositories/ITransactionRepository";
 
 type Input = {
   id: string;
@@ -11,7 +14,10 @@ type Input = {
   categoryId: string | null;
 };
 
-export async function createExpenseUseCase(input: Input, repo: ITransactionRepository): Promise<TransactionRecord> {
+export async function createExpenseUseCase(
+  input: Input,
+  repo: ITransactionRepository,
+): Promise<TransactionRecord> {
   const expense = createExpense(input);
   return repo.save(expense);
 }

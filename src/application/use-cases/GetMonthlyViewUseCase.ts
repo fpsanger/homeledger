@@ -1,6 +1,12 @@
+import type {
+  ICreditCardPurchaseRepository,
+  InstallmentRecord,
+} from "../../domain/repositories/ICreditCardPurchaseRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../domain/repositories/ITransactionRepository";
 import { buildMonthlyView } from "../../domain/services/MonthlyView";
-import type { ITransactionRepository, TransactionRecord } from "../../domain/repositories/ITransactionRepository";
-import type { ICreditCardPurchaseRepository, InstallmentRecord } from "../../domain/repositories/ICreditCardPurchaseRepository";
 
 type Input = {
   year: number;
@@ -16,7 +22,7 @@ type Output = {
 export async function getMonthlyViewUseCase(
   input: Input,
   transactionRepo: ITransactionRepository,
-  creditCardRepo: ICreditCardPurchaseRepository
+  creditCardRepo: ICreditCardPurchaseRepository,
 ): Promise<Output> {
   const { year, month, personId } = input;
 

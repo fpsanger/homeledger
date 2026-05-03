@@ -1,5 +1,5 @@
-import type { TransactionRecord } from "../repositories/ITransactionRepository";
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
+import type { TransactionRecord } from "../repositories/ITransactionRepository";
 
 type MonthlyViewInput = {
   transactions: TransactionRecord[];
@@ -26,8 +26,9 @@ export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
     .filter((t) => matchesMonth(t.date))
     .filter((t) => (personId ? t.personId === personId : true));
 
-  const filteredInstallments = installments
-    .filter((i) => i.dueYear === year && i.dueMonth === month);
+  const filteredInstallments = installments.filter(
+    (i) => i.dueYear === year && i.dueMonth === month,
+  );
 
   return {
     transactions: filteredTransactions,

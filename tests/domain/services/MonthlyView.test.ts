@@ -24,6 +24,7 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   dueYear: 2026,
   dueMonth: 5,
   isPaid: false,
+  isCanceled: false,
   ...overrides,
 });
 
@@ -120,6 +121,41 @@ describe("MonthlyView service", () => {
       for (const i of view.installments) {
         expect(i).not.toHaveProperty("workspaceId");
       }
+    });
+
+    it("monthly view shows installment amount not the total purchase amount", () => {
+      const installment = makeInstallment({ amount: 100, dueYear: 2026, dueMonth: 5 });
+
+      const view = buildMonthlyView({ transactions: [], installments: [installment], year: 2026, month: 5 });
+
+      expect(view.installments[0].amount).toBe(100);
+      expect(view.installments[0].amount).not.toBe(1200);
+    });
+
+    it("purchase total is not duplicated across all monthly views", () => {
+      const installments = Array.from({ length: 12 }, (_, i) =>
+        makeInstallment({ id: `inst-${i + 1}`, amount: 100, dueYear: 2026, dueMonth: i + 1 }),
+      );
+
+      const januaryView = buildMonthlyView({ transactions: [], installments, year: 2026, month: 1 });
+
+      expect(januaryView.installments).toHaveLength(1);
+      expect(januaryView.installments[0].amount).toBe(100);
+      const monthTotal = januaryView.installments.reduce((sum, i) => sum + i.amount, 0);
+      expect(monthTotal).toBe(100);
+      expect(monthTotal).not.toBe(1200);
+    });
+
+    it("canceled installments are excluded from monthly view", () => {
+      const installments = [
+        makeInstallment({ id: "i1", isCanceled: false }),
+        makeInstallment({ id: "i2", isCanceled: true }),
+      ];
+
+      const view = buildMonthlyView({ transactions: [], installments, year: 2026, month: 5 });
+
+      expect(view.installments).toHaveLength(1);
+      expect(view.installments[0].id).toBe("i1");
     });
   });
 });

@@ -3,6 +3,23 @@
 ## [Unreleased]
 
 ### Added
+- `src/domain/services/InstallmentPurchase.ts` — `createInstallmentPurchase()`: validates personId required, totalAmount > 0, numberOfInstallments > 1, baseAmount > 0 (rejects amount-too-small cases); returns `{ purchase: PurchaseDraft, installments: InstallmentDraftWithPurchaseId[] }` with `creditCardPurchaseId` on each installment
+- `src/domain/services/InstallmentPurchase.ts` — `cancelInstallmentPurchase()`: pure function, marks all installments `isCanceled: true`, preserves all other fields, handles empty array
+- `src/domain/services/InstallmentPurchase.ts` — `createInstallments()`: fixed rounding — uses `Math.floor` for base installments so last installment always ≥ base; last installment absorbs cent difference; validates `baseAmount > 0`
+- `src/domain/services/MonthlyView.ts` — `buildMonthlyView()`: excludes `isCanceled: true` installments from monthly view
+- `src/domain/repositories/ICreditCardPurchaseRepository.ts` — `InstallmentRecord.isCanceled: boolean` added; `cancelPurchase(purchaseId)` added to interface
+- `src/application/use-cases/CreateInstallmentPurchaseUseCase.ts` — orchestrates domain validation + repo save for installment purchases
+- `src/application/use-cases/CancelInstallmentPurchaseUseCase.ts` — delegates purchase cancellation to repository
+
+- Domain tests for installment purchases (RED — production code not yet implemented):
+  - `createInstallmentPurchase`: returns purchase draft + installments with `creditCardPurchaseId`; requires `numberOfInstallments > 1`; validates personId and totalAmount; rounding difference absorbed by last installment; sequential installment_number; correct due_month per installment; all installments linked to same person
+  - `cancelInstallmentPurchase`: marks all installments as `isCanceled: true` regardless of paid status; preserves all original fields; handles empty list
+  - `createInstallments` (rounding): last installment absorbs cent difference so sum equals totalAmount exactly
+  - `buildMonthlyView` (canceled): canceled installments excluded from monthly view
+  - `buildMonthlyView` (totals): installment amount per month is not the full purchase total; purchase total not duplicated across months
+  - `createExpense` (boundary): one-time expense has no `creditCardPurchaseId`, `installments`, or `numberOfInstallments` fields
+
+### Added
 - `src/domain/entities/Category.ts` — `createCategory()`: validates name (required, trimmed), validates householdId required, computes `path` (root = name, subcategory = parent/name) and `level` (root = 0, child = parent+1); no workspace coupling
 - `src/domain/services/CategoryTree.ts` — `isCircularReference()`: ancestor-chain walk; `canDeleteCategory()` / `isLeafCategory()`: checks for children; `validateExpenseCategory()`: null allowed, leaf-only rule enforced; `computeUpdatedPaths()`: cascades path+level to all descendants; `buildCategoryTree()`: nested tree from flat list
 - `src/domain/repositories/ICategoryRepository.ts` — extended `CategoryRecord` with `householdId`, `path`, `level`; field order: domain fields before infrastructure field before timestamp

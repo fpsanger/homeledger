@@ -81,7 +81,24 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
   });
 }
 
-export function createInstallmentPurchase(input: PurchaseDraft & { numberOfInstallments: number; totalAmount: number; personId: string; purchaseDate: Date; description: string; categoryId: string | null }) {
+type CreateInstallmentPurchaseInput = {
+  id: string;
+  personId: string;
+  totalAmount: number;
+  numberOfInstallments: number;
+  purchaseDate: Date;
+  description: string;
+  categoryId: string | null;
+};
+
+type InstallmentPurchaseResult = {
+  purchase: PurchaseDraft;
+  installments: InstallmentDraftWithPurchaseId[];
+};
+
+export function createInstallmentPurchase(
+  input: CreateInstallmentPurchaseInput,
+): InstallmentPurchaseResult {
   if (!input.personId) {
     throw new Error("Person is required");
   }
@@ -94,6 +111,13 @@ export function createInstallmentPurchase(input: PurchaseDraft & { numberOfInsta
     throw new Error("Number of installments must be greater than 1");
   }
 
+  const drafts = createInstallments(input);
+
+  const installments: InstallmentDraftWithPurchaseId[] = drafts.map((draft) => ({
+    ...draft,
+    creditCardPurchaseId: input.id,
+  }));
+
   const purchase: PurchaseDraft = {
     id: input.id,
     personId: input.personId,
@@ -103,18 +127,6 @@ export function createInstallmentPurchase(input: PurchaseDraft & { numberOfInsta
     description: input.description,
     categoryId: input.categoryId,
   };
-
-  const installments = createInstallments({
-    personId: input.personId,
-    totalAmount: input.totalAmount,
-    numberOfInstallments: input.numberOfInstallments,
-    purchaseDate: input.purchaseDate,
-    description: input.description,
-    categoryId: input.categoryId,
-  }).map(inst => ({
-    ...inst,
-    creditCardPurchaseId: input.id,
-  }));
 
   return { purchase, installments };
 }

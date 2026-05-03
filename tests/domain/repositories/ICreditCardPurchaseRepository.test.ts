@@ -22,10 +22,16 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
     return [];
   }
   async markInstallmentPaid(_installmentId: string): Promise<void> {}
+  async cancelPurchase(_purchaseId: string): Promise<void> {}
 }
 
 describe("ICreditCardPurchaseRepository interface", () => {
   it("can be implemented by a mock class", () => {
     expect(new MockCreditCardPurchaseRepository()).toBeDefined();
+  });
+
+  it("cancelPurchase is part of the contract", async () => {
+    const repo = new MockCreditCardPurchaseRepository();
+    await expect(repo.cancelPurchase("purchase-1")).resolves.toBeUndefined();
   });
 });

@@ -66,6 +66,14 @@ describe("Expense entity", () => {
       expect(expense).not.toHaveProperty("workspace_id");
     });
 
+    it("one-time expense has no credit card installment relationship", () => {
+      const expense = createExpense(baseExpense);
+
+      expect(expense).not.toHaveProperty("creditCardPurchaseId");
+      expect(expense).not.toHaveProperty("installments");
+      expect(expense).not.toHaveProperty("numberOfInstallments");
+    });
+
     it("accepts all supported payment methods", () => {
       const methods = [
         "CASH",

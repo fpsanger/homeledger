@@ -131,9 +131,8 @@ export function createInstallmentPurchase(
   return { purchase, installments };
 }
 
-export function cancelInstallmentPurchase(installments: InstallmentDraft[]): InstallmentDraft[] {
-  return installments.map(inst => ({
-    ...inst,
-    isCanceled: true,
-  }));
+export function cancelInstallmentPurchase(
+  installments: InstallmentDraft[],
+): (InstallmentDraft & { isCanceled: true })[] {
+  return installments.map((inst) => ({ ...inst, isCanceled: true as const }));
 }

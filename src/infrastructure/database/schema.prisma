@@ -34,6 +34,8 @@ model Category {
   id        String   @id @default(uuid())
   name      String
   parentId  String?
+  path      String   @default("")
+  level     Int      @default(0)
   createdAt DateTime @default(now())
 
   parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])

@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT_CARD
+  CREDIT_CARD
+  PIX
+  BANK_TRANSFER
+  BOLETO
+}
+
+model Person {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  transactions          Transaction[]
+  creditCardPurchases   CreditCardPurchase[]
+  recurringTransactions RecurringTransaction[]
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  parentId  String?
+  createdAt DateTime @default(now())
+
+  parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children              Category[]             @relation("CategoryHierarchy")
+  transactions          Transaction[]
+  recurringTransactions RecurringTransaction[]
+  creditCardPurchases   CreditCardPurchase[]
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  personId      String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(15, 2)
+  date          DateTime
+  description   String
+  paymentMethod PaymentMethod
+  categoryId    String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  person   Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+}
+
+model CreditCardPurchase {
+  id                   String   @id @default(uuid())
+  personId             String
+  description          String
+  totalAmount          Decimal  @db.Decimal(15, 2)
+  numberOfInstallments Int
+  purchaseDate         DateTime
+  categoryId           String?
+  createdAt            DateTime @default(now())
+
+  person       Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  installments Installment[]
+}
+
+model Installment {
+  id                   String  @id @default(uuid())
+  creditCardPurchaseId String
+  installmentNumber    Int
+  amount               Decimal @db.Decimal(15, 2)
+  dueYear              Int
+  dueMonth             Int
+  isPaid               Boolean @default(false)
+
+  creditCardPurchase CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
+
+  @@unique([creditCardPurchaseId, installmentNumber])
+}
+
+model RecurringTransaction {
+  id            String          @id @default(uuid())
+  personId      String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(15, 2)
+  description   String
+  paymentMethod PaymentMethod
+  categoryId    String?
+  startDate     DateTime
+  endDate       DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  person   Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+}

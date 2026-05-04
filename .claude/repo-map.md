@@ -4,7 +4,8 @@
 
 This project is a financial control system focused on:
 - simplicity
-- shared workspaces (family usage)
+- single household, no login
+- people-based expense tracking
 - monthly expense visualization
 - credit card installment handling
 
@@ -47,7 +48,7 @@ Clean Architecture (layered):
 
 ## Key Concepts
 
-- Workspace (multi-user shared data)
+- Person (household member, owns transactions)
 - Transactions (income / expense)
 - Installments (credit card logic)
 - Monthly aggregation

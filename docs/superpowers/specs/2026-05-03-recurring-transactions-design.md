@@ -102,10 +102,12 @@ updateRecurringTransaction(
 
 Add `frequency: "MONTHLY"` to `RecurringTransactionRecord`.
 
-Add `findById` and `update` methods:
+Add `findById`, `findAllActiveByMonth`, and `update` methods:
 
 ```ts
 findById(id: string): Promise<RecurringTransactionRecord | null>
+
+findAllActiveByMonth(year: number, month: number): Promise<RecurringTransactionRecord[]>
 
 update(
   id: string,

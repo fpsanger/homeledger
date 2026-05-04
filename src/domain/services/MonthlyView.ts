@@ -27,7 +27,7 @@ export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
     .filter((t) => (personId ? t.personId === personId : true));
 
   const filteredInstallments = installments.filter(
-    (i) => i.dueYear === year && i.dueMonth === month,
+    (i) => i.dueYear === year && i.dueMonth === month && !i.isCanceled,
   );
 
   return {

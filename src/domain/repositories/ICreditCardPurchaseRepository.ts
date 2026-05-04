@@ -17,6 +17,7 @@ export interface InstallmentRecord {
   dueYear: number;
   dueMonth: number;
   isPaid: boolean;
+  isCanceled: boolean;
 }
 
 export interface ICreditCardPurchaseRepository {
@@ -31,4 +32,6 @@ export interface ICreditCardPurchaseRepository {
     month: number,
   ): Promise<InstallmentRecord[]>;
   markInstallmentPaid(installmentId: string): Promise<void>;
+  findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
+  updateInstallments(installments: InstallmentRecord[]): Promise<void>;
 }

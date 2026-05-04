@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | cut -d'\"' -f4); [[ \"$FILE\" == *.ts ]] && node_modules/.bin/biome check --write \"$FILE\" 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | cut -d'\"' -f4); if [[ \"$FILE\" == src/domain/* ]]; then TEST=$(echo \"$FILE\" | sed 's|src/|tests/|' | sed 's|\\.ts$|.test.ts|'); [[ -f \"$TEST\" ]] && node_modules/.bin/jest \"$TEST\" --no-coverage 2>&1 | tail -15; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | cut -d'\"' -f4); if [[ \"$FILE\" == src/domain/* ]]; then VIOLATIONS=$(grep -E \"from ['\\\"]\\.\\./(application|infrastructure|presentation|app)\" \"$FILE\" 2>/dev/null); [[ -n \"$VIOLATIONS\" ]] && echo \"⚠️  ARCHITECTURE VIOLATION in $FILE: domain imports from outer layer\" && echo \"$VIOLATIONS\" || true; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

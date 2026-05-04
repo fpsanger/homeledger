@@ -16,7 +16,7 @@ export interface RecurringTransactionRecord {
 type UpdateableFields = Partial<
   Pick<
     RecurringTransactionRecord,
-    "endDate" | "amount" | "description" | "categoryId" | "paymentMethod" | "startDate" | "frequency"
+    "endDate" | "amount" | "description" | "categoryId" | "paymentMethod" | "frequency"
   >
 >;
 

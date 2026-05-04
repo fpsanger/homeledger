@@ -1,9 +1,12 @@
+import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
+import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
 import type { TransactionRecord } from "../repositories/ITransactionRepository";
 
 type MonthlyViewInput = {
   transactions: TransactionRecord[];
   installments: InstallmentRecord[];
+  recurringRules?: RecurringTransactionRecord[];
   year: number;
   month: number;
   personId?: string;
@@ -15,7 +18,7 @@ type MonthlyViewResult = {
 };
 
 export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
-  const { transactions, installments, year, month, personId } = input;
+  const { transactions, installments, recurringRules = [], year, month, personId } = input;
 
   const matchesMonth = (date: Date) => {
     const d = new Date(date);
@@ -30,8 +33,14 @@ export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
     (i) => i.dueYear === year && i.dueMonth === month && !i.isCanceled,
   );
 
+  const activeRules = recurringRules.filter(
+    (r) => isActiveInMonth(r, year, month) && (personId ? r.personId === personId : true),
+  );
+
+  const occurrences = activeRules.map((r) => generateOccurrence(r, year, month));
+
   return {
-    transactions: filteredTransactions,
+    transactions: [...filteredTransactions, ...occurrences],
     installments: filteredInstallments,
   };
 }

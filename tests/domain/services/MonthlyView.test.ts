@@ -1,4 +1,5 @@
 import type { InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
+import type { RecurringTransactionRecord } from "../../../src/domain/repositories/IRecurringTransactionRepository";
 import type { TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
 import { buildMonthlyView } from "../../../src/domain/services/MonthlyView";
 
@@ -25,6 +26,24 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   dueMonth: 5,
   isPaid: false,
   isCanceled: false,
+  ...overrides,
+});
+
+const makeRecurringRule = (
+  overrides: Partial<RecurringTransactionRecord> = {},
+): RecurringTransactionRecord => ({
+  id: "rule-1",
+  personId: "person-1",
+  type: "EXPENSE",
+  amount: 500,
+  description: "Rent",
+  paymentMethod: "PIX",
+  categoryId: null,
+  frequency: "MONTHLY",
+  startDate: new Date("2026-01-01"),
+  endDate: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   ...overrides,
 });
 
@@ -156,6 +175,94 @@ describe("MonthlyView service", () => {
 
       expect(view.installments).toHaveLength(1);
       expect(view.installments[0].id).toBe("i1");
+    });
+
+    it("includes a recurring occurrence for an active rule in the target month", () => {
+      const rule = makeRecurringRule();
+      const view = buildMonthlyView({
+        transactions: [],
+        installments: [],
+        recurringRules: [rule],
+        year: 2026,
+        month: 5,
+      });
+
+      expect(view.transactions).toHaveLength(1);
+      expect(view.transactions[0].id).toBe("rule-1");
+      expect(view.transactions[0].amount).toBe(500);
+    });
+
+    it("excludes a recurring rule that starts after the target month", () => {
+      const rule = makeRecurringRule({ startDate: new Date("2026-06-01") });
+      const view = buildMonthlyView({
+        transactions: [],
+        installments: [],
+        recurringRules: [rule],
+        year: 2026,
+        month: 5,
+      });
+
+      expect(view.transactions).toHaveLength(0);
+    });
+
+    it("excludes a recurring rule canceled in the target month", () => {
+      const rule = makeRecurringRule({ endDate: new Date("2026-05-10") });
+      const view = buildMonthlyView({
+        transactions: [],
+        installments: [],
+        recurringRules: [rule],
+        year: 2026,
+        month: 5,
+      });
+
+      expect(view.transactions).toHaveLength(0);
+    });
+
+    it("filters recurring occurrences by personId when provided", () => {
+      const rules = [
+        makeRecurringRule({ id: "r1", personId: "person-1" }),
+        makeRecurringRule({ id: "r2", personId: "person-2" }),
+      ];
+      const view = buildMonthlyView({
+        transactions: [],
+        installments: [],
+        recurringRules: rules,
+        year: 2026,
+        month: 5,
+        personId: "person-1",
+      });
+
+      expect(view.transactions).toHaveLength(1);
+      expect(view.transactions[0].id).toBe("r1");
+    });
+
+    it("merges recurring occurrences with regular transactions", () => {
+      const txn = makeTransaction({ id: "txn-1" });
+      const rule = makeRecurringRule({ id: "rule-1" });
+      const view = buildMonthlyView({
+        transactions: [txn],
+        installments: [],
+        recurringRules: [rule],
+        year: 2026,
+        month: 5,
+      });
+
+      expect(view.transactions).toHaveLength(2);
+      const ids = view.transactions.map((t) => t.id);
+      expect(ids).toContain("txn-1");
+      expect(ids).toContain("rule-1");
+    });
+
+    it("existing tests still pass when recurringRules is omitted", () => {
+      const txn = makeTransaction({ id: "txn-1", date: new Date("2026-05-10") });
+      const view = buildMonthlyView({
+        transactions: [txn],
+        installments: [],
+        year: 2026,
+        month: 5,
+      });
+
+      expect(view.transactions).toHaveLength(1);
     });
   });
 });

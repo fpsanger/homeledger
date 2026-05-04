@@ -3,6 +3,18 @@
 ## [Unreleased]
 
 ### Added
+- `src/domain/entities/Category.ts` — `createCategory()`: validates name (required, trimmed), validates householdId required, computes `path` (root = name, subcategory = parent/name) and `level` (root = 0, child = parent+1); no workspace coupling
+- `src/domain/services/CategoryTree.ts` — `isCircularReference()`: ancestor-chain walk; `canDeleteCategory()` / `isLeafCategory()`: checks for children; `validateExpenseCategory()`: null allowed, leaf-only rule enforced; `computeUpdatedPaths()`: cascades path+level to all descendants; `buildCategoryTree()`: nested tree from flat list
+- `src/domain/repositories/ICategoryRepository.ts` — extended `CategoryRecord` with `householdId`, `path`, `level`; field order: domain fields before infrastructure field before timestamp
+- `src/infrastructure/repositories/PrismaCategoryRepository.ts` — implements `ICategoryRepository`; upsert-based `save()` supports path cascade updates; maps `householdId = "default"` constant (single-household product, not stored in DB)
+- Migration `20260503140811_add_category_path_level` — adds `path String` and `level Int` columns to `category` table with safe defaults
+
+### Added
+- Domain tests for `Category` entity (`tests/domain/entities/Category.test.ts`): root creation, subcategory with parentId, householdId required, name required/trimmed, path generation (root = name, sub = parent/name, deep), level calculation (root=0, child=parent+1, no workspaceId)
+- Domain tests for `CategoryTree` service (`tests/domain/services/CategoryTree.test.ts`): circular reference detection (self-parent, ancestor loop, chain loop), canDeleteCategory (blocks when children exist), computeUpdatedPaths (cascade path+level on reparent, promote to root), buildCategoryTree (root nodes, nested children, multi-level, leaf empty children)
+- Category-Expense integration tests: isLeafCategory, validateExpenseCategory (null = allowed, leaf = allowed, missing = throws, non-leaf = throws)
+
+### Added
 - `src/domain/entities/Person.ts` — `createPerson()`: validates name (required, trimmed), returns `PersonRecord`, no workspaceId
 - `src/domain/entities/Transaction.ts` — `createExpense()`: validates personId required, amount positive, date required; categoryId optional; always sets type=EXPENSE
 - `src/domain/services/MonthlyView.ts` — `buildMonthlyView()`: filters transactions and installments by year/month, optional personId filter, no duplicates

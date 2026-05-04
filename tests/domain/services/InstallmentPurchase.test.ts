@@ -49,7 +49,11 @@ describe("InstallmentPurchase service", () => {
     });
 
     it("handles month rollover into next year", () => {
-      const purchase = { ...basePurchase, purchaseDate: new Date("2026-11-01"), numberOfInstallments: 3 };
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-11-01"),
+        numberOfInstallments: 3,
+      };
 
       const installments = createInstallments(purchase);
 
@@ -88,20 +92,26 @@ describe("InstallmentPurchase service", () => {
     });
 
     it("throws when personId is missing", () => {
-      expect(() => createInstallments({ ...basePurchase, personId: "" })).toThrow("Person is required");
+      expect(() => createInstallments({ ...basePurchase, personId: "" })).toThrow(
+        "Person is required",
+      );
     });
 
     it("throws when totalAmount is zero", () => {
-      expect(() => createInstallments({ ...basePurchase, totalAmount: 0 })).toThrow("Amount must be positive");
+      expect(() => createInstallments({ ...basePurchase, totalAmount: 0 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when totalAmount is negative", () => {
-      expect(() => createInstallments({ ...basePurchase, totalAmount: -100 })).toThrow("Amount must be positive");
+      expect(() => createInstallments({ ...basePurchase, totalAmount: -100 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when numberOfInstallments is less than 1", () => {
       expect(() => createInstallments({ ...basePurchase, numberOfInstallments: 0 })).toThrow(
-        "Number of installments must be at least 1"
+        "Number of installments must be at least 1",
       );
     });
 

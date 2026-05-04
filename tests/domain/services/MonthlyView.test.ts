@@ -1,6 +1,6 @@
-import { buildMonthlyView } from "../../../src/domain/services/MonthlyView";
-import type { TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
 import type { InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
+import type { TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import { buildMonthlyView } from "../../../src/domain/services/MonthlyView";
 
 const makeTransaction = (overrides: Partial<TransactionRecord> = {}): TransactionRecord => ({
   id: "txn-1",

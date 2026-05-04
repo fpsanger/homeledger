@@ -36,11 +36,15 @@ describe("Expense entity", () => {
     });
 
     it("throws when amount is negative", () => {
-      expect(() => createExpense({ ...baseExpense, amount: -50 })).toThrow("Amount must be positive");
+      expect(() => createExpense({ ...baseExpense, amount: -50 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when date is missing", () => {
-      expect(() => createExpense({ ...baseExpense, date: null as unknown as Date })).toThrow("Date is required");
+      expect(() => createExpense({ ...baseExpense, date: null as unknown as Date })).toThrow(
+        "Date is required",
+      );
     });
 
     it("allows categoryId to be null (optional)", () => {
@@ -63,7 +67,14 @@ describe("Expense entity", () => {
     });
 
     it("accepts all supported payment methods", () => {
-      const methods = ["CASH", "DEBIT_CARD", "CREDIT_CARD", "PIX", "BANK_TRANSFER", "BOLETO"] as const;
+      const methods = [
+        "CASH",
+        "DEBIT_CARD",
+        "CREDIT_CARD",
+        "PIX",
+        "BANK_TRANSFER",
+        "BOLETO",
+      ] as const;
 
       for (const method of methods) {
         expect(() => createExpense({ ...baseExpense, paymentMethod: method })).not.toThrow();

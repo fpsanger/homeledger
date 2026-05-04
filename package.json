@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "biome check src tests",
+    "format": "biome format --write src tests",
     "test": "jest"
   },
   "jest": {
@@ -25,12 +26,11 @@
     "schema": "src/infrastructure/database/schema.prisma"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.14",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
     "jest": "^30.3.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",

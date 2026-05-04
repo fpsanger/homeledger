@@ -20,6 +20,10 @@ enum PaymentMethod {
   BOLETO
 }
 
+enum FrequencyType {
+  MONTHLY
+}
+
 model Person {
   id        String   @id @default(uuid())
   name      String
@@ -84,6 +88,7 @@ model Installment {
   dueYear              Int
   dueMonth             Int
   isPaid               Boolean @default(false)
+  isCanceled           Boolean @default(false)
 
   creditCardPurchase CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
 
@@ -98,6 +103,7 @@ model RecurringTransaction {
   description   String
   paymentMethod PaymentMethod
   categoryId    String?
+  frequency     FrequencyType   @default(MONTHLY)
   startDate     DateTime
   endDate       DateTime?
   createdAt     DateTime        @default(now())

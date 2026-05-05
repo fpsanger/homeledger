@@ -1,3 +1,4 @@
+import { NotFoundError } from "../../domain/errors";
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
 
 export async function deleteCategoryUseCase(
@@ -5,6 +6,6 @@ export async function deleteCategoryUseCase(
   repo: ICategoryRepository,
 ): Promise<void> {
   const category = await repo.findById(id);
-  if (!category) throw new Error("Category not found");
+  if (!category) throw new NotFoundError("Category not found");
   await repo.delete(id);
 }

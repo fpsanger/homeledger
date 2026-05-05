@@ -1,3 +1,4 @@
+import { NotFoundError } from "../../domain/errors";
 import type {
   IRecurringTransactionRepository,
   RecurringTransactionRecord,
@@ -25,7 +26,7 @@ export async function updateRecurringTransactionUseCase(
   const { id, newId, updates, today } = input;
 
   const rule = await repo.findById(id);
-  if (!rule) throw new Error("Recurring transaction not found");
+  if (!rule) throw new NotFoundError("Recurring transaction not found");
 
   const [closedRule, newRule] = updateRecurringTransaction(rule, updates, newId, today);
 

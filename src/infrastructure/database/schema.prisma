@@ -20,6 +20,14 @@ enum PaymentMethod {
   BOLETO
 }
 
+enum IncomeSource {
+  SALARY
+  FREELANCE
+  RENTAL
+  INVESTMENT
+  OTHER
+}
+
 enum FrequencyType {
   MONTHLY
 }
@@ -56,7 +64,8 @@ model Transaction {
   amount        Decimal         @db.Decimal(15, 2)
   date          DateTime
   description   String
-  paymentMethod PaymentMethod
+  paymentMethod PaymentMethod?
+  source        IncomeSource?
   categoryId    String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt

@@ -1,5 +1,5 @@
-import { ExpenseForm } from "@/components/expenses/ExpenseForm";
-import { InstallmentForm } from "@/components/expenses/InstallmentForm";
+import { TransactionTabs } from "@/components/transactions/TransactionTabs";
+import { InstallmentForm } from "@/components/transactions/InstallmentForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Person = { id: string; name: string };
@@ -25,7 +25,7 @@ async function getCategories(): Promise<Category[]> {
   return data.categories;
 }
 
-export default async function ExpensesPage() {
+export default async function TransactionsPage() {
   const [people, categories] = await Promise.all([getPeople(), getCategories()]);
   const leafCategories = categories.filter(
     (c) => !categories.some((other) => other.parentId === c.id),
@@ -33,14 +33,14 @@ export default async function ExpensesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Expenses</h1>
+      <h1 className="text-2xl font-semibold">Transactions</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Add Expense</CardTitle>
+            <CardTitle className="text-base">Add Transaction</CardTitle>
           </CardHeader>
           <CardContent>
-            <ExpenseForm people={people} categories={leafCategories} />
+            <TransactionTabs people={people} categories={leafCategories} />
           </CardContent>
         </Card>
         <Card>

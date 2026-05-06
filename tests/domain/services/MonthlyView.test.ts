@@ -11,6 +11,7 @@ const makeTransaction = (overrides: Partial<TransactionRecord> = {}): Transactio
   date: new Date("2026-05-10"),
   description: "Test",
   paymentMethod: "CASH",
+  source: null,
   categoryId: null,
   createdAt: new Date(),
   updatedAt: new Date(),

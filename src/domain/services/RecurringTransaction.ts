@@ -78,6 +78,7 @@ export function generateOccurrence(
     date: new Date(Date.UTC(year, month - 1, day)),
     description: rule.description,
     paymentMethod: rule.paymentMethod,
+    source: null,
     categoryId: rule.categoryId,
     createdAt: rule.createdAt,
     updatedAt: rule.updatedAt,

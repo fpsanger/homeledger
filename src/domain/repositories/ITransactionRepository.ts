@@ -1,3 +1,5 @@
+export type IncomeSource = "SALARY" | "FREELANCE" | "RENTAL" | "INVESTMENT" | "OTHER";
+
 export interface TransactionRecord {
   id: string;
   personId: string;
@@ -5,7 +7,8 @@ export interface TransactionRecord {
   amount: number;
   date: Date;
   description: string;
-  paymentMethod: "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "PIX" | "BANK_TRANSFER" | "BOLETO";
+  paymentMethod: "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "PIX" | "BANK_TRANSFER" | "BOLETO" | null;
+  source: IncomeSource | null;
   categoryId: string | null;
   createdAt: Date;
   updatedAt: Date;

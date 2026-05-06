@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "numberOfInstallments must be a positive integer" }, { status: 400 });
     }
     if (!body.purchaseDate) return Response.json({ error: "purchaseDate is required" }, { status: 400 });
+    if (!body.creditCardId) return Response.json({ error: "creditCardId is required" }, { status: 400 });
 
-    const { creditCard } = createRepositories();
+    const { creditCardPurchase, creditCard } = createRepositories();
     const result = await createInstallmentPurchaseUseCase(
       {
         id: crypto.randomUUID(),
@@ -24,7 +25,9 @@ export async function POST(request: NextRequest) {
         purchaseDate: new Date(body.purchaseDate),
         description: body.description ?? "",
         categoryId: body.categoryId ?? null,
+        creditCardId: body.creditCardId,
       },
+      creditCardPurchase,
       creditCard,
     );
     return Response.json(result, { status: 201 });

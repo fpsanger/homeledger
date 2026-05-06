@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- `/installments` page: view all credit card purchases with installments, filter by person, toggle canceled visibility, mark installments as paid
 - `src/domain/services/InstallmentPurchase.ts` — `createInstallmentPurchase()`: validates personId required, totalAmount > 0, numberOfInstallments > 1, baseAmount > 0 (rejects amount-too-small cases); returns `{ purchase: PurchaseDraft, installments: InstallmentDraftWithPurchaseId[] }` with `creditCardPurchaseId` on each installment
 - `src/domain/services/InstallmentPurchase.ts` — `cancelInstallmentPurchase()`: pure function, marks all installments `isCanceled: true`, preserves all other fields, handles empty array
 - `src/domain/services/InstallmentPurchase.ts` — `createInstallments()`: fixed rounding — uses `Math.floor` for base installments so last installment always ≥ base; last installment absorbs cent difference; validates `baseAmount > 0`

@@ -1,4 +1,5 @@
 import { InstallmentsList } from "@/components/installments/InstallmentsList";
+import { BillView } from "@/components/credit-cards/BillView";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
@@ -19,10 +20,11 @@ async function getPurchases(personId?: string) {
   return data.purchases;
 }
 
-type SearchParams = { personId?: string };
+type SearchParams = { personId?: string; view?: string };
 
 export default async function InstallmentsPage({ searchParams }: { searchParams: SearchParams }) {
   const personId = searchParams.personId ?? "";
+  const view = searchParams.view ?? "purchases";
   const [people, purchases] = await Promise.all([
     getPeople(),
     getPurchases(personId || undefined),
@@ -31,11 +33,21 @@ export default async function InstallmentsPage({ searchParams }: { searchParams:
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Installments</h1>
-      <InstallmentsList
-        people={people}
-        purchases={purchases}
-        currentPersonId={personId}
-      />
+      <div className="flex gap-2">
+        <a href={`/installments?view=purchases${personId ? `&personId=${personId}` : ""}`}
+          className={`px-3 py-1 rounded text-sm ${view === "purchases" ? "bg-foreground text-background" : "border"}`}>
+          All Purchases
+        </a>
+        <a href={`/installments?view=bill`}
+          className={`px-3 py-1 rounded text-sm ${view === "bill" ? "bg-foreground text-background" : "border"}`}>
+          Bill View
+        </a>
+      </div>
+      {view === "bill" ? (
+        <BillView />
+      ) : (
+        <InstallmentsList people={people} purchases={purchases} currentPersonId={personId} />
+      )}
     </div>
   );
 }

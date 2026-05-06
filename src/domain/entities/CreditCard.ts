@@ -35,7 +35,7 @@ export function createCreditCard(input: CreateCreditCardInput): CreditCardRecord
     throw new Error("dueDayOfMonth must be between 1 and 31");
 
   if (input.closureType === "FIXED") {
-    if (input.fixedClosureDay === null || input.fixedClosureDay === undefined)
+    if (input.fixedClosureDay == null)
       throw new Error("fixedClosureDay is required for FIXED cards");
     if (input.fixedClosureDay < 1 || input.fixedClosureDay > 31)
       throw new Error("fixedClosureDay must be between 1 and 31");

@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 const navLinks = [
   { href: "/monthly-view", label: "Monthly View" },
   { href: "/expenses", label: "Expenses" },
+  { href: "/installments", label: "Installments" },
   { href: "/categories", label: "Categories" },
   { href: "/people", label: "People" },
 ];

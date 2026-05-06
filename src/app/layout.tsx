@@ -23,6 +23,7 @@ const navLinks = [
   { href: "/monthly-view", label: "Monthly View" },
   { href: "/transactions", label: "Transactions" },
   { href: "/installments", label: "Installments" },
+  { href: "/credit-cards", label: "Credit Cards" },
   { href: "/categories", label: "Categories" },
   { href: "/people", label: "People" },
 ];

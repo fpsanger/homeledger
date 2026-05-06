@@ -122,10 +122,9 @@ export function InstallmentsList({ people, purchases, currentPersonId }: Props) 
               </div>
             </div>
 
-            {visibleInstallments.length === 0 && (
+            {visibleInstallments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No installments to show.</p>
-            )}
-
+            ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-muted-foreground border-b">
@@ -159,6 +158,7 @@ export function InstallmentsList({ people, purchases, currentPersonId }: Props) 
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         );
       })}

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type {
   CreditCardPurchaseRecord,
+  CreditCardPurchaseWithInstallments,
   ICreditCardPurchaseRepository,
   InstallmentRecord,
 } from "../../domain/repositories/ICreditCardPurchaseRepository";
@@ -121,5 +122,19 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
         }),
       ),
     );
+  }
+
+  async findAllPurchasesWithInstallments(
+    personId?: string,
+  ): Promise<CreditCardPurchaseWithInstallments[]> {
+    const rows = await this.prisma.creditCardPurchase.findMany({
+      where: personId ? { personId } : undefined,
+      include: { installments: true },
+      orderBy: { purchaseDate: "desc" },
+    });
+    return rows.map((row) => ({
+      ...purchaseToRecord(row),
+      installments: row.installments.map(installmentToRecord),
+    }));
   }
 }

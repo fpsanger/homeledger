@@ -1,5 +1,6 @@
 import type {
   CreditCardPurchaseRecord,
+  CreditCardPurchaseWithInstallments,
   ICreditCardPurchaseRepository,
   InstallmentRecord,
 } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
@@ -26,6 +27,11 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
     return [];
   }
   async updateInstallments(_installments: InstallmentRecord[]): Promise<void> {}
+  async findAllPurchasesWithInstallments(
+    _personId?: string,
+  ): Promise<CreditCardPurchaseWithInstallments[]> {
+    return [];
+  }
 }
 
 describe("ICreditCardPurchaseRepository interface", () => {

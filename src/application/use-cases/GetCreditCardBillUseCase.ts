@@ -24,7 +24,9 @@ export async function getCreditCardBillUseCase(
 
   // Map purchaseId → creditCardId
   const purchaseCardMap = new Map<string, string>(
-    purchases.map((p) => [p.id, p.creditCardId]),
+    purchases
+      .filter((p) => p.creditCardId != null)
+      .map((p) => [p.id, p.creditCardId as string]),
   );
 
   // Group installments by creditCardId (skip canceled)

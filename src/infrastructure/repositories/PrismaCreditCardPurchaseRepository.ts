@@ -20,7 +20,7 @@ function purchaseToRecord(row: {
   return {
     id: row.id,
     personId: row.personId,
-    creditCardId: row.creditCardId ?? "",
+    creditCardId: row.creditCardId ?? null,
     description: row.description,
     totalAmount: typeof row.totalAmount === "number" ? row.totalAmount : row.totalAmount.toNumber(),
     numberOfInstallments: row.numberOfInstallments,

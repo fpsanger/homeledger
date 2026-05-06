@@ -4,29 +4,33 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
+type CreditCard = { id: string; name: string };
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
 async function getPeople(): Promise<Person[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/people`,
-    { cache: "no-store" },
-  );
+  const res = await fetch(`${BASE_URL}/api/people`, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json();
   return data.people;
 }
 
 async function getCategories(): Promise<Category[]> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/categories`,
-    { cache: "no-store" },
-  );
+  const res = await fetch(`${BASE_URL}/api/categories`, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json();
   return data.categories;
 }
 
+async function getCreditCards(): Promise<CreditCard[]> {
+  const res = await fetch(`${BASE_URL}/api/credit-cards`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.cards;
+}
+
 export default async function TransactionsPage() {
-  const [people, categories] = await Promise.all([getPeople(), getCategories()]);
+  const [people, categories, creditCards] = await Promise.all([getPeople(), getCategories(), getCreditCards()]);
   const leafCategories = categories.filter(
     (c) => !categories.some((other) => other.parentId === c.id),
   );
@@ -48,7 +52,7 @@ export default async function TransactionsPage() {
             <CardTitle className="text-base">Add Credit Card Purchase</CardTitle>
           </CardHeader>
           <CardContent>
-            <InstallmentForm people={people} categories={leafCategories} />
+            <InstallmentForm people={people} categories={leafCategories} creditCards={creditCards} />
           </CardContent>
         </Card>
       </div>

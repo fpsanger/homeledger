@@ -19,6 +19,7 @@ const makeInstallment = (overrides = {}) => ({
 const makePurchase = (overrides = {}): CreditCardPurchaseWithInstallments => ({
   id: "p-1",
   personId: "person-1",
+  creditCardId: "cc-1",
   description: "TV",
   totalAmount: 1200,
   numberOfInstallments: 12,

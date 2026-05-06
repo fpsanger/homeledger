@@ -9,6 +9,7 @@ import type {
 function purchaseToRecord(row: {
   id: string;
   personId: string;
+  creditCardId: string | null;
   description: string;
   totalAmount: { toNumber(): number } | number;
   numberOfInstallments: number;
@@ -19,6 +20,7 @@ function purchaseToRecord(row: {
   return {
     id: row.id,
     personId: row.personId,
+    creditCardId: row.creditCardId ?? "",
     description: row.description,
     totalAmount: typeof row.totalAmount === "number" ? row.totalAmount : row.totalAmount.toNumber(),
     numberOfInstallments: row.numberOfInstallments,
@@ -61,6 +63,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       data: {
         id: purchase.id,
         personId: purchase.personId,
+        creditCardId: purchase.creditCardId,
         description: purchase.description,
         totalAmount: purchase.totalAmount,
         numberOfInstallments: purchase.numberOfInstallments,

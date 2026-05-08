@@ -25,7 +25,9 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const sorted = [...categories].sort((a, b) => a.path.localeCompare(b.path));
+  const sorted = [...categories].sort((a, b) =>
+    (a.path || a.name).localeCompare(b.path || b.name),
+  );
 
   async function handleDelete(id: string) {
     setErrors((prev) => ({ ...prev, [id]: "" }));
@@ -63,7 +65,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
             <TableCell style={{ paddingLeft: `${cat.level * 20 + 12}px` }} className="font-medium">
               {cat.name}
             </TableCell>
-            <TableCell className="text-muted-foreground text-sm">{cat.path}</TableCell>
+            <TableCell className="text-muted-foreground text-sm">{cat.path || cat.name}</TableCell>
             <TableCell className="text-right">
               {errors[cat.id] && (
                 <span className="text-sm text-destructive mr-3">{errors[cat.id]}</span>

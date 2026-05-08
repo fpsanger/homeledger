@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ export function InstallmentForm({
   categories: Category[];
   creditCards: CreditCard[];
 }) {
+  const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [personId, setPersonId] = useState("");
   const [creditCardId, setCreditCardId] = useState("");
@@ -64,6 +66,7 @@ export function InstallmentForm({
     setPurchaseDate(today);
     setCategoryId("");
     setDescription("");
+    router.refresh();
   }
 
   return (

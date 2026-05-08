@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +20,7 @@ type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string };
 
 export function IncomeForm({ people, categories }: { people: Person[]; categories: Category[] }) {
+  const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [personId, setPersonId] = useState("");
   const [amount, setAmount] = useState("");
@@ -27,6 +30,8 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const isDuplicate = useDuplicateCheck("INCOME", amount ? parseFloat(amount) : null, date, refreshKey);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,6 +65,8 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
     setSource("SALARY");
     setCategoryId("");
     setDescription("");
+    setRefreshKey((k) => k + 1);
+    router.refresh();
   }
 
   return (
@@ -122,6 +129,11 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
           placeholder="Optional"
         />
       </div>
+      {isDuplicate && (
+        <p className="text-sm text-amber-600">
+          A transaction with the same amount, date, and type already exists this month. You can still proceed.
+        </p>
+      )}
       <Button type="submit" disabled={loading}>
         {loading ? "Adding…" : "Add Income"}
       </Button>

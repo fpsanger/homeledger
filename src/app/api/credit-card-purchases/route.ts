@@ -7,8 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const personId = searchParams.get("personId") ?? undefined;
-    const { creditCard } = createRepositories();
-    const purchases = await getCreditCardPurchasesUseCase(personId, creditCard);
+    const { creditCardPurchase } = createRepositories();
+    const purchases = await getCreditCardPurchasesUseCase(personId, creditCardPurchase);
     return Response.json({ purchases });
   } catch (error) {
     return errorResponse(error);

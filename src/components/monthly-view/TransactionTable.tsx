@@ -1,3 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -6,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 type Transaction = {
   id: string;
@@ -39,7 +44,23 @@ export function TransactionTable({
   transactions: Transaction[];
   people: Person[];
 }) {
+  const router = useRouter();
   const byId = Object.fromEntries(people.map((p) => [p.id, p.name]));
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    setError(null);
+    setDeletingId(id);
+    const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to delete.");
+      return;
+    }
+    router.refresh();
+  }
 
   const totalIncome = transactions
     .filter((t) => t.type === "INCOME")
@@ -55,6 +76,7 @@ export function TransactionTable({
 
   return (
     <div className="flex flex-col gap-3">
+      {error && <p className="text-sm text-destructive">{error}</p>}
       <Table>
         <TableHeader>
           <TableRow>
@@ -64,13 +86,14 @@ export function TransactionTable({
             <TableHead>Type</TableHead>
             <TableHead>Method</TableHead>
             <TableHead className="text-right">Amount</TableHead>
+            <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
           {transactions.map((t) => (
             <TableRow key={t.id}>
               <TableCell className="text-sm text-muted-foreground">
-                {new Date(t.date).toLocaleDateString()}
+                {new Date(t.date).toLocaleDateString("pt-BR")}
               </TableCell>
               <TableCell>{byId[t.personId] ?? t.personId}</TableCell>
               <TableCell>{t.description || "—"}</TableCell>
@@ -89,6 +112,17 @@ export function TransactionTable({
                 {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
               </TableCell>
               <TableCell className="text-right font-medium">{fmt(t.amount)}</TableCell>
+              <TableCell className="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={deletingId === t.id}
+                  onClick={() => handleDelete(t.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  {deletingId === t.id ? "…" : "Delete"}
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -9,7 +9,7 @@ export type CreditCardBillEntry = {
   total: number;
 };
 
-type Input = { year: number; month: number };
+type Input = { year: number; month: number; personId?: string };
 
 export async function getCreditCardBillUseCase(
   input: Input,
@@ -18,7 +18,7 @@ export async function getCreditCardBillUseCase(
 ): Promise<CreditCardBillEntry[]> {
   const [installments, purchases, cards] = await Promise.all([
     purchaseRepo.findAllInstallmentsByMonth(input.year, input.month),
-    purchaseRepo.findAllPurchasesWithInstallments(),
+    purchaseRepo.findAllPurchasesWithInstallments(input.personId),
     creditCardRepo.findAll(),
   ]);
 

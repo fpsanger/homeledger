@@ -11,8 +11,9 @@ export async function GET(request: NextRequest) {
     if (!year || !month)
       return Response.json({ error: "year and month are required" }, { status: 400 });
 
+    const personId = searchParams.get("personId") ?? undefined;
     const { creditCard, creditCardPurchase } = createRepositories();
-    const bill = await getCreditCardBillUseCase({ year, month }, creditCard, creditCardPurchase);
+    const bill = await getCreditCardBillUseCase({ year, month, personId }, creditCard, creditCardPurchase);
     return Response.json({ bill });
   } catch (error) {
     return errorResponse(error);

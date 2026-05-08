@@ -20,7 +20,9 @@ export function CategoryForm({ categories }: { categories: Category[] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sorted = [...categories].sort((a, b) => a.path.localeCompare(b.path));
+  const sorted = [...categories].sort((a, b) =>
+    (a.path || a.name).localeCompare(b.path || b.name),
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,7 +71,7 @@ export function CategoryForm({ categories }: { categories: Category[] }) {
           <option value="">None (root)</option>
           {sorted.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.path}
+              {c.path || c.name}
             </option>
           ))}
         </Select>

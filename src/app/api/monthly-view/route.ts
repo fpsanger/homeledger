@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
 
     const personId = searchParams.get("personId") ?? undefined;
 
-    const { transaction, creditCard, recurring } = createRepositories();
+    const { transaction, creditCardPurchase, recurring } = createRepositories();
     const result = await getMonthlyViewUseCase(
       { year, month, personId },
       transaction,
-      creditCard,
+      creditCardPurchase,
       recurring,
     );
     return Response.json(result);

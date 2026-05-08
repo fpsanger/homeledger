@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+type Person = { id: string; name: string };
 type Installment = { id: string; installmentNumber: number; amount: number; isPaid: boolean };
 type BillEntry = {
   card: { id: string; name: string };
@@ -13,7 +14,7 @@ type BillEntry = {
 };
 
 function formatMonth(year: number, month: number) {
-  return new Date(year, month - 1).toLocaleString("default", { month: "long", year: "numeric" });
+  return new Date(year, month - 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 }
 
 export function BillView() {
@@ -22,10 +23,20 @@ export function BillView() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [bill, setBill] = useState<BillEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [people, setPeople] = useState<Person[]>([]);
+  const [personId, setPersonId] = useState<string>("");
 
-  async function load(y: number, m: number) {
+  useEffect(() => {
+    fetch("/api/people")
+      .then((r) => r.json())
+      .then((d) => setPeople(d.people ?? []));
+  }, []);
+
+  async function load(y: number, m: number, pid: string) {
     setLoading(true);
-    const res = await fetch(`/api/credit-cards/bill?year=${y}&month=${m}`);
+    const params = new URLSearchParams({ year: String(y), month: String(m) });
+    if (pid) params.set("personId", pid);
+    const res = await fetch(`/api/credit-cards/bill?${params}`);
     if (res.ok) {
       const data = await res.json();
       setBill(data.bill);
@@ -33,7 +44,7 @@ export function BillView() {
     setLoading(false);
   }
 
-  useEffect(() => { load(year, month); }, [year, month]);
+  useEffect(() => { load(year, month, personId); }, [year, month, personId]);
 
   function prev() {
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
@@ -46,10 +57,20 @@ export function BillView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button variant="outline" size="sm" onClick={prev}>←</Button>
         <span className="font-medium">{formatMonth(year, month)}</span>
         <Button variant="outline" size="sm" onClick={next}>→</Button>
+        <select
+          className="ml-auto border rounded px-2 py-1 text-sm bg-background"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+        >
+          <option value="">All people</option>
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
       </div>
       {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {!loading && bill.length === 0 && (

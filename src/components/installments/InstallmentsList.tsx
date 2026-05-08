@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 
 type Person = { id: string; name: string };
+type Category = { id: string; name: string; path: string };
+type CreditCard = { id: string; name: string };
 
 type Installment = {
   id: string;
@@ -26,6 +29,7 @@ type Purchase = {
   numberOfInstallments: number;
   purchaseDate: string;
   categoryId: string | null;
+  creditCardId: string | null;
   installments: Installment[];
 };
 
@@ -40,10 +44,126 @@ type Props = {
   currentPersonId: string;
 };
 
+type EditState = {
+  description: string;
+  totalAmount: string;
+  purchaseDate: string;
+  categoryId: string;
+  creditCardId: string;
+};
+
+function EditForm({
+  purchase,
+  onSaved,
+  onCancel,
+}: {
+  purchase: Purchase;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<EditState>({
+    description: purchase.description,
+    totalAmount: String(purchase.totalAmount),
+    purchaseDate: purchase.purchaseDate.split("T")[0],
+    categoryId: purchase.categoryId ?? "",
+    creditCardId: purchase.creditCardId ?? "",
+  });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadOptions() {
+    if (loaded) return;
+    const [catRes, ccRes] = await Promise.all([
+      fetch("/api/categories"),
+      fetch("/api/credit-cards"),
+    ]);
+    if (catRes.ok) {
+      const d = await catRes.json();
+      setCategories(d.categories ?? []);
+    }
+    if (ccRes.ok) {
+      const d = await ccRes.json();
+      setCreditCards(d.cards ?? []);
+    }
+    setLoaded(true);
+  }
+
+  useEffect(() => { loadOptions(); }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const res = await fetch(`/api/credit-card-purchases/${purchase.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: form.description,
+        totalAmount: parseFloat(form.totalAmount),
+        purchaseDate: form.purchaseDate,
+        categoryId: form.categoryId || null,
+        creditCardId: form.creditCardId || null,
+      }),
+    });
+    setLoading(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to save.");
+      return;
+    }
+    onSaved();
+  }
+
+  function field(id: string, label: string, el: React.ReactNode) {
+    return (
+      <div className="flex flex-col gap-1">
+        <Label htmlFor={id}>{label}</Label>
+        {el}
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 pt-2">
+      {field("ep-desc", "Description",
+        <Input id="ep-desc" value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional" />
+      )}
+      {field("ep-amount", "Total Amount",
+        <Input id="ep-amount" type="number" min="0.01" step="0.01" required value={form.totalAmount} onChange={(e) => setForm(f => ({ ...f, totalAmount: e.target.value }))} />
+      )}
+      {field("ep-date", "Purchase Date",
+        <Input id="ep-date" type="date" required value={form.purchaseDate} onChange={(e) => setForm(f => ({ ...f, purchaseDate: e.target.value }))} />
+      )}
+      {field("ep-card", "Credit Card",
+        <Select id="ep-card" value={form.creditCardId} onChange={(e) => setForm(f => ({ ...f, creditCardId: e.target.value }))}>
+          <option value="">None</option>
+          {creditCards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </Select>
+      )}
+      {field("ep-cat", "Category",
+        <Select id="ep-cat" value={form.categoryId} onChange={(e) => setForm(f => ({ ...f, categoryId: e.target.value }))}>
+          <option value="">None</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.path}</option>)}
+        </Select>
+      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={loading}>{loading ? "Saving…" : "Save"}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>Cancel</Button>
+      </div>
+    </form>
+  );
+}
+
 export function InstallmentsList({ people, purchases, currentPersonId }: Props) {
   const router = useRouter();
   const [showCanceled, setShowCanceled] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -61,6 +181,19 @@ export function InstallmentsList({ people, purchases, currentPersonId }: Props) 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data.error ?? "Failed to mark installment as paid.");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function deletePurchase(id: string) {
+    setError(null);
+    setDeletingId(id);
+    const res = await fetch(`/api/credit-card-purchases/${id}`, { method: "DELETE" });
+    setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to delete.");
       return;
     }
     router.refresh();
@@ -115,12 +248,38 @@ export function InstallmentsList({ people, purchases, currentPersonId }: Props) 
               <div>
                 <p className="font-medium">{purchase.description || "No description"}</p>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(purchase.purchaseDate).toLocaleDateString()} ·{" "}
+                  {new Date(purchase.purchaseDate).toLocaleDateString("pt-BR")} ·{" "}
                   {purchase.numberOfInstallments}x ·{" "}
                   R$ {purchase.totalAmount.toFixed(2)}
                 </p>
               </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditingId(editingId === purchase.id ? null : purchase.id)}
+                >
+                  {editingId === purchase.id ? "Cancel" : "Edit"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={deletingId === purchase.id}
+                  onClick={() => deletePurchase(purchase.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  {deletingId === purchase.id ? "…" : "Delete"}
+                </Button>
+              </div>
             </div>
+
+            {editingId === purchase.id && (
+              <EditForm
+                purchase={purchase}
+                onSaved={() => { setEditingId(null); router.refresh(); }}
+                onCancel={() => setEditingId(null)}
+              />
+            )}
 
             {visibleInstallments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No installments to show.</p>

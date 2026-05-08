@@ -8,8 +8,8 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   try {
-    const { creditCard } = createRepositories();
-    await markInstallmentPaidUseCase(params.id, creditCard);
+    const { creditCardPurchase } = createRepositories();
+    await markInstallmentPaidUseCase(params.id, creditCardPurchase);
     return new Response(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

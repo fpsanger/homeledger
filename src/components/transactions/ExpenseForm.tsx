@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +21,7 @@ type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string };
 
 export function ExpenseForm({ people, categories }: { people: Person[]; categories: Category[] }) {
+  const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [personId, setPersonId] = useState("");
   const [amount, setAmount] = useState("");
@@ -28,6 +31,8 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const isDuplicate = useDuplicateCheck("EXPENSE", amount ? parseFloat(amount) : null, date, refreshKey);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,6 +66,8 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
     setPaymentMethod("CASH");
     setCategoryId("");
     setDescription("");
+    setRefreshKey((k) => k + 1);
+    router.refresh();
   }
 
   return (
@@ -110,7 +117,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
         <Select id="expense-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
           <option value="">None</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.path}</option>
+            <option key={c.id} value={c.id}>{c.path || c.name}</option>
           ))}
         </Select>
       </div>
@@ -123,6 +130,11 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
           placeholder="Optional"
         />
       </div>
+      {isDuplicate && (
+        <p className="text-sm text-amber-600">
+          A transaction with the same amount, date, and type already exists this month. You can still proceed.
+        </p>
+      )}
       <Button type="submit" disabled={loading}>
         {loading ? "Adding…" : "Add Expense"}
       </Button>

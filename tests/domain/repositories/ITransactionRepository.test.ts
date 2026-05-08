@@ -30,6 +30,20 @@ class InMemoryTransactionRepository implements ITransactionRepository {
     });
   }
 
+  async findByYear(year: number): Promise<TransactionRecord[]> {
+    return this.store.filter((t) => {
+      const d = new Date(t.date);
+      return d.getUTCFullYear() === year;
+    });
+  }
+
+  async findByPersonAndYear(personId: string, year: number): Promise<TransactionRecord[]> {
+    return this.store.filter((t) => {
+      const d = new Date(t.date);
+      return t.personId === personId && d.getUTCFullYear() === year;
+    });
+  }
+
   async save(t: Omit<TransactionRecord, "createdAt" | "updatedAt">): Promise<TransactionRecord> {
     const record: TransactionRecord = { ...t, createdAt: new Date(), updatedAt: new Date() };
     const idx = this.store.findIndex((r) => r.id === t.id);

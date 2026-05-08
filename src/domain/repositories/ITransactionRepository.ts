@@ -18,6 +18,8 @@ export interface ITransactionRepository {
   findById(id: string): Promise<TransactionRecord | null>;
   findByMonth(year: number, month: number): Promise<TransactionRecord[]>;
   findByPersonAndMonth(personId: string, year: number, month: number): Promise<TransactionRecord[]>;
+  findByYear(year: number): Promise<TransactionRecord[]>;
+  findByPersonAndYear(personId: string, year: number): Promise<TransactionRecord[]>;
   save(transaction: Omit<TransactionRecord, "createdAt" | "updatedAt">): Promise<TransactionRecord>;
   delete(id: string): Promise<void>;
 }

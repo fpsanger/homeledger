@@ -8,6 +8,8 @@ const makeTransactionRepo = (
   findById: async () => null,
   findByMonth: async () => [],
   findByPersonAndMonth: async () => [],
+  findByYear: async () => [],
+  findByPersonAndYear: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() } as TransactionRecord),
   delete: async () => {},
   ...overrides,

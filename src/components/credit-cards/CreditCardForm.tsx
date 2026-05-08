@@ -54,7 +54,7 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to save card.");
+      setError(data.error ?? "Falha ao salvar cartão.");
       return;
     }
 
@@ -64,33 +64,33 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cc-name">Card Name</Label>
-        <Input id="cc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Nubank" required />
+        <Label htmlFor="cc-name">Nome do Cartão</Label>
+        <Input id="cc-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="ex: Nubank" required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cc-closure-type">Closure Type</Label>
+        <Label htmlFor="cc-closure-type">Tipo de Fechamento</Label>
         <Select id="cc-closure-type" value={closureType} onChange={(e) => setClosureType(e.target.value as "FIXED" | "VARIABLE")} required>
-          <option value="FIXED">Fixed (same day every month)</option>
-          <option value="VARIABLE">Variable (set per month)</option>
+          <option value="FIXED">Fixo (mesmo dia todo mês)</option>
+          <option value="VARIABLE">Variável (definido por mês)</option>
         </Select>
       </div>
       {closureType === "FIXED" && (
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="cc-closure-day">Closure Day</Label>
+          <Label htmlFor="cc-closure-day">Dia de Fechamento</Label>
           <Input id="cc-closure-day" type="number" min="1" max="31" value={fixedClosureDay} onChange={(e) => setFixedClosureDay(e.target.value)} required />
         </div>
       )}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="cc-due-day">Due Day of Month</Label>
+        <Label htmlFor="cc-due-day">Dia de Vencimento</Label>
         <Input id="cc-due-day" type="number" min="1" max="31" value={dueDayOfMonth} onChange={(e) => setDueDayOfMonth(e.target.value)} required />
       </div>
       <div className="flex items-center gap-2">
         <input id="cc-always-next" type="checkbox" checked={alwaysNextMonth} onChange={(e) => setAlwaysNextMonth(e.target.checked)} />
-        <Label htmlFor="cc-always-next">First installment always goes to next month</Label>
+        <Label htmlFor="cc-always-next">Primeira parcela sempre vai para o mês seguinte</Label>
       </div>
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>{loading ? "Saving…" : card ? "Update" : "Add Card"}</Button>
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" disabled={loading}>{loading ? "Salvando…" : card ? "Atualizar" : "Adicionar Cartão"}</Button>
+        <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

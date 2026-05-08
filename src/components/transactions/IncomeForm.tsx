@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 
 const INCOME_SOURCES = [
-  { value: "SALARY", label: "Salary" },
+  { value: "SALARY", label: "Salário" },
   { value: "FREELANCE", label: "Freelance" },
-  { value: "RENTAL", label: "Rental" },
-  { value: "INVESTMENT", label: "Investment" },
-  { value: "OTHER", label: "Other" },
+  { value: "RENTAL", label: "Aluguel" },
+  { value: "INVESTMENT", label: "Investimento" },
+  { value: "OTHER", label: "Outro" },
 ];
 
 type Person = { id: string; name: string };
@@ -55,7 +55,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to create income.");
+      setError(data.error ?? "Falha ao criar receita.");
       return;
     }
 
@@ -72,16 +72,16 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-person">Person</Label>
+        <Label htmlFor="income-person">Pessoa</Label>
         <Select id="income-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
-          <option value="">Select person</option>
+          <option value="">Selecione a pessoa</option>
           {people.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-amount">Amount</Label>
+        <Label htmlFor="income-amount">Valor</Label>
         <Input
           id="income-amount"
           type="number"
@@ -94,7 +94,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-date">Date</Label>
+        <Label htmlFor="income-date">Data</Label>
         <Input
           id="income-date"
           type="date"
@@ -104,7 +104,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-source">Source</Label>
+        <Label htmlFor="income-source">Fonte</Label>
         <Select id="income-source" value={source} onChange={(e) => setSource(e.target.value)} required>
           {INCOME_SOURCES.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -112,30 +112,30 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-category">Category</Label>
+        <Label htmlFor="income-category">Categoria</Label>
         <Select id="income-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">None</option>
+          <option value="">Nenhuma</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.path}</option>
           ))}
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-description">Description</Label>
+        <Label htmlFor="income-description">Descrição</Label>
         <Input
           id="income-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional"
+          placeholder="Opcional"
         />
       </div>
       {isDuplicate && (
         <p className="text-sm text-amber-600">
-          A transaction with the same amount, date, and type already exists this month. You can still proceed.
+          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar mesmo assim.
         </p>
       )}
       <Button type="submit" disabled={loading}>
-        {loading ? "Adding…" : "Add Income"}
+        {loading ? "Adicionando…" : "Adicionar Receita"}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

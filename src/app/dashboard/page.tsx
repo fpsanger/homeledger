@@ -1,11 +1,15 @@
-import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
-import { MonthNav } from "@/components/monthly-view/MonthNav";
-import { TransactionTable } from "@/components/monthly-view/TransactionTable";
-import { AnnualReportCards } from "@/components/dashboard/AnnualReportCards";
+import { AnnualReportSection } from "@/components/dashboard/AnnualReportSection";
+import { MonthlySummaryCard } from "@/components/dashboard/MonthlySummaryCard";
 import { YearNav } from "@/components/dashboard/YearNav";
+import { MonthNav } from "@/components/monthly-view/MonthNav";
+import { CategoryBreakdownChart } from "@/components/dashboard/CategoryBreakdownChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
+import { cookies } from "next/headers";
 
 type Person = { id: string; name: string };
+type Category = { id: string; name: string; parentId: string | null; path: string };
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
@@ -14,6 +18,13 @@ async function getPeople(): Promise<Person[]> {
   if (!res.ok) return [];
   const data = await res.json();
   return data.people;
+}
+
+async function getCategories(): Promise<Category[]> {
+  const res = await fetch(`${BASE_URL}/api/categories`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.categories;
 }
 
 async function getMonthlyView(year: number, month: number, personId?: string) {
@@ -33,62 +44,81 @@ async function getAnnualReport(year: number, personId?: string) {
 }
 
 type SearchParams = {
-  year?: string;
-  month?: string;
-  personId?: string;
   annualYear?: string;
   annualPersonId?: string;
+  monthYear?: string;
+  monthMonth?: string;
+  monthPersonId?: string;
 };
 
 export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
   const now = new Date();
-  const year = searchParams.year ? parseInt(searchParams.year, 10) : now.getFullYear();
-  const month = searchParams.month ? parseInt(searchParams.month, 10) : now.getMonth() + 1;
-  const personId = searchParams.personId ?? "";
-  const annualYear = searchParams.annualYear ? parseInt(searchParams.annualYear, 10) : now.getFullYear();
-  const annualPersonId = searchParams.annualPersonId ?? "";
+  const globalPersonId = cookies().get("global-person-id")?.value ?? "";
+  const isGlobalLocked = !!globalPersonId;
 
-  const [people, { transactions, installments }, annualReport] = await Promise.all([
+  const annualYear = searchParams.annualYear ? parseInt(searchParams.annualYear, 10) : now.getFullYear();
+  const annualPersonId = isGlobalLocked ? globalPersonId : (searchParams.annualPersonId ?? "");
+
+  const monthYear = searchParams.monthYear ? parseInt(searchParams.monthYear, 10) : now.getFullYear();
+  const monthMonth = searchParams.monthMonth ? parseInt(searchParams.monthMonth, 10) : now.getMonth() + 1;
+  const monthPersonId = isGlobalLocked ? globalPersonId : (searchParams.monthPersonId ?? "");
+
+  const [people, categories, { transactions, installments }, annualReport] = await Promise.all([
     getPeople(),
-    getMonthlyView(year, month, personId || undefined),
+    getCategories(),
+    getMonthlyView(monthYear, monthMonth, monthPersonId || undefined),
     getAnnualReport(annualYear, annualPersonId || undefined),
   ]);
 
   return (
     <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="text-2xl font-semibold">Monthly View</h2>
-          <MonthNav year={year} month={month} people={people} currentPersonId={personId} />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h3 className="text-base font-semibold">Transactions</h3>
-          <TransactionTable transactions={transactions} people={people} />
-        </div>
-
-        <Separator />
-
-        <div className="flex flex-col gap-3">
-          <h3 className="text-base font-semibold">Installments</h3>
-          <InstallmentTable installments={installments} />
-        </div>
-      </section>
-
-      <Separator />
-
-      <section className="flex flex-col gap-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h2 className="text-2xl font-semibold">Annual Report</h2>
-          <YearNav year={annualYear} people={people} currentPersonId={annualPersonId} />
-        </div>
-
-        {annualReport ? (
-          <AnnualReportCards report={annualReport} />
-        ) : (
-          <p className="text-muted-foreground text-sm">Failed to load annual report.</p>
-        )}
-      </section>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle>Relatório Anual</CardTitle>
+            <YearNav year={annualYear} people={people} currentPersonId={annualPersonId} isGlobalLocked={isGlobalLocked} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {annualReport ? (
+            <AnnualReportSection report={annualReport} />
+          ) : (
+            <p className="text-muted-foreground text-sm">Falha ao carregar relatório anual.</p>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle>Resumo do Mês</CardTitle>
+            <MonthNav
+              year={monthYear}
+              month={monthMonth}
+              people={people}
+              currentPersonId={monthPersonId}
+              paramPrefix="month"
+              basePath="/dashboard"
+              isGlobalLocked={isGlobalLocked}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <MonthlySummaryCard transactions={transactions} installments={installments} />
+          <Separator />
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Despesas por Categoria</h3>
+              <Link
+                href="/transactions"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Ver transações →
+              </Link>
+            </div>
+            <CategoryBreakdownChart transactions={transactions} installments={installments} categories={categories} />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

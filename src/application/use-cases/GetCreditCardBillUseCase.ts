@@ -2,10 +2,18 @@ import type { CreditCardRecord } from "../../domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 import type { ICreditCardPurchaseRepository, InstallmentRecord } from "../../domain/repositories/ICreditCardPurchaseRepository";
 
+export type BillInstallmentItem = InstallmentRecord & {
+  purchaseDescription: string;
+  personId: string;
+  categoryId: string | null;
+  numberOfInstallments: number;
+  purchaseDate: Date;
+};
+
 export type CreditCardBillEntry = {
   card: CreditCardRecord;
   dueDayOfMonth: number;
-  installments: InstallmentRecord[];
+  installments: BillInstallmentItem[];
   total: number;
 };
 
@@ -22,28 +30,31 @@ export async function getCreditCardBillUseCase(
     creditCardRepo.findAll(),
   ]);
 
-  // Map purchaseId → creditCardId
-  const purchaseCardMap = new Map<string, string>(
-    purchases
-      .filter((p) => p.creditCardId != null)
-      .map((p) => [p.id, p.creditCardId as string]),
-  );
+  const purchaseMap = new Map(purchases.map((p) => [p.id, p]));
 
-  // Group installments by creditCardId (skip canceled)
-  const byCard = new Map<string, InstallmentRecord[]>();
+  // Group enriched installments by creditCardId (skip canceled)
+  const byCard = new Map<string, BillInstallmentItem[]>();
   for (const inst of installments) {
     if (inst.isCanceled) continue;
-    const cardId = purchaseCardMap.get(inst.creditCardPurchaseId);
-    if (!cardId) continue;
-    const list = byCard.get(cardId) ?? [];
-    list.push(inst);
-    byCard.set(cardId, list);
+    const purchase = purchaseMap.get(inst.creditCardPurchaseId);
+    if (!purchase?.creditCardId) continue;
+    const enriched: BillInstallmentItem = {
+      ...inst,
+      purchaseDescription: purchase.description,
+      personId: purchase.personId,
+      categoryId: purchase.categoryId,
+      numberOfInstallments: purchase.numberOfInstallments,
+      purchaseDate: purchase.purchaseDate,
+    };
+    const list = byCard.get(purchase.creditCardId) ?? [];
+    list.push(enriched);
+    byCard.set(purchase.creditCardId, list);
   }
 
   const cardMap = new Map(cards.map((c) => [c.id, c]));
 
   const result: CreditCardBillEntry[] = [];
-  for (const [cardId, insts] of byCard.entries()) {
+  for (const [cardId, insts] of Array.from(byCard.entries())) {
     const card = cardMap.get(cardId);
     if (!card) continue;
     result.push({

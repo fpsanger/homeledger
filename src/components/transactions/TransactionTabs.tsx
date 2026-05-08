@@ -27,7 +27,7 @@ export function TransactionTabs({ people, categories }: Props) {
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Expense
+          Despesa
         </button>
         <button
           type="button"
@@ -38,7 +38,7 @@ export function TransactionTabs({ people, categories }: Props) {
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Income
+          Receita
         </button>
       </div>
       {tab === "expense" ? (

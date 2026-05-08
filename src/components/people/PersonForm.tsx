@@ -27,7 +27,7 @@ export function PersonForm() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to create person.");
+      setError(data.error ?? "Falha ao criar pessoa.");
       return;
     }
 
@@ -38,7 +38,7 @@ export function PersonForm() {
   return (
     <form onSubmit={handleSubmit} className="flex gap-3 items-end">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="person-name">Name</Label>
+        <Label htmlFor="person-name">Nome</Label>
         <Input
           id="person-name"
           value={name}
@@ -48,7 +48,7 @@ export function PersonForm() {
         />
       </div>
       <Button type="submit" disabled={loading}>
-        {loading ? "Adding…" : "Add Person"}
+        {loading ? "Adicionando…" : "Adicionar Pessoa"}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

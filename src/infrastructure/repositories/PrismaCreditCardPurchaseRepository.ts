@@ -86,7 +86,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
 
   async findAllInstallmentsByMonth(year: number, month: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
-      where: { dueYear: year, dueMonth: month },
+      where: { dueYear: year, dueMonth: month, isCanceled: false },
     });
     return rows.map(installmentToRecord);
   }
@@ -97,9 +97,29 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     month: number,
   ): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
-      where: { dueYear: year, dueMonth: month, creditCardPurchase: { personId } },
+      where: { dueYear: year, dueMonth: month, isCanceled: false, creditCardPurchase: { personId } },
     });
     return rows.map(installmentToRecord);
+  }
+
+  async updatePurchase(
+    id: string,
+    data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">,
+  ): Promise<void> {
+    await this.prisma.creditCardPurchase.update({
+      where: { id },
+      data: {
+        description: data.description,
+        totalAmount: data.totalAmount,
+        purchaseDate: data.purchaseDate,
+        categoryId: data.categoryId,
+        creditCardId: data.creditCardId,
+      },
+    });
+  }
+
+  async deletePurchase(id: string): Promise<void> {
+    await this.prisma.creditCardPurchase.delete({ where: { id } });
   }
 
   async markInstallmentPaid(installmentId: string): Promise<void> {
@@ -107,6 +127,10 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       where: { id: installmentId },
       data: { isPaid: true },
     });
+  }
+
+  async deleteInstallment(installmentId: string): Promise<void> {
+    await this.prisma.installment.delete({ where: { id: installmentId } });
   }
 
   async findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]> {

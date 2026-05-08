@@ -22,11 +22,12 @@ export function MonthNav({ year, month, people, currentPersonId }: Props) {
   const router = useRouter();
 
   function navigate(newYear: number, newMonth: number) {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(window.location.search);
     params.set("year", String(newYear));
     params.set("month", String(newMonth));
     if (currentPersonId) params.set("personId", currentPersonId);
-    router.push(`/monthly-view?${params.toString()}`);
+    else params.delete("personId");
+    router.push(`/dashboard?${params.toString()}`);
   }
 
   function prev() {
@@ -40,11 +41,12 @@ export function MonthNav({ year, month, people, currentPersonId }: Props) {
   }
 
   function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(window.location.search);
     params.set("year", String(year));
     params.set("month", String(month));
     if (e.target.value) params.set("personId", e.target.value);
-    router.push(`/monthly-view?${params.toString()}`);
+    else params.delete("personId");
+    router.push(`/dashboard?${params.toString()}`);
   }
 
   return (

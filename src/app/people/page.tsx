@@ -1,6 +1,7 @@
 import { PersonForm } from "@/components/people/PersonForm";
 import { PersonList } from "@/components/people/PersonList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 
 type PersonRecord = {
@@ -23,14 +24,7 @@ export default async function PeoplePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-semibold">Pessoas</h1>
-        {people.length > 0 && (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-            {people.length}
-          </span>
-        )}
-      </div>
+      <PageHeader eyebrow="Configurações" title="Pessoas" description={people.length > 0 ? `${people.length} pessoas cadastradas` : undefined} />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Adicionar Pessoa</CardTitle>

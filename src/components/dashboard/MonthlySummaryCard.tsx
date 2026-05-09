@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Scale } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 type Transaction = { type: string; amount: number };
 type Installment = { amount: number; isCanceled: boolean };
@@ -23,43 +23,54 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
     transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) +
     installmentExpenses;
   const balance = income - expenses;
+  const isPositive = balance >= 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-card rounded-lg shadow-sm border border-l-4 border-l-green-500 p-4 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
+    <div className="flex flex-col gap-4">
+      {/* Balance row */}
+      <div className="rounded-xl border bg-card p-5 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1.5">
+            Saldo do Mês
+          </p>
+          <p
+            className={`text-3xl font-bold tracking-tight amount-display ${
+              isPositive ? "text-emerald-500" : "text-red-400"
+            }`}
+          >
+            {formatAmount(balance)}
+          </p>
+        </div>
+        <span
+          className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+            isPositive
+              ? "border-emerald-500/20 text-emerald-500 bg-emerald-500/8"
+              : "border-red-400/20 text-red-400 bg-red-400/8"
+          }`}
+        >
+          {isPositive ? "Positivo" : "Negativo"}
+        </span>
+      </div>
+
+      {/* Supporting stats */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-card rounded-xl border border-l-4 border-l-emerald-600 p-4 flex items-start justify-between card-hover">
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Receita</p>
-            <p className="text-2xl font-bold mt-1">{formatAmount(income)}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Receita</p>
+            <p className="text-xl font-bold mt-1 amount-display">{formatAmount(income)}</p>
           </div>
-          <span className="p-2 rounded-lg text-green-600 bg-green-50">
+          <span className="p-2 rounded-lg text-emerald-600 bg-emerald-500/10">
             <TrendingUp className="w-4 h-4" />
           </span>
         </div>
-      </div>
 
-      <div className="bg-card rounded-lg shadow-sm border border-l-4 border-l-red-400 p-4 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
+        <div className="bg-card rounded-xl border border-l-4 border-l-red-500 p-4 flex items-start justify-between card-hover">
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Despesas</p>
-            <p className="text-2xl font-bold mt-1">{formatAmount(expenses)}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Despesas</p>
+            <p className="text-xl font-bold mt-1 amount-display">{formatAmount(expenses)}</p>
           </div>
-          <span className="p-2 rounded-lg text-red-600 bg-red-50">
+          <span className="p-2 rounded-lg text-red-500 bg-red-500/10">
             <TrendingDown className="w-4 h-4" />
-          </span>
-        </div>
-      </div>
-
-      <div className="bg-card rounded-lg shadow-sm border border-l-4 border-l-slate-400 p-4 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Saldo</p>
-            <p className={`text-2xl font-bold mt-1 ${balance >= 0 ? "text-green-600" : "text-red-600"}`}>
-              {formatAmount(balance)}
-            </p>
-          </div>
-          <span className="p-2 rounded-lg text-slate-600 bg-slate-50">
-            <Scale className="w-4 h-4" />
           </span>
         </div>
       </div>

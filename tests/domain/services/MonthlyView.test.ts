@@ -27,6 +27,7 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   dueMonth: 5,
   isPaid: false,
   isCanceled: false,
+      categoryId: null,
   ...overrides,
 });
 

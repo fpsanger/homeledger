@@ -4,6 +4,7 @@ import { YearNav } from "@/components/dashboard/YearNav";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { CategoryBreakdownChart } from "@/components/dashboard/CategoryBreakdownChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -72,6 +73,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="flex flex-col gap-8">
+      <PageHeader eyebrow="Visão Geral" title="Dashboard" />
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">

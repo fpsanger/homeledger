@@ -1,7 +1,15 @@
 "use client";
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { PieChart as PieChartIcon } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+import { BarChart2 } from "lucide-react";
 
 type Transaction = {
   id: string;
@@ -30,28 +38,42 @@ type Props = {
   categories: Category[];
 };
 
-const COLORS = [
-  "hsl(158, 60%, 36%)",
-  "hsl(215, 60%, 52%)",
-  "hsl(38, 85%, 55%)",
-  "hsl(270, 50%, 58%)",
-  "hsl(0, 65%, 55%)",
-  "hsl(185, 55%, 42%)",
-  "hsl(330, 55%, 55%)",
-  "hsl(90, 45%, 45%)",
+const TOP_N = 7;
+
+const BAR_COLORS = [
+  "hsl(215 50% 52%)",
+  "hsl(215 45% 47%)",
+  "hsl(215 40% 42%)",
+  "hsl(215 38% 38%)",
+  "hsl(215 35% 34%)",
+  "hsl(215 32% 30%)",
+  "hsl(215 28% 26%)",
+  "hsl(215 25% 22%)",
 ];
 
 function fmt(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+type TooltipEntry = { name: string; value: number; payload: { pct: number } };
+
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: TooltipEntry[] }) {
+  if (!active || !payload?.length) return null;
+  const { name, value, payload: extra } = payload[0];
+  return (
+    <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 shadow-xl text-xs">
+      <p className="text-zinc-400 mb-1 font-medium">{name}</p>
+      <p className="text-zinc-200 tabular-nums">{fmt(value)}</p>
+      <p className="text-zinc-500 mt-0.5">{extra.pct.toFixed(1)}% do total</p>
+    </div>
+  );
+}
+
 export function CategoryBreakdownChart({ transactions, installments = [], categories }: Props) {
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
 
-  const expenses = transactions.filter((t) => t.type === "EXPENSE");
-
   const grouped: Record<string, number> = {};
-  for (const t of expenses) {
+  for (const t of transactions.filter((t) => t.type === "EXPENSE")) {
     const label = t.categoryId ? (catById[t.categoryId]?.name ?? "Outro") : "Sem categoria";
     grouped[label] = (grouped[label] ?? 0) + t.amount;
   }
@@ -60,62 +82,56 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
     grouped[label] = (grouped[label] ?? 0) + i.amount;
   }
 
-  const data = Object.entries(grouped)
+  const sorted = Object.entries(grouped)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  if (data.length === 0) {
+  if (sorted.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
-        <PieChartIcon className="w-8 h-8 opacity-30" />
+        <BarChart2 className="w-8 h-8 opacity-30" />
         <p className="text-sm">Sem dados de despesas neste mês</p>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col sm:flex-row items-center gap-6">
-      <div className="w-full sm:w-64 h-52 shrink-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={55}
-              outerRadius={90}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value) => (typeof value === "number" ? fmt(value) : String(value))}
-              contentStyle={{
-                borderRadius: "8px",
-                fontSize: "12px",
-                border: "1px solid hsl(var(--border))",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+  const top = sorted.slice(0, TOP_N);
+  const rest = sorted.slice(TOP_N);
+  if (rest.length > 0) {
+    const outrosTotal = rest.reduce((s, e) => s + e.value, 0);
+    top.push({ name: "Outros", value: outrosTotal });
+  }
 
-      <div className="flex flex-col gap-2 w-full min-w-0">
-        {data.map((entry, index) => (
-          <div key={entry.name} className="flex items-center gap-2 text-sm min-w-0">
-            <span
-              className="w-2.5 h-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-            />
-            <span className="text-muted-foreground truncate flex-1">{entry.name}</span>
-            <span className="font-medium tabular-nums shrink-0">{fmt(entry.value)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+  const total = top.reduce((s, e) => s + e.value, 0);
+  const data = top.map((e) => ({ ...e, pct: total > 0 ? (e.value / total) * 100 : 0 }));
+
+  const barHeight = 32;
+  const chartHeight = data.length * barHeight + 16;
+
+  return (
+    <ResponsiveContainer width="100%" height={chartHeight}>
+      <BarChart
+        data={data}
+        layout="vertical"
+        margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
+        barSize={14}
+      >
+        <XAxis type="number" hide />
+        <YAxis
+          type="category"
+          dataKey="name"
+          width={120}
+          tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148,163,184,0.04)" }} />
+        <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+          {data.map((_, index) => (
+            <Cell key={`cell-${index}`} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }

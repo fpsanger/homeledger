@@ -1,5 +1,7 @@
 import { InstallmentsList } from "@/components/installments/InstallmentsList";
+import { InstallmentsTabs } from "@/components/installments/InstallmentsTabs";
 import { BillView } from "@/components/credit-cards/BillView";
+import { PageHeader } from "@/components/ui/page-header";
 import { cookies } from "next/headers";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
@@ -21,13 +23,10 @@ async function getPurchases(personId?: string) {
   return data.purchases;
 }
 
-type SearchParams = { personId?: string; view?: string };
-
-export default async function InstallmentsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function InstallmentsPage() {
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
   const isGlobalLocked = !!globalPersonId;
-  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
-  const view = searchParams.view ?? "purchases";
+  const personId = globalPersonId;
   const [people, purchases] = await Promise.all([
     getPeople(),
     getPurchases(personId || undefined),
@@ -35,22 +34,19 @@ export default async function InstallmentsPage({ searchParams }: { searchParams:
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Parcelas</h1>
-      <div className="flex gap-2">
-        <a href={`/installments?view=purchases${personId ? `&personId=${personId}` : ""}`}
-          className={`px-3 py-1 rounded text-sm ${view === "purchases" ? "bg-foreground text-background" : "border"}`}>
-          Todas as Compras
-        </a>
-        <a href={`/installments?view=bill`}
-          className={`px-3 py-1 rounded text-sm ${view === "bill" ? "bg-foreground text-background" : "border"}`}>
-          Fatura
-        </a>
-      </div>
-      {view === "bill" ? (
-        <BillView />
-      ) : (
-        <InstallmentsList people={people} purchases={purchases} currentPersonId={personId} isGlobalLocked={isGlobalLocked} />
-      )}
+      <PageHeader eyebrow="Crédito" title="Parcelas" />
+      <InstallmentsTabs
+        defaultTab="purchases"
+        purchasesView={
+          <InstallmentsList
+            people={people}
+            purchases={purchases}
+            currentPersonId={personId}
+            isGlobalLocked={isGlobalLocked}
+          />
+        }
+        billView={<BillView />}
+      />
     </div>
   );
 }

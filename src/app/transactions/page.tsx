@@ -1,4 +1,5 @@
 import { TransactionPageClient } from "@/components/transactions/TransactionPageClient";
+import { PageHeader } from "@/components/ui/page-header";
 import { cookies } from "next/headers";
 
 type Person = { id: string; name: string };
@@ -59,7 +60,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Transações</h1>
+      <PageHeader eyebrow="Finanças" title="Transações" />
       <TransactionPageClient
         year={year}
         month={month}

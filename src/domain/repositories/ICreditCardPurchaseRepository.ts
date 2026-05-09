@@ -1,6 +1,7 @@
 export interface CreditCardPurchaseRecord {
   id: string;
   personId: string;
+  creditCardId: string | null;
   description: string;
   totalAmount: number;
   numberOfInstallments: number;
@@ -20,6 +21,10 @@ export interface InstallmentRecord {
   isCanceled: boolean;
 }
 
+export interface CreditCardPurchaseWithInstallments extends CreditCardPurchaseRecord {
+  installments: InstallmentRecord[];
+}
+
 export interface ICreditCardPurchaseRepository {
   save(
     purchase: Omit<CreditCardPurchaseRecord, "createdAt">,
@@ -31,7 +36,11 @@ export interface ICreditCardPurchaseRepository {
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]>;
+  updatePurchase(id: string, data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">): Promise<void>;
+  deletePurchase(id: string): Promise<void>;
   markInstallmentPaid(installmentId: string): Promise<void>;
+  deleteInstallment(installmentId: string): Promise<void>;
   findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
   updateInstallments(installments: InstallmentRecord[]): Promise<void>;
+  findAllPurchasesWithInstallments(personId?: string): Promise<CreditCardPurchaseWithInstallments[]>;
 }

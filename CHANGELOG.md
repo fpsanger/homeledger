@@ -3,6 +3,18 @@
 ## [Unreleased]
 
 ### Added
+- Income feature: add incomes via new `/transactions` page (renamed from `/expenses`)
+- `TransactionRecord` gains nullable `source: IncomeSource | null` field; `paymentMethod` is now nullable (null for incomes)
+- `IncomeSource` enum: `SALARY | FREELANCE | RENTAL | INVESTMENT | OTHER`
+- `createIncome()` domain entity function with validation (personId, date, amount > 0, source required)
+- `CreateIncomeUseCase` — validates leaf category, persists via `ITransactionRepository`
+- `validateIncomeCategory()` in `CategoryTree` service
+- `POST /api/incomes` route
+- `IncomeForm` component; `TransactionTabs` component (Expense / Income tab switcher)
+- DB migration `20260506142731_add_income_source` — adds `IncomeSource` enum + nullable `source` column + makes `paymentMethod` nullable on `Transaction`
+
+
+- `/installments` page: view all credit card purchases with installments, filter by person, toggle canceled visibility, mark installments as paid
 - `src/domain/services/InstallmentPurchase.ts` — `createInstallmentPurchase()`: validates personId required, totalAmount > 0, numberOfInstallments > 1, baseAmount > 0 (rejects amount-too-small cases); returns `{ purchase: PurchaseDraft, installments: InstallmentDraftWithPurchaseId[] }` with `creditCardPurchaseId` on each installment
 - `src/domain/services/InstallmentPurchase.ts` — `cancelInstallmentPurchase()`: pure function, marks all installments `isCanceled: true`, preserves all other fields, handles empty array
 - `src/domain/services/InstallmentPurchase.ts` — `createInstallments()`: fixed rounding — uses `Math.floor` for base installments so last installment always ≥ base; last installment absorbs cent difference; validates `baseAmount > 0`

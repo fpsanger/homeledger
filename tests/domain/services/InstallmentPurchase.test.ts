@@ -2,6 +2,7 @@ import {
   cancelInstallmentPurchase,
   createInstallmentPurchase,
   createInstallments,
+  resolveFirstDueMonth,
 } from "../../../src/domain/services/InstallmentPurchase";
 
 const basePurchase = {
@@ -11,6 +12,9 @@ const basePurchase = {
   purchaseDate: new Date("2026-01-15"),
   description: "TV",
   categoryId: null,
+  creditCardId: "card-1",
+  closureDay: 25,
+  alwaysNextMonth: false,
 };
 
 describe("InstallmentPurchase service", () => {
@@ -237,7 +241,7 @@ describe("InstallmentPurchase service", () => {
     it("each installment has due_month set correctly", () => {
       const result = createInstallmentPurchase({
         ...basePurchaseWithId,
-        purchaseDate: new Date("2026-03-01"),
+        purchaseDate: new Date("2026-03-01"),  // day 1 < closure 25 → starts March
         numberOfInstallments: 3,
         totalAmount: 300,
       });
@@ -312,6 +316,63 @@ describe("InstallmentPurchase service", () => {
       const canceled = cancelInstallmentPurchase([]);
 
       expect(canceled).toHaveLength(0);
+    });
+  });
+
+  describe("resolveFirstDueMonth", () => {
+    it("purchase before closure day goes to current month", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 10,
+        purchaseYear: 2026,
+        purchaseMonth: 3,
+        closureDay: 25,
+        alwaysNextMonth: false,
+      });
+      expect(result).toEqual({ year: 2026, month: 3 });
+    });
+
+    it("purchase on closure day goes to next month", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 25,
+        purchaseYear: 2026,
+        purchaseMonth: 3,
+        closureDay: 25,
+        alwaysNextMonth: false,
+      });
+      expect(result).toEqual({ year: 2026, month: 4 });
+    });
+
+    it("purchase after closure day goes to next month", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 28,
+        purchaseYear: 2026,
+        purchaseMonth: 3,
+        closureDay: 25,
+        alwaysNextMonth: false,
+      });
+      expect(result).toEqual({ year: 2026, month: 4 });
+    });
+
+    it("next month rolls over to January when purchase is in December", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 26,
+        purchaseYear: 2026,
+        purchaseMonth: 12,
+        closureDay: 25,
+        alwaysNextMonth: false,
+      });
+      expect(result).toEqual({ year: 2027, month: 1 });
+    });
+
+    it("alwaysNextMonth forces next month even when purchase is before closure", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 5,
+        purchaseYear: 2026,
+        purchaseMonth: 3,
+        closureDay: 25,
+        alwaysNextMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 4 });
     });
   });
 });

@@ -56,6 +56,7 @@ const makeExpense = (
   date: new Date("2026-05-10"),
   description: "Groceries",
   paymentMethod: "CASH",
+  source: null,
   categoryId: null,
   ...overrides,
 });

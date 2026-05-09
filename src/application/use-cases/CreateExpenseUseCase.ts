@@ -12,7 +12,7 @@ type Input = {
   amount: number;
   date: Date;
   description: string;
-  paymentMethod: TransactionRecord["paymentMethod"];
+  paymentMethod: Exclude<TransactionRecord["paymentMethod"], null>;
   categoryId: string | null;
 };
 

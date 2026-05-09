@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { cancelInstallmentPurchaseUseCase } from "../../../../application/use-cases/CancelInstallmentPurchaseUseCase";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
@@ -8,8 +7,8 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   try {
-    const { creditCard } = createRepositories();
-    await cancelInstallmentPurchaseUseCase(params.id, creditCard);
+    const { creditCardPurchase } = createRepositories();
+    await creditCardPurchase.deleteInstallment(params.id);
     return new Response(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

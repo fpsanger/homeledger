@@ -4,18 +4,8 @@ import type {
   TransactionRecord,
 } from "../../domain/repositories/ITransactionRepository";
 
-function toRecord(row: {
-  id: string;
-  personId: string;
-  type: string;
-  amount: { toNumber(): number } | number;
-  date: Date;
-  description: string;
-  paymentMethod: string;
-  categoryId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): TransactionRecord {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toRecord(row: any): TransactionRecord {
   return {
     id: row.id,
     personId: row.personId,
@@ -23,7 +13,8 @@ function toRecord(row: {
     amount: typeof row.amount === "number" ? row.amount : row.amount.toNumber(),
     date: row.date,
     description: row.description,
-    paymentMethod: row.paymentMethod as TransactionRecord["paymentMethod"],
+    paymentMethod: (row.paymentMethod ?? null) as TransactionRecord["paymentMethod"],
+    source: (row.source ?? null) as TransactionRecord["source"],
     categoryId: row.categoryId,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -72,7 +63,8 @@ export class PrismaTransactionRepository implements ITransactionRepository {
         amount: transaction.amount,
         date: transaction.date,
         description: transaction.description,
-        paymentMethod: transaction.paymentMethod,
+        paymentMethod: transaction.paymentMethod ?? undefined,
+        source: transaction.source ?? undefined,
         categoryId: transaction.categoryId,
       },
       update: {
@@ -80,7 +72,8 @@ export class PrismaTransactionRepository implements ITransactionRepository {
         amount: transaction.amount,
         date: transaction.date,
         description: transaction.description,
-        paymentMethod: transaction.paymentMethod,
+        paymentMethod: transaction.paymentMethod ?? undefined,
+        source: transaction.source ?? undefined,
         categoryId: transaction.categoryId,
       },
     });

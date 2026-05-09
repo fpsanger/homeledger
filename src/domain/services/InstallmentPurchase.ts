@@ -23,7 +23,28 @@ export type PurchaseDraft = {
   purchaseDate: Date;
   description: string;
   categoryId: string | null;
+  creditCardId: string;
 };
+
+type ResolveFirstDueMonthInput = {
+  purchaseDay: number;
+  purchaseYear: number;
+  purchaseMonth: number;
+  closureDay: number;
+  alwaysNextMonth: boolean;
+};
+
+export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): { year: number; month: number } {
+  const shiftNext = input.alwaysNextMonth || input.purchaseDay >= input.closureDay;
+  if (!shiftNext) return { year: input.purchaseYear, month: input.purchaseMonth };
+
+  if (input.purchaseMonth === 12) return { year: input.purchaseYear + 1, month: 1 };
+  return { year: input.purchaseYear, month: input.purchaseMonth + 1 };
+}
+
+function roundCents(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 type CreateInstallmentsInput = {
   personId: string;
@@ -32,38 +53,38 @@ type CreateInstallmentsInput = {
   purchaseDate: Date;
   description: string;
   categoryId: string | null;
+  creditCardId: string;
+  closureDay: number;
+  alwaysNextMonth: boolean;
 };
 
-function roundCents(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 export function createInstallments(input: CreateInstallmentsInput): InstallmentDraft[] {
-  if (!input.personId) {
-    throw new Error("Person is required");
-  }
-
-  if (input.totalAmount <= 0) {
-    throw new Error("Amount must be positive");
-  }
-
-  if (input.numberOfInstallments < 1) {
-    throw new Error("Number of installments must be at least 1");
-  }
+  if (!input.personId) throw new Error("Person is required");
+  if (input.totalAmount <= 0) throw new Error("Amount must be positive");
+  if (input.numberOfInstallments < 1) throw new Error("Number of installments must be at least 1");
 
   const baseAmount = Math.floor((input.totalAmount / input.numberOfInstallments) * 100) / 100;
+  if (baseAmount <= 0) throw new Error("Amount too small for the number of installments");
 
-  if (baseAmount <= 0) {
-    throw new Error("Amount too small for the number of installments");
-  }
+  const purchaseDay = input.purchaseDate.getUTCDate();
+  const purchaseYear = input.purchaseDate.getUTCFullYear();
+  const purchaseMonth = input.purchaseDate.getUTCMonth() + 1;
 
-  const startYear = input.purchaseDate.getUTCFullYear();
-  const startMonth = input.purchaseDate.getUTCMonth() + 1;
+  const first = resolveFirstDueMonth({
+    purchaseDay,
+    purchaseYear,
+    purchaseMonth,
+    closureDay: input.closureDay,
+    alwaysNextMonth: input.alwaysNextMonth,
+  });
+
+  // Convert first due to absolute month index for arithmetic
+  const firstAbsolute = (first.year - 1) * 12 + (first.month - 1);
 
   return Array.from({ length: input.numberOfInstallments }, (_, i) => {
-    const totalMonths = startMonth - 1 + i;
-    const dueYear = startYear + Math.floor(totalMonths / 12);
-    const dueMonth = (totalMonths % 12) + 1;
+    const absolute = firstAbsolute + i;
+    const dueYear = Math.floor(absolute / 12) + 1;
+    const dueMonth = (absolute % 12) + 1;
 
     const isLast = i === input.numberOfInstallments - 1;
     const amount = isLast
@@ -91,6 +112,9 @@ type CreateInstallmentPurchaseInput = {
   purchaseDate: Date;
   description: string;
   categoryId: string | null;
+  creditCardId: string;
+  closureDay: number;
+  alwaysNextMonth: boolean;
 };
 
 type InstallmentPurchaseResult = {
@@ -101,18 +125,10 @@ type InstallmentPurchaseResult = {
 export function createInstallmentPurchase(
   input: CreateInstallmentPurchaseInput,
 ): InstallmentPurchaseResult {
-  if (!input.personId) {
-    throw new Error("Person is required");
-  }
-
-  if (input.totalAmount <= 0) {
-    throw new Error("Amount must be positive");
-  }
-
-  // Single-charge purchases use createExpense, not this function. Installment purchases require splitting.
-  if (input.numberOfInstallments <= 1) {
+  if (!input.personId) throw new Error("Person is required");
+  if (input.totalAmount <= 0) throw new Error("Amount must be positive");
+  if (input.numberOfInstallments <= 1)
     throw new Error("Number of installments must be greater than 1");
-  }
 
   const drafts = createInstallments(input);
 
@@ -129,6 +145,7 @@ export function createInstallmentPurchase(
     purchaseDate: input.purchaseDate,
     description: input.description,
     categoryId: input.categoryId,
+    creditCardId: input.creditCardId,
   };
 
   return { purchase, installments };

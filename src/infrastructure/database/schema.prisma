@@ -20,8 +20,21 @@ enum PaymentMethod {
   BOLETO
 }
 
+enum IncomeSource {
+  SALARY
+  FREELANCE
+  RENTAL
+  INVESTMENT
+  OTHER
+}
+
 enum FrequencyType {
   MONTHLY
+}
+
+enum ClosureType {
+  FIXED
+  VARIABLE
 }
 
 model Person {
@@ -49,6 +62,31 @@ model Category {
   creditCardPurchases   CreditCardPurchase[]
 }
 
+model CreditCard {
+  id               String      @id @default(uuid())
+  name             String
+  closureType      ClosureType
+  fixedClosureDay  Int?
+  dueDayOfMonth    Int
+  alwaysNextMonth  Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+
+  purchases CreditCardPurchase[]
+  closures  CreditCardClosure[]
+}
+
+model CreditCardClosure {
+  id           String     @id @default(uuid())
+  creditCardId String
+  year         Int
+  month        Int
+  closureDay   Int
+
+  creditCard CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+
+  @@unique([creditCardId, year, month])
+}
+
 model Transaction {
   id            String          @id @default(uuid())
   personId      String
@@ -56,7 +94,8 @@ model Transaction {
   amount        Decimal         @db.Decimal(15, 2)
   date          DateTime
   description   String
-  paymentMethod PaymentMethod
+  paymentMethod PaymentMethod?
+  source        IncomeSource?
   categoryId    String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
@@ -68,6 +107,7 @@ model Transaction {
 model CreditCardPurchase {
   id                   String   @id @default(uuid())
   personId             String
+  creditCardId         String?
   description          String
   totalAmount          Decimal  @db.Decimal(15, 2)
   numberOfInstallments Int
@@ -76,6 +116,7 @@ model CreditCardPurchase {
   createdAt            DateTime @default(now())
 
   person       Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  creditCard   CreditCard?   @relation(fields: [creditCardId], references: [id])
   category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   installments Installment[]
 }

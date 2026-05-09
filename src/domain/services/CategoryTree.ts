@@ -46,6 +46,20 @@ export function validateExpenseCategory(
   }
 }
 
+export function validateIncomeCategory(
+  categoryId: string | null,
+  categories: CategoryRecord[],
+): void {
+  if (categoryId === null) return;
+
+  const category = categories.find((c) => c.id === categoryId);
+  if (!category) throw new Error("Category not found");
+
+  if (!isLeafCategory(categoryId, categories)) {
+    throw new Error("Income must use the most specific category");
+  }
+}
+
 export function computeUpdatedPaths(
   categoryId: string,
   newParent: CategoryRecord | null,

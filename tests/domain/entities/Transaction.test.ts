@@ -1,4 +1,4 @@
-import { createExpense } from "../../../src/domain/entities/Transaction";
+import { createExpense, createIncome } from "../../../src/domain/entities/Transaction";
 
 const baseExpense = {
   id: "txn-1",
@@ -86,6 +86,78 @@ describe("Expense entity", () => {
 
       for (const method of methods) {
         expect(() => createExpense({ ...baseExpense, paymentMethod: method })).not.toThrow();
+      }
+    });
+  });
+});
+
+const baseIncome = {
+  id: "txn-2",
+  personId: "person-1",
+  amount: 5000.0,
+  date: new Date("2026-05-01"),
+  description: "Monthly salary",
+  source: "SALARY" as const,
+  categoryId: null,
+};
+
+describe("Income entity", () => {
+  describe("createIncome", () => {
+    it("creates an income with valid data", () => {
+      const income = createIncome(baseIncome);
+
+      expect(income.id).toBe("txn-2");
+      expect(income.personId).toBe("person-1");
+      expect(income.type).toBe("INCOME");
+      expect(income.amount).toBe(5000.0);
+      expect(income.source).toBe("SALARY");
+    });
+
+    it("always sets type to INCOME", () => {
+      const income = createIncome(baseIncome);
+
+      expect(income.type).toBe("INCOME");
+    });
+
+    it("throws when personId is missing", () => {
+      expect(() => createIncome({ ...baseIncome, personId: "" })).toThrow("Person is required");
+    });
+
+    it("throws when amount is zero", () => {
+      expect(() => createIncome({ ...baseIncome, amount: 0 })).toThrow("Amount must be positive");
+    });
+
+    it("throws when amount is negative", () => {
+      expect(() => createIncome({ ...baseIncome, amount: -100 })).toThrow("Amount must be positive");
+    });
+
+    it("throws when date is missing", () => {
+      expect(() => createIncome({ ...baseIncome, date: null as unknown as Date })).toThrow(
+        "Date is required",
+      );
+    });
+
+    it("throws when source is missing", () => {
+      expect(() => createIncome({ ...baseIncome, source: "" as never })).toThrow("Source is required");
+    });
+
+    it("allows categoryId to be null", () => {
+      const income = createIncome({ ...baseIncome, categoryId: null });
+
+      expect(income.categoryId).toBeNull();
+    });
+
+    it("accepts a categoryId when provided", () => {
+      const income = createIncome({ ...baseIncome, categoryId: "cat-1" });
+
+      expect(income.categoryId).toBe("cat-1");
+    });
+
+    it("accepts all supported income sources", () => {
+      const sources = ["SALARY", "FREELANCE", "RENTAL", "INVESTMENT", "OTHER"] as const;
+
+      for (const source of sources) {
+        expect(() => createIncome({ ...baseIncome, source })).not.toThrow();
       }
     });
   });

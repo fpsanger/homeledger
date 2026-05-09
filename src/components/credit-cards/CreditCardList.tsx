@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageHeader } from "@/components/ui/page-header";
 import { CreditCardForm } from "./CreditCardForm";
 import { ClosureManagerDialog } from "./ClosureManager";
 
@@ -52,17 +53,16 @@ export function CreditCardList({ initialCards }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cartões de Crédito</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gerencie cartões, vencimentos e regras de fechamento.</p>
-        </div>
+      <PageHeader
+        eyebrow="Crédito"
+        title="Cartões de Crédito"
+        description="Gerencie cartões, vencimentos e regras de fechamento."
+      >
         <Button onClick={() => setFormOpen(true)} className="shrink-0 gap-2">
           <Plus className="w-4 h-4" />
           Novo Cartão
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Summary strip */}
       {cards.length > 0 && (

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 const navLinks = [
-  { href: "/monthly-view", label: "Monthly View" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/transactions", label: "Transactions" },
   { href: "/installments", label: "Installments" },
   { href: "/credit-cards", label: "Credit Cards" },

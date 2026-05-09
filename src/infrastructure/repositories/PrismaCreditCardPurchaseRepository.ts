@@ -102,6 +102,20 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     return rows.map(installmentToRecord);
   }
 
+  async findAllInstallmentsByYear(year: number): Promise<InstallmentRecord[]> {
+    const rows = await this.prisma.installment.findMany({
+      where: { dueYear: year, isCanceled: false },
+    });
+    return rows.map(installmentToRecord);
+  }
+
+  async findInstallmentsByYear(personId: string, year: number): Promise<InstallmentRecord[]> {
+    const rows = await this.prisma.installment.findMany({
+      where: { dueYear: year, isCanceled: false, creditCardPurchase: { personId } },
+    });
+    return rows.map(installmentToRecord);
+  }
+
   async updatePurchase(
     id: string,
     data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">,

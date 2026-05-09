@@ -51,6 +51,24 @@ export class PrismaTransactionRepository implements ITransactionRepository {
     return rows.map(toRecord);
   }
 
+  async findByYear(year: number): Promise<TransactionRecord[]> {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year + 1, 0, 1));
+    const rows = await this.prisma.transaction.findMany({
+      where: { date: { gte: start, lt: end } },
+    });
+    return rows.map(toRecord);
+  }
+
+  async findByPersonAndYear(personId: string, year: number): Promise<TransactionRecord[]> {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Date.UTC(year + 1, 0, 1));
+    const rows = await this.prisma.transaction.findMany({
+      where: { personId, date: { gte: start, lt: end } },
+    });
+    return rows.map(toRecord);
+  }
+
   async save(
     transaction: Omit<TransactionRecord, "createdAt" | "updatedAt">,
   ): Promise<TransactionRecord> {

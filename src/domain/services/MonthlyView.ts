@@ -5,6 +5,7 @@ import type { TransactionRecord } from "../repositories/ITransactionRepository";
 
 type MonthlyViewInput = {
   transactions: TransactionRecord[];
+  /** Must already be scoped to personId by the caller — InstallmentRecord has no personId field */
   installments: InstallmentRecord[];
   recurringRules?: RecurringTransactionRecord[];
   year: number;

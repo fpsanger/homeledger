@@ -19,6 +19,11 @@ export interface InstallmentRecord {
   dueMonth: number;
   isPaid: boolean;
   isCanceled: boolean;
+  categoryId: string | null;
+  purchaseDescription?: string;
+  personId?: string;
+  creditCardId?: string | null;
+  numberOfInstallments?: number;
 }
 
 export interface CreditCardPurchaseWithInstallments extends CreditCardPurchaseRecord {

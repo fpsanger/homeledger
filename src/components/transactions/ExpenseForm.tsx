@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 
 const PAYMENT_METHODS = [
-  { value: "CASH", label: "Cash" },
-  { value: "DEBIT_CARD", label: "Debit Card" },
-  { value: "CREDIT_CARD", label: "Credit Card" },
+  { value: "CASH", label: "Dinheiro" },
+  { value: "DEBIT_CARD", label: "Cartão de Débito" },
+  { value: "CREDIT_CARD", label: "Cartão de Crédito" },
   { value: "PIX", label: "PIX" },
-  { value: "BANK_TRANSFER", label: "Bank Transfer" },
+  { value: "BANK_TRANSFER", label: "Transferência Bancária" },
   { value: "BOLETO", label: "Boleto" },
 ];
 
@@ -56,7 +56,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Failed to create expense.");
+      setError(data.error ?? "Falha ao criar despesa.");
       return;
     }
 
@@ -73,16 +73,16 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-person">Person</Label>
+        <Label htmlFor="expense-person">Pessoa</Label>
         <Select id="expense-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
-          <option value="">Select person</option>
+          <option value="">Selecione a pessoa</option>
           {people.map((p) => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-amount">Amount</Label>
+        <Label htmlFor="expense-amount">Valor</Label>
         <Input
           id="expense-amount"
           type="number"
@@ -95,7 +95,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-date">Date</Label>
+        <Label htmlFor="expense-date">Data</Label>
         <Input
           id="expense-date"
           type="date"
@@ -105,7 +105,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-payment">Payment Method</Label>
+        <Label htmlFor="expense-payment">Forma de Pagamento</Label>
         <Select id="expense-payment" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>
           {PAYMENT_METHODS.map((m) => (
             <option key={m.value} value={m.value}>{m.label}</option>
@@ -113,30 +113,30 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-category">Category</Label>
+        <Label htmlFor="expense-category">Categoria</Label>
         <Select id="expense-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">None</option>
+          <option value="">Nenhuma</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.path || c.name}</option>
           ))}
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-description">Description</Label>
+        <Label htmlFor="expense-description">Descrição</Label>
         <Input
           id="expense-description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Optional"
+          placeholder="Opcional"
         />
       </div>
       {isDuplicate && (
         <p className="text-sm text-amber-600">
-          A transaction with the same amount, date, and type already exists this month. You can still proceed.
+          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar mesmo assim.
         </p>
       )}
       <Button type="submit" disabled={loading}>
-        {loading ? "Adding…" : "Add Expense"}
+        {loading ? "Adicionando…" : "Adicionar Despesa"}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

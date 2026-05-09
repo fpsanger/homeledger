@@ -11,10 +11,5 @@ async function getCards() {
 
 export default async function CreditCardsPage() {
   const cards = await getCards();
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Credit Cards</h1>
-      <CreditCardList initialCards={cards} />
-    </div>
-  );
+  return <CreditCardList initialCards={cards} />;
 }

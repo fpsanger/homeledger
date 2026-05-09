@@ -13,6 +13,7 @@ const makeInstallment = (overrides = {}) => ({
   dueMonth: 5,
   isPaid: false,
   isCanceled: false,
+      categoryId: null,
   ...overrides,
 });
 

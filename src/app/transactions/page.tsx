@@ -1,6 +1,5 @@
-import { TransactionTabs } from "@/components/transactions/TransactionTabs";
-import { InstallmentForm } from "@/components/transactions/InstallmentForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TransactionPageClient } from "@/components/transactions/TransactionPageClient";
+import { cookies } from "next/headers";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
@@ -29,33 +28,49 @@ async function getCreditCards(): Promise<CreditCard[]> {
   return data.cards;
 }
 
-export default async function TransactionsPage() {
-  const [people, categories, creditCards] = await Promise.all([getPeople(), getCategories(), getCreditCards()]);
-  const leafCategories = categories.filter(
-    (c) => !categories.some((other) => other.parentId === c.id),
-  );
+async function getMonthlyView(year: number, month: number, personId?: string) {
+  const params = new URLSearchParams({ year: String(year), month: String(month) });
+  if (personId) params.set("personId", personId);
+  const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, { cache: "no-store" });
+  if (!res.ok) return { transactions: [], installments: [] };
+  return res.json();
+}
+
+type SearchParams = {
+  year?: string;
+  month?: string;
+  personId?: string;
+};
+
+export default async function TransactionsPage({ searchParams }: { searchParams: SearchParams }) {
+  const now = new Date();
+  const globalPersonId = cookies().get("global-person-id")?.value ?? "";
+  const isGlobalLocked = !!globalPersonId;
+  const year = searchParams.year ? parseInt(searchParams.year, 10) : now.getFullYear();
+  const month = searchParams.month ? parseInt(searchParams.month, 10) : now.getMonth() + 1;
+  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
+
+  const [people, categories, creditCards, { transactions, installments }] = await Promise.all([
+    getPeople(),
+    getCategories(),
+    getCreditCards(),
+    getMonthlyView(year, month, personId || undefined),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Transactions</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Add Transaction</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TransactionTabs people={people} categories={leafCategories} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Add Credit Card Purchase</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <InstallmentForm people={people} categories={leafCategories} creditCards={creditCards} />
-          </CardContent>
-        </Card>
-      </div>
+      <h1 className="text-2xl font-semibold">Transações</h1>
+      <TransactionPageClient
+        year={year}
+        month={month}
+        people={people}
+        currentPersonId={personId}
+        isGlobalLocked={isGlobalLocked}
+        categories={categories}
+        creditCards={creditCards}
+        transactions={transactions}
+        installments={installments}
+      />
     </div>
   );
 }

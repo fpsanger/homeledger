@@ -39,6 +39,13 @@ function installmentToRecord(row: {
   dueMonth: number;
   isPaid: boolean;
   isCanceled: boolean;
+  creditCardPurchase?: {
+    categoryId: string | null;
+    description?: string;
+    personId?: string;
+    creditCardId?: string | null;
+    numberOfInstallments?: number;
+  } | null;
 }): InstallmentRecord {
   return {
     id: row.id,
@@ -49,6 +56,11 @@ function installmentToRecord(row: {
     dueMonth: row.dueMonth,
     isPaid: row.isPaid,
     isCanceled: row.isCanceled,
+    categoryId: row.creditCardPurchase?.categoryId ?? null,
+    purchaseDescription: row.creditCardPurchase?.description,
+    personId: row.creditCardPurchase?.personId,
+    creditCardId: row.creditCardPurchase?.creditCardId,
+    numberOfInstallments: row.creditCardPurchase?.numberOfInstallments,
   };
 }
 
@@ -87,6 +99,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   async findAllInstallmentsByMonth(year: number, month: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, dueMonth: month, isCanceled: false },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -98,6 +111,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   ): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, dueMonth: month, isCanceled: false, creditCardPurchase: { personId } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -105,6 +119,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   async findAllInstallmentsByYear(year: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, isCanceled: false },
+      include: { creditCardPurchase: { select: { categoryId: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -112,6 +127,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   async findInstallmentsByYear(personId: string, year: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, isCanceled: false, creditCardPurchase: { personId } },
+      include: { creditCardPurchase: { select: { categoryId: true } } },
     });
     return rows.map(installmentToRecord);
   }

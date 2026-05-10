@@ -55,7 +55,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
     router.refresh();
   }
 
-  if (sorted.length === 0) {
+  if (categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
         <Tags className="w-8 h-8 opacity-30" />
@@ -82,6 +82,13 @@ export function CategoryList({ categories }: { categories: Category[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
+          {paged.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-8">
+                Nenhuma categoria encontrada
+              </TableCell>
+            </TableRow>
+          )}
           {paged.map((cat) => (
             <TableRow key={cat.id}>
               <TableCell style={{ paddingLeft: `${cat.level * 20 + 12}px` }} className="font-medium text-sm">

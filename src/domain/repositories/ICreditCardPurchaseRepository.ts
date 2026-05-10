@@ -21,6 +21,7 @@ export interface InstallmentRecord {
   isCanceled: boolean;
   categoryId: string | null;
   purchaseDescription?: string;
+  purchaseDate?: Date;
   personId?: string;
   creditCardId?: string | null;
   numberOfInstallments?: number;

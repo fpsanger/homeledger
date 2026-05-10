@@ -38,6 +38,7 @@ type Installment = {
   personId?: string;
   categoryId?: string | null;
   purchaseDescription?: string;
+  purchaseDate?: Date | string;
   numberOfInstallments?: number;
   creditCardId?: string | null;
 };
@@ -154,7 +155,7 @@ export function TransactionPageClient({
               type: "credit",
               personId: editingPurchase.personId ?? "",
               amount: String(editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
-              date: toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
+              date: editingPurchase.purchaseDate ? toDateInput(editingPurchase.purchaseDate) : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
               paymentMethod: "CASH",
               source: "SALARY",
               creditCardId: editingPurchase.creditCardId ?? "",

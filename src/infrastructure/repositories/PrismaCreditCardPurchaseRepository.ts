@@ -42,6 +42,7 @@ function installmentToRecord(row: {
   creditCardPurchase?: {
     categoryId: string | null;
     description?: string;
+    purchaseDate?: Date;
     personId?: string;
     creditCardId?: string | null;
     numberOfInstallments?: number;
@@ -58,6 +59,7 @@ function installmentToRecord(row: {
     isCanceled: row.isCanceled,
     categoryId: row.creditCardPurchase?.categoryId ?? null,
     purchaseDescription: row.creditCardPurchase?.description,
+    purchaseDate: row.creditCardPurchase?.purchaseDate,
     personId: row.creditCardPurchase?.personId,
     creditCardId: row.creditCardPurchase?.creditCardId,
     numberOfInstallments: row.creditCardPurchase?.numberOfInstallments,
@@ -99,7 +101,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   async findAllInstallmentsByMonth(year: number, month: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, dueMonth: month, isCanceled: false },
-      include: { creditCardPurchase: { select: { categoryId: true, description: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -111,7 +113,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   ): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, dueMonth: month, isCanceled: false, creditCardPurchase: { personId } },
-      include: { creditCardPurchase: { select: { categoryId: true, description: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
     });
     return rows.map(installmentToRecord);
   }

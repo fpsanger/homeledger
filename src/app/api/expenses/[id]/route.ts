@@ -20,10 +20,11 @@ export async function PUT(
     if (!date) return new Response(JSON.stringify({ error: "date is required" }), { status: 400 });
     if (!paymentMethod) return new Response(JSON.stringify({ error: "paymentMethod is required" }), { status: 400 });
 
-    const { transaction } = createRepositories();
+    const { transaction, category } = createRepositories();
     await updateExpenseUseCase(
       { id: params.id, personId, amount, date: new Date(date), paymentMethod: paymentMethod as PaymentMethod, categoryId, description },
       transaction,
+      category,
     );
     return new Response(null, { status: 204 });
   } catch (error) {

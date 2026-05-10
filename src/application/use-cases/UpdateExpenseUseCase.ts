@@ -1,4 +1,6 @@
+import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
 import type { ITransactionRepository, TransactionRecord } from "../../domain/repositories/ITransactionRepository";
+import { validateExpenseCategory } from "../../domain/services/CategoryTree";
 
 const VALID_PAYMENT_METHODS = ["CASH", "DEBIT_CARD", "CREDIT_CARD", "PIX", "BANK_TRANSFER", "BOLETO"] as const;
 type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
@@ -16,12 +18,21 @@ type Input = {
 export async function updateExpenseUseCase(
   input: Input,
   repo: ITransactionRepository,
+  categoryRepo: ICategoryRepository,
 ): Promise<TransactionRecord> {
   if (!input.personId) throw new Error("Person is required");
   if (input.amount <= 0) throw new Error("Amount must be positive");
   if (!input.date) throw new Error("Date is required");
   if (!(VALID_PAYMENT_METHODS as readonly string[]).includes(input.paymentMethod)) {
     throw new Error("Invalid payment method");
+  }
+
+  const existing = await repo.findById(input.id);
+  if (!existing) throw new Error("Transaction not found");
+
+  if (input.categoryId !== null) {
+    const categories = await categoryRepo.findAll();
+    validateExpenseCategory(input.categoryId, categories);
   }
 
   return repo.update(input.id, {

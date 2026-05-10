@@ -82,11 +82,13 @@ export function TransactionTable({
   installmentExpenses = 0,
   people,
   categories = [],
+  onEdit,
 }: {
   transactions: Transaction[];
   installmentExpenses?: number;
   people: Person[];
   categories?: Category[];
+  onEdit?: (t: Transaction) => void;
 }) {
   const router = useRouter();
   const byPersonId = Object.fromEntries(people.map((p) => [p.id, p.name]));
@@ -289,10 +291,11 @@ export function TransactionTable({
                             </Button>
                           }
                           items={[
+                            ...(onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
                             {
                               label: deletingId === t.id ? "Excluindo..." : "Excluir",
                               onClick: () => handleDelete(t.id),
-                              variant: "destructive",
+                              variant: "destructive" as const,
                             },
                           ]}
                         />

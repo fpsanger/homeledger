@@ -67,6 +67,7 @@ export function BillView() {
   const [personId, setPersonId] = useState<string>("");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [paying, setPaying] = useState<Set<string>>(new Set());
+  const [unpaying, setUnpaying] = useState<Set<string>>(new Set());
   const [payError, setPayError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -144,6 +145,53 @@ export function BillView() {
       setPayError(cardId);
     } finally {
       setPaying((prev) => {
+        const next = new Set(prev);
+        next.delete(cardId);
+        return next;
+      });
+    }
+  }
+
+  async function unpayFatura(cardId: string, installments: BillInstallmentItem[]) {
+    const ids = installments.filter((i) => i.isPaid && !i.isCanceled).map((i) => i.id);
+    if (ids.length === 0) return;
+    setPayError(null);
+    setUnpaying((prev) => new Set(prev).add(cardId));
+    setBill((prev) =>
+      prev.map((entry) =>
+        entry.card.id === cardId
+          ? {
+              ...entry,
+              installments: entry.installments.map((i) =>
+                ids.includes(i.id) ? { ...i, isPaid: false } : i,
+              ),
+            }
+          : entry,
+      ),
+    );
+    try {
+      const res = await fetch("/api/installments/bulk-unpaid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error("Erro ao estornar fatura");
+    } catch {
+      setBill((prev) =>
+        prev.map((entry) =>
+          entry.card.id === cardId
+            ? {
+                ...entry,
+                installments: entry.installments.map((i) =>
+                  ids.includes(i.id) ? { ...i, isPaid: true } : i,
+                ),
+              }
+            : entry,
+        ),
+      );
+      setPayError(cardId);
+    } finally {
+      setUnpaying((prev) => {
         const next = new Set(prev);
         next.delete(cardId);
         return next;
@@ -236,6 +284,16 @@ export function BillView() {
                       onClick={(e) => { e.stopPropagation(); payFatura(entry.card.id, entry.installments); }}
                     >
                       {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
+                    </Button>
+                  )}
+                  {entry.installments.some((i) => i.isPaid && !i.isCanceled) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={unpaying.has(entry.card.id)}
+                      onClick={(e) => { e.stopPropagation(); unpayFatura(entry.card.id, entry.installments); }}
+                    >
+                      {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
                     </Button>
                   )}
                   <div className="text-right">

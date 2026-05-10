@@ -167,6 +167,14 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     });
   }
 
+  async markInstallmentsUnpaid(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await this.prisma.installment.updateMany({
+      where: { id: { in: ids }, isPaid: true },
+      data: { isPaid: false },
+    });
+  }
+
   async deleteInstallment(installmentId: string): Promise<void> {
     await this.prisma.installment.delete({ where: { id: installmentId } });
   }

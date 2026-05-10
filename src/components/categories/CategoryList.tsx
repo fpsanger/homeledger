@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,12 +35,42 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   const [editing, setEditing] = useState<Category | null>(null);
   const [query, setQuery] = useState("");
 
-  const sorted = [...categories]
-    .sort((a, b) => (a.path || a.name).localeCompare(b.path || b.name))
-    .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
+  const grouped = useMemo(() => {
+    const q = query.toLowerCase();
+    const roots = categories
+      .filter((c) => c.parentId === null)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const childrenOf = new Map<string, Category[]>();
+    for (const c of categories) {
+      if (c.parentId) {
+        const arr = childrenOf.get(c.parentId) ?? [];
+        arr.push(c);
+        childrenOf.set(c.parentId, arr);
+      }
+    }
+    childrenOf.forEach((v, k) => {
+      childrenOf.set(k, v.sort((a: Category, b: Category) => a.name.localeCompare(b.name)));
+    });
+    const result: Category[] = [];
+    for (const root of roots) {
+      const children = childrenOf.get(root.id) ?? [];
+      if (!q) {
+        result.push(root, ...children);
+      } else {
+        const rootMatches = root.name.toLowerCase().includes(q);
+        const matchedChildren = children.filter((c) => c.name.toLowerCase().includes(q));
+        if (rootMatches) {
+          result.push(root, ...children);
+        } else if (matchedChildren.length > 0) {
+          result.push(root, ...matchedChildren);
+        }
+      }
+    }
+    return result;
+  }, [categories, query]);
 
-  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-  const paged = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(grouped.length / PAGE_SIZE);
+  const paged = grouped.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   async function handleDelete(id: string) {
     setErrors((prev) => ({ ...prev, [id]: "" }));

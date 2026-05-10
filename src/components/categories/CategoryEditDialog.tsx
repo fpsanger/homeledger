@@ -32,11 +32,9 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
 
   // Exclude self and descendants to prevent cycles
   const validParents = categories.filter(
-    (c) => c.id !== category.id && !c.path.startsWith(category.path + "/"),
+    (c) => c.parentId === null && c.id !== category.id && !c.path.startsWith(category.path + "/"),
   );
-  const sorted = [...validParents].sort((a, b) =>
-    (a.path || a.name).localeCompare(b.path || b.name),
-  );
+  const sorted = [...validParents].sort((a, b) => a.name.localeCompare(b.name));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

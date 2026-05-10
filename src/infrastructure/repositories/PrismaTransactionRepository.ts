@@ -98,6 +98,14 @@ export class PrismaTransactionRepository implements ITransactionRepository {
     return toRecord(row);
   }
 
+  async update(
+    id: string,
+    fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<TransactionRecord> {
+    const row = await this.prisma.transaction.update({ where: { id }, data: fields });
+    return toRecord(row);
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.transaction.delete({ where: { id } });
   }

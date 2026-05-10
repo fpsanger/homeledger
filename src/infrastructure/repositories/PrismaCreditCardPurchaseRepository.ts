@@ -186,6 +186,20 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     return rows.map(installmentToRecord);
   }
 
+  async updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void> {
+    const installment = await this.prisma.installment.findUniqueOrThrow({ where: { id } });
+    await this.prisma.$transaction([
+      this.prisma.installment.update({
+        where: { id },
+        data: { amount: fields.amount },
+      }),
+      this.prisma.creditCardPurchase.update({
+        where: { id: installment.creditCardPurchaseId },
+        data: { description: fields.description },
+      }),
+    ]);
+  }
+
   async updateInstallments(installments: InstallmentRecord[]): Promise<void> {
     await this.prisma.$transaction(
       installments.map((i) =>

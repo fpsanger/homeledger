@@ -37,6 +37,7 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
   async findByPurchaseId(_purchaseId: string): Promise<InstallmentRecord[]> {
     return [];
   }
+  async updateInstallment(_id: string, _fields: { amount: number; description: string }): Promise<void> {}
   async updateInstallments(_installments: InstallmentRecord[]): Promise<void> {}
   async findAllPurchasesWithInstallments(
     _personId?: string,

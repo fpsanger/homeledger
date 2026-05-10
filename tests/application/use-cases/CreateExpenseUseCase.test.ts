@@ -11,6 +11,7 @@ const makeTransactionRepo = (
   findByYear: async () => [],
   findByPersonAndYear: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() } as TransactionRecord),
+  update: async (id, fields) => ({ id, createdAt: new Date(), updatedAt: new Date(), personId: "", type: "EXPENSE", amount: 0, date: new Date(), description: "", paymentMethod: null, source: null, categoryId: null, ...fields } as TransactionRecord),
   delete: async () => {},
   ...overrides,
 });

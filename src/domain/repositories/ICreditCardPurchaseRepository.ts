@@ -50,6 +50,7 @@ export interface ICreditCardPurchaseRepository {
   markInstallmentsUnpaid(ids: string[]): Promise<void>;
   deleteInstallment(installmentId: string): Promise<void>;
   findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
+  updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void>;
   updateInstallments(installments: InstallmentRecord[]): Promise<void>;
   findAllPurchasesWithInstallments(personId?: string): Promise<CreditCardPurchaseWithInstallments[]>;
 }

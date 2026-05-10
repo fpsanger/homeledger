@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -32,10 +33,11 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState<Category | null>(null);
+  const [query, setQuery] = useState("");
 
-  const sorted = [...categories].sort((a, b) =>
-    (a.path || a.name).localeCompare(b.path || b.name),
-  );
+  const sorted = [...categories]
+    .sort((a, b) => (a.path || a.name).localeCompare(b.path || b.name))
+    .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
 
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const paged = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -64,6 +66,12 @@ export function CategoryList({ categories }: { categories: Category[] }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <Input
+        placeholder="Filtrar por nome…"
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); setPage(0); }}
+        className="max-w-xs"
+      />
       <div className="rounded-lg border overflow-hidden">
       <Table>
         <TableHeader>

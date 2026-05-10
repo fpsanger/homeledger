@@ -35,3 +35,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# mtime-based, breaks after git clone
+graphify-out/manifest.json
+# local only
+graphify-out/cost.json
+# optional: commit for speed, skip to keep repo small
+graphify-out/cache/        

@@ -10,6 +10,9 @@ class MockCategoryRepository implements ICategoryRepository {
   async findById(_id: string): Promise<CategoryRecord | null> {
     return null;
   }
+  async findRootByName(_name: string, _householdId: string): Promise<CategoryRecord | null> {
+    return null;
+  }
   async save(c: Omit<CategoryRecord, "createdAt">): Promise<CategoryRecord> {
     return { ...c, createdAt: new Date() };
   }

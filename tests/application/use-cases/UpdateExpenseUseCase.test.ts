@@ -19,6 +19,7 @@ const makeTransactionRepo = (
 const makeCategoryRepo = (categories: CategoryRecord[] = [], overrides = {}): ICategoryRepository => ({
   findAll: async () => categories,
   findById: async (id) => categories.find(c => c.id === id) ?? null,
+  findRootByName: async (name) => categories.find(c => c.parentId === null && c.name === name) ?? null,
   save: async (c) => ({ ...c, createdAt: new Date() }),
   delete: async () => {},
   ...overrides,

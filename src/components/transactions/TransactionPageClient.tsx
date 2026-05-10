@@ -135,6 +135,8 @@ export function TransactionPageClient({
         {editingInstallment && (
           <EditInstallmentForm
             installment={editingInstallment}
+            people={people}
+            creditCards={creditCards}
             onSuccess={() => setEditingInstallment(null)}
           />
         )}

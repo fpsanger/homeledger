@@ -116,9 +116,13 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
           url = `/api/incomes/${editMode.transactionId}`;
           body = { personId, amount: parseFloat(amount), date, source, categoryId: categoryId || null, description };
         }
-      } else {
+      } else if (editMode.purchaseId) {
         url = `/api/credit-card-purchases/${editMode.purchaseId}`;
         body = { description, totalAmount: parseFloat(amount), purchaseDate: date, categoryId: categoryId || null, creditCardId };
+      } else {
+        setError("ID da compra não encontrado.");
+        setLoading(false);
+        return;
       }
     } else {
       method = "POST";

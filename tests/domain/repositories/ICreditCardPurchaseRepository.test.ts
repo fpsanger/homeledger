@@ -31,6 +31,7 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
   async updatePurchase(_id: string, _data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">): Promise<void> {}
   async deletePurchase(_id: string): Promise<void> {}
   async markInstallmentPaid(_installmentId: string): Promise<void> {}
+  async markInstallmentsPaid(_ids: string[]): Promise<void> {}
   async deleteInstallment(_installmentId: string): Promise<void> {}
   async findByPurchaseId(_purchaseId: string): Promise<InstallmentRecord[]> {
     return [];

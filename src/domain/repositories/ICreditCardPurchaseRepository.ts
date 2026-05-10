@@ -46,6 +46,7 @@ export interface ICreditCardPurchaseRepository {
   updatePurchase(id: string, data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">): Promise<void>;
   deletePurchase(id: string): Promise<void>;
   markInstallmentPaid(installmentId: string): Promise<void>;
+  markInstallmentsPaid(ids: string[]): Promise<void>;
   deleteInstallment(installmentId: string): Promise<void>;
   findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
   updateInstallments(installments: InstallmentRecord[]): Promise<void>;

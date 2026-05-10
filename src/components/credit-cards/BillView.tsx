@@ -66,6 +66,8 @@ export function BillView() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [personId, setPersonId] = useState<string>("");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [paying, setPaying] = useState<Set<string>>(new Set());
+  const [payError, setPayError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -98,6 +100,55 @@ export function BillView() {
   function next() {
     if (month === 12) { setYear((y) => y + 1); setMonth(1); }
     else setMonth((m) => m + 1);
+  }
+
+  async function payFatura(cardId: string, installments: BillInstallmentItem[]) {
+    const ids = installments.filter((i) => !i.isPaid && !i.isCanceled).map((i) => i.id);
+    if (ids.length === 0) return;
+    setPayError(null);
+    setPaying((prev) => new Set(prev).add(cardId));
+    // optimistic update
+    setBill((prev) =>
+      prev.map((entry) =>
+        entry.card.id === cardId
+          ? {
+              ...entry,
+              installments: entry.installments.map((i) =>
+                ids.includes(i.id) ? { ...i, isPaid: true } : i,
+              ),
+            }
+          : entry,
+      ),
+    );
+    try {
+      const res = await fetch("/api/installments/bulk-paid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error("Erro ao pagar fatura");
+    } catch {
+      // revert
+      setBill((prev) =>
+        prev.map((entry) =>
+          entry.card.id === cardId
+            ? {
+                ...entry,
+                installments: entry.installments.map((i) =>
+                  ids.includes(i.id) ? { ...i, isPaid: false } : i,
+                ),
+              }
+            : entry,
+        ),
+      );
+      setPayError(cardId);
+    } finally {
+      setPaying((prev) => {
+        const next = new Set(prev);
+        next.delete(cardId);
+        return next;
+      });
+    }
   }
 
   function toggleCollapse(cardId: string) {
@@ -176,11 +227,26 @@ export function BillView() {
                     <p className="text-xs text-muted-foreground">Vence: dia {entry.dueDayOfMonth}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.installments.length} {entry.installments.length === 1 ? "item" : "itens"}
-                  </p>
+                <div className="flex items-center gap-3">
+                  {entry.installments.some((i) => !i.isPaid && !i.isCanceled) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={paying.has(entry.card.id)}
+                      onClick={(e) => { e.stopPropagation(); payFatura(entry.card.id, entry.installments); }}
+                    >
+                      {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
+                    </Button>
+                  )}
+                  <div className="text-right">
+                    <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.installments.length} {entry.installments.length === 1 ? "item" : "itens"}
+                    </p>
+                    {payError === entry.card.id && (
+                      <p className="text-xs text-destructive">Erro ao pagar</p>
+                    )}
+                  </div>
                 </div>
               </button>
 

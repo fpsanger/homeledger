@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 type Person = { id: string; name: string };
 type CreditCard = { id: string; name: string };
@@ -125,15 +126,7 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="ei-amount">Valor</Label>
-          <Input
-            id="ei-amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
+          <CurrencyInput id="ei-amount" value={amount} onChange={setAmount} required />
         </div>
 
         <div className="flex flex-col gap-1.5">

@@ -3,6 +3,8 @@ import { MonthlySummaryCard } from "@/components/dashboard/MonthlySummaryCard";
 import { YearNav } from "@/components/dashboard/YearNav";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { CategoryBreakdownChart } from "@/components/dashboard/CategoryBreakdownChart";
+import { MonthlyExpensesCard } from "@/components/dashboard/MonthlyExpensesCard";
+import { IncomeExpenseBalanceCard } from "@/components/dashboard/IncomeExpenseBalanceCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
@@ -89,6 +91,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           )}
         </CardContent>
       </Card>
+      {annualReport && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MonthlyExpensesCard months={annualReport.months} totalExpenses={annualReport.totalExpenses} />
+          <IncomeExpenseBalanceCard months={annualReport.months} />
+        </div>
+      )}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">

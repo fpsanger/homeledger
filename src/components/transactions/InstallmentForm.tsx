@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string };
@@ -91,15 +93,30 @@ export function InstallmentForm({
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-total">Valor Total</Label>
-        <Input id="inst-total" type="number" min="0.01" step="0.01" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} placeholder="0.00" required />
+        <CurrencyInput id="inst-total" value={totalAmount} onChange={(v) => { setTotalAmount(v); setNumberOfInstallments(""); }} required />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-count">Número de Parcelas</Label>
-        <Input id="inst-count" type="number" min="2" step="1" value={numberOfInstallments} onChange={(e) => setNumberOfInstallments(e.target.value)} required />
+        <Select id="inst-count" value={numberOfInstallments} onChange={(e) => setNumberOfInstallments(e.target.value)} required>
+          {(() => {
+            const total = parseFloat(totalAmount);
+            if (!total || total <= 0) {
+              return <option value="">Informe o valor primeiro</option>;
+            }
+            return Array.from({ length: 11 }, (_, i) => i + 2).map((n) => {
+              const perInstallment = (total / n).toFixed(2).replace(".", ",");
+              return (
+                <option key={n} value={String(n)}>
+                  {n}x de R$ {perInstallment}
+                </option>
+              );
+            });
+          })()}
+        </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="inst-date">Data da Compra</Label>
-        <Input id="inst-date" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} required />
+        <Label>Data da Compra</Label>
+        <DatePicker value={purchaseDate} onChange={setPurchaseDate} required />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-category">Categoria</Label>

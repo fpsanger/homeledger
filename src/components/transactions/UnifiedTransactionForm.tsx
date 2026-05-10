@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -206,21 +208,17 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="u-amount">{type === "credit" ? "Valor Total" : "Valor"}</Label>
-        <Input
+        <CurrencyInput
           id="u-amount"
-          type="number"
-          min="0.01"
-          step="0.01"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
+          onChange={(v) => { setAmount(v); setNumberOfInstallments(""); }}
           required
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-date">{type === "credit" ? "Data da Compra" : "Data"}</Label>
-        <Input id="u-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+        <Label>{type === "credit" ? "Data da Compra" : "Data"}</Label>
+        <DatePicker value={date} onChange={setDate} required />
       </div>
 
       {type === "expense" && (
@@ -259,15 +257,27 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
           {!isEditMode && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="u-installments">Parcelas</Label>
-              <Input
+              <Select
                 id="u-installments"
-                type="number"
-                min="2"
-                step="1"
                 value={numberOfInstallments}
                 onChange={(e) => setNumberOfInstallments(e.target.value)}
                 required
-              />
+              >
+                {(() => {
+                  const total = parseFloat(amount);
+                  if (!total || total <= 0) {
+                    return <option value="">Informe o valor primeiro</option>;
+                  }
+                  return Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+                    const perInstallment = (total / n).toFixed(2).replace(".", ",");
+                    return (
+                      <option key={n} value={String(n)}>
+                        {n}x de R$ {perInstallment}
+                      </option>
+                    );
+                  });
+                })()}
+              </Select>
             </div>
           )}
         </>

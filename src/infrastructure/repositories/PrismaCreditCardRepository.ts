@@ -28,6 +28,7 @@ function closureToRecord(row: {
   year: number;
   month: number;
   closureDay: number;
+  previousMonth: boolean;
 }): CreditCardClosureRecord {
   return {
     id: row.id,
@@ -35,6 +36,7 @@ function closureToRecord(row: {
     year: row.year,
     month: row.month,
     closureDay: row.closureDay,
+    previousMonth: row.previousMonth,
   };
 }
 
@@ -105,8 +107,9 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
         year: closure.year,
         month: closure.month,
         closureDay: closure.closureDay,
+        previousMonth: closure.previousMonth,
       },
-      update: { closureDay: closure.closureDay },
+      update: { closureDay: closure.closureDay, previousMonth: closure.previousMonth },
     });
     return closureToRecord(row);
   }
@@ -128,5 +131,11 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
       orderBy: [{ year: "desc" }, { month: "desc" }],
     });
     return rows.map(closureToRecord);
+  }
+
+  async deleteClosure(creditCardId: string, year: number, month: number): Promise<void> {
+    await this.prisma.creditCardClosure.delete({
+      where: { creditCardId_year_month: { creditCardId, year, month } },
+    });
   }
 }

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro" },
@@ -83,26 +85,11 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-amount">Valor</Label>
-        <Input
-          id="expense-amount"
-          type="number"
-          min="0.01"
-          step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
-          required
-        />
+        <CurrencyInput id="expense-amount" value={amount} onChange={setAmount} required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-date">Data</Label>
-        <Input
-          id="expense-date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+        <Label>Data</Label>
+        <DatePicker value={date} onChange={setDate} required />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-payment">Forma de Pagamento</Label>

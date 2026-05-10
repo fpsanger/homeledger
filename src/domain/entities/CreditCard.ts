@@ -16,6 +16,7 @@ export interface CreditCardClosureRecord {
   year: number;
   month: number;
   closureDay: number;
+  previousMonth: boolean;
 }
 
 type CreateCreditCardInput = {

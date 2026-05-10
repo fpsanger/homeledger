@@ -4,7 +4,7 @@ import { useState } from "react";
 import { BarChart2, Table2 } from "lucide-react";
 import type { AnnualReportResult } from "@/domain/services/AnnualReport";
 import { AnnualReportCards } from "./AnnualReportCards";
-import { AnnualBarChart } from "./AnnualBarChart";
+import { AnnualBalanceChart, fmtSigned } from "./AnnualBalanceCard";
 
 type Props = {
   report: AnnualReportResult;
@@ -47,7 +47,13 @@ export function AnnualReportSection({ report }: Props) {
       {view === "table" ? (
         <AnnualReportCards report={report} />
       ) : (
-        <AnnualBarChart months={report.months} />
+        <div className="flex flex-col gap-1 pt-1">
+          <p className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+            {fmtSigned(report.totalBalance)}
+          </p>
+          <p className="text-xs text-muted-foreground mb-2">Diferença entre receitas e despesas por mês</p>
+          <AnnualBalanceChart months={report.months} />
+        </div>
       )}
     </div>
   );

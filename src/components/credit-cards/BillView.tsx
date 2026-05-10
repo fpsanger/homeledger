@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight, CreditCard, Package, Receipt, Users } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, CreditCard, Package, Receipt, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string };
@@ -56,7 +57,12 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
   );
 }
 
-export function BillView() {
+type BillViewProps = {
+  initialPersonId?: string;
+  isGlobalLocked?: boolean;
+};
+
+export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillViewProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -64,7 +70,7 @@ export function BillView() {
   const [loading, setLoading] = useState(false);
   const [people, setPeople] = useState<Person[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [personId, setPersonId] = useState<string>("");
+  const [personId, setPersonId] = useState<string>(initialPersonId);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [paying, setPaying] = useState<Set<string>>(new Set());
   const [unpaying, setUnpaying] = useState<Set<string>>(new Set());
@@ -108,7 +114,6 @@ export function BillView() {
     if (ids.length === 0) return;
     setPayError(null);
     setPaying((prev) => new Set(prev).add(cardId));
-    // optimistic update
     setBill((prev) =>
       prev.map((entry) =>
         entry.card.id === cardId
@@ -129,7 +134,6 @@ export function BillView() {
       });
       if (!res.ok) throw new Error("Erro ao pagar fatura");
     } catch {
-      // revert
       setBill((prev) =>
         prev.map((entry) =>
           entry.card.id === cardId
@@ -221,16 +225,18 @@ export function BillView() {
         <Button variant="outline" size="sm" onClick={prev}>←</Button>
         <span className="font-medium capitalize">{formatMonth(year, month)}</span>
         <Button variant="outline" size="sm" onClick={next}>→</Button>
-        <select
-          className="ml-auto border rounded px-2 py-1 text-sm bg-background"
-          value={personId}
-          onChange={(e) => setPersonId(e.target.value)}
-        >
-          <option value="">Todas as pessoas</option>
-          {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        {!isGlobalLocked && (
+          <select
+            className="ml-auto border rounded px-2 py-1 text-sm bg-background"
+            value={personId}
+            onChange={(e) => setPersonId(e.target.value)}
+          >
+            <option value="">Todas as pessoas</option>
+            {people.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {loading && <p className="text-sm text-muted-foreground">Carregando…</p>}
@@ -256,120 +262,140 @@ export function BillView() {
 
           {/* Card groups */}
           {bill.map((entry) => {
-            const isCollapsed = collapsed.has(entry.card.id);
+            const isOpen = !collapsed.has(entry.card.id);
+            const activeParcelas = entry.installments.filter((i) => !i.isCanceled);
+            const allPaid = activeParcelas.length > 0 && activeParcelas.every((i) => i.isPaid);
             return (
-            <Card key={entry.card.id} className="overflow-hidden">
-              {/* Card header */}
-              <button
-                type="button"
-                className="w-full flex items-center justify-between px-5 py-4 border-b bg-muted/30 hover:bg-muted/50 transition-colors text-left"
-                onClick={() => toggleCollapse(entry.card.id)}
+              <Collapsible
+                key={entry.card.id}
+                open={isOpen}
+                onOpenChange={() => toggleCollapse(entry.card.id)}
               >
-                <div className="flex items-center gap-3">
-                  {isCollapsed
-                    ? <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                  <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-semibold text-sm">{entry.card.name}</p>
-                    <p className="text-xs text-muted-foreground">Vence: dia {entry.dueDayOfMonth}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  {entry.installments.some((i) => !i.isPaid && !i.isCanceled) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={paying.has(entry.card.id)}
-                      onClick={(e) => { e.stopPropagation(); payFatura(entry.card.id, entry.installments); }}
-                    >
-                      {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
-                    </Button>
-                  )}
-                  {entry.installments.some((i) => i.isPaid && !i.isCanceled) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={unpaying.has(entry.card.id)}
-                      onClick={(e) => { e.stopPropagation(); unpayFatura(entry.card.id, entry.installments); }}
-                    >
-                      {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
-                    </Button>
-                  )}
-                  <div className="text-right">
-                    <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.installments.length} {entry.installments.length === 1 ? "item" : "itens"}
-                    </p>
-                    {payError === entry.card.id && (
-                      <p className="text-xs text-destructive">Erro ao pagar</p>
-                    )}
-                  </div>
-                </div>
-              </button>
-
-              {/* Desktop table */}
-              {!isCollapsed && <div className="hidden sm:block">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-muted-foreground border-b">
-                      <th className="px-5 py-2.5 font-medium text-xs">Compra</th>
-                      <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
-                      <th className="px-5 py-2.5 font-medium text-xs">Pessoa</th>
-                      <th className="px-5 py-2.5 font-medium text-xs">Categoria</th>
-                      <th className="px-5 py-2.5 font-medium text-xs text-right">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {entry.installments.map((inst) => (
-                      <tr key={inst.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-                        <td className="px-5 py-3">
-                          <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(inst.purchaseDate)}</p>
-                        </td>
-                        <td className="px-5 py-3">
-                          <Badge variant="outline" className="font-mono text-xs">
-                            {inst.installmentNumber}/{inst.numberOfInstallments}
-                          </Badge>
-                        </td>
-                        <td className="px-5 py-3 text-sm text-muted-foreground">
-                          {personMap.get(inst.personId) ?? "—"}
-                        </td>
-                        <td className="px-5 py-3 text-sm text-muted-foreground">
-                          {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
-                        </td>
-                        <td className="px-5 py-3 text-right font-medium text-sm">
-                          {formatCurrency(inst.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>}
-
-              {/* Mobile cards */}
-              {!isCollapsed && <div className="sm:hidden flex flex-col divide-y">
-                {entry.installments.map((inst) => (
-                  <div key={inst.id} className="px-4 py-3 flex flex-col gap-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-                      <p className="font-semibold text-sm shrink-0">{formatCurrency(inst.amount)}</p>
+                <Card className={`overflow-hidden${allPaid ? " ring-1 ring-green-500" : ""}`}>
+                  {/* Card header */}
+<CollapsibleTrigger
+  className={`no-active-scale w-full rounded-none flex items-center justify-between px-5 py-4 border-b transition-colors text-left ${
+    allPaid
+      ? "bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:hover:bg-green-900 dark:border-green-800"
+      : "bg-muted/30 hover:bg-muted/50"
+  }`}
+>
+                    <div className="flex items-center gap-3">
+                      {isOpen
+                        ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                      <CreditCard className="w-4 h-4 text-muted-foreground" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-sm">{entry.card.name}</p>
+                          {allPaid && (
+                            <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3 h-3" /> Paga
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Vence: dia {entry.dueDayOfMonth}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {inst.installmentNumber}/{inst.numberOfInstallments}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
-                      {inst.categoryId && (
-                        <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
+                    <div className="flex items-center gap-3">
+                      {entry.installments.some((i) => !i.isPaid && !i.isCanceled) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={paying.has(entry.card.id)}
+                          onClick={(e) => { e.stopPropagation(); payFatura(entry.card.id, entry.installments); }}
+                        >
+                          {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
+                        </Button>
                       )}
-                      <span className="text-xs text-muted-foreground">{formatDate(inst.purchaseDate)}</span>
+                      {entry.installments.some((i) => i.isPaid && !i.isCanceled) && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={unpaying.has(entry.card.id)}
+                          onClick={(e) => { e.stopPropagation(); unpayFatura(entry.card.id, entry.installments); }}
+                        >
+                          {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
+                        </Button>
+                      )}
+                      <div className="text-right">
+                        <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {entry.installments.length} {entry.installments.length === 1 ? "item" : "itens"}
+                        </p>
+                        {payError === entry.card.id && (
+                          <p className="text-xs text-destructive">Erro ao pagar</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>}
-            </Card>
-          );})}
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent>
+                    {/* Desktop table */}
+                    <div className="hidden sm:block">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-muted-foreground border-b">
+                            <th className="px-5 py-2.5 font-medium text-xs">Compra</th>
+                            <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
+                            <th className="px-5 py-2.5 font-medium text-xs">Pessoa</th>
+                            <th className="px-5 py-2.5 font-medium text-xs">Categoria</th>
+                            <th className="px-5 py-2.5 font-medium text-xs text-right">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {entry.installments.map((inst) => (
+                            <tr key={inst.id} className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}`}>
+                              <td className="px-5 py-3">
+                                <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+                                <p className="text-xs text-muted-foreground">{formatDate(inst.purchaseDate)}</p>
+                              </td>
+                              <td className="px-5 py-3">
+                                <Badge variant="outline" className="font-mono text-xs">
+                                  {inst.installmentNumber}/{inst.numberOfInstallments}
+                                </Badge>
+                              </td>
+                              <td className="px-5 py-3 text-sm text-muted-foreground">
+                                {personMap.get(inst.personId) ?? "—"}
+                              </td>
+                              <td className="px-5 py-3 text-sm text-muted-foreground">
+                                {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
+                              </td>
+                              <td className="px-5 py-3 text-right font-medium text-sm">
+                                {formatCurrency(inst.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile cards */}
+                    <div className="sm:hidden flex flex-col divide-y">
+                      {entry.installments.map((inst) => (
+                        <div key={inst.id} className="px-4 py-3 flex flex-col gap-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+                            <p className="font-semibold text-sm shrink-0">{formatCurrency(inst.amount)}</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="font-mono text-xs">
+                              {inst.installmentNumber}/{inst.numberOfInstallments}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
+                            {inst.categoryId && (
+                              <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
+                            )}
+                            <span className="text-xs text-muted-foreground">{formatDate(inst.purchaseDate)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            );
+          })}
         </>
       )}
     </div>

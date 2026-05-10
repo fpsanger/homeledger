@@ -45,7 +45,7 @@ export default async function InstallmentsPage() {
             isGlobalLocked={isGlobalLocked}
           />
         }
-        billView={<BillView />}
+        billView={<BillView initialPersonId={personId} isGlobalLocked={isGlobalLocked} />}
       />
     </div>
   );

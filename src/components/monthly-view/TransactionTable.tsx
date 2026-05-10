@@ -131,19 +131,28 @@ export function TransactionTable({
     return Array.from(seen);
   }, [transactions]);
 
-  const usedCategoryIds = useMemo(() => {
+  const usedParentCategoryIds = useMemo(() => {
     const seen = new Set<string>();
-    for (const t of transactions) if (t.categoryId) seen.add(t.categoryId);
+    for (const t of transactions) {
+      if (!t.categoryId) continue;
+      const cat = categories.find((c) => c.id === t.categoryId);
+      if (!cat) continue;
+      seen.add(cat.parentId ?? cat.id);
+    }
     return Array.from(seen);
-  }, [transactions]);
+  }, [transactions, categories]);
 
-  const showCategoryCol = usedCategoryIds.length > 0;
+  const showCategoryCol = usedParentCategoryIds.length > 0;
 
   const filtered = useMemo(() => {
     setPage(0);
     return transactions.filter((t) => {
       if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
-      if (categoryFilter && t.categoryId !== categoryFilter) return false;
+      if (categoryFilter) {
+        const cat = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
+        const parentId = cat ? (cat.parentId ?? cat.id) : null;
+        if (parentId !== categoryFilter) return false;
+      }
       if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
       return true;
     });
@@ -210,7 +219,7 @@ export function TransactionTable({
             className="h-8 w-44 text-sm"
           >
             <option value="">Todas categorias</option>
-            {usedCategoryIds.map((cid) => (
+            {usedParentCategoryIds.map((cid) => (
               <option key={cid} value={cid}>
                 {byCategoryId[cid] ?? cid}
               </option>

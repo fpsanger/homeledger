@@ -92,7 +92,14 @@ export function TransactionTable({
 }) {
   const router = useRouter();
   const byPersonId = Object.fromEntries(people.map((p) => [p.id, p.name]));
-  const byCategoryId = Object.fromEntries(categories.map((c) => [c.id, c.name]));
+  const byCategoryId = Object.fromEntries(
+    categories.map((c) => {
+      const displayName = c.parentId
+        ? (categories.find((p) => p.id === c.parentId)?.name ?? c.name)
+        : c.name;
+      return [c.id, displayName];
+    }),
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");

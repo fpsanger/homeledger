@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -21,7 +22,7 @@ const PAYMENT_METHODS = [
 ];
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string };
+type Category = { id: string; name: string; parentId: string | null; path: string };
 
 export function ExpenseForm({ people, categories }: { people: Person[]; categories: Category[] }) {
   const router = useRouter();
@@ -100,13 +101,8 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="expense-category">Categoria</Label>
-        <Select id="expense-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">Nenhuma</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.path || c.name}</option>
-          ))}
-        </Select>
+        <Label>Categoria</Label>
+        <CategoryCombobox categories={categories} value={categoryId} onChange={setCategoryId} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-description">Descrição</Label>

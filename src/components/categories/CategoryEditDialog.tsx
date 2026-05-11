@@ -6,14 +6,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { Dialog } from "@/components/ui/dialog";
 
 type Category = {
   id: string;
   name: string;
   path: string;
-  parentId?: string | null;
+  parentId: string | null;
   level: number;
 };
 
@@ -72,19 +72,13 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="edit-category-parent">Categoria pai</Label>
-          <Select
-            id="edit-category-parent"
+          <Label>Categoria pai</Label>
+          <CategoryCombobox
+            categories={sorted}
             value={parentId}
-            onChange={(e) => setParentId(e.target.value)}
-          >
-            <option value="">Nenhuma (raiz)</option>
-            {sorted.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.path || c.name}
-              </option>
-            ))}
-          </Select>
+            onChange={setParentId}
+            placeholder="Nenhuma (raiz)"
+          />
         </div>
 <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>

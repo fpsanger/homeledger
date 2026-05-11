@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Badge } from "@/components/ui/badge";
@@ -73,14 +74,6 @@ function EditForm({
   onSaved: () => void;
   onCancel: () => void;
 }) {
-  function resolveInitialCategory(categoryId: string | null, cats: Category[]) {
-    if (!categoryId) return { parentCategoryId: "", subCategoryId: "" };
-    const cat = cats.find((c) => c.id === categoryId);
-    if (!cat) return { parentCategoryId: categoryId, subCategoryId: "" };
-    if (cat.parentId) return { parentCategoryId: cat.parentId, subCategoryId: cat.id };
-    return { parentCategoryId: cat.id, subCategoryId: "" };
-  }
-
   const [form, setForm] = useState<EditState>({
     description: purchase.description,
     totalAmount: String(purchase.totalAmount),
@@ -91,8 +84,7 @@ function EditForm({
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [parentCategoryId, setParentCategoryId] = useState("");
-  const [subCategoryId, setSubCategoryId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
 
   async function loadOptions() {
     if (loaded) return;
@@ -104,9 +96,7 @@ function EditForm({
       const d = await catRes.json();
       const cats: Category[] = d.categories ?? [];
       setCategories(cats);
-      const resolved = resolveInitialCategory(purchase.categoryId ?? null, cats);
-      setParentCategoryId(resolved.parentCategoryId);
-      setSubCategoryId(resolved.subCategoryId);
+      setCategoryId(purchase.categoryId ?? "");
     }
     if (ccRes.ok) {
       const d = await ccRes.json();
@@ -120,9 +110,6 @@ function EditForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const subCategories = categories.filter((c) => c.parentId === parentCategoryId);
-    const selectedParentHasChildren = subCategories.length > 0;
-    const resolvedCategoryId = selectedParentHasChildren ? subCategoryId : parentCategoryId;
 
     const res = await fetch(`/api/credit-card-purchases/${purchase.id}`, {
       method: "PUT",
@@ -131,7 +118,7 @@ function EditForm({
         description: form.description,
         totalAmount: parseFloat(form.totalAmount),
         purchaseDate: form.purchaseDate,
-        categoryId: resolvedCategoryId || null,
+        categoryId: categoryId || null,
         creditCardId: form.creditCardId || null,
       }),
     });
@@ -171,27 +158,13 @@ function EditForm({
           {creditCards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </Select>
       )}
-      {(() => {
-        const rootCategories = categories.filter((c) => c.parentId === null);
-        const subCategories = categories.filter((c) => c.parentId === parentCategoryId);
-        const selectedParentHasChildren = subCategories.length > 0;
-        return (
-          <>
-            {field("ep-cat", "Categoria",
-              <Select id="ep-cat" value={parentCategoryId} onChange={(e) => { setParentCategoryId(e.target.value); setSubCategoryId(""); }}>
-                <option value="">Nenhuma</option>
-                {rootCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-            )}
-            {selectedParentHasChildren && field("ep-subcat", "Subcategoria",
-              <Select id="ep-subcat" value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)} required>
-                <option value="">Selecione a subcategoria</option>
-                {subCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-            )}
-          </>
-        );
-      })()}
+      {field("ep-cat", "Categoria",
+        <CategoryCombobox
+          categories={categories}
+          value={categoryId}
+          onChange={setCategoryId}
+        />
+      )}
       <div className="flex gap-2 pt-1">
         <Button type="submit" size="sm" disabled={loading}>{loading ? "Salvando…" : "Salvar"}</Button>
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>

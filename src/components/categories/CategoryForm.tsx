@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 
 type Category = {
   id: string;
@@ -69,19 +69,13 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="category-parent">Categoria pai</Label>
-        <Select
-          id="category-parent"
+        <Label>Categoria pai</Label>
+        <CategoryCombobox
+          categories={sorted}
           value={parentId}
-          onChange={(e) => setParentId(e.target.value)}
-        >
-          <option value="">Nenhuma (raiz)</option>
-          {sorted.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.path || c.name}
-            </option>
-          ))}
-        </Select>
+          onChange={setParentId}
+          placeholder="Nenhuma (raiz)"
+        />
       </div>
 <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={loading}>

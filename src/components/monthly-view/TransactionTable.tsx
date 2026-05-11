@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 type Transaction = {
@@ -213,18 +214,18 @@ export function TransactionTable({
           className="h-8 w-48 text-sm"
         />
         {showCategoryCol && (
-          <Select
+          <CategoryCombobox
+            categories={usedParentCategoryIds.map((cid) => ({
+              id: cid,
+              name: byCategoryId[cid] ?? cid,
+              parentId: null,
+              path: byCategoryId[cid] ?? cid,
+            }))}
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={setCategoryFilter}
+            placeholder="Todas categorias"
             className="h-8 w-44 text-sm"
-          >
-            <option value="">Todas categorias</option>
-            {usedParentCategoryIds.map((cid) => (
-              <option key={cid} value={cid}>
-                {byCategoryId[cid] ?? cid}
-              </option>
-            ))}
-          </Select>
+          />
         )}
         {paymentMethods.length > 0 && (
           <Select

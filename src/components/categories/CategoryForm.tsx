@@ -11,12 +11,19 @@ type Category = {
   id: string;
   name: string;
   path: string;
+  parentId: string | null;
 };
 
-export function CategoryForm({ categories }: { categories: Category[] }) {
+type Props = {
+  categories: Category[];
+  defaultParentId?: string;
+  onSuccess?: () => void;
+};
+
+export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [parentId, setParentId] = useState("");
+  const [parentId, setParentId] = useState(defaultParentId ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,12 +51,13 @@ export function CategoryForm({ categories }: { categories: Category[] }) {
     }
 
     setName("");
-    setParentId("");
+    setParentId(defaultParentId ?? "");
+    onSuccess?.();
     router.refresh();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 items-end flex-wrap">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="category-name">Nome</Label>
         <Input
@@ -66,7 +74,6 @@ export function CategoryForm({ categories }: { categories: Category[] }) {
           id="category-parent"
           value={parentId}
           onChange={(e) => setParentId(e.target.value)}
-          className="w-48"
         >
           <option value="">Nenhuma (raiz)</option>
           {sorted.map((c) => (
@@ -76,10 +83,12 @@ export function CategoryForm({ categories }: { categories: Category[] }) {
           ))}
         </Select>
       </div>
-      <Button type="submit" disabled={loading}>
-        {loading ? "Adicionando…" : "Adicionar Categoria"}
-      </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      <div className="flex justify-end gap-2 pt-1">
+        <Button type="submit" disabled={loading}>
+          {loading ? "Adicionando…" : "Adicionar Categoria"}
+        </Button>
+      </div>
     </form>
   );
 }

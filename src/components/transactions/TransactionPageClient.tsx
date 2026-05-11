@@ -77,10 +77,6 @@ export function TransactionPageClient({
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
 
-  const leafCategories = categories.filter(
-    (c) => !categories.some((other) => other.parentId === c.id),
-  );
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -94,7 +90,7 @@ export function TransactionPageClient({
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title="Adicionar Transação">
         <UnifiedTransactionForm
           people={people}
-          categories={leafCategories}
+          categories={categories}
           creditCards={creditCards}
           onSuccess={() => setDialogOpen(false)}
         />
@@ -108,7 +104,7 @@ export function TransactionPageClient({
         {editingTransaction && (
           <UnifiedTransactionForm
             people={people}
-            categories={leafCategories}
+            categories={categories}
             creditCards={creditCards}
             editMode={{ transactionId: editingTransaction.id }}
             initialValues={{
@@ -150,7 +146,7 @@ export function TransactionPageClient({
         {editingPurchase && (
           <UnifiedTransactionForm
             people={people}
-            categories={leafCategories}
+            categories={categories}
             creditCards={creditCards}
             editMode={{ purchaseId: editingPurchase.creditCardPurchaseId }}
             initialValues={{

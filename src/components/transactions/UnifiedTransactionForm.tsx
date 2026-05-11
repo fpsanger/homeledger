@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select";
 type FormType = "expense" | "income" | "credit";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string };
+type Category = { id: string; name: string; parentId: string | null; path: string };
 type CreditCard = { id: string; name: string };
 
 const PAYMENT_METHODS = [
@@ -68,8 +68,24 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
   const [personId, setPersonId] = useState(initialValues?.personId ?? "");
   const [amount, setAmount] = useState(initialValues?.amount ?? "");
   const [date, setDate] = useState(initialValues?.date ?? today);
-  const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
+
+  function resolveInitialCategory(initCategoryId: string | undefined, cats: Category[]) {
+    if (!initCategoryId) return { parentCategoryId: "", subCategoryId: "" };
+    const cat = cats.find((c) => c.id === initCategoryId);
+    if (!cat) return { parentCategoryId: initCategoryId, subCategoryId: "" };
+    if (cat.parentId) return { parentCategoryId: cat.parentId, subCategoryId: cat.id };
+    return { parentCategoryId: cat.id, subCategoryId: "" };
+  }
+
+  const initial = resolveInitialCategory(initialValues?.categoryId, categories);
+  const [parentCategoryId, setParentCategoryId] = useState(initial.parentCategoryId);
+  const [subCategoryId, setSubCategoryId] = useState(initial.subCategoryId);
+
+  const rootCategories = categories.filter((c) => c.parentId === null);
+  const subCategories = categories.filter((c) => c.parentId === parentCategoryId);
+  const selectedParentHasChildren = subCategories.length > 0;
+  const categoryId = selectedParentHasChildren ? subCategoryId : parentCategoryId;
   const [paymentMethod, setPaymentMethod] = useState(initialValues?.paymentMethod ?? "CASH");
   const [source, setSource] = useState(initialValues?.source ?? "SALARY");
   const [creditCardId, setCreditCardId] = useState(initialValues?.creditCardId ?? "");
@@ -90,7 +106,8 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
     setPersonId("");
     setAmount("");
     setDate(today);
-    setCategoryId("");
+    setParentCategoryId("");
+    setSubCategoryId("");
     setDescription("");
     setPaymentMethod("CASH");
     setSource("SALARY");
@@ -285,13 +302,37 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="u-category">Categoria</Label>
-        <Select id="u-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+        <Select
+          id="u-category"
+          value={parentCategoryId}
+          onChange={(e) => {
+            setParentCategoryId(e.target.value);
+            setSubCategoryId("");
+          }}
+        >
           <option value="">Nenhuma</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.path || c.name}</option>
+          {rootCategories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </Select>
       </div>
+
+      {selectedParentHasChildren && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="u-subcategory">Subcategoria</Label>
+          <Select
+            id="u-subcategory"
+            value={subCategoryId}
+            onChange={(e) => setSubCategoryId(e.target.value)}
+            required
+          >
+            <option value="">Selecione a subcategoria</option>
+            {subCategories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="u-description">Descrição</Label>

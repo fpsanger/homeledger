@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -91,7 +92,6 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
   const [creditCardId, setCreditCardId] = useState(initialValues?.creditCardId ?? "");
   const [numberOfInstallments, setNumberOfInstallments] = useState("2");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
@@ -118,7 +118,6 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     let url: string;
@@ -139,7 +138,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
         url = `/api/credit-card-purchases/${editMode.purchaseId}`;
         body = { description, totalAmount: parseFloat(amount), purchaseDate: date, categoryId: categoryId || null, creditCardId };
       } else {
-        setError("ID da compra não encontrado.");
+        toast.error("ID da compra não encontrado.");
         setLoading(false);
         return;
       }
@@ -175,7 +174,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao enviar.");
+      toast.error(data.error ?? "Falha ao enviar.");
       return;
     }
 
@@ -183,6 +182,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       reset();
     }
     router.refresh();
+    toast.success("Transação salva com sucesso.");
     onSuccess?.();
   }
 
@@ -356,7 +356,6 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
           : isEditMode ? "Salvar alterações" : `Adicionar ${typeLabels[type]}`}
       </Button>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

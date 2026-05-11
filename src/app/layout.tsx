@@ -4,6 +4,7 @@ import { DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { TopNav } from "@/components/layout/TopNav";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -37,6 +38,7 @@ export default function RootLayout({
         <ThemeProvider>
           <TopNav />
           <main className="px-6 py-8 max-w-6xl mx-auto">{children}</main>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

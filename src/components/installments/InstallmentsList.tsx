@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, ShoppingBag, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,6 @@ type EditState = {
   description: string;
   totalAmount: string;
   purchaseDate: string;
-  categoryId: string;
   creditCardId: string;
 };
 
@@ -73,18 +73,26 @@ function EditForm({
   onSaved: () => void;
   onCancel: () => void;
 }) {
+  function resolveInitialCategory(categoryId: string | null, cats: Category[]) {
+    if (!categoryId) return { parentCategoryId: "", subCategoryId: "" };
+    const cat = cats.find((c) => c.id === categoryId);
+    if (!cat) return { parentCategoryId: categoryId, subCategoryId: "" };
+    if (cat.parentId) return { parentCategoryId: cat.parentId, subCategoryId: cat.id };
+    return { parentCategoryId: cat.id, subCategoryId: "" };
+  }
+
   const [form, setForm] = useState<EditState>({
     description: purchase.description,
     totalAmount: String(purchase.totalAmount),
     purchaseDate: purchase.purchaseDate.split("T")[0],
-    categoryId: purchase.categoryId ?? "",
     creditCardId: purchase.creditCardId ?? "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [parentCategoryId, setParentCategoryId] = useState("");
+  const [subCategoryId, setSubCategoryId] = useState("");
 
   async function loadOptions() {
     if (loaded) return;
@@ -94,7 +102,11 @@ function EditForm({
     ]);
     if (catRes.ok) {
       const d = await catRes.json();
-      setCategories(d.categories ?? []);
+      const cats: Category[] = d.categories ?? [];
+      setCategories(cats);
+      const resolved = resolveInitialCategory(purchase.categoryId ?? null, cats);
+      setParentCategoryId(resolved.parentCategoryId);
+      setSubCategoryId(resolved.subCategoryId);
     }
     if (ccRes.ok) {
       const d = await ccRes.json();
@@ -107,8 +119,11 @@ function EditForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
+    const subCategories = categories.filter((c) => c.parentId === parentCategoryId);
+    const selectedParentHasChildren = subCategories.length > 0;
+    const resolvedCategoryId = selectedParentHasChildren ? subCategoryId : parentCategoryId;
+
     const res = await fetch(`/api/credit-card-purchases/${purchase.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -116,16 +131,17 @@ function EditForm({
         description: form.description,
         totalAmount: parseFloat(form.totalAmount),
         purchaseDate: form.purchaseDate,
-        categoryId: form.categoryId || null,
+        categoryId: resolvedCategoryId || null,
         creditCardId: form.creditCardId || null,
       }),
     });
     setLoading(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao salvar.");
+      toast.error(data.error ?? "Falha ao salvar.");
       return;
     }
+    toast.success("Parcelamento atualizado.");
     onSaved();
   }
 
@@ -155,13 +171,27 @@ function EditForm({
           {creditCards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </Select>
       )}
-      {field("ep-cat", "Categoria",
-        <Select id="ep-cat" value={form.categoryId} onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}>
-          <option value="">Nenhuma</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.path}</option>)}
-        </Select>
-      )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {(() => {
+        const rootCategories = categories.filter((c) => c.parentId === null);
+        const subCategories = categories.filter((c) => c.parentId === parentCategoryId);
+        const selectedParentHasChildren = subCategories.length > 0;
+        return (
+          <>
+            {field("ep-cat", "Categoria",
+              <Select id="ep-cat" value={parentCategoryId} onChange={(e) => { setParentCategoryId(e.target.value); setSubCategoryId(""); }}>
+                <option value="">Nenhuma</option>
+                {rootCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
+            )}
+            {selectedParentHasChildren && field("ep-subcat", "Subcategoria",
+              <Select id="ep-subcat" value={subCategoryId} onChange={(e) => setSubCategoryId(e.target.value)} required>
+                <option value="">Selecione a subcategoria</option>
+                {subCategories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
+            )}
+          </>
+        );
+      })()}
       <div className="flex gap-2 pt-1">
         <Button type="submit" size="sm" disabled={loading}>{loading ? "Salvando…" : "Salvar"}</Button>
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>
@@ -199,7 +229,6 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
   function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -210,29 +239,29 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
   }
 
   async function markPaid(installmentId: string) {
-    setError(null);
     setPendingId(installmentId);
     const res = await fetch(`/api/installments/${installmentId}/paid`, { method: "PATCH" });
     setPendingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao marcar parcela como paga.");
+      toast.error(data.error ?? "Falha ao marcar parcela como paga.");
       return;
     }
     router.refresh();
+    toast.success("Parcelamento atualizado.");
   }
 
   async function deletePurchase(id: string) {
-    setError(null);
     setDeletingId(id);
     const res = await fetch(`/api/credit-card-purchases/${id}`, { method: "DELETE" });
     setDeletingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao excluir.");
+      toast.error(data.error ?? "Falha ao excluir.");
       return;
     }
     router.refresh();
+    toast.success("Parcelamento atualizado.");
   }
 
   return (
@@ -279,8 +308,6 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
           <label htmlFor="show-canceled" className="text-sm">Mostrar cancelados</label>
         </div>
       </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Empty state */}
       {purchases.length === 0 && (

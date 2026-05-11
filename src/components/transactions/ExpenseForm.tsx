@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +33,11 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const isDuplicate = useDuplicateCheck("EXPENSE", amount ? parseFloat(amount) : null, date, refreshKey);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/expenses", {
@@ -58,7 +57,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar despesa.");
+      toast.error(data.error ?? "Falha ao criar despesa.");
       return;
     }
 
@@ -70,6 +69,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
     setDescription("");
     setRefreshKey((k) => k + 1);
     router.refresh();
+    toast.success("Despesa salva com sucesso.");
   }
 
   return (
@@ -125,7 +125,6 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Despesa"}
       </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { MoreHorizontal, CreditCard, Wallet, CheckCircle2, Clock } from "lucide-react";
 import {
   Table,
@@ -95,7 +96,6 @@ export function InstallmentTable({
 }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
@@ -104,29 +104,29 @@ export function InstallmentTable({
   const byCardId = useMemo(() => Object.fromEntries(creditCards.map((c) => [c.id, c.name])), [creditCards]);
 
   async function handleDelete(id: string) {
-    setError(null);
     setLoadingId(id);
     const res = await fetch(`/api/installments/${id}`, { method: "DELETE" });
     setLoadingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao excluir.");
+      toast.error(data.error ?? "Falha ao excluir.");
       return;
     }
     router.refresh();
+    toast.success("Parcelamento atualizado.");
   }
 
   async function handleMarkPaid(id: string) {
-    setError(null);
     setLoadingId(id);
     const res = await fetch(`/api/installments/${id}/paid`, { method: "PATCH" });
     setLoadingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao marcar como pago.");
+      toast.error(data.error ?? "Falha ao marcar como pago.");
       return;
     }
     router.refresh();
+    toast.success("Parcelamento atualizado.");
   }
 
   const active = installments.filter((i) => !i.isCanceled);
@@ -180,8 +180,6 @@ export function InstallmentTable({
           <option value="canceled">Cancelado</option>
         </Select>
       </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">

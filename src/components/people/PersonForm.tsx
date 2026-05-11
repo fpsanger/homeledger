@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +11,9 @@ export function PersonForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/people", {
@@ -27,12 +26,13 @@ export function PersonForm() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar pessoa.");
+      toast.error(data.error ?? "Falha ao criar pessoa.");
       return;
     }
 
     setName("");
     router.refresh();
+    toast.success("Pessoa criada com sucesso.");
   }
 
   return (
@@ -50,7 +50,6 @@ export function PersonForm() {
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Pessoa"}
       </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +46,6 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
   const [amount, setAmount] = useState(String(installment.amount));
   const [description, setDescription] = useState(installment.purchaseDescription ?? "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const byPersonId = Object.fromEntries(people.map((p) => [p.id, p.name]));
   const byCardId = Object.fromEntries(creditCards.map((c) => [c.id, c.name]));
@@ -56,7 +56,6 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch(`/api/installments/${installment.id}`, {
@@ -69,11 +68,12 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao salvar.");
+      toast.error(data.error ?? "Falha ao salvar.");
       return;
     }
 
     router.refresh();
+    toast.success("Parcelamento atualizado.");
     onSuccess();
   }
 
@@ -143,7 +143,6 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
           {loading ? "Salvando…" : "Salvar alterações"}
         </Button>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
       </form>
     </div>
   );

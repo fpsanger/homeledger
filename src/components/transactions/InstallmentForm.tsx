@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,11 +33,9 @@ export function InstallmentForm({
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/installments", {
@@ -57,7 +56,7 @@ export function InstallmentForm({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar compra parcelada.");
+      toast.error(data.error ?? "Falha ao criar compra parcelada.");
       return;
     }
 
@@ -69,6 +68,7 @@ export function InstallmentForm({
     setCategoryId("");
     setDescription("");
     router.refresh();
+    toast.success("Parcelamento salvo com sucesso.");
   }
 
   return (
@@ -132,7 +132,6 @@ export function InstallmentForm({
         <Input id="inst-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
       </div>
       <Button type="submit" disabled={loading}>{loading ? "Adicionando…" : "Adicionar Compra"}</Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

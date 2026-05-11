@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash } from "lucide-react";
 import {
   Table,
@@ -101,7 +102,6 @@ export function TransactionTable({
     }),
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
@@ -109,16 +109,16 @@ export function TransactionTable({
   const PAGE_SIZE = 20;
 
   async function handleDelete(id: string) {
-    setError(null);
     setDeletingId(id);
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
     setDeletingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao excluir.");
+      toast.error(data.error ?? "Falha ao excluir.");
       return;
     }
     router.refresh();
+    toast.success("Transação excluída.");
   }
 
   const totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
@@ -241,8 +241,6 @@ export function TransactionTable({
           </Select>
         )}
       </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,6 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
   const [name, setName] = useState(category.name);
   const [parentId, setParentId] = useState(category.parentId ?? "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Exclude self and descendants to prevent cycles
   const validParents = categories.filter(
@@ -38,7 +38,6 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch(`/api/categories/${category.id}`, {
@@ -51,12 +50,13 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao atualizar categoria.");
+      toast.error(data.error ?? "Falha ao atualizar categoria.");
       return;
     }
 
     onClose();
     router.refresh();
+    toast.success("Categoria atualizada.");
   }
 
   return (
@@ -86,8 +86,7 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
             ))}
           </Select>
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        <div className="flex justify-end gap-2 pt-2">
+<div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>

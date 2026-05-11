@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,13 +32,11 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const isDuplicate = useDuplicateCheck("INCOME", amount ? parseFloat(amount) : null, date, refreshKey);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/incomes", {
@@ -57,7 +56,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar receita.");
+      toast.error(data.error ?? "Falha ao criar receita.");
       return;
     }
 
@@ -69,6 +68,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
     setDescription("");
     setRefreshKey((k) => k + 1);
     router.refresh();
+    toast.success("Receita salva com sucesso.");
   }
 
   return (
@@ -124,7 +124,6 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Receita"}
       </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

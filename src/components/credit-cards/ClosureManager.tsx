@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,6 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [closureDay, setClosureDay] = useState("");
   const [previousMonth, setPreviousMonth] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
     setDeletingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao remover fechamento.");
+      toast.error(data.error ?? "Falha ao remover fechamento.");
       return;
     }
     load();
@@ -70,7 +70,6 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     const res = await fetch(`/api/credit-cards/${cardId}/closures`, {
       method: "POST",
@@ -85,9 +84,10 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
     setLoading(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao definir fechamento.");
+      toast.error(data.error ?? "Falha ao definir fechamento.");
       return;
     }
+    toast.success("Fechamento salvo com sucesso.");
     setClosureDay("");
     setPreviousMonth(false);
     setEditingId(null);
@@ -196,7 +196,6 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
               />
               Fechamento no mês anterior
             </label>
-            {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="flex gap-2 self-end">
               {editingId && (
                 <Button type="button" variant="outline" onClick={cancelEdit}>

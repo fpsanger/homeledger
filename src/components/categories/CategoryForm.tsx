@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,6 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
   const [name, setName] = useState("");
   const [parentId, setParentId] = useState(defaultParentId ?? "");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const sorted = [...categories]
     .filter((c) => c.parentId === null)
@@ -33,7 +33,6 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/categories", {
@@ -46,7 +45,7 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar categoria.");
+      toast.error(data.error ?? "Falha ao criar categoria.");
       return;
     }
 
@@ -54,6 +53,7 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
     setParentId(defaultParentId ?? "");
     onSuccess?.();
     router.refresh();
+    toast.success("Categoria criada com sucesso.");
   }
 
   return (
@@ -83,8 +83,7 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
           ))}
         </Select>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex justify-end gap-2 pt-1">
+<div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={loading}>
           {loading ? "Adicionando…" : "Adicionar Categoria"}
         </Button>

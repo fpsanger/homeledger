@@ -11,6 +11,7 @@ const makeTransactionRepo = (
   findByYear: async () => [],
   findByPersonAndYear: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() } as TransactionRecord),
+  update: async (id, fields) => ({ id, createdAt: new Date(), updatedAt: new Date(), personId: "", type: "INCOME", amount: 0, date: new Date(), description: "", paymentMethod: null, source: null, categoryId: null, ...fields } as TransactionRecord),
   delete: async () => {},
   ...overrides,
 });
@@ -21,6 +22,7 @@ const makeCategoryRepo = (
 ): ICategoryRepository => ({
   findAll: async () => categories,
   findById: async (id) => categories.find((c) => c.id === id) ?? null,
+  findRootByName: async (name) => categories.find((c) => c.parentId === null && c.name === name) ?? null,
   save: async (c) => ({ ...c, createdAt: new Date() }),
   delete: async () => {},
   ...overrides,

@@ -76,11 +76,12 @@ model CreditCard {
 }
 
 model CreditCardClosure {
-  id           String     @id @default(uuid())
-  creditCardId String
-  year         Int
-  month        Int
-  closureDay   Int
+  id            String     @id @default(uuid())
+  creditCardId  String
+  year          Int
+  month         Int
+  closureDay    Int
+  previousMonth Boolean    @default(false)
 
   creditCard CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
 

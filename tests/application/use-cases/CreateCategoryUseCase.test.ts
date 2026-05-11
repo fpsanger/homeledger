@@ -7,6 +7,7 @@ const makeRepo = (
 ): ICategoryRepository => ({
   findAll: async () => categories,
   findById: async (id) => categories.find((c) => c.id === id) ?? null,
+  findRootByName: async (name) => categories.find((c) => c.parentId === null && c.name === name) ?? null,
   save: async (c) => ({ ...c, createdAt: new Date() }),
   delete: async () => {},
   ...overrides,
@@ -61,5 +62,43 @@ describe("createCategoryUseCase", () => {
         repo,
       ),
     ).rejects.toThrow("Name is required");
+  });
+
+  it("throws DuplicateCategoryError when root category with same name exists", async () => {
+    const existing: CategoryRecord = {
+      id: "cat-existing",
+      name: "Food",
+      parentId: null,
+      path: "Food",
+      level: 0,
+      householdId: "default",
+      createdAt: new Date(),
+    };
+    const repo = makeRepo([existing]);
+    await expect(
+      createCategoryUseCase(
+        { id: "cat-new", name: "Food", parentId: null, householdId: "default" },
+        repo,
+      ),
+    ).rejects.toThrow("Food");
+  });
+
+  it("allows child category with same name as existing root", async () => {
+    const root: CategoryRecord = {
+      id: "cat-root",
+      name: "Food",
+      parentId: null,
+      path: "Food",
+      level: 0,
+      householdId: "default",
+      createdAt: new Date(),
+    };
+    const repo = makeRepo([root]);
+    const result = await createCategoryUseCase(
+      { id: "cat-child", name: "Food", parentId: "cat-root", householdId: "default" },
+      repo,
+    );
+    expect(result.path).toBe("Food/Food");
+    expect(result.level).toBe(1);
   });
 });

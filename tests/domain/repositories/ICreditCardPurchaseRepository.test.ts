@@ -31,10 +31,13 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
   async updatePurchase(_id: string, _data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">): Promise<void> {}
   async deletePurchase(_id: string): Promise<void> {}
   async markInstallmentPaid(_installmentId: string): Promise<void> {}
+  async markInstallmentsPaid(_ids: string[]): Promise<void> {}
+  async markInstallmentsUnpaid(_ids: string[]): Promise<void> {}
   async deleteInstallment(_installmentId: string): Promise<void> {}
   async findByPurchaseId(_purchaseId: string): Promise<InstallmentRecord[]> {
     return [];
   }
+  async updateInstallment(_id: string, _fields: { amount: number; description: string }): Promise<void> {}
   async updateInstallments(_installments: InstallmentRecord[]): Promise<void> {}
   async findAllPurchasesWithInstallments(
     _personId?: string,

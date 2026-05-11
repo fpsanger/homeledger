@@ -84,10 +84,14 @@ export function InstallmentTable({
   installments,
   people = [],
   creditCards = [],
+  onEditInstallment,
+  onEditPurchase,
 }: {
   installments: Installment[];
   people?: Person[];
   creditCards?: CreditCardItem[];
+  onEditInstallment?: (inst: Installment) => void;
+  onEditPurchase?: (inst: Installment) => void;
 }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -208,6 +212,12 @@ export function InstallmentTable({
                 const metaParts = [installmentLabel, personName, cardName].filter(Boolean);
 
                 const actions = [];
+                if (onEditInstallment) {
+                  actions.push({ label: "Editar parcela", onClick: () => onEditInstallment(inst) });
+                }
+                if (onEditPurchase) {
+                  actions.push({ label: "Editar compra", onClick: () => onEditPurchase(inst) });
+                }
                 if (!inst.isPaid && !inst.isCanceled) {
                   actions.push({
                     label: loadingId === inst.id ? "Salvando…" : "Marcar pago",

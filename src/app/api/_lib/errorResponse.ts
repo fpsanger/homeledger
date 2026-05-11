@@ -1,8 +1,11 @@
-import { NotFoundError } from "../../../domain/errors";
+import { DuplicateCategoryError, NotFoundError } from "../../../domain/errors";
 
 export function errorResponse(error: unknown): Response {
   if (error instanceof NotFoundError) {
     return Response.json({ error: error.message }, { status: 404 });
+  }
+  if (error instanceof DuplicateCategoryError) {
+    return Response.json({ error: error.message }, { status: 409 });
   }
   // Prisma P2025: record not found during update/delete
   if (

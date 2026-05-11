@@ -35,8 +35,11 @@ function makePurchaseRepo(): ICreditCardPurchaseRepository {
     updatePurchase: jest.fn(),
     deletePurchase: jest.fn(),
     markInstallmentPaid: jest.fn(),
+    markInstallmentsPaid: jest.fn(),
+    markInstallmentsUnpaid: jest.fn(),
     deleteInstallment: jest.fn(),
     findByPurchaseId: jest.fn(),
+    updateInstallment: jest.fn(),
     updateInstallments: jest.fn(),
     findAllPurchasesWithInstallments: jest.fn().mockResolvedValue([purchase1, purchase2]),
   };

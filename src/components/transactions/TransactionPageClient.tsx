@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
+import { EditInstallmentForm } from "./EditInstallmentForm";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { TransactionTable } from "@/components/monthly-view/TransactionTable";
 import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
@@ -21,6 +22,8 @@ type Transaction = {
   date: Date | string;
   description: string;
   paymentMethod: string;
+  categoryId?: string | null;
+  source?: string | null;
 };
 
 type Installment = {
@@ -31,6 +34,13 @@ type Installment = {
   dueMonth: number;
   isPaid: boolean;
   isCanceled: boolean;
+  creditCardPurchaseId?: string;
+  personId?: string;
+  categoryId?: string | null;
+  purchaseDescription?: string;
+  purchaseDate?: Date | string;
+  numberOfInstallments?: number;
+  creditCardId?: string | null;
 };
 
 type Props = {
@@ -45,6 +55,11 @@ type Props = {
   installments: Installment[];
 };
 
+function toDateInput(date: Date | string): string {
+  const d = new Date(date);
+  return d.toISOString().split("T")[0];
+}
+
 export function TransactionPageClient({
   year,
   month,
@@ -58,10 +73,9 @@ export function TransactionPageClient({
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [tab, setTab] = useState<"transactions" | "installments">("transactions");
-
-  const leafCategories = categories.filter(
-    (c) => !categories.some((other) => other.parentId === c.id),
-  );
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -76,10 +90,79 @@ export function TransactionPageClient({
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title="Adicionar Transação">
         <UnifiedTransactionForm
           people={people}
-          categories={leafCategories}
+          categories={categories}
           creditCards={creditCards}
           onSuccess={() => setDialogOpen(false)}
         />
+      </Dialog>
+
+      <Dialog
+        open={editingTransaction !== null}
+        onClose={() => setEditingTransaction(null)}
+        title="Editar Transação"
+      >
+        {editingTransaction && (
+          <UnifiedTransactionForm
+            people={people}
+            categories={categories}
+            creditCards={creditCards}
+            editMode={{ transactionId: editingTransaction.id }}
+            initialValues={{
+              type: editingTransaction.type === "INCOME" ? "income" : "expense",
+              personId: editingTransaction.personId,
+              amount: String(editingTransaction.amount),
+              date: toDateInput(editingTransaction.date),
+              paymentMethod: editingTransaction.paymentMethod ?? "CASH",
+              source: editingTransaction.source ?? "SALARY",
+              creditCardId: "",
+              categoryId: editingTransaction.categoryId ?? "",
+              description: editingTransaction.description,
+            }}
+            onSuccess={() => setEditingTransaction(null)}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        open={editingInstallment !== null}
+        onClose={() => setEditingInstallment(null)}
+        title="Editar Parcela"
+      >
+        {editingInstallment && (
+          <EditInstallmentForm
+            installment={editingInstallment}
+            people={people}
+            creditCards={creditCards}
+            onSuccess={() => setEditingInstallment(null)}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        open={editingPurchase !== null}
+        onClose={() => setEditingPurchase(null)}
+        title="Editar Compra"
+      >
+        {editingPurchase && (
+          <UnifiedTransactionForm
+            people={people}
+            categories={categories}
+            creditCards={creditCards}
+            editMode={{ purchaseId: editingPurchase.creditCardPurchaseId }}
+            initialValues={{
+              type: "credit",
+              personId: editingPurchase.personId ?? "",
+              amount: String(editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
+              date: editingPurchase.purchaseDate ? toDateInput(editingPurchase.purchaseDate) : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
+              paymentMethod: "CASH",
+              source: "SALARY",
+              creditCardId: editingPurchase.creditCardId ?? "",
+              categoryId: editingPurchase.categoryId ?? "",
+              description: editingPurchase.purchaseDescription ?? "",
+            }}
+            onSuccess={() => setEditingPurchase(null)}
+          />
+        )}
       </Dialog>
 
       <div className="flex gap-1.5">
@@ -132,9 +215,16 @@ export function TransactionPageClient({
             installmentExpenses={installments.filter((i) => !i.isCanceled).reduce((s, i) => s + i.amount, 0)}
             people={people}
             categories={categories}
+            onEdit={(t) => setEditingTransaction(t)}
           />
         ) : (
-          <InstallmentTable installments={installments} people={people} creditCards={creditCards} />
+          <InstallmentTable
+            installments={installments}
+            people={people}
+            creditCards={creditCards}
+            onEditInstallment={(inst) => setEditingInstallment(inst)}
+            onEditPurchase={(inst) => setEditingPurchase(inst)}
+          />
         )}
       </div>
     </div>

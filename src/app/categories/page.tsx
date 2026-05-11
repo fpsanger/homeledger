@@ -1,8 +1,5 @@
-import { CategoryForm } from "@/components/categories/CategoryForm";
 import { CategoryList } from "@/components/categories/CategoryList";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { Separator } from "@/components/ui/separator";
 
 type CategoryRecord = {
   id: string;
@@ -28,16 +25,11 @@ export default async function CategoriesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Configurações" title="Categorias" description={categories.length > 0 ? `${categories.length} categorias cadastradas` : undefined} />
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Adicionar Categoria</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CategoryForm categories={categories} />
-        </CardContent>
-      </Card>
-      <Separator />
+      <PageHeader
+        eyebrow="Configurações"
+        title="Categorias"
+        description={categories.length > 0 ? `${categories.length} categorias cadastradas` : undefined}
+      />
       <CategoryList categories={categories} />
     </div>
   );

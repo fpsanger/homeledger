@@ -82,15 +82,24 @@ export function TransactionTable({
   installmentExpenses = 0,
   people,
   categories = [],
+  onEdit,
 }: {
   transactions: Transaction[];
   installmentExpenses?: number;
   people: Person[];
   categories?: Category[];
+  onEdit?: (t: Transaction) => void;
 }) {
   const router = useRouter();
   const byPersonId = Object.fromEntries(people.map((p) => [p.id, p.name]));
-  const byCategoryId = Object.fromEntries(categories.map((c) => [c.id, c.name]));
+  const byCategoryId = Object.fromEntries(
+    categories.map((c) => {
+      const displayName = c.parentId
+        ? (categories.find((p) => p.id === c.parentId)?.name ?? c.name)
+        : c.name;
+      return [c.id, displayName];
+    }),
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -122,19 +131,28 @@ export function TransactionTable({
     return Array.from(seen);
   }, [transactions]);
 
-  const usedCategoryIds = useMemo(() => {
+  const usedParentCategoryIds = useMemo(() => {
     const seen = new Set<string>();
-    for (const t of transactions) if (t.categoryId) seen.add(t.categoryId);
+    for (const t of transactions) {
+      if (!t.categoryId) continue;
+      const cat = categories.find((c) => c.id === t.categoryId);
+      if (!cat) continue;
+      seen.add(cat.parentId ?? cat.id);
+    }
     return Array.from(seen);
-  }, [transactions]);
+  }, [transactions, categories]);
 
-  const showCategoryCol = usedCategoryIds.length > 0;
+  const showCategoryCol = usedParentCategoryIds.length > 0;
 
   const filtered = useMemo(() => {
     setPage(0);
     return transactions.filter((t) => {
       if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
-      if (categoryFilter && t.categoryId !== categoryFilter) return false;
+      if (categoryFilter) {
+        const cat = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
+        const parentId = cat ? (cat.parentId ?? cat.id) : null;
+        if (parentId !== categoryFilter) return false;
+      }
       if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
       return true;
     });
@@ -201,7 +219,7 @@ export function TransactionTable({
             className="h-8 w-44 text-sm"
           >
             <option value="">Todas categorias</option>
-            {usedCategoryIds.map((cid) => (
+            {usedParentCategoryIds.map((cid) => (
               <option key={cid} value={cid}>
                 {byCategoryId[cid] ?? cid}
               </option>
@@ -289,10 +307,11 @@ export function TransactionTable({
                             </Button>
                           }
                           items={[
+                            ...(onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
                             {
                               label: deletingId === t.id ? "Excluindo..." : "Excluir",
                               onClick: () => handleDelete(t.id),
-                              variant: "destructive",
+                              variant: "destructive" as const,
                             },
                           ]}
                         />

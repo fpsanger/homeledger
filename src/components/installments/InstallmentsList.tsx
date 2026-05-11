@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
@@ -142,10 +144,10 @@ function EditForm({
         <Input id="ep-desc" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Opcional" />
       )}
       {field("ep-amount", "Valor Total",
-        <Input id="ep-amount" type="number" min="0.01" step="0.01" required value={form.totalAmount} onChange={(e) => setForm((f) => ({ ...f, totalAmount: e.target.value }))} />
+        <CurrencyInput id="ep-amount" value={form.totalAmount} onChange={(v) => setForm((f) => ({ ...f, totalAmount: v }))} required />
       )}
-      {field("ep-date", "Data da Compra",
-        <Input id="ep-date" type="date" required value={form.purchaseDate} onChange={(e) => setForm((f) => ({ ...f, purchaseDate: e.target.value }))} />
+      {field("", "Data da Compra",
+        <DatePicker value={form.purchaseDate} onChange={(v) => setForm((f) => ({ ...f, purchaseDate: v }))} required />
       )}
       {field("ep-card", "Cartão de Crédito",
         <Select id="ep-card" value={form.creditCardId} onChange={(e) => setForm((f) => ({ ...f, creditCardId: e.target.value }))}>

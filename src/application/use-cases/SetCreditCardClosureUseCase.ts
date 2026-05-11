@@ -6,6 +6,7 @@ type Input = {
   year: number;
   month: number;
   closureDay: number;
+  previousMonth: boolean;
 };
 
 export async function setCreditCardClosureUseCase(

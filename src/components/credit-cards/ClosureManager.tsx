@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-type Closure = { id: string; year: number; month: number; closureDay: number };
+type Closure = { id: string; year: number; month: number; closureDay: number; previousMonth: boolean };
 
 const MONTH_NAMES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -19,8 +19,44 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [closureDay, setClosureDay] = useState("");
+  const [previousMonth, setPreviousMonth] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(c: Closure) {
+    if (!confirm(`Remover fechamento de ${MONTH_NAMES[c.month - 1]} ${c.year}?`)) return;
+    setDeletingId(c.id);
+    const res = await fetch(`/api/credit-cards/${cardId}/closures`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ year: c.year, month: c.month }),
+    });
+    setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Falha ao remover fechamento.");
+      return;
+    }
+    load();
+  }
+
+  function startEdit(c: Closure) {
+    setEditingId(c.id);
+    setYear(String(c.year));
+    setMonth(String(c.month));
+    setClosureDay(String(c.closureDay));
+    setPreviousMonth(c.previousMonth);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setYear(String(new Date().getFullYear()));
+    setMonth(String(new Date().getMonth() + 1));
+    setClosureDay("");
+    setPreviousMonth(false);
+  }
 
   async function load() {
     const res = await fetch(`/api/credit-cards/${cardId}/closures`);
@@ -43,6 +79,7 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
         year: parseInt(year, 10),
         month: parseInt(month, 10),
         closureDay: parseInt(closureDay, 10),
+        previousMonth,
       }),
     });
     setLoading(false);
@@ -52,6 +89,8 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
       return;
     }
     setClosureDay("");
+    setPreviousMonth(false);
+    setEditingId(null);
     load();
   }
 
@@ -73,7 +112,31 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
                     <span className="text-muted-foreground">
                       {MONTH_NAMES[c.month - 1]} {c.year}
                     </span>
-                    <Badge variant="secondary">Dia {c.closureDay}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        Dia {c.closureDay}{c.previousMonth ? " (mês ant.)" : ""}
+                      </Badge>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(c)}
+                        disabled={loading || deletingId === c.id}
+                        aria-label="Editar fechamento"
+                        className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                        title="Editar fechamento"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(c)}
+                        disabled={loading || deletingId === c.id}
+                        aria-label="Remover fechamento"
+                        className="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
+                        title="Remover fechamento"
+                      >
+                        {deletingId === c.id ? "…" : "Remover"}
+                      </button>
+                    </div>
                   </div>
                 ))}
             </div>
@@ -82,7 +145,9 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
 
         {/* Add new closing */}
         <div className="border-t pt-4">
-          <p className="text-sm font-medium mb-3">Definir Data de Fechamento</p>
+          <p className="text-sm font-medium mb-3">
+            {editingId ? "Editar Fechamento" : "Definir Data de Fechamento"}
+          </p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <div className="grid grid-cols-3 gap-3">
               <div className="flex flex-col gap-1.5">
@@ -93,6 +158,7 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
                   required
+                  disabled={!!editingId}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -105,6 +171,7 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
                   required
+                  disabled={!!editingId}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -120,10 +187,26 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
                 />
               </div>
             </div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={previousMonth}
+                onChange={(e) => setPreviousMonth(e.target.checked)}
+                className="h-4 w-4 rounded border-input"
+              />
+              Fechamento no mês anterior
+            </label>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={loading} className="self-end">
-              {loading ? "Salvando…" : "Salvar Fechamento"}
-            </Button>
+            <div className="flex gap-2 self-end">
+              {editingId && (
+                <Button type="button" variant="outline" onClick={cancelEdit}>
+                  Cancelar
+                </Button>
+              )}
+              <Button type="submit" disabled={loading}>
+                {loading ? "Salvando…" : editingId ? "Atualizar" : "Salvar Fechamento"}
+              </Button>
+            </div>
           </form>
         </div>
       </div>

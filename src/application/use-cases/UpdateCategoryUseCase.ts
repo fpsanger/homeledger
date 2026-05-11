@@ -1,4 +1,5 @@
 import { createCategory } from "../../domain/entities/Category";
+import { DuplicateCategoryError } from "../../domain/errors";
 import type { ICategoryRepository, CategoryRecord } from "../../domain/repositories/ICategoryRepository";
 
 type Input = {
@@ -16,6 +17,11 @@ export async function updateCategoryUseCase(
   if (!existing) throw new Error("Category not found");
 
   let parent: { path: string; level: number } | null = null;
+
+  if (input.parentId === null) {
+    const existing = await repo.findRootByName(input.name.trim(), input.householdId);
+    if (existing && existing.id !== input.id) throw new DuplicateCategoryError(input.name.trim());
+  }
 
   if (input.parentId !== null) {
     if (input.parentId === input.id) throw new Error("Category cannot be its own parent");

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const INCOME_SOURCES = [
   { value: "SALARY", label: "Salário" },
@@ -82,26 +84,11 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="income-amount">Valor</Label>
-        <Input
-          id="income-amount"
-          type="number"
-          min="0.01"
-          step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
-          required
-        />
+        <CurrencyInput id="income-amount" value={amount} onChange={setAmount} required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-date">Data</Label>
-        <Input
-          id="income-date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-        />
+        <Label>Data</Label>
+        <DatePicker value={date} onChange={setDate} required />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="income-source">Fonte</Label>

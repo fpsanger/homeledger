@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { LayoutGrid, List, MoreHorizontal, Plus, Tags } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,6 @@ type ViewMode = "cards" | "table";
 
 export function CategoryList({ categories }: { categories: Category[] }) {
   const router = useRouter();
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleting, setDeleting] = useState<string | null>(null);
   const [editing, setEditing] = useState<Category | null>(null);
   const [creating, setCreating] = useState(false);
@@ -97,16 +97,16 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   const paged = flatFiltered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   async function handleDelete(id: string) {
-    setErrors((prev) => ({ ...prev, [id]: "" }));
     setDeleting(id);
     const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     setDeleting(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setErrors((prev) => ({ ...prev, [id]: data.error ?? "Falha ao excluir." }));
+      toast.error(data.error ?? "Falha ao excluir.");
       return;
     }
     router.refresh();
+    toast.success("Categoria excluída.");
   }
 
   function openCreate(parentId?: string) {
@@ -232,9 +232,6 @@ export function CategoryList({ categories }: { categories: Category[] }) {
                         ]}
                       />
                     </div>
-                    {errors[root.id] && (
-                      <p className="text-xs text-destructive mt-1">{errors[root.id]}</p>
-                    )}
                   </CardHeader>
 
                   <CardContent className="pt-0 flex-1">
@@ -261,11 +258,6 @@ export function CategoryList({ categories }: { categories: Category[] }) {
                               {child.name}
                             </span>
                             <div className="flex items-center gap-1 shrink-0">
-                              {errors[child.id] && (
-                                <span className="text-xs text-destructive">
-                                  {errors[child.id]}
-                                </span>
-                              )}
                               <DropdownMenu
                                 align="right"
                                 trigger={
@@ -336,9 +328,6 @@ export function CategoryList({ categories }: { categories: Category[] }) {
                       {cat.path || cat.name}
                     </TableCell>
                     <TableCell className="text-right">
-                      {errors[cat.id] && (
-                        <span className="text-sm text-destructive mr-3">{errors[cat.id]}</span>
-                      )}
                       <DropdownMenu
                         align="right"
                         trigger={

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -19,7 +21,7 @@ const INCOME_SOURCES = [
 ];
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string };
+type Category = { id: string; name: string; parentId: string | null; path: string };
 
 export function IncomeForm({ people, categories }: { people: Person[]; categories: Category[] }) {
   const router = useRouter();
@@ -31,13 +33,11 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const isDuplicate = useDuplicateCheck("INCOME", amount ? parseFloat(amount) : null, date, refreshKey);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/incomes", {
@@ -57,7 +57,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar receita.");
+      toast.error(data.error ?? "Falha ao criar receita.");
       return;
     }
 
@@ -69,6 +69,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
     setDescription("");
     setRefreshKey((k) => k + 1);
     router.refresh();
+    toast.success("Receita salva com sucesso.");
   }
 
   return (
@@ -99,13 +100,8 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="income-category">Categoria</Label>
-        <Select id="income-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">Nenhuma</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.path}</option>
-          ))}
-        </Select>
+        <Label>Categoria</Label>
+        <CategoryCombobox categories={categories} value={categoryId} onChange={setCategoryId} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="income-description">Descrição</Label>
@@ -124,7 +120,6 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Receita"}
       </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

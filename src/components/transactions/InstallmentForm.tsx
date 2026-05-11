@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string };
+type Category = { id: string; name: string; parentId: string | null; path: string };
 type CreditCard = { id: string; name: string };
 
 export function InstallmentForm({
@@ -32,11 +34,9 @@ export function InstallmentForm({
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const res = await fetch("/api/installments", {
@@ -57,7 +57,7 @@ export function InstallmentForm({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao criar compra parcelada.");
+      toast.error(data.error ?? "Falha ao criar compra parcelada.");
       return;
     }
 
@@ -69,6 +69,7 @@ export function InstallmentForm({
     setCategoryId("");
     setDescription("");
     router.refresh();
+    toast.success("Parcelamento salvo com sucesso.");
   }
 
   return (
@@ -119,20 +120,14 @@ export function InstallmentForm({
         <DatePicker value={purchaseDate} onChange={setPurchaseDate} required />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="inst-category">Categoria</Label>
-        <Select id="inst-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-          <option value="">Nenhuma</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.path}</option>
-          ))}
-        </Select>
+        <Label>Categoria</Label>
+        <CategoryCombobox categories={categories} value={categoryId} onChange={setCategoryId} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-description">Descrição</Label>
         <Input id="inst-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
       </div>
       <Button type="submit" disabled={loading}>{loading ? "Adicionando…" : "Adicionar Compra"}</Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

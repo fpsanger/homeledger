@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -9,6 +10,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 
 type FormType = "expense" | "income" | "credit";
 
@@ -70,28 +72,12 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
   const [date, setDate] = useState(initialValues?.date ?? today);
   const [description, setDescription] = useState(initialValues?.description ?? "");
 
-  function resolveInitialCategory(initCategoryId: string | undefined, cats: Category[]) {
-    if (!initCategoryId) return { parentCategoryId: "", subCategoryId: "" };
-    const cat = cats.find((c) => c.id === initCategoryId);
-    if (!cat) return { parentCategoryId: initCategoryId, subCategoryId: "" };
-    if (cat.parentId) return { parentCategoryId: cat.parentId, subCategoryId: cat.id };
-    return { parentCategoryId: cat.id, subCategoryId: "" };
-  }
-
-  const initial = resolveInitialCategory(initialValues?.categoryId, categories);
-  const [parentCategoryId, setParentCategoryId] = useState(initial.parentCategoryId);
-  const [subCategoryId, setSubCategoryId] = useState(initial.subCategoryId);
-
-  const rootCategories = categories.filter((c) => c.parentId === null);
-  const subCategories = categories.filter((c) => c.parentId === parentCategoryId);
-  const selectedParentHasChildren = subCategories.length > 0;
-  const categoryId = selectedParentHasChildren ? subCategoryId : parentCategoryId;
+  const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? "");
   const [paymentMethod, setPaymentMethod] = useState(initialValues?.paymentMethod ?? "CASH");
   const [source, setSource] = useState(initialValues?.source ?? "SALARY");
   const [creditCardId, setCreditCardId] = useState(initialValues?.creditCardId ?? "");
   const [numberOfInstallments, setNumberOfInstallments] = useState("2");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
@@ -106,8 +92,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
     setPersonId("");
     setAmount("");
     setDate(today);
-    setParentCategoryId("");
-    setSubCategoryId("");
+    setCategoryId("");
     setDescription("");
     setPaymentMethod("CASH");
     setSource("SALARY");
@@ -118,7 +103,6 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     let url: string;
@@ -139,7 +123,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
         url = `/api/credit-card-purchases/${editMode.purchaseId}`;
         body = { description, totalAmount: parseFloat(amount), purchaseDate: date, categoryId: categoryId || null, creditCardId };
       } else {
-        setError("ID da compra não encontrado.");
+        toast.error("ID da compra não encontrado.");
         setLoading(false);
         return;
       }
@@ -175,7 +159,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao enviar.");
+      toast.error(data.error ?? "Falha ao enviar.");
       return;
     }
 
@@ -183,6 +167,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       reset();
     }
     router.refresh();
+    toast.success("Transação salva com sucesso.");
     onSuccess?.();
   }
 
@@ -301,38 +286,13 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-category">Categoria</Label>
-        <Select
-          id="u-category"
-          value={parentCategoryId}
-          onChange={(e) => {
-            setParentCategoryId(e.target.value);
-            setSubCategoryId("");
-          }}
-        >
-          <option value="">Nenhuma</option>
-          {rootCategories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </Select>
+        <Label>Categoria</Label>
+        <CategoryCombobox
+          categories={categories}
+          value={categoryId}
+          onChange={setCategoryId}
+        />
       </div>
-
-      {selectedParentHasChildren && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="u-subcategory">Subcategoria</Label>
-          <Select
-            id="u-subcategory"
-            value={subCategoryId}
-            onChange={(e) => setSubCategoryId(e.target.value)}
-            required
-          >
-            <option value="">Selecione a subcategoria</option>
-            {subCategories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
-        </div>
-      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="u-description">Descrição</Label>
@@ -356,7 +316,6 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
           : isEditMode ? "Salvar alterações" : `Adicionar ${typeLabels[type]}`}
       </Button>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

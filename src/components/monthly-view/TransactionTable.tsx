@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash } from "lucide-react";
 import {
   Table,
@@ -14,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 type Transaction = {
@@ -101,7 +103,6 @@ export function TransactionTable({
     }),
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
@@ -109,16 +110,16 @@ export function TransactionTable({
   const PAGE_SIZE = 20;
 
   async function handleDelete(id: string) {
-    setError(null);
     setDeletingId(id);
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
     setDeletingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao excluir.");
+      toast.error(data.error ?? "Falha ao excluir.");
       return;
     }
     router.refresh();
+    toast.success("Transação excluída.");
   }
 
   const totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
@@ -213,18 +214,18 @@ export function TransactionTable({
           className="h-8 w-48 text-sm"
         />
         {showCategoryCol && (
-          <Select
+          <CategoryCombobox
+            categories={usedParentCategoryIds.map((cid) => ({
+              id: cid,
+              name: byCategoryId[cid] ?? cid,
+              parentId: null,
+              path: byCategoryId[cid] ?? cid,
+            }))}
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={setCategoryFilter}
+            placeholder="Todas categorias"
             className="h-8 w-44 text-sm"
-          >
-            <option value="">Todas categorias</option>
-            {usedParentCategoryIds.map((cid) => (
-              <option key={cid} value={cid}>
-                {byCategoryId[cid] ?? cid}
-              </option>
-            ))}
-          </Select>
+          />
         )}
         {paymentMethods.length > 0 && (
           <Select
@@ -241,8 +242,6 @@ export function TransactionTable({
           </Select>
         )}
       </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">

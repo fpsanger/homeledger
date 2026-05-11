@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { MoreHorizontal, Plus, CreditCard as CreditCardIcon, Calendar, Lock, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,7 +28,6 @@ export function CreditCardList({ initialCards }: Props) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
   const [closureCardId, setClosureCardId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/credit-cards");
@@ -38,13 +38,13 @@ export function CreditCardList({ initialCards }: Props) {
   }
 
   async function handleDelete(id: string) {
-    setError(null);
     const res = await fetch(`/api/credit-cards/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao excluir.");
+      toast.error(data.error ?? "Falha ao excluir.");
       return;
     }
+    toast.success("Cartão excluído.");
     refresh();
   }
 
@@ -72,8 +72,6 @@ export function CreditCardList({ initialCards }: Props) {
           <SummaryCard label="Fechamento Variável" value={variableCount} icon={<Shuffle className="w-4 h-4" />} />
         </div>
       )}
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Empty state */}
       {cards.length === 0 && (

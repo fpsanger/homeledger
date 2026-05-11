@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { CheckCircle2, ChevronDown, ChevronRight, CreditCard, Package, Receipt, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,6 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [paying, setPaying] = useState<Set<string>>(new Set());
   const [unpaying, setUnpaying] = useState<Set<string>>(new Set());
-  const [payError, setPayError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -112,7 +112,6 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
   async function payFatura(cardId: string, installments: BillInstallmentItem[]) {
     const ids = installments.filter((i) => !i.isPaid && !i.isCanceled).map((i) => i.id);
     if (ids.length === 0) return;
-    setPayError(null);
     setPaying((prev) => new Set(prev).add(cardId));
     setBill((prev) =>
       prev.map((entry) =>
@@ -133,6 +132,7 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) throw new Error("Erro ao pagar fatura");
+      toast.success("Fatura paga com sucesso.");
     } catch {
       setBill((prev) =>
         prev.map((entry) =>
@@ -146,7 +146,7 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
             : entry,
         ),
       );
-      setPayError(cardId);
+      toast.error("Erro ao pagar fatura.");
     } finally {
       setPaying((prev) => {
         const next = new Set(prev);
@@ -159,7 +159,6 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
   async function unpayFatura(cardId: string, installments: BillInstallmentItem[]) {
     const ids = installments.filter((i) => i.isPaid && !i.isCanceled).map((i) => i.id);
     if (ids.length === 0) return;
-    setPayError(null);
     setUnpaying((prev) => new Set(prev).add(cardId));
     setBill((prev) =>
       prev.map((entry) =>
@@ -180,6 +179,7 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
         body: JSON.stringify({ ids }),
       });
       if (!res.ok) throw new Error("Erro ao estornar fatura");
+      toast.success("Fatura estornada com sucesso.");
     } catch {
       setBill((prev) =>
         prev.map((entry) =>
@@ -193,7 +193,7 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
             : entry,
         ),
       );
-      setPayError(cardId);
+      toast.error("Erro ao estornar fatura.");
     } finally {
       setUnpaying((prev) => {
         const next = new Set(prev);
@@ -323,9 +323,6 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                         <p className="text-xs text-muted-foreground">
                           {entry.installments.length} {entry.installments.length === 1 ? "item" : "itens"}
                         </p>
-                        {payError === entry.card.id && (
-                          <p className="text-xs text-destructive">Erro ao pagar</p>
-                        )}
                       </div>
                     </div>
                   </CollapsibleTrigger>

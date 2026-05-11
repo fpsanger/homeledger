@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { MoreHorizontal, Users } from "lucide-react";
 import {
   Table,
@@ -29,6 +30,7 @@ export function PersonList({ people }: { people: Person[] }) {
     await fetch(`/api/people/${id}`, { method: "DELETE" });
     setDeletingId(null);
     router.refresh();
+    toast.success("Pessoa excluída.");
   }
 
   if (people.length === 0) {

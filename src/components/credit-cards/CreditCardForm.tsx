@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,11 +29,9 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
   const [dueDayOfMonth, setDueDayOfMonth] = useState(String(card?.dueDayOfMonth ?? ""));
   const [alwaysNextMonth, setAlwaysNextMonth] = useState(card?.alwaysNextMonth ?? false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const url = card ? `/api/credit-cards/${card.id}` : "/api/credit-cards";
@@ -54,10 +53,11 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Falha ao salvar cartão.");
+      toast.error(data.error ?? "Falha ao salvar cartão.");
       return;
     }
 
+    toast.success("Cartão criado com sucesso.");
     onSaved();
   }
 
@@ -92,7 +92,6 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
         <Button type="submit" disabled={loading}>{loading ? "Salvando…" : card ? "Atualizar" : "Adicionar Cartão"}</Button>
         <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
     </form>
   );
 }

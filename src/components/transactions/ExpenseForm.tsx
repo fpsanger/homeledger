@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { parseCurrencyBR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const isDuplicate = useDuplicateCheck("EXPENSE", amount ? parseFloat(amount) : null, date, refreshKey);
+  const isDuplicate = useDuplicateCheck("EXPENSE", amount ? parseCurrencyBR(amount) : null, date, refreshKey);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +47,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         personId,
-        amount: parseFloat(amount),
+        amount: parseCurrencyBR(amount),
         date,
         paymentMethod,
         categoryId: categoryId || null,

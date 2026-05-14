@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
+import { parseCurrencyBR } from "@/lib/utils";
 
 type FormType = "expense" | "income" | "credit";
 
@@ -84,12 +85,12 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
   const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
   const isDuplicate = useDuplicateCheck(
     dupType,
-    type !== "credit" && amount ? parseFloat(amount) : null,
+    type !== "credit" && amount ? parseCurrencyBR(amount) : null,
     date,
     refreshKey,
   );
   const isCreditDuplicate = useCreditCardDuplicateCheck(
-    type === "credit" && amount ? parseFloat(amount) : null,
+    type === "credit" && amount ? parseCurrencyBR(amount) : null,
     type === "credit" ? date : null,
     type === "credit" ? creditCardId : null,
     refreshKey,
@@ -121,14 +122,14 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       if (editMode.transactionId) {
         if (type === "expense") {
           url = `/api/expenses/${editMode.transactionId}`;
-          body = { personId, amount: parseFloat(amount), date, paymentMethod, categoryId: categoryId || null, description };
+          body = { personId, amount: parseCurrencyBR(amount), date, paymentMethod, categoryId: categoryId || null, description };
         } else {
           url = `/api/incomes/${editMode.transactionId}`;
-          body = { personId, amount: parseFloat(amount), date, source, categoryId: categoryId || null, description };
+          body = { personId, amount: parseCurrencyBR(amount), date, source, categoryId: categoryId || null, description };
         }
       } else if (editMode.purchaseId) {
         url = `/api/credit-card-purchases/${editMode.purchaseId}`;
-        body = { description, totalAmount: parseFloat(amount), purchaseDate: date, categoryId: categoryId || null, creditCardId };
+        body = { description, totalAmount: parseCurrencyBR(amount), purchaseDate: date, categoryId: categoryId || null, creditCardId };
       } else {
         toast.error("ID da compra não encontrado.");
         setLoading(false);
@@ -138,16 +139,16 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       method = "POST";
       if (type === "expense") {
         url = "/api/expenses";
-        body = { personId, amount: parseFloat(amount), date, paymentMethod, categoryId: categoryId || null, description };
+        body = { personId, amount: parseCurrencyBR(amount), date, paymentMethod, categoryId: categoryId || null, description };
       } else if (type === "income") {
         url = "/api/incomes";
-        body = { personId, amount: parseFloat(amount), date, source, categoryId: categoryId || null, description };
+        body = { personId, amount: parseCurrencyBR(amount), date, source, categoryId: categoryId || null, description };
       } else {
         url = "/api/installments";
         body = {
           personId,
           creditCardId,
-          totalAmount: parseFloat(amount),
+          totalAmount: parseCurrencyBR(amount),
           numberOfInstallments: parseInt(numberOfInstallments, 10),
           purchaseDate: date,
           categoryId: categoryId || null,
@@ -273,7 +274,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
                 required
               >
                 {(() => {
-                  const total = parseFloat(amount);
+                  const total = parseCurrencyBR(amount);
                   if (!total || total <= 0) {
                     return <option value="">Informe o valor primeiro</option>;
                   }

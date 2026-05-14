@@ -220,7 +220,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
         <CurrencyInput
           id="u-amount"
           value={amount}
-          onChange={(v) => { setAmount(v); setNumberOfInstallments(""); }}
+          onChange={(v) => { setAmount(v); setNumberOfInstallments("1"); }}
           required
         />
       </div>

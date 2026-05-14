@@ -34,7 +34,7 @@ export default async function InstallmentsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Crédito" title="Parcelas" />
+      <PageHeader eyebrow="Crédito" title="Parcelas" description={purchases.length > 0 ? `${purchases.length} compras parceladas` : undefined} />
       <InstallmentsTabs
         defaultTab="purchases"
         purchasesView={

@@ -47,8 +47,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   const now = new Date();
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
   const isGlobalLocked = !!globalPersonId;
-  const year = searchParams.year ? parseInt(searchParams.year, 10) : now.getFullYear();
-  const month = searchParams.month ? parseInt(searchParams.month, 10) : now.getMonth() + 1;
+  const year = searchParams.year ? parseInt(searchParams.year, 10) : now.getUTCFullYear();
+  const month = searchParams.month ? parseInt(searchParams.month, 10) : now.getUTCMonth() + 1;
   const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
 
   const [people, categories, creditCards, { transactions, installments }] = await Promise.all([
@@ -60,7 +60,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Finanças" title="Transações" />
+      <PageHeader eyebrow="Finanças" title="Transações" description={transactions.length > 0 ? `${transactions.length} transações no mês` : undefined} />
       <TransactionPageClient
         year={year}
         month={month}

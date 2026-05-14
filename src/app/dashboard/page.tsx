@@ -75,7 +75,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader eyebrow="Visão Geral" title="Dashboard" />
+      <PageHeader eyebrow="Visão Geral" title="Dashboard" description="Resumo financeiro geral" />
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">

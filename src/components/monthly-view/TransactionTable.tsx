@@ -49,13 +49,9 @@ function fmtCurrency(amount: number) {
 
 function fmtDate(date: Date | string) {
   const d = new Date(date);
-  return `${String(d.getDate()).padStart(2, "0")} ${MONTH_ABBR[d.getMonth()]}`;
+  return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTH_ABBR[d.getUTCMonth()]}`;
 }
 
-function dateKey(date: Date | string) {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
 
 function SummaryCard({
   icon: Icon,
@@ -266,15 +262,11 @@ export function TransactionTable({
               </TableRow>
             ) : (
               (() => {
-                let lastDateKey = "";
                 return paginated.map((t) => {
-                  const dk = dateKey(t.date);
-                  const isNewDate = dk !== lastDateKey;
-                  lastDateKey = dk;
                   return (
                     <TableRow key={t.id} className="group">
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {isNewDate ? fmtDate(t.date) : ""}
+                        {fmtDate(t.date)}
                       </TableCell>
                       <TableCell className="text-sm">{byPersonId[t.personId] ?? t.personId}</TableCell>
                       <TableCell className="text-sm">{t.description || "—"}</TableCell>

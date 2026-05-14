@@ -25,6 +25,16 @@ const dmSerifDisplay = DM_Serif_Display({
 export const metadata: Metadata = {
   title: "HomeLedger",
   description: "Household finance tracker",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "HomeLedger",
+  },
 };
 
 export default function RootLayout({

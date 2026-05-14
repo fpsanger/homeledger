@@ -1,76 +1,62 @@
 # Changelog
 
+All notable changes to this project are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses semantic versioning while it remains in active personal development.
+
 ## [Unreleased]
 
-### Added
-- Income feature: add incomes via new `/transactions` page (renamed from `/expenses`)
-- `TransactionRecord` gains nullable `source: IncomeSource | null` field; `paymentMethod` is now nullable (null for incomes)
-- `IncomeSource` enum: `SALARY | FREELANCE | RENTAL | INVESTMENT | OTHER`
-- `createIncome()` domain entity function with validation (personId, date, amount > 0, source required)
-- `CreateIncomeUseCase` — validates leaf category, persists via `ITransactionRepository`
-- `validateIncomeCategory()` in `CategoryTree` service
-- `POST /api/incomes` route
-- `IncomeForm` component; `TransactionTabs` component (Expense / Income tab switcher)
-- DB migration `20260506142731_add_income_source` — adds `IncomeSource` enum + nullable `source` column + makes `paymentMethod` nullable on `Transaction`
+### Changed
 
+- Refined project documentation for local maintenance and release tracking.
 
-- `/installments` page: view all credit card purchases with installments, filter by person, toggle canceled visibility, mark installments as paid
-- `src/domain/services/InstallmentPurchase.ts` — `createInstallmentPurchase()`: validates personId required, totalAmount > 0, numberOfInstallments > 1, baseAmount > 0 (rejects amount-too-small cases); returns `{ purchase: PurchaseDraft, installments: InstallmentDraftWithPurchaseId[] }` with `creditCardPurchaseId` on each installment
-- `src/domain/services/InstallmentPurchase.ts` — `cancelInstallmentPurchase()`: pure function, marks all installments `isCanceled: true`, preserves all other fields, handles empty array
-- `src/domain/services/InstallmentPurchase.ts` — `createInstallments()`: fixed rounding — uses `Math.floor` for base installments so last installment always ≥ base; last installment absorbs cent difference; validates `baseAmount > 0`
-- `src/domain/services/MonthlyView.ts` — `buildMonthlyView()`: excludes `isCanceled: true` installments from monthly view
-- `src/domain/repositories/ICreditCardPurchaseRepository.ts` — `InstallmentRecord.isCanceled: boolean` added; `cancelPurchase(purchaseId)` added to interface
-- `src/application/use-cases/CreateInstallmentPurchaseUseCase.ts` — orchestrates domain validation + repo save for installment purchases
-- `src/application/use-cases/CancelInstallmentPurchaseUseCase.ts` — delegates purchase cancellation to repository
-
-- Domain tests for installment purchases (RED — production code not yet implemented):
-  - `createInstallmentPurchase`: returns purchase draft + installments with `creditCardPurchaseId`; requires `numberOfInstallments > 1`; validates personId and totalAmount; rounding difference absorbed by last installment; sequential installment_number; correct due_month per installment; all installments linked to same person
-  - `cancelInstallmentPurchase`: marks all installments as `isCanceled: true` regardless of paid status; preserves all original fields; handles empty list
-  - `createInstallments` (rounding): last installment absorbs cent difference so sum equals totalAmount exactly
-  - `buildMonthlyView` (canceled): canceled installments excluded from monthly view
-  - `buildMonthlyView` (totals): installment amount per month is not the full purchase total; purchase total not duplicated across months
-  - `createExpense` (boundary): one-time expense has no `creditCardPurchaseId`, `installments`, or `numberOfInstallments` fields
+## [0.1.0] - 2026-05-14
 
 ### Added
-- `src/domain/entities/Category.ts` — `createCategory()`: validates name (required, trimmed), validates householdId required, computes `path` (root = name, subcategory = parent/name) and `level` (root = 0, child = parent+1); no workspace coupling
-- `src/domain/services/CategoryTree.ts` — `isCircularReference()`: ancestor-chain walk; `canDeleteCategory()` / `isLeafCategory()`: checks for children; `validateExpenseCategory()`: null allowed, leaf-only rule enforced; `computeUpdatedPaths()`: cascades path+level to all descendants; `buildCategoryTree()`: nested tree from flat list
-- `src/domain/repositories/ICategoryRepository.ts` — extended `CategoryRecord` with `householdId`, `path`, `level`; field order: domain fields before infrastructure field before timestamp
-- `src/infrastructure/repositories/PrismaCategoryRepository.ts` — implements `ICategoryRepository`; upsert-based `save()` supports path cascade updates; maps `householdId = "default"` constant (single-household product, not stored in DB)
-- Migration `20260503140811_add_category_path_level` — adds `path String` and `level Int` columns to `category` table with safe defaults
 
-### Added
-- Domain tests for `Category` entity (`tests/domain/entities/Category.test.ts`): root creation, subcategory with parentId, householdId required, name required/trimmed, path generation (root = name, sub = parent/name, deep), level calculation (root=0, child=parent+1, no workspaceId)
-- Domain tests for `CategoryTree` service (`tests/domain/services/CategoryTree.test.ts`): circular reference detection (self-parent, ancestor loop, chain loop), canDeleteCategory (blocks when children exist), computeUpdatedPaths (cascade path+level on reparent, promote to root), buildCategoryTree (root nodes, nested children, multi-level, leaf empty children)
-- Category-Expense integration tests: isLeafCategory, validateExpenseCategory (null = allowed, leaf = allowed, missing = throws, non-leaf = throws)
+- Initialized the Homeledger product as a personal finance app for a single household.
+- Added a Next.js 14 application with TypeScript, App Router, Tailwind CSS, and reusable UI components.
+- Added PostgreSQL persistence with Prisma 7, Docker Compose, migrations, and a Prisma client singleton.
+- Added Clean Architecture layers for domain rules, application use cases, infrastructure repositories, API routes, and UI.
+- Added people management for household members.
+- Added expense transactions with person, amount, date, description, payment method, and optional category.
+- Added income transactions with source classification.
+- Added hierarchical categories with path and level calculation.
+- Added category tree behavior, including circular-reference checks, leaf validation, deletion checks, and path cascade updates.
+- Added monthly financial views that combine regular transactions and credit card installments.
+- Added recurring monthly transactions with start and optional end dates.
+- Added credit cards with fixed and variable closure dates.
+- Added credit card purchases with installment generation.
+- Added installment management, including paid/unpaid state, bulk paid/unpaid actions, canceled purchase handling, and monthly filtering.
+- Added credit card bill views.
+- Added dashboard and annual report views with monthly summaries, income/expense/balance cards, category breakdowns, and annual charts.
+- Added duplicate warnings for regular transactions and credit card purchases.
+- Added transaction editing flows for expenses, incomes, and installments.
+- Added category selection through a reusable category combobox.
+- Added toast notifications for user feedback.
+- Added PWA support with manifest and app icons.
+- Added domain, application, service, and repository tests with Jest and ts-jest.
+- Added Biome for linting and formatting.
+- Added project specs and implementation plans under `docs/superpowers`.
+- Added Graphify output for repository navigation.
 
-### Added
-- `src/domain/entities/Person.ts` — `createPerson()`: validates name (required, trimmed), returns `PersonRecord`, no workspaceId
-- `src/domain/entities/Transaction.ts` — `createExpense()`: validates personId required, amount positive, date required; categoryId optional; always sets type=EXPENSE
-- `src/domain/services/MonthlyView.ts` — `buildMonthlyView()`: filters transactions and installments by year/month, optional personId filter, no duplicates
-- `src/domain/services/InstallmentPurchase.ts` — `createInstallments()`: splits totalAmount into N installments, computes dueYear/dueMonth with rollover, validates personId/amount/installment count; returns `InstallmentDraft[]` with personId and categoryId
-- `src/application/use-cases/CreatePersonUseCase.ts` — orchestrates domain + repo save
-- `src/application/use-cases/ListPeopleUseCase.ts` — delegates to `IPersonRepository.findAll()`
-- `src/application/use-cases/CreateExpenseUseCase.ts` — orchestrates domain + repo save
-- `src/application/use-cases/GetMonthlyViewUseCase.ts` — fetches transactions + installments from repos, delegates filtering to domain service
-- Added `findByMonth(year, month)` to `ITransactionRepository` for household-wide monthly view
-- Added `findAllInstallmentsByMonth(year, month)` to `ICreditCardPurchaseRepository` for household-wide monthly view
-- Removed stale `IUserRepository` contract test (User model was replaced by Person in prior refactor)
+### Changed
 
-### Added
-- Domain behavior tests for `Person` entity: name validation, no workspaceId (`tests/domain/entities/Person.test.ts`)
-- Domain behavior tests for `Transaction` (Expense) entity: personId required, amount positive, date required, categoryId optional, no workspaceId (`tests/domain/entities/Transaction.test.ts`)
-- Monthly view service tests: groups by month, filters by person, includes installments, no duplicates, no workspaceId (`tests/domain/services/MonthlyView.test.ts`)
-- Installment purchase service tests: N installments created, amount split, month rollover, personId on all installments, categoryId optional, validation rules, no workspaceId (`tests/domain/services/InstallmentPurchase.test.ts`)
-- Updated `IPersonRepository` contract test with in-memory implementation covering save, list, findById, delete, and no-workspaceId assertion
-- Updated `ITransactionRepository` contract test with in-memory implementation covering expense save, findByPersonAndMonth filtering, delete, and no-workspaceId assertion
+- Renamed the expenses-focused transaction surface to support both expenses and incomes.
+- Made `paymentMethod` nullable for income transactions.
+- Consolidated transaction records around the `INCOME` and `EXPENSE` types.
+- Updated category uniqueness so root category names are unique without household coupling.
+- Updated the monthly view to exclude canceled installments.
+- Updated installment rounding so the final installment absorbs cent differences and totals match the purchase amount.
+- Updated installment purchase validation for one-time and multi-installment credit card purchases.
+- Updated repository contracts and implementations to match the single-household product model.
+- Removed stale workspace/user assumptions from the core domain model.
 
-### Added
-- Next.js 14 project initialized with TypeScript, Tailwind CSS, App Router (`src/` layout)
-- Prisma 7 ORM with PostgreSQL — schema at `src/infrastructure/database/schema.prisma`
-- Database models: `User`, `Workspace`, `WorkspaceMember`, `Category`, `Transaction`, `CreditCardPurchase`, `Installment`, `RecurringTransaction`
-- Enums: `Role`, `TransactionType`, `PaymentMethod`
-- Initial database migration applied (`20260502200910_init`)
-- `PrismaClient` singleton at `src/infrastructure/database/client.ts`
-- Domain repository interfaces (zero Prisma imports): `IUserRepository`, `IWorkspaceRepository`, `ITransactionRepository`, `ICreditCardPurchaseRepository`, `IRecurringTransactionRepository`, `ICategoryRepository`
-- Compile-time contract tests for all 6 repository interfaces
-- `docker-compose.yml` with PostgreSQL 16 on port 5433 for local development
+### Fixed
+
+- Fixed installment amount calculation so monthly views do not duplicate full purchase totals across installments.
+- Fixed number-of-installments validation for credit card purchase flows.
+- Fixed handling for one-installment credit card purchases.
+- Fixed duplicate detection coverage for credit card purchases.
+- Fixed category editing edge cases around duplicate names and category hierarchy.
+- Fixed canceled installments leaking into monthly financial views.

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { useCreditCardDuplicateCheck } from "@/hooks/useCreditCardDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -85,6 +86,12 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
     dupType,
     type !== "credit" && amount ? parseFloat(amount) : null,
     date,
+    refreshKey,
+  );
+  const isCreditDuplicate = useCreditCardDuplicateCheck(
+    type === "credit" && amount ? parseFloat(amount) : null,
+    type === "credit" ? date : null,
+    type === "credit" ? creditCardId : null,
     refreshKey,
   );
 
@@ -304,7 +311,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
         />
       </div>
 
-      {!isEditMode && isDuplicate && (
+      {!isEditMode && (isDuplicate || isCreditDuplicate) && (
         <p className="text-sm text-amber-600">
           Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar mesmo assim.
         </p>

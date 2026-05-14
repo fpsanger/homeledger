@@ -12,7 +12,6 @@ import { Dialog } from "@/components/ui/dialog";
 type Category = {
   id: string;
   name: string;
-  path: string;
   parentId: string | null;
   level: number;
 };
@@ -30,9 +29,8 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
   const [parentId, setParentId] = useState(category.parentId ?? "");
   const [loading, setLoading] = useState(false);
 
-  // Exclude self and descendants to prevent cycles
   const validParents = categories.filter(
-    (c) => c.parentId === null && c.id !== category.id && !c.path.startsWith(category.path + "/"),
+    (c) => c.parentId === null && c.id !== category.id,
   );
   const sorted = [...validParents].sort((a, b) => a.name.localeCompare(b.name));
 

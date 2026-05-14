@@ -53,6 +53,7 @@ export function CategoryCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
+        type="button"
         disabled={disabled}
         className={cn(
           "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",

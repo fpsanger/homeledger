@@ -27,7 +27,7 @@ export async function updateCategoryUseCase(
     if (input.parentId === input.id) throw new Error("Category cannot be its own parent");
     const parentRecord = await repo.findById(input.parentId);
     if (!parentRecord) throw new Error("Parent category not found");
-    if (parentRecord.path.startsWith(existing.path + "/")) {
+    if ((parentRecord.path ?? "").startsWith((existing.path ?? "") + "/")) {
       throw new Error("Cannot move category under one of its own descendants");
     }
     parent = { path: parentRecord.path, level: parentRecord.level };

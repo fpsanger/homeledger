@@ -127,8 +127,8 @@ export function createInstallmentPurchase(
 ): InstallmentPurchaseResult {
   if (!input.personId) throw new Error("Person is required");
   if (input.totalAmount <= 0) throw new Error("Amount must be positive");
-  if (input.numberOfInstallments <= 1)
-    throw new Error("Number of installments must be greater than 1");
+  if (input.numberOfInstallments < 1)
+    throw new Error("Number of installments must be positive");
 
   const drafts = createInstallments(input);
 

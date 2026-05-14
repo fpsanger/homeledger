@@ -174,7 +174,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
   const typeLabels: Record<FormType, string> = {
     expense: "Despesa",
     income: "Receita",
-    credit: "Compra Parcelada",
+    credit: "Compra com Cartão",
   };
 
   return (

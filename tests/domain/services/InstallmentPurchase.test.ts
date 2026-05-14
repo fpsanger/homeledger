@@ -200,16 +200,16 @@ describe("InstallmentPurchase service", () => {
       }
     });
 
-    it("throws when numberOfInstallments is 1", () => {
+    it("allows numberOfInstallments of 1", () => {
       expect(() =>
         createInstallmentPurchase({ ...basePurchaseWithId, numberOfInstallments: 1 }),
-      ).toThrow("Number of installments must be greater than 1");
+      ).not.toThrow();
     });
 
     it("throws when numberOfInstallments is less than 1", () => {
       expect(() =>
         createInstallmentPurchase({ ...basePurchaseWithId, numberOfInstallments: 0 }),
-      ).toThrow("Number of installments must be greater than 1");
+      ).toThrow("Number of installments must be positive");
     });
 
     it("throws when personId is missing", () => {

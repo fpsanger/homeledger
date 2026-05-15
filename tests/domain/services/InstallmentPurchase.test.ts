@@ -401,5 +401,31 @@ describe("InstallmentPurchase service", () => {
       });
       expect(result).toEqual({ year: 2027, month: 1 });
     });
+
+    it("closureInPreviousMonth with purchaseDay >= closureDay shifts by 2 months", () => {
+      // April closure = March 27. Purchase on March 27 → misses April bill → goes to May.
+      const result = resolveFirstDueMonth({
+        purchaseDay: 27,
+        purchaseYear: 2026,
+        purchaseMonth: 3,
+        closureDay: 27,
+        alwaysNextMonth: false,
+        closureInPreviousMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 5 });
+    });
+
+    it("closureInPreviousMonth with purchaseDay >= closureDay in November shifts to January", () => {
+      // January closure = November 27. Purchase on November 28 → misses January bill → February.
+      const result = resolveFirstDueMonth({
+        purchaseDay: 28,
+        purchaseYear: 2026,
+        purchaseMonth: 11,
+        closureDay: 27,
+        alwaysNextMonth: false,
+        closureInPreviousMonth: true,
+      });
+      expect(result).toEqual({ year: 2027, month: 1 });
+    });
   });
 });

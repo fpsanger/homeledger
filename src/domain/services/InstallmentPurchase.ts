@@ -39,8 +39,12 @@ export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): { year: 
   const shiftNext = input.alwaysNextMonth || input.closureInPreviousMonth || input.purchaseDay >= input.closureDay;
   if (!shiftNext) return { year: input.purchaseYear, month: input.purchaseMonth };
 
-  if (input.purchaseMonth === 12) return { year: input.purchaseYear + 1, month: 1 };
-  return { year: input.purchaseYear, month: input.purchaseMonth + 1 };
+  // When closure is in the previous month and the purchase is on/after the closure day,
+  // the purchase misses the next billing month → must shift by 2.
+  const shiftBy = input.closureInPreviousMonth && input.purchaseDay >= input.closureDay ? 2 : 1;
+  const targetMonth = input.purchaseMonth + shiftBy;
+  if (targetMonth > 12) return { year: input.purchaseYear + 1, month: targetMonth - 12 };
+  return { year: input.purchaseYear, month: targetMonth };
 }
 
 function roundCents(value: number): number {

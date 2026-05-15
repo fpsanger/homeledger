@@ -22,6 +22,7 @@ export async function createInstallmentPurchaseUseCase(
   if (!card) throw new Error("Credit card not found");
 
   let closureDay: number;
+  let closureInPreviousMonth = false;
   if (card.closureType === "FIXED") {
     if (card.fixedClosureDay == null) throw new Error("FIXED card is missing fixedClosureDay");
     closureDay = card.fixedClosureDay;
@@ -35,11 +36,13 @@ export async function createInstallmentPurchaseUseCase(
       );
     }
     closureDay = closure.closureDay;
+    closureInPreviousMonth = closure.previousMonth;
   }
 
   const { purchase, installments } = createInstallmentPurchase({
     ...input,
     closureDay,
+    closureInPreviousMonth,
     alwaysNextMonth: card.alwaysNextMonth,
   });
 

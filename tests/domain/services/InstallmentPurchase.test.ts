@@ -375,5 +375,31 @@ describe("InstallmentPurchase service", () => {
       });
       expect(result).toEqual({ year: 2026, month: 4 });
     });
+
+    it("closureInPreviousMonth forces next month even when purchaseDay < closureDay", () => {
+      // Closure was April 28 (previous month) for May's bill.
+      // Purchase on May 6: day 6 < closureDay 28, but closure already passed → June.
+      const result = resolveFirstDueMonth({
+        purchaseDay: 6,
+        purchaseYear: 2026,
+        purchaseMonth: 5,
+        closureDay: 28,
+        alwaysNextMonth: false,
+        closureInPreviousMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 6 });
+    });
+
+    it("closureInPreviousMonth in December rolls over to next year", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 6,
+        purchaseYear: 2026,
+        purchaseMonth: 12,
+        closureDay: 28,
+        alwaysNextMonth: false,
+        closureInPreviousMonth: true,
+      });
+      expect(result).toEqual({ year: 2027, month: 1 });
+    });
   });
 });

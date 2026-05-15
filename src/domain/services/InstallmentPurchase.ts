@@ -32,10 +32,11 @@ type ResolveFirstDueMonthInput = {
   purchaseMonth: number;
   closureDay: number;
   alwaysNextMonth: boolean;
+  closureInPreviousMonth?: boolean;
 };
 
 export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): { year: number; month: number } {
-  const shiftNext = input.alwaysNextMonth || input.purchaseDay >= input.closureDay;
+  const shiftNext = input.alwaysNextMonth || input.closureInPreviousMonth || input.purchaseDay >= input.closureDay;
   if (!shiftNext) return { year: input.purchaseYear, month: input.purchaseMonth };
 
   if (input.purchaseMonth === 12) return { year: input.purchaseYear + 1, month: 1 };
@@ -56,6 +57,7 @@ type CreateInstallmentsInput = {
   creditCardId: string;
   closureDay: number;
   alwaysNextMonth: boolean;
+  closureInPreviousMonth?: boolean;
 };
 
 export function createInstallments(input: CreateInstallmentsInput): InstallmentDraft[] {
@@ -76,6 +78,7 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
     purchaseMonth,
     closureDay: input.closureDay,
     alwaysNextMonth: input.alwaysNextMonth,
+    closureInPreviousMonth: input.closureInPreviousMonth,
   });
 
   // Convert first due to absolute month index for arithmetic
@@ -115,6 +118,7 @@ type CreateInstallmentPurchaseInput = {
   creditCardId: string;
   closureDay: number;
   alwaysNextMonth: boolean;
+  closureInPreviousMonth?: boolean;
 };
 
 type InstallmentPurchaseResult = {

@@ -21,10 +21,11 @@ export async function GET(request: NextRequest) {
     }
 
     const personId = searchParams.get("personId") ?? undefined;
+    const filterBy = searchParams.get("filterBy") === "purchaseDate" ? "purchaseDate" as const : "dueMonth" as const;
 
     const { transaction, creditCardPurchase, recurring } = createRepositories();
     const result = await getMonthlyViewUseCase(
-      { year, month, personId },
+      { year, month, personId, filterBy },
       transaction,
       creditCardPurchase,
       recurring,

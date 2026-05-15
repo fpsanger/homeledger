@@ -30,7 +30,7 @@ async function getCreditCards(): Promise<CreditCard[]> {
 }
 
 async function getMonthlyView(year: number, month: number, personId?: string) {
-  const params = new URLSearchParams({ year: String(year), month: String(month) });
+  const params = new URLSearchParams({ year: String(year), month: String(month), filterBy: "purchaseDate" });
   if (personId) params.set("personId", personId);
   const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, { cache: "no-store" });
   if (!res.ok) return { transactions: [], installments: [] };

@@ -29,14 +29,27 @@ export async function createInstallmentPurchaseUseCase(
   } else {
     const purchaseYear = input.purchaseDate.getUTCFullYear();
     const purchaseMonth = input.purchaseDate.getUTCMonth() + 1;
-    const closure = await creditCardRepo.findClosure(input.creditCardId, purchaseYear, purchaseMonth);
-    if (!closure) {
-      throw new Error(
-        `No closure date set for ${card.name} in ${purchaseYear}-${String(purchaseMonth).padStart(2, "0")}. Set a closure date before registering purchases.`,
-      );
+
+    // For previousMonth=true cards, the relevant closure falls in the purchase month
+    // but is stored under the NEXT billing month's record.
+    // Try next billing month first; fall back to current month (same-month closures).
+    const nextBMMonth = purchaseMonth === 12 ? 1 : purchaseMonth + 1;
+    const nextBMYear = purchaseMonth === 12 ? purchaseYear + 1 : purchaseYear;
+    const nextClosure = await creditCardRepo.findClosure(input.creditCardId, nextBMYear, nextBMMonth);
+
+    if (nextClosure?.previousMonth) {
+      closureDay = nextClosure.closureDay;
+      closureInPreviousMonth = true;
+    } else {
+      const currentClosure = await creditCardRepo.findClosure(input.creditCardId, purchaseYear, purchaseMonth);
+      if (!currentClosure) {
+        throw new Error(
+          `No closure date set for ${card.name} in ${purchaseYear}-${String(purchaseMonth).padStart(2, "0")}. Set a closure date before registering purchases.`,
+        );
+      }
+      closureDay = currentClosure.closureDay;
+      closureInPreviousMonth = currentClosure.previousMonth;
     }
-    closureDay = closure.closureDay;
-    closureInPreviousMonth = closure.previousMonth;
   }
 
   const { purchase, installments } = createInstallmentPurchase({

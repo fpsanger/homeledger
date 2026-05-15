@@ -11,6 +11,7 @@ type MonthlyViewInput = {
   year: number;
   month: number;
   personId?: string;
+  filterBy?: "dueMonth" | "purchaseDate";
 };
 
 type MonthlyViewResult = {
@@ -19,7 +20,7 @@ type MonthlyViewResult = {
 };
 
 export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
-  const { transactions, installments, recurringRules = [], year, month, personId } = input;
+  const { transactions, installments, recurringRules = [], year, month, personId, filterBy = "dueMonth" } = input;
 
   const matchesMonth = (date: Date) => {
     const d = new Date(date);
@@ -30,9 +31,14 @@ export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
     .filter((t) => matchesMonth(t.date))
     .filter((t) => (personId ? t.personId === personId : true));
 
-  const filteredInstallments = installments.filter(
-    (i) => i.dueYear === year && i.dueMonth === month && !i.isCanceled,
-  );
+  const filteredInstallments = installments.filter((i) => {
+    if (i.isCanceled) return false;
+    if (filterBy === "purchaseDate") {
+      const d = i.purchaseDate ? new Date(i.purchaseDate) : null;
+      return !!d && d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
+    }
+    return i.dueYear === year && i.dueMonth === month;
+  });
 
   const activeRules = recurringRules.filter(
     (r) => isActiveInMonth(r, year, month) && (personId ? r.personId === personId : true),

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { parseCurrencyBR } from "@/lib/utils";
+import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
 type CreditCard = { id: string; name: string };
@@ -44,7 +44,7 @@ function fmtDate(date: Date | string) {
 
 export function EditInstallmentForm({ installment, people = [], creditCards = [], onSuccess }: Props) {
   const router = useRouter();
-  const [amount, setAmount] = useState(String(installment.amount));
+  const [amount, setAmount] = useState(formatAmountBR(installment.amount));
   const [description, setDescription] = useState(installment.purchaseDescription ?? "");
   const [loading, setLoading] = useState(false);
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
 import { EditInstallmentForm } from "./EditInstallmentForm";
+import { formatAmountBR } from "@/lib/utils";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { TransactionTable } from "@/components/monthly-view/TransactionTable";
 import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
@@ -110,7 +111,7 @@ export function TransactionPageClient({
             initialValues={{
               type: editingTransaction.type === "INCOME" ? "income" : "expense",
               personId: editingTransaction.personId,
-              amount: String(editingTransaction.amount),
+              amount: formatAmountBR(editingTransaction.amount),
               date: toDateInput(editingTransaction.date),
               paymentMethod: editingTransaction.paymentMethod ?? "CASH",
               source: editingTransaction.source ?? "SALARY",
@@ -152,7 +153,7 @@ export function TransactionPageClient({
             initialValues={{
               type: "credit",
               personId: editingPurchase.personId ?? "",
-              amount: String(editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
+              amount: formatAmountBR(editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
               date: editingPurchase.purchaseDate ? toDateInput(editingPurchase.purchaseDate) : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
               paymentMethod: "CASH",
               source: "SALARY",

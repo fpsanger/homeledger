@@ -19,7 +19,7 @@ export function createCategory(input: CreateCategoryInput): CategoryRecord {
     throw new Error("Household is required");
   }
 
-  const path = input.parent ? `${input.parent.path}/${name}` : name;
+  const path = input.parent?.path ? `${input.parent.path}/${name}` : name;
   const level = input.parent ? input.parent.level + 1 : 0;
 
   return {

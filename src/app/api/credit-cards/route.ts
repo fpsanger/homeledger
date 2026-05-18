@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
         fixedClosureDay: body.fixedClosureDay ?? null,
         dueDayOfMonth: body.dueDayOfMonth,
         alwaysNextMonth: body.alwaysNextMonth ?? false,
+        closureNextMonth: body.closureNextMonth ?? false,
       },
       creditCard,
     );

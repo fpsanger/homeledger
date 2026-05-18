@@ -22,6 +22,12 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
   ): Promise<InstallmentRecord[]> {
     return [];
   }
+  async findAllInstallmentsByPurchaseMonth(_year: number, _month: number): Promise<InstallmentRecord[]> {
+    return [];
+  }
+  async findInstallmentsByPurchaseMonth(_personId: string, _year: number, _month: number): Promise<InstallmentRecord[]> {
+    return [];
+  }
   async findAllInstallmentsByYear(_year: number): Promise<InstallmentRecord[]> {
     return [];
   }

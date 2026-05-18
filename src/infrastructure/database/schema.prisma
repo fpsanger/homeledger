@@ -69,6 +69,7 @@ model CreditCard {
   fixedClosureDay  Int?
   dueDayOfMonth    Int
   alwaysNextMonth  Boolean     @default(false)
+  closureNextMonth Boolean     @default(false)
   createdAt        DateTime    @default(now())
 
   purchases CreditCardPurchase[]

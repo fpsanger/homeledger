@@ -427,5 +427,55 @@ describe("InstallmentPurchase service", () => {
       });
       expect(result).toEqual({ year: 2027, month: 1 });
     });
+
+    it("closureNextMonth: purchase stays in same month regardless of closureDay", () => {
+      // Closure is on day 1 of NEXT month (Nov 1). Purchase Oct 10 < Nov 1 → October.
+      const result = resolveFirstDueMonth({
+        purchaseDay: 10,
+        purchaseYear: 2026,
+        purchaseMonth: 10,
+        closureDay: 1,
+        alwaysNextMonth: false,
+        closureNextMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 10 });
+    });
+
+    it("closureNextMonth with high closureDay: purchase still stays in same month", () => {
+      // Closure is on day 25 of NEXT month. Purchase Oct 10 is always before that.
+      const result = resolveFirstDueMonth({
+        purchaseDay: 10,
+        purchaseYear: 2026,
+        purchaseMonth: 10,
+        closureDay: 25,
+        alwaysNextMonth: false,
+        closureNextMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 10 });
+    });
+
+    it("closureNextMonth in December stays in December", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 15,
+        purchaseYear: 2026,
+        purchaseMonth: 12,
+        closureDay: 1,
+        alwaysNextMonth: false,
+        closureNextMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 12 });
+    });
+
+    it("closureNextMonth is overridden by alwaysNextMonth", () => {
+      const result = resolveFirstDueMonth({
+        purchaseDay: 10,
+        purchaseYear: 2026,
+        purchaseMonth: 10,
+        closureDay: 1,
+        alwaysNextMonth: true,
+        closureNextMonth: true,
+      });
+      expect(result).toEqual({ year: 2026, month: 11 });
+    });
   });
 });

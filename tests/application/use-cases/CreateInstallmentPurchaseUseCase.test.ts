@@ -20,6 +20,7 @@ const VARIABLE_CARD: CreditCardRecord = {
   fixedClosureDay: null,
   dueDayOfMonth: 10,
   alwaysNextMonth: false,
+  closureNextMonth: false,
   createdAt: new Date(),
 };
 
@@ -43,19 +44,31 @@ function makeCardRepo(
     hasPurchases: jest.fn(),
     setClosure: jest.fn(),
     findClosuresByCard: jest.fn(),
+    deleteClosure: jest.fn(),
   };
 }
 
 function makePurchaseRepo(): ICreditCardPurchaseRepository {
   return {
     save: jest.fn().mockImplementation((_purchase: unknown, installments: unknown[]) =>
-      Promise.resolve({ purchase: _purchase, installments }),
+      Promise.resolve({ ..._purchase as object, installments }),
     ),
-    findById: jest.fn(),
-    findByMonth: jest.fn(),
+    findAllInstallmentsByMonth: jest.fn(),
     findInstallmentsByMonth: jest.fn(),
-    delete: jest.fn(),
-    update: jest.fn(),
+    findAllInstallmentsByPurchaseMonth: jest.fn(),
+    findInstallmentsByPurchaseMonth: jest.fn(),
+    findAllInstallmentsByYear: jest.fn(),
+    findInstallmentsByYear: jest.fn(),
+    updatePurchase: jest.fn(),
+    deletePurchase: jest.fn(),
+    markInstallmentPaid: jest.fn(),
+    markInstallmentsPaid: jest.fn(),
+    markInstallmentsUnpaid: jest.fn(),
+    deleteInstallment: jest.fn(),
+    findByPurchaseId: jest.fn(),
+    updateInstallment: jest.fn(),
+    updateInstallments: jest.fn(),
+    findAllPurchasesWithInstallments: jest.fn(),
   };
 }
 
@@ -76,7 +89,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(4); // April
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -89,7 +102,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(5); // May
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -102,7 +115,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(5); // May
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -115,7 +128,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(6); // June
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -128,7 +141,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(6); // June
     expect(installments[0].dueYear).toBe(2026);
   });

@@ -68,7 +68,7 @@ export function computeUpdatedPaths(
   const target = categories.find((c) => c.id === categoryId);
   if (!target) return categories;
 
-  const newPath = newParent ? `${newParent.path}/${target.name}` : target.name;
+  const newPath = newParent?.path ? `${newParent.path}/${target.name}` : target.name;
   const newLevel = newParent ? newParent.level + 1 : 0;
 
   const updatedTarget: CategoryRecord = {
@@ -94,7 +94,7 @@ function cascadeDescendants(
   for (const child of children) {
     const updatedChild: CategoryRecord = {
       ...child,
-      path: `${updatedParent.path}/${child.name}`,
+      path: updatedParent.path ? `${updatedParent.path}/${child.name}` : child.name,
       level: updatedParent.level + 1,
     };
     result = result.map((c) => (c.id === child.id ? updatedChild : c));

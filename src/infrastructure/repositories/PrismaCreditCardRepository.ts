@@ -9,6 +9,7 @@ function toRecord(row: {
   fixedClosureDay: number | null;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
   createdAt: Date;
 }): CreditCardRecord {
   return {
@@ -18,6 +19,7 @@ function toRecord(row: {
     fixedClosureDay: row.fixedClosureDay,
     dueDayOfMonth: row.dueDayOfMonth,
     alwaysNextMonth: row.alwaysNextMonth,
+    closureNextMonth: row.closureNextMonth,
     createdAt: row.createdAt,
   };
 }
@@ -52,6 +54,7 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
         fixedClosureDay: card.fixedClosureDay,
         dueDayOfMonth: card.dueDayOfMonth,
         alwaysNextMonth: card.alwaysNextMonth,
+        closureNextMonth: card.closureNextMonth,
       },
     });
     return toRecord(row);
@@ -66,6 +69,7 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
         fixedClosureDay: card.fixedClosureDay,
         dueDayOfMonth: card.dueDayOfMonth,
         alwaysNextMonth: card.alwaysNextMonth,
+        closureNextMonth: card.closureNextMonth,
       },
     });
     return toRecord(row);

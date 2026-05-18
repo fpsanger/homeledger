@@ -11,6 +11,7 @@ function makeRepo(overrides: Partial<ICreditCardRepository> = {}): ICreditCardRe
       fixedClosureDay: 25,
       dueDayOfMonth: 10,
       alwaysNextMonth: false,
+      closureNextMonth: false,
       createdAt: new Date(),
     } as CreditCardRecord),
     update: jest.fn(),
@@ -21,6 +22,7 @@ function makeRepo(overrides: Partial<ICreditCardRepository> = {}): ICreditCardRe
     setClosure: jest.fn(),
     findClosure: jest.fn(),
     findClosuresByCard: jest.fn(),
+    deleteClosure: jest.fn(),
     ...overrides,
   };
 }
@@ -35,6 +37,7 @@ describe("createCreditCardUseCase", () => {
         fixedClosureDay: 25,
         dueDayOfMonth: 10,
         alwaysNextMonth: false,
+        closureNextMonth: false,
       },
       repo,
     );
@@ -52,6 +55,7 @@ describe("createCreditCardUseCase", () => {
           fixedClosureDay: 25,
           dueDayOfMonth: 10,
           alwaysNextMonth: false,
+          closureNextMonth: false,
         },
         repo,
       ),

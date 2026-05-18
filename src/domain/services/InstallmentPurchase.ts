@@ -33,10 +33,14 @@ type ResolveFirstDueMonthInput = {
   closureDay: number;
   alwaysNextMonth: boolean;
   closureInPreviousMonth?: boolean;
+  closureNextMonth?: boolean;
 };
 
 export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): { year: number; month: number } {
-  const shiftNext = input.alwaysNextMonth || input.closureInPreviousMonth || input.purchaseDay >= input.closureDay;
+  const shiftNext =
+    input.alwaysNextMonth ||
+    input.closureInPreviousMonth ||
+    (!input.closureNextMonth && input.purchaseDay >= input.closureDay);
   if (!shiftNext) return { year: input.purchaseYear, month: input.purchaseMonth };
 
   // When closure is in the previous month and the purchase is on/after the closure day,
@@ -62,6 +66,7 @@ type CreateInstallmentsInput = {
   closureDay: number;
   alwaysNextMonth: boolean;
   closureInPreviousMonth?: boolean;
+  closureNextMonth?: boolean;
 };
 
 export function createInstallments(input: CreateInstallmentsInput): InstallmentDraft[] {
@@ -83,6 +88,7 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
     closureDay: input.closureDay,
     alwaysNextMonth: input.alwaysNextMonth,
     closureInPreviousMonth: input.closureInPreviousMonth,
+    closureNextMonth: input.closureNextMonth,
   });
 
   // Convert first due to absolute month index for arithmetic
@@ -123,6 +129,7 @@ type CreateInstallmentPurchaseInput = {
   closureDay: number;
   alwaysNextMonth: boolean;
   closureInPreviousMonth?: boolean;
+  closureNextMonth?: boolean;
 };
 
 type InstallmentPurchaseResult = {

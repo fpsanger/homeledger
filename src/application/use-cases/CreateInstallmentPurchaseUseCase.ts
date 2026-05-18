@@ -57,6 +57,7 @@ export async function createInstallmentPurchaseUseCase(
     closureDay,
     closureInPreviousMonth,
     alwaysNextMonth: card.alwaysNextMonth,
+    closureNextMonth: card.closureNextMonth,
   });
 
   return repo.save(purchase, installments);

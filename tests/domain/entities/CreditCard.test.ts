@@ -7,6 +7,7 @@ const baseFixed = {
   fixedClosureDay: 25,
   dueDayOfMonth: 10,
   alwaysNextMonth: false,
+  closureNextMonth: false,
 };
 
 const baseVariable = {
@@ -16,6 +17,7 @@ const baseVariable = {
   fixedClosureDay: null,
   dueDayOfMonth: 5,
   alwaysNextMonth: false,
+  closureNextMonth: false,
 };
 
 describe("createCreditCard", () => {

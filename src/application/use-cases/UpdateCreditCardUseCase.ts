@@ -8,6 +8,7 @@ type Input = {
   fixedClosureDay: number | null;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
 };
 
 export async function updateCreditCardUseCase(

@@ -16,6 +16,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         fixedClosureDay: body.fixedClosureDay ?? null,
         dueDayOfMonth: body.dueDayOfMonth,
         alwaysNextMonth: body.alwaysNextMonth ?? false,
+        closureNextMonth: body.closureNextMonth ?? false,
       },
       creditCard,
     );

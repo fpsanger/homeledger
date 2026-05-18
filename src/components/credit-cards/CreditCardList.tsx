@@ -19,6 +19,7 @@ type CreditCard = {
   fixedClosureDay: number | null;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
 };
 
 type Props = { initialCards: CreditCard[] };
@@ -184,6 +185,11 @@ function CreditCardRow({
             {card.alwaysNextMonth && (
               <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
                 1ª parcela → mês seguinte
+              </span>
+            )}
+            {card.closureNextMonth && (
+              <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                Fechamento no mês seguinte
               </span>
             )}
           </div>

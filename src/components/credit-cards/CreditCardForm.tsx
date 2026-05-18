@@ -14,6 +14,7 @@ type CreditCard = {
   fixedClosureDay: number | null;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
 };
 
 type Props = {
@@ -28,6 +29,7 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
   const [fixedClosureDay, setFixedClosureDay] = useState(String(card?.fixedClosureDay ?? ""));
   const [dueDayOfMonth, setDueDayOfMonth] = useState(String(card?.dueDayOfMonth ?? ""));
   const [alwaysNextMonth, setAlwaysNextMonth] = useState(card?.alwaysNextMonth ?? false);
+  const [closureNextMonth, setClosureNextMonth] = useState(card?.closureNextMonth ?? false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,6 +48,7 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
         fixedClosureDay: closureType === "FIXED" ? parseInt(fixedClosureDay, 10) : null,
         dueDayOfMonth: parseInt(dueDayOfMonth, 10),
         alwaysNextMonth,
+        closureNextMonth,
       }),
     });
 
@@ -87,6 +90,10 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
       <div className="flex items-center gap-2">
         <input id="cc-always-next" type="checkbox" checked={alwaysNextMonth} onChange={(e) => setAlwaysNextMonth(e.target.checked)} />
         <Label htmlFor="cc-always-next">Primeira parcela sempre vai para o mês seguinte</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <input id="cc-closure-next-month" type="checkbox" checked={closureNextMonth} onChange={(e) => setClosureNextMonth(e.target.checked)} />
+        <Label htmlFor="cc-closure-next-month">Dia de fechamento é no mês seguinte à compra</Label>
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={loading}>{loading ? "Salvando…" : card ? "Atualizar" : "Adicionar Cartão"}</Button>

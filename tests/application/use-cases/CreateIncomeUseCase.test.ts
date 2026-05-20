@@ -86,10 +86,11 @@ describe("CreateIncomeUseCase", () => {
 
     const result = await createIncomeUseCase(baseInput, transactionRepo, categoryRepo);
 
-    expect(result.id).toBe("inc-1");
-    expect(result.type).toBe("INCOME");
-    expect(result.amount).toBe(5000);
-    expect(result.source).toBe("SALARY");
+    expect(result.record.id).toBe("inc-1");
+    expect(result.record.type).toBe("INCOME");
+    expect(result.record.amount).toBe(5000);
+    expect(result.record.source).toBe("SALARY");
+    expect(result.isDuplicate).toBe(false);
   });
 
   it("saves and returns the income when categoryId is a leaf", async () => {
@@ -102,7 +103,7 @@ describe("CreateIncomeUseCase", () => {
       categoryRepo,
     );
 
-    expect(result.categoryId).toBe("cat-leaf");
+    expect(result.record.categoryId).toBe("cat-leaf");
   });
 
   it("throws when categoryId is a non-leaf category", async () => {
@@ -156,5 +157,53 @@ describe("CreateIncomeUseCase", () => {
     await expect(
       createIncomeUseCase({ ...baseInput, source: "" as never }, transactionRepo, categoryRepo),
     ).rejects.toThrow("Source is required");
+  });
+
+  it("returns isDuplicate=true when same income exists on same day", async () => {
+    const existing: TransactionRecord = {
+      id: "inc-existing",
+      personId: "person-1",
+      type: "INCOME",
+      amount: 5000,
+      date: new Date("2026-05-01"),
+      description: "Other salary",
+      paymentMethod: null,
+      source: "SALARY",
+      categoryId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const transactionRepo = makeTransactionRepo({
+      findByPersonAndMonth: async () => [existing],
+    });
+    const categoryRepo = makeCategoryRepo([]);
+
+    const result = await createIncomeUseCase(baseInput, transactionRepo, categoryRepo);
+    expect(result.isDuplicate).toBe(true);
+    expect(result.record.id).toBe("inc-1");
+  });
+
+  it("returns isDuplicate=false when same amount but different day", async () => {
+    const existing: TransactionRecord = {
+      id: "inc-existing",
+      personId: "person-1",
+      type: "INCOME",
+      amount: 5000,
+      date: new Date("2026-05-02"),
+      description: "Other salary",
+      paymentMethod: null,
+      source: "SALARY",
+      categoryId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const transactionRepo = makeTransactionRepo({
+      findByPersonAndMonth: async () => [existing],
+    });
+    const categoryRepo = makeCategoryRepo([]);
+
+    const result = await createIncomeUseCase(baseInput, transactionRepo, categoryRepo);
+    expect(result.isDuplicate).toBe(false);
+    expect(result.record.id).toBe("inc-1");
   });
 });

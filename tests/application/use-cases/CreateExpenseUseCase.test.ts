@@ -86,9 +86,10 @@ describe("CreateExpenseUseCase", () => {
 
     const result = await createExpenseUseCase(baseInput, transactionRepo, categoryRepo);
 
-    expect(result.id).toBe("exp-1");
-    expect(result.type).toBe("EXPENSE");
-    expect(result.amount).toBe(50);
+    expect(result.record.id).toBe("exp-1");
+    expect(result.record.type).toBe("EXPENSE");
+    expect(result.record.amount).toBe(50);
+    expect(result.isDuplicate).toBe(false);
   });
 
   it("saves and returns the expense when categoryId is a leaf", async () => {
@@ -101,8 +102,8 @@ describe("CreateExpenseUseCase", () => {
       categoryRepo,
     );
 
-    expect(result.id).toBe("exp-1");
-    expect(result.categoryId).toBe("cat-leaf");
+    expect(result.record.id).toBe("exp-1");
+    expect(result.record.categoryId).toBe("cat-leaf");
   });
 
   it("throws when categoryId is a non-leaf category", async () => {
@@ -147,5 +148,53 @@ describe("CreateExpenseUseCase", () => {
     await expect(
       createExpenseUseCase({ ...baseInput, amount: -10 }, transactionRepo, categoryRepo),
     ).rejects.toThrow("Amount must be positive");
+  });
+
+  it("returns isDuplicate=true when same expense exists on same day", async () => {
+    const existing: TransactionRecord = {
+      id: "exp-existing",
+      personId: "person-1",
+      type: "EXPENSE",
+      amount: 50,
+      date: new Date("2026-05-04"),
+      description: "Other lunch",
+      paymentMethod: "CASH",
+      source: null,
+      categoryId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const transactionRepo = makeTransactionRepo({
+      findByPersonAndMonth: async () => [existing],
+    });
+    const categoryRepo = makeCategoryRepo([]);
+
+    const result = await createExpenseUseCase(baseInput, transactionRepo, categoryRepo);
+    expect(result.isDuplicate).toBe(true);
+    expect(result.record.id).toBe("exp-1");
+  });
+
+  it("returns isDuplicate=false when same amount but different day", async () => {
+    const existing: TransactionRecord = {
+      id: "exp-existing",
+      personId: "person-1",
+      type: "EXPENSE",
+      amount: 50,
+      date: new Date("2026-05-05"),
+      description: "Other lunch",
+      paymentMethod: "CASH",
+      source: null,
+      categoryId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const transactionRepo = makeTransactionRepo({
+      findByPersonAndMonth: async () => [existing],
+    });
+    const categoryRepo = makeCategoryRepo([]);
+
+    const result = await createExpenseUseCase(baseInput, transactionRepo, categoryRepo);
+    expect(result.isDuplicate).toBe(false);
+    expect(result.record.id).toBe("exp-1");
   });
 });

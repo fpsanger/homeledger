@@ -42,6 +42,7 @@ type Installment = {
   purchaseDate?: Date | string;
   numberOfInstallments?: number;
   creditCardId?: string | null;
+  purchaseTotalAmount?: number;
 };
 
 type Props = {
@@ -152,7 +153,7 @@ export function TransactionPageClient({
             initialValues={{
               type: "credit",
               personId: editingPurchase.personId ?? "",
-              amount: formatAmountBR(editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
+              amount: formatAmountBR(editingPurchase.purchaseTotalAmount ?? editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
               date: editingPurchase.purchaseDate ? toDateInput(editingPurchase.purchaseDate) : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
               paymentMethod: "CASH",
               source: "SALARY",

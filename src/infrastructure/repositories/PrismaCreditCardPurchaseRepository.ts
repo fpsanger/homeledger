@@ -46,8 +46,10 @@ function installmentToRecord(row: {
     personId?: string;
     creditCardId?: string | null;
     numberOfInstallments?: number;
+    totalAmount?: { toNumber(): number } | number;
   } | null;
 }): InstallmentRecord {
+  const rawTotal = row.creditCardPurchase?.totalAmount;
   return {
     id: row.id,
     creditCardPurchaseId: row.creditCardPurchaseId,
@@ -63,6 +65,7 @@ function installmentToRecord(row: {
     personId: row.creditCardPurchase?.personId,
     creditCardId: row.creditCardPurchase?.creditCardId,
     numberOfInstallments: row.creditCardPurchase?.numberOfInstallments,
+    purchaseTotalAmount: rawTotal == null ? undefined : typeof rawTotal === "number" ? rawTotal : rawTotal.toNumber(),
   };
 }
 
@@ -101,7 +104,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   async findAllInstallmentsByMonth(year: number, month: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, dueMonth: month, isCanceled: false },
-      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true, totalAmount: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -113,7 +116,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   ): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
       where: { dueYear: year, dueMonth: month, isCanceled: false, creditCardPurchase: { personId } },
-      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true, totalAmount: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -123,7 +126,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     const lt = new Date(Date.UTC(year, month, 1));
     const rows = await this.prisma.installment.findMany({
       where: { installmentNumber: 1, isCanceled: false, creditCardPurchase: { purchaseDate: { gte, lt } } },
-      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true, totalAmount: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -133,7 +136,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     const lt = new Date(Date.UTC(year, month, 1));
     const rows = await this.prisma.installment.findMany({
       where: { installmentNumber: 1, isCanceled: false, creditCardPurchase: { personId, purchaseDate: { gte, lt } } },
-      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true } } },
+      include: { creditCardPurchase: { select: { categoryId: true, description: true, purchaseDate: true, personId: true, creditCardId: true, numberOfInstallments: true, totalAmount: true } } },
     });
     return rows.map(installmentToRecord);
   }
@@ -158,16 +161,42 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     id: string,
     data: Pick<CreditCardPurchaseRecord, "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId">,
   ): Promise<void> {
-    await this.prisma.creditCardPurchase.update({
-      where: { id },
-      data: {
-        description: data.description,
-        totalAmount: data.totalAmount,
-        purchaseDate: data.purchaseDate,
-        categoryId: data.categoryId,
-        creditCardId: data.creditCardId,
-      },
+    
+    const installments = await this.prisma.installment.findMany({
+      where: { creditCardPurchaseId: id, isCanceled: false },
+      orderBy: { installmentNumber: "asc" },
     });
+
+    const count = installments.length;
+    const base = count > 0 ? Math.floor((data.totalAmount / count) * 100) / 100 : 0;
+
+    if (count > 0 && base <= 0) {
+      throw new Error("Valor total muito pequeno para o número de parcelas");
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.creditCardPurchase.update({
+        where: { id },
+        data: {
+          description: data.description,
+          totalAmount: data.totalAmount,
+          purchaseDate: data.purchaseDate,
+          categoryId: data.categoryId,
+          creditCardId: data.creditCardId,
+        },
+      }),
+      ...installments.map((inst, i) =>
+        this.prisma.installment.update({
+          where: { id: inst.id },
+          data: {
+            amount:
+              i === count - 1
+                ? Math.round((data.totalAmount - base * (count - 1)) * 100) / 100
+                : base,
+          },
+        }),
+      ),
+    ]);
   }
 
   async deletePurchase(id: string): Promise<void> {
@@ -209,7 +238,37 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   }
 
   async updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void> {
-    const installment = await this.prisma.installment.findUniqueOrThrow({ where: { id } });
+    const installment = await this.prisma.installment.findUniqueOrThrow({
+      where: { id },
+      include: { creditCardPurchase: { select: { totalAmount: true } } },
+    });
+
+    const purchaseTotalAmount =
+      typeof installment.creditCardPurchase.totalAmount === "number"
+        ? installment.creditCardPurchase.totalAmount
+        : installment.creditCardPurchase.totalAmount.toNumber();
+
+    const allInstallments = await this.prisma.installment.findMany({
+      where: { creditCardPurchaseId: installment.creditCardPurchaseId, isCanceled: false },
+      orderBy: { installmentNumber: "asc" },
+    });
+
+    const paidAmount = allInstallments
+      .filter((i) => i.id !== id && i.isPaid)
+      .reduce((sum, i) => sum + (typeof i.amount === "number" ? i.amount : i.amount.toNumber()), 0);
+
+    const futureInstallments = allInstallments.filter(
+      (i) => i.id !== id && !i.isPaid,
+    );
+
+    if (fields.amount > purchaseTotalAmount) {
+      throw new Error("O valor da parcela não pode ser maior que o total da compra");
+    }
+
+    const remainingAmount = purchaseTotalAmount - paidAmount - fields.amount;
+    const count = futureInstallments.length;
+    const base = count > 0 ? Math.floor((remainingAmount / count) * 100) / 100 : 0;
+
     await this.prisma.$transaction([
       this.prisma.installment.update({
         where: { id },
@@ -219,6 +278,17 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
         where: { id: installment.creditCardPurchaseId },
         data: { description: fields.description },
       }),
+      ...futureInstallments.map((inst, i) =>
+        this.prisma.installment.update({
+          where: { id: inst.id },
+          data: {
+            amount:
+              i === count - 1
+                ? Math.round((remainingAmount - base * (count - 1)) * 100) / 100
+                : base,
+          },
+        }),
+      ),
     ]);
   }
 

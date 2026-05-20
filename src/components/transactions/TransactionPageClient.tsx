@@ -73,7 +73,6 @@ export function TransactionPageClient({
   installments,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [tab, setTab] = useState<"transactions" | "installments">("transactions");
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
@@ -166,51 +165,14 @@ export function TransactionPageClient({
         )}
       </Dialog>
 
-      <div className="flex gap-1.5">
-        <button
-          type="button"
-          onClick={() => setTab("transactions")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
-            tab === "transactions"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-          }`}
-        >
-          Transações
-          {transactions.length > 0 && (
-            <span className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
-              tab === "transactions"
-                ? "bg-primary-foreground/20 text-primary-foreground"
-                : "bg-muted text-muted-foreground"
-            }`}>
-              {transactions.length}
-            </span>
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("installments")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
-            tab === "installments"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-          }`}
-        >
-          Parcelas
-          {installments.length > 0 && (
-            <span className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
-              tab === "installments"
-                ? "bg-primary-foreground/20 text-primary-foreground"
-                : "bg-muted text-muted-foreground"
-            }`}>
-              {installments.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      <div>
-        {tab === "transactions" ? (
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Transações
+            {transactions.length > 0 && (
+              <span className="ml-2 text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">{transactions.length}</span>
+            )}
+          </h2>
           <TransactionTable
             transactions={transactions}
             installmentExpenses={installments.filter((i) => !i.isCanceled).reduce((s, i) => s + i.amount, 0)}
@@ -218,14 +180,22 @@ export function TransactionPageClient({
             categories={categories}
             onEdit={(t) => setEditingTransaction(t)}
           />
-        ) : (
-          <InstallmentTable
-            installments={installments}
-            people={people}
-            creditCards={creditCards}
-            onEditInstallment={(inst) => setEditingInstallment(inst)}
-            onEditPurchase={(inst) => setEditingPurchase(inst)}
-          />
+        </div>
+
+        {installments.length > 0 && (
+          <div className="flex flex-col gap-4">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Parcelas
+              <span className="ml-2 text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">{installments.length}</span>
+            </h2>
+            <InstallmentTable
+              installments={installments}
+              people={people}
+              creditCards={creditCards}
+              onEditInstallment={(inst) => setEditingInstallment(inst)}
+              onEditPurchase={(inst) => setEditingPurchase(inst)}
+            />
+          </div>
         )}
       </div>
     </div>

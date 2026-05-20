@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, CreditCard, Wallet, CheckCircle2, Clock } from "lucide-react";
+import { MoreHorizontal, CreditCard, Wallet, CheckCircle2, Clock, ChevronDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -97,6 +97,7 @@ export function InstallmentTable({
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
 
@@ -160,12 +161,22 @@ export function InstallmentTable({
   return (
     <div className="flex flex-col gap-4">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <SummaryCard icon={Wallet} label="Total" value={fmt(total)} colorClass="text-foreground" />
-        <SummaryCard icon={CheckCircle2} label="Pago" value={fmt(paid)} colorClass="text-green-600" />
-        <SummaryCard icon={CreditCard} label="Restante" value={fmt(remaining)} colorClass="text-amber-600" />
-        <SummaryCard icon={Clock} label="Pendentes" value={String(pendingCount)} colorClass="text-muted-foreground" />
-      </div>
+      <button
+        type="button"
+        onClick={() => setSummaryOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+      >
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`} />
+        {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
+      </button>
+      {summaryOpen && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <SummaryCard icon={Wallet} label="Total" value={fmt(total)} colorClass="text-foreground" />
+          <SummaryCard icon={CheckCircle2} label="Pago" value={fmt(paid)} colorClass="text-green-600" />
+          <SummaryCard icon={CreditCard} label="Restante" value={fmt(remaining)} colorClass="text-amber-600" />
+          <SummaryCard icon={Clock} label="Pendentes" value={String(pendingCount)} colorClass="text-muted-foreground" />
+        </div>
+      )}
 
       {/* Filter */}
       <div className="flex flex-wrap gap-2">

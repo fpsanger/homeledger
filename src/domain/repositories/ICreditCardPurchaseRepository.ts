@@ -57,4 +57,5 @@ export interface ICreditCardPurchaseRepository {
   updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void>;
   updateInstallments(installments: InstallmentRecord[]): Promise<void>;
   findAllPurchasesWithInstallments(personId?: string): Promise<CreditCardPurchaseWithInstallments[]>;
+  findPurchasesByPersonAndMonth(personId: string, year: number, month: number): Promise<CreditCardPurchaseRecord[]>;
 }

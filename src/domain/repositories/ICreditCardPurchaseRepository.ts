@@ -25,6 +25,7 @@ export interface InstallmentRecord {
   personId?: string;
   creditCardId?: string | null;
   numberOfInstallments?: number;
+  purchaseTotalAmount?: number;
 }
 
 export interface CreditCardPurchaseWithInstallments extends CreditCardPurchaseRecord {

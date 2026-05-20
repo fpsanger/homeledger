@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
@@ -76,7 +77,7 @@ function EditForm({
 }) {
   const [form, setForm] = useState<EditState>({
     description: purchase.description,
-    totalAmount: String(purchase.totalAmount),
+    totalAmount: formatAmountBR(purchase.totalAmount),
     purchaseDate: purchase.purchaseDate.split("T")[0],
     creditCardId: purchase.creditCardId ?? "",
   });
@@ -116,7 +117,7 @@ function EditForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         description: form.description,
-        totalAmount: parseFloat(form.totalAmount),
+        totalAmount: parseCurrencyBR(form.totalAmount),
         purchaseDate: form.purchaseDate,
         categoryId: categoryId || null,
         creditCardId: form.creditCardId || null,

@@ -22,6 +22,7 @@ type Installment = {
   personId?: string;
   creditCardId?: string | null;
   categoryId?: string | null;
+  purchaseTotalAmount?: number;
 };
 
 type Props = {
@@ -116,6 +117,12 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
             <span className="text-muted-foreground">Valor atual</span>
             <p className="font-medium tabular-nums">{fmtCurrency(installment.amount)}</p>
           </div>
+          {installment.purchaseTotalAmount != null && (
+            <div>
+              <span className="text-muted-foreground">Total da compra</span>
+              <p className="font-medium tabular-nums">{fmtCurrency(installment.purchaseTotalAmount)}</p>
+            </div>
+          )}
         </div>
       </div>
 

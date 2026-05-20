@@ -1,27 +1,30 @@
 # Personal Finance System
 
-This system helps families or shared groups manage personal finances in a simple way.
+This system helps a single household manage personal finances in a simple way.
 
-The main concept is a shared workspace. A user can create a workspace and invite other users by email.
+There is no login or invitation. The household has a fixed set of people. Each financial record is linked to a person.
 
-Inside a workspace, members can register incomes, expenses, credit card purchases, installments, recurring transactions and categories.
+People in the household can register incomes, expenses, credit card purchases, installments, recurring transactions and categories.
 
 The system must show a monthly financial view where the user can see all transactions that affect that month, including credit card installments.
 
 # Business Rules
 
-## Workspace
+## Household
 
-- Every financial record belongs to a workspace.
-- A user can own one or more workspaces.
-- A user can be invited to another workspace by email.
-- A workspace can have many members.
-- A member can have a role: Owner, Admin or Member.
+- There is one household. No workspaces, no login, no invitations.
+- A household has one or more people (e.g. Felipe, Ana).
+- People are managed directly — no accounts or passwords.
+
+## People
+
+- A person has a name.
+- Every financial record belongs to a person.
 
 ## Transactions
 
 - A transaction can be Income or Expense.
-- A transaction belongs to one workspace.
+- A transaction belongs to one person.
 - A transaction may belong to one category.
 - A transaction has an amount, date, description and payment method.
 

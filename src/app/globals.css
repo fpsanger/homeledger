@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 150 20% 97%;
+  --foreground: 215 30% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 30% 12%;
+  --primary: 158 80% 22%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 215 20% 94%;
+  --secondary-foreground: 215 30% 12%;
+  --muted: 215 15% 93%;
+  --muted-foreground: 215 15% 45%;
+  --accent: 158 65% 88%;
+  --accent-foreground: 158 80% 16%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 215 20% 87%;
+  --input: 215 20% 87%;
+  --ring: 158 72% 28%;
+  --radius: 0.5rem;
+  --income: 158 72% 28%;
+  --expense: 0 84% 60%;
+}
+
+.dark {
+  --background: 215 28% 8%;
+  --foreground: 0 0% 96%;
+  --card: 215 25% 11%;
+  --card-foreground: 0 0% 96%;
+  --primary: 158 60% 40%;
+  --primary-foreground: 215 30% 8%;
+  --secondary: 215 20% 16%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 215 20% 16%;
+  --muted-foreground: 215 10% 58%;
+  --accent: 158 40% 18%;
+  --accent-foreground: 158 60% 60%;
+  --destructive: 0 62.8% 40%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 215 20% 18%;
+  --input: 215 20% 18%;
+  --ring: 158 60% 40%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% -10%, hsl(158 60% 92% / 0.6) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, hsl(215 40% 92% / 0.4) 0%, transparent 60%);
+  color: hsl(var(--foreground));
+  font-feature-settings: "tnum" 1;
+  min-height: 100vh;
+}
+
+.dark body,
+.dark {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% -10%, hsl(158 40% 12% / 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, hsl(215 30% 12% / 0.4) 0%, transparent 60%);
+}
+
+.amount-positive {
+  color: hsl(var(--income));
+}
+
+.amount-negative {
+  color: hsl(var(--expense));
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
+  }
+}
+
+.amount-display {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+/* Micro-interactions */
+button:active:not([disabled]) {
+  transform: scale(0.97);
+}
+
+a {
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+tr.row-hover {
+  transition: background-color 0.1s ease;
+}
+tr.row-hover:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}

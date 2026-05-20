@@ -1,73 +1,178 @@
-# Project Instructions
+# Project
+
+The tech stack of this project is:
+
+- TypeScript
+- Next.js 14 (App Router)
+- PostgreSQL
+- Prisma ORM
+- Docker
+- Biome
+- Jest + ts-jest
+- Migrations
+- Vercel / Neon (future)
+
+---
+
+# Instructions
 
 ## 1. Mandatory Reading
 
-Before any task, ALWAYS read:
+Before working on new features or unclear tasks, read:
 
-- SPEC.md
-- .claude/repo-map.md
-
----
-
-## 2. Skill Usage
-
-Use the correct skill:
-
-- plan-task → new / unclear tasks
-- write-tests → before domain logic
-- implement-task → implementation
-- validate-task → after implementation
+- `SPEC.md`
+- `.claude/repo-map.md`
 
 ---
 
-## 3. Architecture Rules
+## 2. Architecture Rules
 
-- Follow Clean Architecture
-- Domain is independent
+Follow Clean Architecture with the following layers:
+
+- Domain → `src/domain/`
+- Application → `src/application/`
+- Infrastructure → `src/infrastructure/`
+- UI → `src/app/` (Next.js App Router)
+
+### Rules:
+
+- Domain must not depend on any other layer
+- Application depends only on Domain
+- Infrastructure depends on Domain
+- UI depends on Application
 - No cross-layer violations
 
 ---
 
-## 4. Code Rules
+## 3. Code Rules
 
 - Keep code simple
 - Prefer readability over cleverness
-- Avoid duplication
-- Respect single responsibility
+- Avoid duplication (DRY)
+- Respect Single Responsibility Principle (SRP)
+
+---
+
+## 4. Business Logic Definition
+
+Business logic includes:
+
+- Domain rules
+- Core calculations
+- Validation rules tied to the domain
+- Use cases
+
+Business logic MUST live in Domain or Application layers.
 
 ---
 
 ## 5. TDD Rules
 
-- Domain logic MUST start with tests
-- Implementation only after tests
+All **domain logic MUST follow TDD**.
 
-All business logic MUST follow TDD.
+Other layers SHOULD use tests when appropriate.
 
 ### Required flow:
 
-1. Use write-tests skill
-2. Write failing tests
-3. Use implement-task skill
-4. Implement code to pass tests
-5. Use validate-task skill
+1. Write failing tests
+2. Implement the minimal code to pass
+3. Refactor if needed
+4. Validate behavior
+
+### Test location:
+
+Tests mirror domain structure under `/tests/` (not co-located with `src/`).
+
+Example: `src/domain/entities/Category.ts` → `tests/domain/entities/Category.test.ts`
+
+### Test commands:
+
+- Run all: `rtk jest`
+- Run specific file: `rtk jest tests/domain/entities/Category.test.ts`
+- Watch mode: `rtk jest --watch`
 
 ---
 
 ## 6. UI Rules
 
 UI must:
-- collect input
-- display results
+
+- Collect input
+- Display results
 
 UI must NOT:
-- implement business rules
+
+- Contain business logic
+
+UI must interact only with the Application layer.
 
 ---
 
-## 7. Output Rules
+## 7. Error Handling
+
+- Use explicit and meaningful error types
+- Avoid generic errors
+- Domain errors must be predictable and deterministic
+
+---
+
+## 8. Database & Migrations
+
+- All schema changes must go through migrations
+- Migrations must be versioned
+- Never modify the database manually outside migrations
+
+
+---
+## 9. Branch Naming Convention
+
+Branches must follow this pattern:
+
+<type>/<scope>-<short-description>
+
+Types:
+- feature
+- fix
+- refactor
+- chore
+- test
+
+Examples:
+- feature/expenses-add-installments
+- fix/api-null-pointer
+- refactor/domain-cleanup
+
+Rules:
+- use kebab-case
+- keep names short and descriptive
+- no uppercase
+---
+
+## 10. Commits
+
+Use conventional commits:
+
+- feat: new feature
+- fix: bug fix
+- refactor: code improvement
+- test: tests
+- chore: maintenance
+
+---
+
+## 11. Output Rules
 
 - Be concise
 - Be structured
 - Do not over-engineer
-- Add revelant changes to `CHANGELOG.md` files
+- Add relevant changes to `CHANGELOG.md`
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- ALWAYS read graphify-out/GRAPH_REPORT.md before reading any source files, running grep/glob searches, or answering codebase questions. The graph is your primary map of the codebase.
+- IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

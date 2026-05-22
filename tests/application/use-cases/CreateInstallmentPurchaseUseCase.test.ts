@@ -1,6 +1,6 @@
 import { createInstallmentPurchaseUseCase } from "../../../src/application/use-cases/CreateInstallmentPurchaseUseCase";
 import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
-import type { ICreditCardPurchaseRepository } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
+import type { ICreditCardPurchaseRepository, CreditCardPurchaseRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
 import type { CreditCardRecord, CreditCardClosureRecord } from "../../../src/domain/entities/CreditCard";
 
 const BASE_INPUT = {
@@ -69,8 +69,76 @@ function makePurchaseRepo(): ICreditCardPurchaseRepository {
     updateInstallment: jest.fn(),
     updateInstallments: jest.fn(),
     findAllPurchasesWithInstallments: jest.fn(),
+    findPurchasesByPersonAndMonth: jest.fn().mockResolvedValue([]),
   };
 }
+
+const FIXED_CARD: CreditCardRecord = {
+  id: "card-1",
+  name: "Nubank",
+  closureType: "FIXED",
+  fixedClosureDay: 10,
+  dueDayOfMonth: 17,
+  alwaysNextMonth: false,
+  closureNextMonth: false,
+  createdAt: new Date(),
+};
+
+describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
+  it("returns isDuplicate=true when same amount, date, and card exist", async () => {
+    const existingPurchase: CreditCardPurchaseRecord = {
+      id: "purchase-existing",
+      personId: "person-1",
+      creditCardId: "card-1",
+      description: "Other purchase",
+      totalAmount: 100,
+      numberOfInstallments: 1,
+      purchaseDate: new Date("2026-05-04"),
+      categoryId: null,
+      createdAt: new Date(),
+    };
+    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const purchaseRepo = {
+      ...makePurchaseRepo(),
+      findPurchasesByPersonAndMonth: jest.fn().mockResolvedValue([existingPurchase]),
+    };
+
+    const result = await createInstallmentPurchaseUseCase(
+      { ...BASE_INPUT, purchaseDate: new Date("2026-05-04") },
+      purchaseRepo,
+      cardRepo,
+    );
+    expect(result.isDuplicate).toBe(true);
+    expect(result.record.id).toBe("purchase-1");
+  });
+
+  it("returns isDuplicate=false when same amount but different card", async () => {
+    const existingPurchase: CreditCardPurchaseRecord = {
+      id: "purchase-existing",
+      personId: "person-1",
+      creditCardId: "card-2",
+      description: "Other purchase",
+      totalAmount: 100,
+      numberOfInstallments: 1,
+      purchaseDate: new Date("2026-05-04"),
+      categoryId: null,
+      createdAt: new Date(),
+    };
+    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const purchaseRepo = {
+      ...makePurchaseRepo(),
+      findPurchasesByPersonAndMonth: jest.fn().mockResolvedValue([existingPurchase]),
+    };
+
+    const result = await createInstallmentPurchaseUseCase(
+      { ...BASE_INPUT, purchaseDate: new Date("2026-05-04") },
+      purchaseRepo,
+      cardRepo,
+    );
+    expect(result.isDuplicate).toBe(false);
+    expect(result.record.id).toBe("purchase-1");
+  });
+});
 
 describe("createInstallmentPurchaseUseCase — billing month assignment (previousMonth=true)", () => {
   // Card: April billing closes March 27, May billing closes April 28
@@ -89,7 +157,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(4); // April
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -102,7 +170,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(5); // May
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -115,7 +183,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(5); // May
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -128,7 +196,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(6); // June
     expect(installments[0].dueYear).toBe(2026);
   });
@@ -141,7 +209,7 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
       purchaseRepo,
       cardRepo,
     );
-    const installments = (result as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
     expect(installments[0].dueMonth).toBe(6); // June
     expect(installments[0].dueYear).toBe(2026);
   });

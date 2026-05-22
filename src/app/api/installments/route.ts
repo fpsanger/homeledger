@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       creditCardPurchase,
       creditCard,
     );
-    return Response.json(result, { status: 201 });
+    return Response.json({ ...result.record, isDuplicate: result.isDuplicate }, { status: 201 });
   } catch (error) {
     return errorResponse(error);
   }

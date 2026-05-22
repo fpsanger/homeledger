@@ -1,6 +1,7 @@
 import { createInstallmentPurchase } from "../../domain/services/InstallmentPurchase";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
+import { isDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
 
 type Input = {
   id: string;
@@ -52,6 +53,12 @@ export async function createInstallmentPurchaseUseCase(
     }
   }
 
+  const year = input.purchaseDate.getUTCFullYear();
+  const month = input.purchaseDate.getUTCMonth() + 1;
+  const existing = await repo.findPurchasesByPersonAndMonth(input.personId, year, month);
+  const dateStr = input.purchaseDate.toISOString().slice(0, 10);
+  const isDuplicate = isDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId);
+
   const { purchase, installments } = createInstallmentPurchase({
     ...input,
     closureDay,
@@ -60,5 +67,6 @@ export async function createInstallmentPurchaseUseCase(
     closureNextMonth: card.closureNextMonth,
   });
 
-  return repo.save(purchase, installments);
+  const record = await repo.save(purchase, installments);
+  return { record, isDuplicate };
 }

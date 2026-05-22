@@ -316,4 +316,17 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       installments: row.installments.map(installmentToRecord),
     }));
   }
+
+  async findPurchasesByPersonAndMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<CreditCardPurchaseRecord[]> {
+    const gte = new Date(Date.UTC(year, month - 1, 1));
+    const lt = new Date(Date.UTC(year, month, 1));
+    const rows = await this.prisma.creditCardPurchase.findMany({
+      where: { personId, purchaseDate: { gte, lt } },
+    });
+    return rows.map(purchaseToRecord);
+  }
 }

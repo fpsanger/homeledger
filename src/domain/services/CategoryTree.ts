@@ -60,6 +60,18 @@ export function validateIncomeCategory(
   }
 }
 
+export function validateInvestmentCategory(
+  categoryId: string,
+  categories: CategoryRecord[],
+): void {
+  const category = categories.find((c) => c.id === categoryId);
+  if (!category) throw new Error("Category not found");
+
+  if (!isLeafCategory(categoryId, categories)) {
+    throw new Error("Investment must use the most specific category");
+  }
+}
+
 export function computeUpdatedPaths(
   categoryId: string,
   newParent: CategoryRecord | null,

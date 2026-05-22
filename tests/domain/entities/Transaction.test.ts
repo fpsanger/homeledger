@@ -1,4 +1,4 @@
-import { createExpense, createIncome } from "../../../src/domain/entities/Transaction";
+import { createExpense, createIncome, createInvestment } from "../../../src/domain/entities/Transaction";
 
 const baseExpense = {
   id: "txn-1",
@@ -87,6 +87,58 @@ describe("Expense entity", () => {
       for (const method of methods) {
         expect(() => createExpense({ ...baseExpense, paymentMethod: method })).not.toThrow();
       }
+    });
+  });
+});
+
+const baseInvestment = {
+  id: "txn-3",
+  personId: "person-1",
+  amount: 1000.0,
+  date: new Date("2026-05-01"),
+  description: "FGTS investment",
+  categoryId: "cat-inv-1",
+};
+
+describe("Investment entity", () => {
+  describe("createInvestment", () => {
+    it("creates an investment with valid data", () => {
+      const inv = createInvestment(baseInvestment);
+
+      expect(inv.id).toBe("txn-3");
+      expect(inv.type).toBe("INVESTMENT");
+      expect(inv.amount).toBe(1000.0);
+      expect(inv.categoryId).toBe("cat-inv-1");
+    });
+
+    it("always sets source to null", () => {
+      const inv = createInvestment(baseInvestment);
+      expect(inv.source).toBeNull();
+    });
+
+    it("always sets paymentMethod to null", () => {
+      const inv = createInvestment(baseInvestment);
+      expect(inv.paymentMethod).toBeNull();
+    });
+
+    it("throws when personId is missing", () => {
+      expect(() => createInvestment({ ...baseInvestment, personId: "" })).toThrow("Person is required");
+    });
+
+    it("throws when amount is zero", () => {
+      expect(() => createInvestment({ ...baseInvestment, amount: 0 })).toThrow("Amount must be positive");
+    });
+
+    it("throws when amount is negative", () => {
+      expect(() => createInvestment({ ...baseInvestment, amount: -100 })).toThrow("Amount must be positive");
+    });
+
+    it("throws when date is missing", () => {
+      expect(() => createInvestment({ ...baseInvestment, date: null as unknown as Date })).toThrow("Date is required");
+    });
+
+    it("throws when categoryId is missing", () => {
+      expect(() => createInvestment({ ...baseInvestment, categoryId: "" })).toThrow("Category is required");
     });
   });
 });

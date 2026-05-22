@@ -12,7 +12,7 @@ function sameDay(a: Date | string, dateStr: string): boolean {
 
 export function isDuplicateTransaction(
   existing: TransactionRecord[],
-  type: "EXPENSE" | "INCOME",
+  type: "EXPENSE" | "INCOME" | "INVESTMENT",
   amount: number | null,
   date: string | null,
 ): boolean {

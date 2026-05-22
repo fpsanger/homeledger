@@ -77,7 +77,7 @@ export function CategoryForm({ categories, defaultParentId, onSuccess }: Props) 
           placeholder="Nenhuma (raiz)"
         />
       </div>
-<div className="flex justify-end gap-2 pt-1">
+      <div className="flex justify-end gap-2 pt-1">
         <Button type="submit" disabled={loading}>
           {loading ? "Adicionando…" : "Adicionar Categoria"}
         </Button>

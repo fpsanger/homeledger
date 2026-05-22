@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
 import { EditInstallmentForm } from "./EditInstallmentForm";
 import { RecurringTransactionForm } from "./RecurringTransactionForm";
+import { InvestmentForm } from "./InvestmentForm";
 import { formatAmountBR } from "@/lib/utils";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { TransactionTable } from "@/components/monthly-view/TransactionTable";
@@ -19,7 +20,7 @@ type CreditCard = { id: string; name: string };
 type Transaction = {
   id: string;
   personId: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "INVESTMENT";
   amount: number;
   date: Date | string;
   description: string;
@@ -76,6 +77,7 @@ export function TransactionPageClient({
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
+  const [investmentDialogOpen, setInvestmentDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
@@ -89,6 +91,10 @@ export function TransactionPageClient({
             <Plus className="w-4 h-4" />
             Recorrente
           </Button>
+          <Button variant="outline" onClick={() => setInvestmentDialogOpen(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            Investimento
+          </Button>
           <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
             <Plus className="w-4 h-4" />
             Adicionar Transação
@@ -101,6 +107,14 @@ export function TransactionPageClient({
           people={people}
           categories={categories}
           onSuccess={() => setRecurringDialogOpen(false)}
+        />
+      </Dialog>
+
+      <Dialog open={investmentDialogOpen} onClose={() => setInvestmentDialogOpen(false)} title="Adicionar Investimento">
+        <InvestmentForm
+          people={people}
+          categories={categories}
+          onSuccess={() => setInvestmentDialogOpen(false)}
         />
       </Dialog>
 
@@ -125,7 +139,7 @@ export function TransactionPageClient({
             creditCards={creditCards}
             editMode={{ transactionId: editingTransaction.id }}
             initialValues={{
-              type: editingTransaction.type === "INCOME" ? "income" : "expense",
+              type: editingTransaction.type === "INCOME" ? "income" : editingTransaction.type === "INVESTMENT" ? "expense" : "expense",
               personId: editingTransaction.personId,
               amount: formatAmountBR(editingTransaction.amount),
               date: toDateInput(editingTransaction.date),

@@ -3,7 +3,7 @@ export type IncomeSource = "SALARY" | "FREELANCE" | "RENTAL" | "INVESTMENT" | "O
 export interface TransactionRecord {
   id: string;
   personId: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "INVESTMENT";
   amount: number;
   date: Date;
   description: string;

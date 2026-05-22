@@ -21,7 +21,7 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 type Transaction = {
   id: string;
   personId: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "INVESTMENT";
   amount: number;
   date: Date | string;
   description: string;
@@ -282,9 +282,16 @@ export function TransactionTable({
                         {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums text-sm">
-                        <span className={t.type === "EXPENSE" ? "text-red-600" : "text-green-600"}>
-                          {t.type === "EXPENSE" ? "-" : "+"}{fmtCurrency(t.amount)}
-                        </span>
+                        {t.type === "INVESTMENT" ? (
+                          <span className="inline-flex items-center gap-1.5 text-violet-600">
+                            <span className="text-xs font-normal bg-violet-100 text-violet-700 rounded px-1.5 py-0.5">INV</span>
+                            {fmtCurrency(t.amount)}
+                          </span>
+                        ) : (
+                          <span className={t.type === "EXPENSE" ? "text-red-600" : "text-green-600"}>
+                            {t.type === "EXPENSE" ? "-" : "+"}{fmtCurrency(t.amount)}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu

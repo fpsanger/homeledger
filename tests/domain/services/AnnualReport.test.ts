@@ -110,4 +110,29 @@ describe("buildAnnualReport", () => {
     const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
     expect(result.totalIncome).toBe(0);
   });
+
+  it("excludes INVESTMENT transactions from income", () => {
+    const transactions = [
+      makeTransaction({ id: "t1", type: "INVESTMENT" as const, amount: 500, date: new Date("2025-03-01") }),
+    ];
+    const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
+    expect(result.months[2].income).toBe(0);
+  });
+
+  it("excludes INVESTMENT transactions from expenses", () => {
+    const transactions = [
+      makeTransaction({ id: "t1", type: "INVESTMENT" as const, amount: 500, date: new Date("2025-03-01") }),
+    ];
+    const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
+    expect(result.months[2].expenses).toBe(0);
+  });
+
+  it("does not affect balance when INVESTMENT transactions present", () => {
+    const transactions = [
+      makeTransaction({ id: "t1", type: "INCOME", amount: 1000, date: new Date("2025-04-01") }),
+      makeTransaction({ id: "t2", type: "INVESTMENT" as const, amount: 300, date: new Date("2025-04-01") }),
+    ];
+    const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
+    expect(result.months[3].balance).toBe(1000);
+  });
 });

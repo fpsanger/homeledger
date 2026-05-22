@@ -2,14 +2,70 @@ import { getCreditCardBillUseCase } from "../../../src/application/use-cases/Get
 import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
 import type { ICreditCardPurchaseRepository } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
 
-const card1 = { id: "card-1", name: "Nubank", closureType: "FIXED" as const, fixedClosureDay: 25, dueDayOfMonth: 10, alwaysNextMonth: false, closureNextMonth: false, createdAt: new Date() };
-const card2 = { id: "card-2", name: "Itaú", closureType: "FIXED" as const, fixedClosureDay: 20, dueDayOfMonth: 5, alwaysNextMonth: false, closureNextMonth: false, createdAt: new Date() };
+const card1 = {
+  id: "card-1",
+  name: "Nubank",
+  closureType: "FIXED" as const,
+  fixedClosureDay: 25,
+  dueDayOfMonth: 10,
+  alwaysNextMonth: false,
+  closureNextMonth: false,
+  createdAt: new Date(),
+};
+const card2 = {
+  id: "card-2",
+  name: "Itaú",
+  closureType: "FIXED" as const,
+  fixedClosureDay: 20,
+  dueDayOfMonth: 5,
+  alwaysNextMonth: false,
+  closureNextMonth: false,
+  createdAt: new Date(),
+};
 
-const installment1 = { id: "i-1", creditCardPurchaseId: "p-1", installmentNumber: 1, amount: 100, dueYear: 2026, dueMonth: 5, isPaid: false, isCanceled: false };
-const installment2 = { id: "i-2", creditCardPurchaseId: "p-2", installmentNumber: 1, amount: 200, dueYear: 2026, dueMonth: 5, isPaid: false, isCanceled: false };
+const installment1 = {
+  id: "i-1",
+  creditCardPurchaseId: "p-1",
+  installmentNumber: 1,
+  amount: 100,
+  dueYear: 2026,
+  dueMonth: 5,
+  isPaid: false,
+  isCanceled: false,
+};
+const installment2 = {
+  id: "i-2",
+  creditCardPurchaseId: "p-2",
+  installmentNumber: 1,
+  amount: 200,
+  dueYear: 2026,
+  dueMonth: 5,
+  isPaid: false,
+  isCanceled: false,
+};
 
-const purchase1 = { id: "p-1", personId: "person-1", creditCardId: "card-1", description: "TV", totalAmount: 1200, numberOfInstallments: 12, purchaseDate: new Date("2026-04-10"), categoryId: null, createdAt: new Date() };
-const purchase2 = { id: "p-2", personId: "person-1", creditCardId: "card-2", description: "Phone", totalAmount: 200, numberOfInstallments: 2, purchaseDate: new Date("2026-04-10"), categoryId: null, createdAt: new Date() };
+const purchase1 = {
+  id: "p-1",
+  personId: "person-1",
+  creditCardId: "card-1",
+  description: "TV",
+  totalAmount: 1200,
+  numberOfInstallments: 12,
+  purchaseDate: new Date("2026-04-10"),
+  categoryId: null,
+  createdAt: new Date(),
+};
+const purchase2 = {
+  id: "p-2",
+  personId: "person-1",
+  creditCardId: "card-2",
+  description: "Phone",
+  totalAmount: 200,
+  numberOfInstallments: 2,
+  purchaseDate: new Date("2026-04-10"),
+  categoryId: null,
+  createdAt: new Date(),
+};
 
 function makeCreditCardRepo(): ICreditCardRepository {
   return {

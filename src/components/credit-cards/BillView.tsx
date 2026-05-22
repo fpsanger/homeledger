@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronDown, ChevronRight, CreditCard, Package, Receipt, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CreditCard,
+  Package,
+  Receipt,
+  Users,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +54,15 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("pt-BR");
 }
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function SummaryCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <Card className="p-4 flex items-center gap-3">
       <div className="text-muted-foreground">{icon}</div>
@@ -98,15 +114,21 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
     setLoading(false);
   }
 
-  useEffect(() => { load(year, month, personId); }, [year, month, personId]);
+  useEffect(() => {
+    load(year, month, personId);
+  }, [year, month, personId]);
 
   function prev() {
-    if (month === 1) { setYear((y) => y - 1); setMonth(12); }
-    else setMonth((m) => m - 1);
+    if (month === 1) {
+      setYear((y) => y - 1);
+      setMonth(12);
+    } else setMonth((m) => m - 1);
   }
   function next() {
-    if (month === 12) { setYear((y) => y + 1); setMonth(1); }
-    else setMonth((m) => m + 1);
+    if (month === 12) {
+      setYear((y) => y + 1);
+      setMonth(1);
+    } else setMonth((m) => m + 1);
   }
 
   async function payFatura(cardId: string, installments: BillInstallmentItem[]) {
@@ -222,9 +244,13 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
     <div className="flex flex-col gap-6">
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="outline" size="sm" onClick={prev}>←</Button>
+        <Button variant="outline" size="sm" onClick={prev}>
+          ←
+        </Button>
         <span className="font-medium capitalize">{formatMonth(year, month)}</span>
-        <Button variant="outline" size="sm" onClick={next}>→</Button>
+        <Button variant="outline" size="sm" onClick={next}>
+          →
+        </Button>
         {!isGlobalLocked && (
           <select
             className="ml-auto border rounded px-2 py-1 text-sm bg-background"
@@ -233,7 +259,9 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
           >
             <option value="">Todas as pessoas</option>
             {people.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
           </select>
         )}
@@ -245,10 +273,26 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <SummaryCard icon={<Receipt className="w-5 h-5" />} label="Total da fatura" value={formatCurrency(totalBill)} />
-            <SummaryCard icon={<CreditCard className="w-5 h-5" />} label="Cartões" value={String(bill.length)} />
-            <SummaryCard icon={<Package className="w-5 h-5" />} label="Parcelas" value={String(totalItems)} />
-            <SummaryCard icon={<Users className="w-5 h-5" />} label="Pessoas" value={String(uniquePeople)} />
+            <SummaryCard
+              icon={<Receipt className="w-5 h-5" />}
+              label="Total da fatura"
+              value={formatCurrency(totalBill)}
+            />
+            <SummaryCard
+              icon={<CreditCard className="w-5 h-5" />}
+              label="Cartões"
+              value={String(bill.length)}
+            />
+            <SummaryCard
+              icon={<Package className="w-5 h-5" />}
+              label="Parcelas"
+              value={String(totalItems)}
+            />
+            <SummaryCard
+              icon={<Users className="w-5 h-5" />}
+              label="Pessoas"
+              value={String(uniquePeople)}
+            />
           </div>
 
           {/* Empty state */}
@@ -273,17 +317,19 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
               >
                 <Card className={`overflow-hidden${allPaid ? " ring-1 ring-green-500" : ""}`}>
                   {/* Card header */}
-<CollapsibleTrigger
-  className={`no-active-scale w-full rounded-none flex items-center justify-between px-5 py-4 border-b transition-colors text-left ${
-    allPaid
-      ? "bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:hover:bg-green-900 dark:border-green-800"
-      : "bg-muted/30 hover:bg-muted/50"
-  }`}
->
+                  <CollapsibleTrigger
+                    className={`no-active-scale w-full rounded-none flex items-center justify-between px-5 py-4 border-b transition-colors text-left ${
+                      allPaid
+                        ? "bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:hover:bg-green-900 dark:border-green-800"
+                        : "bg-muted/30 hover:bg-muted/50"
+                    }`}
+                  >
                     <div className="flex items-center gap-3">
-                      {isOpen
-                        ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                      {isOpen ? (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                      )}
                       <CreditCard className="w-4 h-4 text-muted-foreground" />
                       <div>
                         <div className="flex items-center gap-2">
@@ -294,7 +340,9 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">Vence: dia {entry.dueDayOfMonth}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Vence: dia {entry.dueDayOfMonth}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -303,7 +351,10 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                           variant="outline"
                           size="sm"
                           disabled={paying.has(entry.card.id)}
-                          onClick={(e) => { e.stopPropagation(); payFatura(entry.card.id, entry.installments); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            payFatura(entry.card.id, entry.installments);
+                          }}
                         >
                           {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
                         </Button>
@@ -313,7 +364,10 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                           variant="destructive"
                           size="sm"
                           disabled={unpaying.has(entry.card.id)}
-                          onClick={(e) => { e.stopPropagation(); unpayFatura(entry.card.id, entry.installments); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            unpayFatura(entry.card.id, entry.installments);
+                          }}
                         >
                           {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
                         </Button>
@@ -321,7 +375,8 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                       <div className="text-right">
                         <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
                         <p className="text-xs text-muted-foreground">
-                          {entry.installments.length} {entry.installments.length === 1 ? "item" : "itens"}
+                          {entry.installments.length}{" "}
+                          {entry.installments.length === 1 ? "item" : "itens"}
                         </p>
                       </div>
                     </div>
@@ -342,10 +397,17 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                         </thead>
                         <tbody>
                           {entry.installments.map((inst) => (
-                            <tr key={inst.id} className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}`}>
+                            <tr
+                              key={inst.id}
+                              className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}`}
+                            >
                               <td className="px-5 py-3">
-                                <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-                                <p className="text-xs text-muted-foreground">{formatDate(inst.purchaseDate)}</p>
+                                <p className="font-medium text-sm">
+                                  {inst.purchaseDescription || "Sem descrição"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDate(inst.purchaseDate)}
+                                </p>
                               </td>
                               <td className="px-5 py-3">
                                 <Badge variant="outline" className="font-mono text-xs">
@@ -372,18 +434,28 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
                       {entry.installments.map((inst) => (
                         <div key={inst.id} className="px-4 py-3 flex flex-col gap-1">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-                            <p className="font-semibold text-sm shrink-0">{formatCurrency(inst.amount)}</p>
+                            <p className="font-medium text-sm">
+                              {inst.purchaseDescription || "Sem descrição"}
+                            </p>
+                            <p className="font-semibold text-sm shrink-0">
+                              {formatCurrency(inst.amount)}
+                            </p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant="outline" className="font-mono text-xs">
                               {inst.installmentNumber}/{inst.numberOfInstallments}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {personMap.get(inst.personId) ?? "—"}
+                            </span>
                             {inst.categoryId && (
-                              <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {categoryMap.get(inst.categoryId)}
+                              </span>
                             )}
-                            <span className="text-xs text-muted-foreground">{formatDate(inst.purchaseDate)}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(inst.purchaseDate)}
+                            </span>
                           </div>
                         </div>
                       ))}

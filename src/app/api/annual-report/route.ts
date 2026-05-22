@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
     const personId = searchParams.get("personId") ?? undefined;
 
     const { transaction, creditCardPurchase } = createRepositories();
-    const result = await getAnnualReportUseCase({ year, personId }, transaction, creditCardPurchase);
+    const result = await getAnnualReportUseCase(
+      { year, personId },
+      transaction,
+      creditCardPurchase,
+    );
     return Response.json(result);
   } catch (error) {
     return errorResponse(error);

@@ -1,5 +1,14 @@
 import type { IncomeSource, TransactionRecord } from "../repositories/ITransactionRepository";
 
+type CreateInvestmentInput = {
+  id: string;
+  personId: string;
+  amount: number;
+  date: Date;
+  description: string;
+  categoryId: string;
+};
+
 type CreateExpenseInput = {
   id: string;
   personId: string;
@@ -19,6 +28,38 @@ type CreateIncomeInput = {
   source: IncomeSource;
   categoryId: string | null;
 };
+
+export function createInvestment(input: CreateInvestmentInput): TransactionRecord {
+  if (!input.personId) {
+    throw new Error("Person is required");
+  }
+
+  if (!input.date) {
+    throw new Error("Date is required");
+  }
+
+  if (input.amount <= 0) {
+    throw new Error("Amount must be positive");
+  }
+
+  if (!input.categoryId) {
+    throw new Error("Category is required");
+  }
+
+  return {
+    id: input.id,
+    personId: input.personId,
+    type: "INVESTMENT",
+    amount: input.amount,
+    date: input.date,
+    description: input.description,
+    paymentMethod: null,
+    source: null,
+    categoryId: input.categoryId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
 
 export function createExpense(input: CreateExpenseInput): TransactionRecord {
   if (!input.personId) {

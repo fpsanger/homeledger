@@ -18,27 +18,57 @@ function makePurchase(overrides: Partial<CreditCardPurchaseRecord> = {}): Credit
 
 describe("isDuplicateCreditCardPurchase", () => {
   it("returns true when same amount, date, and creditCardId exist", () => {
-    const existing = [makePurchase({ totalAmount: 100, purchaseDate: new Date("2026-05-07"), creditCardId: "card-1" })];
+    const existing = [
+      makePurchase({
+        totalAmount: 100,
+        purchaseDate: new Date("2026-05-07"),
+        creditCardId: "card-1",
+      }),
+    ];
     expect(isDuplicateCreditCardPurchase(existing, 100, "2026-05-07", "card-1")).toBe(true);
   });
 
   it("returns false when amount differs", () => {
-    const existing = [makePurchase({ totalAmount: 100, purchaseDate: new Date("2026-05-07"), creditCardId: "card-1" })];
+    const existing = [
+      makePurchase({
+        totalAmount: 100,
+        purchaseDate: new Date("2026-05-07"),
+        creditCardId: "card-1",
+      }),
+    ];
     expect(isDuplicateCreditCardPurchase(existing, 200, "2026-05-07", "card-1")).toBe(false);
   });
 
   it("returns false when date differs", () => {
-    const existing = [makePurchase({ totalAmount: 100, purchaseDate: new Date("2026-05-07"), creditCardId: "card-1" })];
+    const existing = [
+      makePurchase({
+        totalAmount: 100,
+        purchaseDate: new Date("2026-05-07"),
+        creditCardId: "card-1",
+      }),
+    ];
     expect(isDuplicateCreditCardPurchase(existing, 100, "2026-05-08", "card-1")).toBe(false);
   });
 
   it("returns false when creditCardId differs", () => {
-    const existing = [makePurchase({ totalAmount: 100, purchaseDate: new Date("2026-05-07"), creditCardId: "card-1" })];
+    const existing = [
+      makePurchase({
+        totalAmount: 100,
+        purchaseDate: new Date("2026-05-07"),
+        creditCardId: "card-1",
+      }),
+    ];
     expect(isDuplicateCreditCardPurchase(existing, 100, "2026-05-07", "card-2")).toBe(false);
   });
 
   it("returns true when same day but different time", () => {
-    const existing = [makePurchase({ totalAmount: 100, purchaseDate: new Date("2026-05-07T23:59:59Z"), creditCardId: "card-1" })];
+    const existing = [
+      makePurchase({
+        totalAmount: 100,
+        purchaseDate: new Date("2026-05-07T23:59:59Z"),
+        creditCardId: "card-1",
+      }),
+    ];
     expect(isDuplicateCreditCardPurchase(existing, 100, "2026-05-07", "card-1")).toBe(true);
   });
 

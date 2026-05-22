@@ -37,7 +37,12 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const isDuplicate = useDuplicateCheck("EXPENSE", amount ? parseCurrencyBR(amount) : null, date, refreshKey);
+  const isDuplicate = useDuplicateCheck(
+    "EXPENSE",
+    amount ? parseCurrencyBR(amount) : null,
+    date,
+    refreshKey,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,10 +84,17 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-person">Pessoa</Label>
-        <Select id="expense-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <Select
+          id="expense-person"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+          required
+        >
           <option value="">Selecione a pessoa</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       </div>
@@ -96,9 +108,16 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="expense-payment">Forma de Pagamento</Label>
-        <Select id="expense-payment" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>
+        <Select
+          id="expense-payment"
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          required
+        >
           {PAYMENT_METHODS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
           ))}
         </Select>
       </div>
@@ -117,7 +136,8 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
       </div>
       {isDuplicate && (
         <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar mesmo assim.
+          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
+          mesmo assim.
         </p>
       )}
       <Button type="submit" disabled={loading}>

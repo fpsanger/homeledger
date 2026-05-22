@@ -48,10 +48,14 @@ export function AnnualReportSection({ report }: Props) {
         <AnnualReportCards report={report} />
       ) : (
         <div className="flex flex-col gap-1 pt-1">
-          <p className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+          <p
+            className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+          >
             {fmtSigned(report.totalBalance)}
           </p>
-          <p className="text-xs text-muted-foreground mb-2">Diferença entre receitas e despesas por mês</p>
+          <p className="text-xs text-muted-foreground mb-2">
+            Diferença entre receitas e despesas por mês
+          </p>
           <AnnualBalanceChart months={report.months} />
         </div>
       )}

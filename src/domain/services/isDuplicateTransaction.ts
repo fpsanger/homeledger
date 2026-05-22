@@ -12,13 +12,11 @@ function sameDay(a: Date | string, dateStr: string): boolean {
 
 export function isDuplicateTransaction(
   existing: TransactionRecord[],
-  type: "EXPENSE" | "INCOME",
+  type: "EXPENSE" | "INCOME" | "INVESTMENT",
   amount: number | null,
   date: string | null,
 ): boolean {
   if (amount === null || date === null) return false;
 
-  return existing.some(
-    (t) => t.type === type && t.amount === amount && sameDay(t.date, date),
-  );
+  return existing.some((t) => t.type === type && t.amount === amount && sameDay(t.date, date));
 }

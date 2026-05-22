@@ -8,12 +8,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (!body.personId) return Response.json({ error: "personId is required" }, { status: 400 });
-    if (typeof body.totalAmount !== "number") return Response.json({ error: "totalAmount must be a number" }, { status: 400 });
+    if (typeof body.totalAmount !== "number")
+      return Response.json({ error: "totalAmount must be a number" }, { status: 400 });
     if (typeof body.numberOfInstallments !== "number" || body.numberOfInstallments < 1) {
-      return Response.json({ error: "numberOfInstallments must be a positive integer" }, { status: 400 });
+      return Response.json(
+        { error: "numberOfInstallments must be a positive integer" },
+        { status: 400 },
+      );
     }
-    if (!body.purchaseDate) return Response.json({ error: "purchaseDate is required" }, { status: 400 });
-    if (!body.creditCardId) return Response.json({ error: "creditCardId is required" }, { status: 400 });
+    if (!body.purchaseDate)
+      return Response.json({ error: "purchaseDate is required" }, { status: 400 });
+    if (!body.creditCardId)
+      return Response.json({ error: "creditCardId is required" }, { status: 400 });
 
     const { creditCardPurchase, creditCard } = createRepositories();
     const result = await createInstallmentPurchaseUseCase(

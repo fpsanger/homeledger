@@ -8,7 +8,11 @@ export interface ICreditCardRepository {
   delete(id: string): Promise<void>;
   hasPurchases(id: string): Promise<boolean>;
   setClosure(closure: Omit<CreditCardClosureRecord, "id">): Promise<CreditCardClosureRecord>;
-  findClosure(creditCardId: string, year: number, month: number): Promise<CreditCardClosureRecord | null>;
+  findClosure(
+    creditCardId: string,
+    year: number,
+    month: number,
+  ): Promise<CreditCardClosureRecord | null>;
   findClosuresByCard(creditCardId: string): Promise<CreditCardClosureRecord[]>;
   deleteClosure(creditCardId: string, year: number, month: number): Promise<void>;
 }

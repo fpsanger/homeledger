@@ -17,11 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { TransactionAmount } from "../transactions/TransactionAmount";
 
 type Transaction = {
   id: string;
   personId: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "INVESTMENT";
   amount: number;
   date: Date | string;
   description: string;
@@ -43,7 +44,20 @@ const PAYMENT_LABELS: Record<string, string> = {
   ACCOUNT_DEBIT: "Déb. Conta",
 };
 
-const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MONTH_ABBR = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 function fmtCurrency(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -53,7 +67,6 @@ function fmtDate(date: Date | string) {
   const d = new Date(date);
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTH_ABBR[d.getUTCMonth()]}`;
 }
-
 
 function SummaryCard({
   icon: Icon,
@@ -121,8 +134,12 @@ export function TransactionTable({
     toast.success(isRecurring ? "Recorrente removido." : "Transação excluída.");
   }
 
-  const totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
-  const totalExpenses = transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) + installmentExpenses;
+  const totalIncome = transactions
+    .filter((t) => t.type === "INCOME")
+    .reduce((s, t) => s + t.amount, 0);
+  const totalExpenses =
+    transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) +
+    installmentExpenses;
   const balance = totalIncome - totalExpenses;
 
   const paymentMethods = useMemo(() => {
@@ -259,7 +276,10 @@ export function TransactionTable({
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={showCategoryCol ? 7 : 6} className="text-center text-sm text-muted-foreground py-8">
+                <TableCell
+                  colSpan={showCategoryCol ? 7 : 6}
+                  className="text-center text-sm text-muted-foreground py-8"
+                >
                   Nenhum resultado encontrado
                 </TableCell>
               </TableRow>
@@ -271,7 +291,9 @@ export function TransactionTable({
                       <TableCell className="text-sm text-muted-foreground tabular-nums">
                         {fmtDate(t.date)}
                       </TableCell>
-                      <TableCell className="text-sm">{byPersonId[t.personId] ?? t.personId}</TableCell>
+                      <TableCell className="text-sm">
+                        {byPersonId[t.personId] ?? t.personId}
+                      </TableCell>
                       <TableCell className="text-sm">{t.description || "—"}</TableCell>
                       {showCategoryCol && (
                         <TableCell className="text-sm text-muted-foreground">
@@ -282,9 +304,7 @@ export function TransactionTable({
                         {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums text-sm">
-                        <span className={t.type === "EXPENSE" ? "text-red-600" : "text-green-600"}>
-                          {t.type === "EXPENSE" ? "-" : "+"}{fmtCurrency(t.amount)}
-                        </span>
+                        <TransactionAmount type={t.type} amount={t.amount} />
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu
@@ -301,7 +321,9 @@ export function TransactionTable({
                             </Button>
                           }
                           items={[
-                            ...(!t.isRecurring && onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
+                            ...(!t.isRecurring && onEdit
+                              ? [{ label: "Editar", onClick: () => onEdit(t) }]
+                              : []),
                             {
                               label: deletingId === t.id ? "Excluindo..." : "Excluir",
                               onClick: () => handleDelete(t.id, t.isRecurring),
@@ -321,11 +343,23 @@ export function TransactionTable({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
             ← Anterior
           </Button>
-          <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <span className="text-sm text-muted-foreground">
+            {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page + 1 >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Próximo →
           </Button>
         </div>

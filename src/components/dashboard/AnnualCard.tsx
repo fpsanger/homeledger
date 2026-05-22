@@ -2,8 +2,18 @@ import type { MonthSummary } from "@/domain/services/AnnualReport";
 import { TrendingUp, TrendingDown, Scale } from "lucide-react";
 
 const MONTH_NAMES = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
 ];
 
 type Props = {
@@ -41,10 +51,14 @@ export function AnnualCard({ title, total, months, field }: Props) {
   const Icon = config.icon;
 
   return (
-    <div className={`bg-card rounded-lg shadow-sm border ${config.borderClass} p-4 flex flex-col gap-3 min-w-0`}>
+    <div
+      className={`bg-card rounded-lg shadow-sm border ${config.borderClass} p-4 flex flex-col gap-3 min-w-0`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {title}
+          </p>
           <p
             className={`text-2xl font-bold mt-1 ${
               isBalance ? (total >= 0 ? "text-green-600" : "text-red-600") : "text-foreground"

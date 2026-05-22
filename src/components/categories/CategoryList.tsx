@@ -56,7 +56,10 @@ export function CategoryList({ categories }: { categories: Category[] }) {
       }
     }
     childrenOf.forEach((v, k) =>
-      childrenOf.set(k, v.sort((a, b) => a.name.localeCompare(b.name))),
+      childrenOf.set(
+        k,
+        v.sort((a, b) => a.name.localeCompare(b.name)),
+      ),
     );
     return { roots, childrenOf };
   }, [categories]);
@@ -119,7 +122,10 @@ export function CategoryList({ categories }: { categories: Category[] }) {
       <Input
         placeholder="Filtrar por nome…"
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setPage(0); }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setPage(0);
+        }}
         className="max-w-xs"
       />
       <div className="flex items-center border rounded-md overflow-hidden ml-auto">

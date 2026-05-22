@@ -1,4 +1,8 @@
-import { createCreditCard, type ClosureType, type CreditCardRecord } from "../../domain/entities/CreditCard";
+import {
+  createCreditCard,
+  type ClosureType,
+  type CreditCardRecord,
+} from "../../domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 
 type Input = {

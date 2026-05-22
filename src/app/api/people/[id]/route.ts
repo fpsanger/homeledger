@@ -3,10 +3,7 @@ import { deletePersonUseCase } from "../../../../application/use-cases/DeletePer
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { person } = createRepositories();
     await deletePersonUseCase(params.id, person);

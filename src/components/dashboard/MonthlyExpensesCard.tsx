@@ -13,7 +13,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 
-const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MONTH_NAMES = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 function fmtFull(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -26,7 +39,15 @@ function fmtCompact(v: number) {
   return `R$${abs.toFixed(0)}`;
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs">
@@ -52,14 +73,18 @@ export function MonthlyExpensesCard({ months, totalExpenses }: Props) {
         <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Despesas Mensais no Ano
         </CardDescription>
-        <CardTitle className="text-2xl font-bold tabular-nums">
-          {fmtFull(totalExpenses)}
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">Total de despesas por mês no ano selecionado</p>
+        <CardTitle className="text-2xl font-bold tabular-nums">{fmtFull(totalExpenses)}</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Total de despesas por mês no ano selecionado
+        </p>
       </CardHeader>
       <CardContent className="pt-0 pb-4">
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="35%">
+          <BarChart
+            data={data}
+            margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+            barCategoryGap="35%"
+          >
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
             <XAxis
               dataKey="name"
@@ -74,7 +99,10 @@ export function MonthlyExpensesCard({ months, totalExpenses }: Props) {
               tickLine={false}
               width={52}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+            />
             <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
               {data.map((entry, i) => {
                 const intensity = maxVal > 0 ? entry.value / maxVal : 0;

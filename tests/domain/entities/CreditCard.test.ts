@@ -46,39 +46,39 @@ describe("createCreditCard", () => {
   });
 
   it("throws when FIXED card has no fixedClosureDay", () => {
-    expect(() =>
-      createCreditCard({ ...baseFixed, fixedClosureDay: null }),
-    ).toThrow("fixedClosureDay is required for FIXED cards");
+    expect(() => createCreditCard({ ...baseFixed, fixedClosureDay: null })).toThrow(
+      "fixedClosureDay is required for FIXED cards",
+    );
   });
 
   it("throws when VARIABLE card has fixedClosureDay set", () => {
-    expect(() =>
-      createCreditCard({ ...baseVariable, fixedClosureDay: 15 }),
-    ).toThrow("fixedClosureDay must be null for VARIABLE cards");
+    expect(() => createCreditCard({ ...baseVariable, fixedClosureDay: 15 })).toThrow(
+      "fixedClosureDay must be null for VARIABLE cards",
+    );
   });
 
   it("throws when fixedClosureDay is below 1", () => {
-    expect(() =>
-      createCreditCard({ ...baseFixed, fixedClosureDay: 0 }),
-    ).toThrow("fixedClosureDay must be between 1 and 31");
+    expect(() => createCreditCard({ ...baseFixed, fixedClosureDay: 0 })).toThrow(
+      "fixedClosureDay must be between 1 and 31",
+    );
   });
 
   it("throws when fixedClosureDay is above 31", () => {
-    expect(() =>
-      createCreditCard({ ...baseFixed, fixedClosureDay: 32 }),
-    ).toThrow("fixedClosureDay must be between 1 and 31");
+    expect(() => createCreditCard({ ...baseFixed, fixedClosureDay: 32 })).toThrow(
+      "fixedClosureDay must be between 1 and 31",
+    );
   });
 
   it("throws when dueDayOfMonth is below 1", () => {
-    expect(() =>
-      createCreditCard({ ...baseFixed, dueDayOfMonth: 0 }),
-    ).toThrow("dueDayOfMonth must be between 1 and 31");
+    expect(() => createCreditCard({ ...baseFixed, dueDayOfMonth: 0 })).toThrow(
+      "dueDayOfMonth must be between 1 and 31",
+    );
   });
 
   it("throws when dueDayOfMonth is above 31", () => {
-    expect(() =>
-      createCreditCard({ ...baseFixed, dueDayOfMonth: 32 }),
-    ).toThrow("dueDayOfMonth must be between 1 and 31");
+    expect(() => createCreditCard({ ...baseFixed, dueDayOfMonth: 32 })).toThrow(
+      "dueDayOfMonth must be between 1 and 31",
+    );
   });
 
   it("alwaysNextMonth defaults to false when false", () => {

@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (!body.personId) return Response.json({ error: "personId is required" }, { status: 400 });
-    if (typeof body.amount !== "number") return Response.json({ error: "amount must be a number" }, { status: 400 });
+    if (typeof body.amount !== "number")
+      return Response.json({ error: "amount must be a number" }, { status: 400 });
     if (!body.date) return Response.json({ error: "date is required" }, { status: 400 });
     if (!VALID_PAYMENT_METHODS.includes(body.paymentMethod)) {
       return Response.json({ error: "invalid paymentMethod" }, { status: 400 });

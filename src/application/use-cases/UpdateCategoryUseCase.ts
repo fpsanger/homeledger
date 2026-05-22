@@ -1,6 +1,9 @@
 import { createCategory } from "../../domain/entities/Category";
 import { DuplicateCategoryError } from "../../domain/errors";
-import type { ICategoryRepository, CategoryRecord } from "../../domain/repositories/ICategoryRepository";
+import type {
+  ICategoryRepository,
+  CategoryRecord,
+} from "../../domain/repositories/ICategoryRepository";
 
 type Input = {
   id: string;

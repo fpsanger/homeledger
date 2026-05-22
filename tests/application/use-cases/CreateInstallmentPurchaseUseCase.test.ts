@@ -24,7 +24,12 @@ const VARIABLE_CARD: CreditCardRecord = {
   createdAt: new Date(),
 };
 
-function makeClosure(month: number, closureDay: number, previousMonth: boolean, year = 2026): CreditCardClosureRecord {
+function makeClosure(
+  month: number,
+  closureDay: number,
+  previousMonth: boolean,
+  year = 2026,
+): CreditCardClosureRecord {
   return { id: `closure-${month}`, creditCardId: "card-1", year, month, closureDay, previousMonth };
 }
 
@@ -34,9 +39,11 @@ function makeCardRepo(
 ): ICreditCardRepository {
   return {
     findById: jest.fn().mockResolvedValue(card),
-    findClosure: jest.fn().mockImplementation((_cardId: string, _year: number, month: number) =>
-      Promise.resolve(closuresByBillingMonth[month] ?? null),
-    ),
+    findClosure: jest
+      .fn()
+      .mockImplementation((_cardId: string, _year: number, month: number) =>
+        Promise.resolve(closuresByBillingMonth[month] ?? null),
+      ),
     save: jest.fn(),
     update: jest.fn(),
     findAll: jest.fn(),
@@ -50,9 +57,11 @@ function makeCardRepo(
 
 function makePurchaseRepo(): ICreditCardPurchaseRepository {
   return {
-    save: jest.fn().mockImplementation((_purchase: unknown, installments: unknown[]) =>
-      Promise.resolve({ ..._purchase as object, installments }),
-    ),
+    save: jest
+      .fn()
+      .mockImplementation((_purchase: unknown, installments: unknown[]) =>
+        Promise.resolve({ ...(_purchase as object), installments }),
+      ),
     findAllInstallmentsByMonth: jest.fn(),
     findInstallmentsByMonth: jest.fn(),
     findAllInstallmentsByPurchaseMonth: jest.fn(),
@@ -143,10 +152,10 @@ describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
 describe("createInstallmentPurchaseUseCase — billing month assignment (previousMonth=true)", () => {
   // Card: April billing closes March 27, May billing closes April 28
   const closures: Record<number, CreditCardClosureRecord> = {
-    3: makeClosure(3, 27, true),  // March billing closes Feb 27
-    4: makeClosure(4, 27, true),  // April billing closes March 27
-    5: makeClosure(5, 28, true),  // May billing closes April 28
-    6: makeClosure(6, 28, true),  // June billing closes May 28
+    3: makeClosure(3, 27, true), // March billing closes Feb 27
+    4: makeClosure(4, 27, true), // April billing closes March 27
+    5: makeClosure(5, 28, true), // May billing closes April 28
+    6: makeClosure(6, 28, true), // June billing closes May 28
   };
 
   it("purchase on March 26 (before April closure March 27) → April billing", async () => {

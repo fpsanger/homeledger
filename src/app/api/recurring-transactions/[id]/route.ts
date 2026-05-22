@@ -3,10 +3,7 @@ import { updateRecurringTransactionUseCase } from "../../../../application/use-c
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await request.json();
     const updates: Record<string, unknown> = {};
@@ -33,10 +30,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { recurring } = createRepositories();
     await recurring.delete(params.id);

@@ -1,5 +1,9 @@
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
-import type { ITransactionRepository, TransactionRecord, IncomeSource } from "../../domain/repositories/ITransactionRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+  IncomeSource,
+} from "../../domain/repositories/ITransactionRepository";
 import { validateIncomeCategory } from "../../domain/services/CategoryTree";
 
 const VALID_SOURCES: IncomeSource[] = ["SALARY", "FREELANCE", "RENTAL", "INVESTMENT", "OTHER"];

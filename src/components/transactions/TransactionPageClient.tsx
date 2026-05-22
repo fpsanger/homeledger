@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
 import { EditInstallmentForm } from "./EditInstallmentForm";
 import { RecurringTransactionForm } from "./RecurringTransactionForm";
+import { InvestmentForm } from "./InvestmentForm";
 import { formatAmountBR } from "@/lib/utils";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { TransactionTable } from "@/components/monthly-view/TransactionTable";
@@ -19,7 +20,7 @@ type CreditCard = { id: string; name: string };
 type Transaction = {
   id: string;
   personId: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "INVESTMENT";
   amount: number;
   date: Date | string;
   description: string;
@@ -76,6 +77,7 @@ export function TransactionPageClient({
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
+  const [investmentDialogOpen, setInvestmentDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
@@ -83,11 +85,30 @@ export function TransactionPageClient({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <MonthNav year={year} month={month} people={people} currentPersonId={currentPersonId} basePath="/transactions" isGlobalLocked={isGlobalLocked} />
+        <MonthNav
+          year={year}
+          month={month}
+          people={people}
+          currentPersonId={currentPersonId}
+          basePath="/transactions"
+          isGlobalLocked={isGlobalLocked}
+        />
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setRecurringDialogOpen(true)} className="gap-1.5">
+          <Button
+            variant="outline"
+            onClick={() => setRecurringDialogOpen(true)}
+            className="gap-1.5"
+          >
             <Plus className="w-4 h-4" />
             Recorrente
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setInvestmentDialogOpen(true)}
+            className="gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Investimento
           </Button>
           <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
             <Plus className="w-4 h-4" />
@@ -96,11 +117,27 @@ export function TransactionPageClient({
         </div>
       </div>
 
-      <Dialog open={recurringDialogOpen} onClose={() => setRecurringDialogOpen(false)} title="Adicionar Transação Recorrente">
+      <Dialog
+        open={recurringDialogOpen}
+        onClose={() => setRecurringDialogOpen(false)}
+        title="Adicionar Transação Recorrente"
+      >
         <RecurringTransactionForm
           people={people}
           categories={categories}
           onSuccess={() => setRecurringDialogOpen(false)}
+        />
+      </Dialog>
+
+      <Dialog
+        open={investmentDialogOpen}
+        onClose={() => setInvestmentDialogOpen(false)}
+        title="Adicionar Investimento"
+      >
+        <InvestmentForm
+          people={people}
+          categories={categories}
+          onSuccess={() => setInvestmentDialogOpen(false)}
         />
       </Dialog>
 
@@ -125,7 +162,12 @@ export function TransactionPageClient({
             creditCards={creditCards}
             editMode={{ transactionId: editingTransaction.id }}
             initialValues={{
-              type: editingTransaction.type === "INCOME" ? "income" : "expense",
+              type:
+                editingTransaction.type === "INCOME"
+                  ? "income"
+                  : editingTransaction.type === "INVESTMENT"
+                    ? "expense"
+                    : "expense",
               personId: editingTransaction.personId,
               amount: formatAmountBR(editingTransaction.amount),
               date: toDateInput(editingTransaction.date),
@@ -169,8 +211,13 @@ export function TransactionPageClient({
             initialValues={{
               type: "credit",
               personId: editingPurchase.personId ?? "",
-              amount: formatAmountBR(editingPurchase.purchaseTotalAmount ?? editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1)),
-              date: editingPurchase.purchaseDate ? toDateInput(editingPurchase.purchaseDate) : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
+              amount: formatAmountBR(
+                editingPurchase.purchaseTotalAmount ??
+                  editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1),
+              ),
+              date: editingPurchase.purchaseDate
+                ? toDateInput(editingPurchase.purchaseDate)
+                : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
               paymentMethod: "CASH",
               source: "SALARY",
               creditCardId: editingPurchase.creditCardId ?? "",
@@ -187,12 +234,16 @@ export function TransactionPageClient({
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Transações
             {transactions.length > 0 && (
-              <span className="ml-2 text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">{transactions.length}</span>
+              <span className="ml-2 text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
+                {transactions.length}
+              </span>
             )}
           </h2>
           <TransactionTable
             transactions={transactions}
-            installmentExpenses={installments.filter((i) => !i.isCanceled).reduce((s, i) => s + i.amount, 0)}
+            installmentExpenses={installments
+              .filter((i) => !i.isCanceled)
+              .reduce((s, i) => s + i.amount, 0)}
             people={people}
             categories={categories}
             onEdit={(t) => setEditingTransaction(t)}
@@ -203,7 +254,9 @@ export function TransactionPageClient({
           <div className="flex flex-col gap-4">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Parcelas
-              <span className="ml-2 text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">{installments.length}</span>
+              <span className="ml-2 text-xs font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
+                {installments.length}
+              </span>
             </h2>
             <InstallmentTable
               installments={installments}

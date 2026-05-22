@@ -3,10 +3,7 @@ import { markInstallmentPaidUseCase } from "../../../../../application/use-cases
 import { errorResponse } from "../../../_lib/errorResponse";
 import { createRepositories } from "../../../_lib/repositories";
 
-export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { creditCardPurchase } = createRepositories();
     await markInstallmentPaidUseCase(params.id, creditCardPurchase);

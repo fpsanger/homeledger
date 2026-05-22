@@ -64,7 +64,14 @@ type Props = {
   initialValues?: InitialValues;
 };
 
-export function UnifiedTransactionForm({ people, categories, creditCards, onSuccess, editMode, initialValues }: Props) {
+export function UnifiedTransactionForm({
+  people,
+  categories,
+  creditCards,
+  onSuccess,
+  editMode,
+  initialValues,
+}: Props) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const isEditMode = editMode !== undefined;
@@ -123,14 +130,34 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       if (editMode.transactionId) {
         if (type === "expense") {
           url = `/api/expenses/${editMode.transactionId}`;
-          body = { personId, amount: parseCurrencyBR(amount), date, paymentMethod, categoryId: categoryId || null, description };
+          body = {
+            personId,
+            amount: parseCurrencyBR(amount),
+            date,
+            paymentMethod,
+            categoryId: categoryId || null,
+            description,
+          };
         } else {
           url = `/api/incomes/${editMode.transactionId}`;
-          body = { personId, amount: parseCurrencyBR(amount), date, source, categoryId: categoryId || null, description };
+          body = {
+            personId,
+            amount: parseCurrencyBR(amount),
+            date,
+            source,
+            categoryId: categoryId || null,
+            description,
+          };
         }
       } else if (editMode.purchaseId) {
         url = `/api/credit-card-purchases/${editMode.purchaseId}`;
-        body = { description, totalAmount: parseCurrencyBR(amount), purchaseDate: date, categoryId: categoryId || null, creditCardId };
+        body = {
+          description,
+          totalAmount: parseCurrencyBR(amount),
+          purchaseDate: date,
+          categoryId: categoryId || null,
+          creditCardId,
+        };
       } else {
         toast.error("ID da compra não encontrado.");
         setLoading(false);
@@ -140,10 +167,24 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       method = "POST";
       if (type === "expense") {
         url = "/api/expenses";
-        body = { personId, amount: parseCurrencyBR(amount), date, paymentMethod, categoryId: categoryId || null, description };
+        body = {
+          personId,
+          amount: parseCurrencyBR(amount),
+          date,
+          paymentMethod,
+          categoryId: categoryId || null,
+          description,
+        };
       } else if (type === "income") {
         url = "/api/incomes";
-        body = { personId, amount: parseCurrencyBR(amount), date, source, categoryId: categoryId || null, description };
+        body = {
+          personId,
+          amount: parseCurrencyBR(amount),
+          date,
+          source,
+          categoryId: categoryId || null,
+          description,
+        };
       } else {
         url = "/api/installments";
         body = {
@@ -209,10 +250,17 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="u-person">Pessoa</Label>
-        <Select id="u-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <Select
+          id="u-person"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+          required
+        >
           <option value="">Selecione a pessoa</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       </div>
@@ -222,7 +270,10 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
         <CurrencyInput
           id="u-amount"
           value={amount}
-          onChange={(v) => { setAmount(v); setNumberOfInstallments("1"); }}
+          onChange={(v) => {
+            setAmount(v);
+            setNumberOfInstallments("1");
+          }}
           required
         />
       </div>
@@ -235,9 +286,16 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
       {type === "expense" && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="u-payment">Forma de Pagamento</Label>
-          <Select id="u-payment" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>
+          <Select
+            id="u-payment"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            required
+          >
             {PAYMENT_METHODS.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
             ))}
           </Select>
         </div>
@@ -248,7 +306,9 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
           <Label htmlFor="u-source">Fonte</Label>
           <Select id="u-source" value={source} onChange={(e) => setSource(e.target.value)} required>
             {INCOME_SOURCES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
             ))}
           </Select>
         </div>
@@ -258,10 +318,17 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
         <>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="u-card">Cartão de Crédito</Label>
-            <Select id="u-card" value={creditCardId} onChange={(e) => setCreditCardId(e.target.value)} required>
+            <Select
+              id="u-card"
+              value={creditCardId}
+              onChange={(e) => setCreditCardId(e.target.value)}
+              required
+            >
               <option value="">Selecione o cartão</option>
               {creditCards.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </Select>
           </div>
@@ -296,11 +363,7 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
       <div className="flex flex-col gap-1.5">
         <Label>Categoria</Label>
-        <CategoryCombobox
-          categories={categories}
-          value={categoryId}
-          onChange={setCategoryId}
-        />
+        <CategoryCombobox categories={categories} value={categoryId} onChange={setCategoryId} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -315,16 +378,20 @@ export function UnifiedTransactionForm({ people, categories, creditCards, onSucc
 
       {!isEditMode && (isDuplicate || isCreditDuplicate) && (
         <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar mesmo assim.
+          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
+          mesmo assim.
         </p>
       )}
 
       <Button type="submit" disabled={loading}>
         {loading
-          ? isEditMode ? "Salvando…" : "Adicionando…"
-          : isEditMode ? "Salvar alterações" : `Adicionar ${typeLabels[type]}`}
+          ? isEditMode
+            ? "Salvando…"
+            : "Adicionando…"
+          : isEditMode
+            ? "Salvar alterações"
+            : `Adicionar ${typeLabels[type]}`}
       </Button>
-
     </form>
   );
 }

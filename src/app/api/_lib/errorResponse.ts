@@ -8,11 +8,7 @@ export function errorResponse(error: unknown): Response {
     return Response.json({ error: error.message }, { status: 409 });
   }
   // Prisma P2025: record not found during update/delete
-  if (
-    error instanceof Error &&
-    "code" in error &&
-    (error as { code: string }).code === "P2025"
-  ) {
+  if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2025") {
     return Response.json({ error: "Record not found" }, { status: 404 });
   }
   if (error instanceof Error) {

@@ -21,10 +21,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "name is required" }, { status: 400 });
     }
     const { person } = createRepositories();
-    const result = await createPersonUseCase(
-      { id: crypto.randomUUID(), name: body.name },
-      person,
-    );
+    const result = await createPersonUseCase({ id: crypto.randomUUID(), name: body.name }, person);
     return Response.json(result, { status: 201 });
   } catch (error) {
     return errorResponse(error);

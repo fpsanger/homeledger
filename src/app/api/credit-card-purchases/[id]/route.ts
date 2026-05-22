@@ -2,10 +2,7 @@ import { NextRequest } from "next/server";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { creditCardPurchase } = createRepositories();
     await creditCardPurchase.deletePurchase(params.id);
@@ -15,10 +12,7 @@ export async function DELETE(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await request.json();
     const { description, totalAmount, purchaseDate, categoryId, creditCardId } = body;

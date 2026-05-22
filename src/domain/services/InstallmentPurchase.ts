@@ -36,7 +36,10 @@ type ResolveFirstDueMonthInput = {
   closureNextMonth?: boolean;
 };
 
-export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): { year: number; month: number } {
+export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): {
+  year: number;
+  month: number;
+} {
   const shiftNext =
     input.alwaysNextMonth ||
     input.closureInPreviousMonth ||
@@ -142,8 +145,7 @@ export function createInstallmentPurchase(
 ): InstallmentPurchaseResult {
   if (!input.personId) throw new Error("Person is required");
   if (input.totalAmount <= 0) throw new Error("Amount must be positive");
-  if (input.numberOfInstallments < 1)
-    throw new Error("Number of installments must be at least 1");
+  if (input.numberOfInstallments < 1) throw new Error("Number of installments must be at least 1");
 
   const drafts = createInstallments(input);
 

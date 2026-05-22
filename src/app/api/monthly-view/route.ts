@@ -17,11 +17,17 @@ export async function GET(request: NextRequest) {
     const month = Number(monthParam);
 
     if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
-      return Response.json({ error: "year must be an integer and month must be 1-12" }, { status: 400 });
+      return Response.json(
+        { error: "year must be an integer and month must be 1-12" },
+        { status: 400 },
+      );
     }
 
     const personId = searchParams.get("personId") ?? undefined;
-    const filterBy = searchParams.get("filterBy") === "purchaseDate" ? "purchaseDate" as const : "dueMonth" as const;
+    const filterBy =
+      searchParams.get("filterBy") === "purchaseDate"
+        ? ("purchaseDate" as const)
+        : ("dueMonth" as const);
 
     const { transaction, creditCardPurchase, recurring } = createRepositories();
     const result = await getMonthlyViewUseCase(

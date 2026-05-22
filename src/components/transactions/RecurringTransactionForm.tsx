@@ -117,10 +117,17 @@ export function RecurringTransactionForm({ people, categories, onSuccess }: Prop
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="rt-person">Pessoa</Label>
-        <Select id="rt-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <Select
+          id="rt-person"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+          required
+        >
           <option value="">Selecione a pessoa</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       </div>
@@ -132,9 +139,16 @@ export function RecurringTransactionForm({ people, categories, onSuccess }: Prop
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="rt-payment">Forma de Pagamento</Label>
-        <Select id="rt-payment" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>
+        <Select
+          id="rt-payment"
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value)}
+          required
+        >
           {PAYMENT_METHODS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
           ))}
         </Select>
       </div>

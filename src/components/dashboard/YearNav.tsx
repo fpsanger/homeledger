@@ -61,7 +61,9 @@ export function YearNav({ year, people, currentPersonId, isGlobalLocked = false 
         <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm">
           <option value="">Todas as pessoas</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       )}

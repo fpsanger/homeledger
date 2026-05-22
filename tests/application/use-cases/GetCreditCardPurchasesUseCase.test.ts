@@ -13,7 +13,7 @@ const makeInstallment = (overrides = {}) => ({
   dueMonth: 5,
   isPaid: false,
   isCanceled: false,
-      categoryId: null,
+  categoryId: null,
   ...overrides,
 });
 
@@ -42,9 +42,15 @@ const makeRepo = (
 
 describe("getCreditCardPurchasesUseCase", () => {
   it("returns all purchases when no personId given", async () => {
-    const purchases = [makePurchase({ id: "p-1" }), makePurchase({ id: "p-2", personId: "person-2" })];
+    const purchases = [
+      makePurchase({ id: "p-1" }),
+      makePurchase({ id: "p-2", personId: "person-2" }),
+    ];
     const repo = makeRepo(purchases);
-    const result = await getCreditCardPurchasesUseCase(undefined, repo as ICreditCardPurchaseRepository);
+    const result = await getCreditCardPurchasesUseCase(
+      undefined,
+      repo as ICreditCardPurchaseRepository,
+    );
     expect(result).toHaveLength(2);
   });
 
@@ -54,14 +60,20 @@ describe("getCreditCardPurchasesUseCase", () => {
       makePurchase({ id: "p-2", personId: "person-2" }),
     ];
     const repo = makeRepo(purchases);
-    const result = await getCreditCardPurchasesUseCase("person-1", repo as ICreditCardPurchaseRepository);
+    const result = await getCreditCardPurchasesUseCase(
+      "person-1",
+      repo as ICreditCardPurchaseRepository,
+    );
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("p-1");
   });
 
   it("returns empty array when no purchases", async () => {
     const repo = makeRepo([]);
-    const result = await getCreditCardPurchasesUseCase(undefined, repo as ICreditCardPurchaseRepository);
+    const result = await getCreditCardPurchasesUseCase(
+      undefined,
+      repo as ICreditCardPurchaseRepository,
+    );
     expect(result).toEqual([]);
   });
 });

@@ -1,9 +1,20 @@
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
-import type { ITransactionRepository, TransactionRecord } from "../../domain/repositories/ITransactionRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../domain/repositories/ITransactionRepository";
 import { validateExpenseCategory } from "../../domain/services/CategoryTree";
 
-const VALID_PAYMENT_METHODS = ["CASH", "DEBIT_CARD", "CREDIT_CARD", "PIX", "BANK_TRANSFER", "BOLETO"] as const;
-type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
+const VALID_PAYMENT_METHODS = [
+  "CASH",
+  "DEBIT_CARD",
+  "CREDIT_CARD",
+  "PIX",
+  "BANK_TRANSFER",
+  "BOLETO",
+  "ACCOUNT_DEBIT",
+] as const;
+type PaymentMethod = (typeof VALID_PAYMENT_METHODS)[number];
 
 type Input = {
   id: string;

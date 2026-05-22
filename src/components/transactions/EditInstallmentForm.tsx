@@ -32,7 +32,20 @@ type Props = {
   onSuccess: () => void;
 };
 
-const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MONTH_ABBR = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 function fmtCurrency(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -43,7 +56,12 @@ function fmtDate(date: Date | string) {
   return `${String(d.getDate()).padStart(2, "0")} ${MONTH_ABBR[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-export function EditInstallmentForm({ installment, people = [], creditCards = [], onSuccess }: Props) {
+export function EditInstallmentForm({
+  installment,
+  people = [],
+  creditCards = [],
+  onSuccess,
+}: Props) {
   const router = useRouter();
   const [amount, setAmount] = useState(formatAmountBR(installment.amount));
   const [description, setDescription] = useState(installment.purchaseDescription ?? "");
@@ -83,7 +101,9 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
     <div className="flex flex-col gap-5">
       {/* Purchase details */}
       <div className="rounded-lg border bg-muted/30 p-4 flex flex-col gap-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Detalhes da Compra</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Detalhes da Compra
+        </p>
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
           {installment.purchaseDescription && (
             <div className="col-span-2">
@@ -120,7 +140,9 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
           {installment.purchaseTotalAmount != null && (
             <div>
               <span className="text-muted-foreground">Total da compra</span>
-              <p className="font-medium tabular-nums">{fmtCurrency(installment.purchaseTotalAmount)}</p>
+              <p className="font-medium tabular-nums">
+                {fmtCurrency(installment.purchaseTotalAmount)}
+              </p>
             </div>
           )}
         </div>
@@ -130,7 +152,9 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
 
       {/* Editable fields */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Editar Parcela</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Editar Parcela
+        </p>
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="ei-amount">Valor</Label>
@@ -150,7 +174,6 @@ export function EditInstallmentForm({ installment, people = [], creditCards = []
         <Button type="submit" disabled={loading}>
           {loading ? "Salvando…" : "Salvar alterações"}
         </Button>
-
       </form>
     </div>
   );

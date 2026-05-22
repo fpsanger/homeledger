@@ -27,14 +27,15 @@ export default async function InstallmentsPage() {
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
   const isGlobalLocked = !!globalPersonId;
   const personId = globalPersonId;
-  const [people, purchases] = await Promise.all([
-    getPeople(),
-    getPurchases(personId || undefined),
-  ]);
+  const [people, purchases] = await Promise.all([getPeople(), getPurchases(personId || undefined)]);
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Crédito" title="Parcelas" description={purchases.length > 0 ? `${purchases.length} compras parceladas` : undefined} />
+      <PageHeader
+        eyebrow="Crédito"
+        title="Parcelas"
+        description={purchases.length > 0 ? `${purchases.length} compras parceladas` : undefined}
+      />
       <InstallmentsTabs
         defaultTab="purchases"
         purchasesView={

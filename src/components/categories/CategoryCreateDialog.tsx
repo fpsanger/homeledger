@@ -20,11 +20,7 @@ type Props = {
 export function CategoryCreateDialog({ open, onClose, categories, defaultParentId }: Props) {
   return (
     <Dialog open={open} onClose={onClose} title="Nova Categoria">
-      <CategoryForm
-        categories={categories}
-        defaultParentId={defaultParentId}
-        onSuccess={onClose}
-      />
+      <CategoryForm categories={categories} defaultParentId={defaultParentId} onSuccess={onClose} />
     </Dialog>
   );
 }

@@ -27,6 +27,7 @@ type Transaction = {
   description: string;
   paymentMethod: string;
   categoryId?: string | null;
+  isRecurring?: boolean;
 };
 
 type Person = { id: string; name: string };
@@ -39,6 +40,7 @@ const PAYMENT_LABELS: Record<string, string> = {
   PIX: "PIX",
   BANK_TRANSFER: "Transferência",
   BOLETO: "Boleto",
+  ACCOUNT_DEBIT: "Déb. Conta",
 };
 
 const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -105,9 +107,10 @@ export function TransactionTable({
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, isRecurring?: boolean) {
     setDeletingId(id);
-    const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    const url = isRecurring ? `/api/recurring-transactions/${id}` : `/api/expenses/${id}`;
+    const res = await fetch(url, { method: "DELETE" });
     setDeletingId(null);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -115,7 +118,7 @@ export function TransactionTable({
       return;
     }
     router.refresh();
-    toast.success("Transação excluída.");
+    toast.success(isRecurring ? "Recorrente removido." : "Transação excluída.");
   }
 
   const totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
@@ -298,10 +301,10 @@ export function TransactionTable({
                             </Button>
                           }
                           items={[
-                            ...(onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
+                            ...(!t.isRecurring && onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
                             {
                               label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                              onClick: () => handleDelete(t.id),
+                              onClick: () => handleDelete(t.id, t.isRecurring),
                               variant: "destructive" as const,
                             },
                           ]}

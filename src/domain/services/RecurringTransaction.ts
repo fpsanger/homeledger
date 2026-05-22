@@ -82,6 +82,7 @@ export function generateOccurrence(
     categoryId: rule.categoryId,
     createdAt: rule.createdAt,
     updatedAt: rule.updatedAt,
+    isRecurring: true,
   };
 }
 

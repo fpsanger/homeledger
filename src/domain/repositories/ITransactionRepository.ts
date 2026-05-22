@@ -7,11 +7,12 @@ export interface TransactionRecord {
   amount: number;
   date: Date;
   description: string;
-  paymentMethod: "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "PIX" | "BANK_TRANSFER" | "BOLETO" | null;
+  paymentMethod: "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "PIX" | "BANK_TRANSFER" | "BOLETO" | "ACCOUNT_DEBIT" | null;
   source: IncomeSource | null;
   categoryId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  isRecurring?: boolean;
 }
 
 export interface ITransactionRepository {

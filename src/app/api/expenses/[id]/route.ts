@@ -4,7 +4,7 @@ import { updateExpenseUseCase } from "../../../../application/use-cases/UpdateEx
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-const VALID_PAYMENT_METHODS = ["CASH", "DEBIT_CARD", "CREDIT_CARD", "PIX", "BANK_TRANSFER", "BOLETO"] as const;
+const VALID_PAYMENT_METHODS = ["CASH", "DEBIT_CARD", "CREDIT_CARD", "PIX", "BANK_TRANSFER", "BOLETO", "ACCOUNT_DEBIT"] as const;
 type PaymentMethod = typeof VALID_PAYMENT_METHODS[number];
 
 export async function PUT(

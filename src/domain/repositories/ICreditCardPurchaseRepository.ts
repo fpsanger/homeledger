@@ -69,4 +69,9 @@ export interface ICreditCardPurchaseRepository {
   findAllPurchasesWithInstallments(
     personId?: string,
   ): Promise<CreditCardPurchaseWithInstallments[]>;
+  findPurchasesByPersonAndMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<CreditCardPurchaseRecord[]>;
 }

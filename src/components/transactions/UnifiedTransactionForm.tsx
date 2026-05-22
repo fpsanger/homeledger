@@ -27,6 +27,7 @@ const PAYMENT_METHODS = [
   { value: "PIX", label: "PIX" },
   { value: "BANK_TRANSFER", label: "Transferência Bancária" },
   { value: "BOLETO", label: "Boleto" },
+  { value: "ACCOUNT_DEBIT", label: "Débito em conta" },
 ];
 
 const INCOME_SOURCES = [

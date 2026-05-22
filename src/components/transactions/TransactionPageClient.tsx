@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
 import { EditInstallmentForm } from "./EditInstallmentForm";
+import { RecurringTransactionForm } from "./RecurringTransactionForm";
 import { formatAmountBR } from "@/lib/utils";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { TransactionTable } from "@/components/monthly-view/TransactionTable";
@@ -74,6 +75,7 @@ export function TransactionPageClient({
   installments,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
@@ -82,11 +84,25 @@ export function TransactionPageClient({
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <MonthNav year={year} month={month} people={people} currentPersonId={currentPersonId} basePath="/transactions" isGlobalLocked={isGlobalLocked} />
-        <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
-          <Plus className="w-4 h-4" />
-          Adicionar Transação
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setRecurringDialogOpen(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            Recorrente
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
+            <Plus className="w-4 h-4" />
+            Adicionar Transação
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={recurringDialogOpen} onClose={() => setRecurringDialogOpen(false)} title="Adicionar Transação Recorrente">
+        <RecurringTransactionForm
+          people={people}
+          categories={categories}
+          onSuccess={() => setRecurringDialogOpen(false)}
+        />
+      </Dialog>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title="Adicionar Transação">
         <UnifiedTransactionForm

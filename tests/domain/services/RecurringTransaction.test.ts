@@ -75,6 +75,11 @@ describe("RecurringTransaction service", () => {
         createRecurringTransaction({ ...baseInput, startDate: null as unknown as Date }),
       ).toThrow("Start date is required");
     });
+
+    it("accepts ACCOUNT_DEBIT as payment method", () => {
+      const record = createRecurringTransaction({ ...baseInput, paymentMethod: "ACCOUNT_DEBIT" });
+      expect(record.paymentMethod).toBe("ACCOUNT_DEBIT");
+    });
   });
 
   describe("isActiveInMonth", () => {

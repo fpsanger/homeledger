@@ -11,6 +11,7 @@ const VALID_PAYMENT_METHODS: TransactionRecord["paymentMethod"][] = [
   "PIX",
   "BANK_TRANSFER",
   "BOLETO",
+  "ACCOUNT_DEBIT",
 ];
 
 export async function POST(request: NextRequest) {

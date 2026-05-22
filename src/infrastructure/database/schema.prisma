@@ -18,6 +18,7 @@ enum PaymentMethod {
   PIX
   BANK_TRANSFER
   BOLETO
+  ACCOUNT_DEBIT
 }
 
 enum IncomeSource {

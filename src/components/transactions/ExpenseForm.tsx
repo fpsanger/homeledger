@@ -16,6 +16,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro" },
   { value: "DEBIT_CARD", label: "Cartão de Débito" },
+  { value: "ACCOUNT_DEBIT", label: "Débito em conta" },
   { value: "CREDIT_CARD", label: "Cartão de Crédito" },
   { value: "PIX", label: "PIX" },
   { value: "BANK_TRANSFER", label: "Transferência Bancária" },

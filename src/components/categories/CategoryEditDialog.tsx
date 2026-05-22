@@ -29,9 +29,7 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
   const [parentId, setParentId] = useState(category.parentId ?? "");
   const [loading, setLoading] = useState(false);
 
-  const validParents = categories.filter(
-    (c) => c.parentId === null && c.id !== category.id,
-  );
+  const validParents = categories.filter((c) => c.parentId === null && c.id !== category.id);
   const sorted = [...validParents].sort((a, b) => a.name.localeCompare(b.name));
 
   async function handleSubmit(e: React.FormEvent) {
@@ -78,7 +76,7 @@ export function CategoryEditDialog({ category, categories, open, onClose }: Prop
             placeholder="Nenhuma (raiz)"
           />
         </div>
-<div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>

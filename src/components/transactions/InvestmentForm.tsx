@@ -15,7 +15,15 @@ import { DatePicker } from "@/components/ui/date-picker";
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
 
-export function InvestmentForm({ people, categories, onSuccess }: { people: Person[]; categories: Category[]; onSuccess?: () => void }) {
+export function InvestmentForm({
+  people,
+  categories,
+  onSuccess,
+}: {
+  people: Person[];
+  categories: Category[];
+  onSuccess?: () => void;
+}) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [personId, setPersonId] = useState("");
@@ -63,10 +71,17 @@ export function InvestmentForm({ people, categories, onSuccess }: { people: Pers
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inv-person">Pessoa</Label>
-        <Select id="inv-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <Select
+          id="inv-person"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+          required
+        >
           <option value="">Selecione a pessoa</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       </div>

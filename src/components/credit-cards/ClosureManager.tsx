@@ -8,11 +8,27 @@ import { Label } from "@/components/ui/label";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-type Closure = { id: string; year: number; month: number; closureDay: number; previousMonth: boolean };
+type Closure = {
+  id: string;
+  year: number;
+  month: number;
+  closureDay: number;
+  previousMonth: boolean;
+};
 
 const MONTH_NAMES = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onClose: () => void }) {
@@ -66,7 +82,9 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
     }
   }
 
-  useEffect(() => { load(); }, [cardId]);
+  useEffect(() => {
+    load();
+  }, [cardId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -101,20 +119,26 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium">Fechamentos Definidos</p>
           {closures.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma data de fechamento definida ainda.</p>
+            <p className="text-sm text-muted-foreground">
+              Nenhuma data de fechamento definida ainda.
+            </p>
           ) : (
             <div className="flex flex-col gap-1.5">
               {closures
                 .slice()
-                .sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month)
+                .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month))
                 .map((c) => (
-                  <div key={c.id} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-muted/50">
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-muted/50"
+                  >
                     <span className="text-muted-foreground">
                       {MONTH_NAMES[c.month - 1]} {c.year}
                     </span>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">
-                        Dia {c.closureDay}{c.previousMonth ? " (mês ant.)" : ""}
+                        Dia {c.closureDay}
+                        {c.previousMonth ? " (mês ant.)" : ""}
                       </Badge>
                       <button
                         type="button"

@@ -8,9 +8,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (!body.personId) return Response.json({ error: "personId is required" }, { status: 400 });
-    if (typeof body.amount !== "number") return Response.json({ error: "amount must be a number" }, { status: 400 });
+    if (typeof body.amount !== "number")
+      return Response.json({ error: "amount must be a number" }, { status: 400 });
     if (!body.date) return Response.json({ error: "date is required" }, { status: 400 });
-    if (!body.categoryId) return Response.json({ error: "categoryId is required" }, { status: 400 });
+    if (!body.categoryId)
+      return Response.json({ error: "categoryId is required" }, { status: 400 });
 
     const { transaction, category } = createRepositories();
     const result = await createInvestmentUseCase(

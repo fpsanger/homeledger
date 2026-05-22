@@ -4,10 +4,7 @@ import { updateCategoryUseCase } from "../../../../application/use-cases/UpdateC
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await request.json();
     if (typeof body.name !== "string" || !body.name.trim()) {
@@ -29,10 +26,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { category } = createRepositories();
     await deleteCategoryUseCase(params.id, category);

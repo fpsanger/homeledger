@@ -11,9 +11,12 @@ type PersonRecord = {
 };
 
 async function getPeople(): Promise<PersonRecord[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/people`, {
-    cache: "no-store",
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/people`,
+    {
+      cache: "no-store",
+    },
+  );
   if (!res.ok) return [];
   const data = await res.json();
   return data.people;
@@ -24,7 +27,11 @@ export default async function PeoplePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Configurações" title="Pessoas" description={people.length > 0 ? `${people.length} pessoas cadastradas` : undefined} />
+      <PageHeader
+        eyebrow="Configurações"
+        title="Pessoas"
+        description={people.length > 0 ? `${people.length} pessoas cadastradas` : undefined}
+      />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Adicionar Pessoa</CardTitle>

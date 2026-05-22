@@ -35,13 +35,21 @@ export async function createInstallmentPurchaseUseCase(
     // Try next billing month first; fall back to current month (same-month closures).
     const nextBMMonth = purchaseMonth === 12 ? 1 : purchaseMonth + 1;
     const nextBMYear = purchaseMonth === 12 ? purchaseYear + 1 : purchaseYear;
-    const nextClosure = await creditCardRepo.findClosure(input.creditCardId, nextBMYear, nextBMMonth);
+    const nextClosure = await creditCardRepo.findClosure(
+      input.creditCardId,
+      nextBMYear,
+      nextBMMonth,
+    );
 
     if (nextClosure?.previousMonth) {
       closureDay = nextClosure.closureDay;
       closureInPreviousMonth = true;
     } else {
-      const currentClosure = await creditCardRepo.findClosure(input.creditCardId, purchaseYear, purchaseMonth);
+      const currentClosure = await creditCardRepo.findClosure(
+        input.creditCardId,
+        purchaseYear,
+        purchaseMonth,
+      );
       if (!currentClosure) {
         throw new Error(
           `No closure date set for ${card.name} in ${purchaseYear}-${String(purchaseMonth).padStart(2, "0")}. Set a closure date before registering purchases.`,

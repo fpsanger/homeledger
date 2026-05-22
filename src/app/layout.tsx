@@ -44,7 +44,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${dmSerifDisplay.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${dmSerifDisplay.variable} antialiased`}
+      >
         <ThemeProvider>
           <TopNav />
           <main className="px-6 py-8 max-w-6xl mx-auto">{children}</main>

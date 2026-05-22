@@ -18,7 +18,5 @@ export function isDuplicateTransaction(
 ): boolean {
   if (amount === null || date === null) return false;
 
-  return existing.some(
-    (t) => t.type === type && t.amount === amount && sameDay(t.date, date),
-  );
+  return existing.some((t) => t.type === type && t.amount === amount && sameDay(t.date, date));
 }

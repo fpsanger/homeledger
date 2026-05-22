@@ -1,5 +1,8 @@
 import { createCategoryUseCase } from "../../../src/application/use-cases/CreateCategoryUseCase";
-import type { ICategoryRepository, CategoryRecord } from "../../../src/domain/repositories/ICategoryRepository";
+import type {
+  ICategoryRepository,
+  CategoryRecord,
+} from "../../../src/domain/repositories/ICategoryRepository";
 
 const makeRepo = (
   categories: CategoryRecord[] = [],
@@ -7,7 +10,8 @@ const makeRepo = (
 ): ICategoryRepository => ({
   findAll: async () => categories,
   findById: async (id) => categories.find((c) => c.id === id) ?? null,
-  findRootByName: async (name) => categories.find((c) => c.parentId === null && c.name === name) ?? null,
+  findRootByName: async (name) =>
+    categories.find((c) => c.parentId === null && c.name === name) ?? null,
   save: async (c) => ({ ...c, createdAt: new Date() }),
   delete: async () => {},
   ...overrides,

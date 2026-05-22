@@ -1,4 +1,8 @@
-import { createExpense, createIncome, createInvestment } from "../../../src/domain/entities/Transaction";
+import {
+  createExpense,
+  createIncome,
+  createInvestment,
+} from "../../../src/domain/entities/Transaction";
 
 const baseExpense = {
   id: "txn-1",
@@ -122,23 +126,33 @@ describe("Investment entity", () => {
     });
 
     it("throws when personId is missing", () => {
-      expect(() => createInvestment({ ...baseInvestment, personId: "" })).toThrow("Person is required");
+      expect(() => createInvestment({ ...baseInvestment, personId: "" })).toThrow(
+        "Person is required",
+      );
     });
 
     it("throws when amount is zero", () => {
-      expect(() => createInvestment({ ...baseInvestment, amount: 0 })).toThrow("Amount must be positive");
+      expect(() => createInvestment({ ...baseInvestment, amount: 0 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when amount is negative", () => {
-      expect(() => createInvestment({ ...baseInvestment, amount: -100 })).toThrow("Amount must be positive");
+      expect(() => createInvestment({ ...baseInvestment, amount: -100 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when date is missing", () => {
-      expect(() => createInvestment({ ...baseInvestment, date: null as unknown as Date })).toThrow("Date is required");
+      expect(() => createInvestment({ ...baseInvestment, date: null as unknown as Date })).toThrow(
+        "Date is required",
+      );
     });
 
     it("throws when categoryId is missing", () => {
-      expect(() => createInvestment({ ...baseInvestment, categoryId: "" })).toThrow("Category is required");
+      expect(() => createInvestment({ ...baseInvestment, categoryId: "" })).toThrow(
+        "Category is required",
+      );
     });
   });
 });
@@ -180,7 +194,9 @@ describe("Income entity", () => {
     });
 
     it("throws when amount is negative", () => {
-      expect(() => createIncome({ ...baseIncome, amount: -100 })).toThrow("Amount must be positive");
+      expect(() => createIncome({ ...baseIncome, amount: -100 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when date is missing", () => {
@@ -190,7 +206,9 @@ describe("Income entity", () => {
     });
 
     it("throws when source is missing", () => {
-      expect(() => createIncome({ ...baseIncome, source: "" as never })).toThrow("Source is required");
+      expect(() => createIncome({ ...baseIncome, source: "" as never })).toThrow(
+        "Source is required",
+      );
     });
 
     it("allows categoryId to be null", () => {

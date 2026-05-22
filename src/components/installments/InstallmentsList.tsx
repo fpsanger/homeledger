@@ -44,8 +44,18 @@ type Purchase = {
 };
 
 const MONTH_NAMES = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
 ];
 
 type Props = {
@@ -106,7 +116,9 @@ function EditForm({
     setLoaded(true);
   }
 
-  useEffect(() => { loadOptions(); }, []);
+  useEffect(() => {
+    loadOptions();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -144,31 +156,63 @@ function EditForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      {field("ep-desc", "Descrição",
-        <Input id="ep-desc" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Opcional" />
+      {field(
+        "ep-desc",
+        "Descrição",
+        <Input
+          id="ep-desc"
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          placeholder="Opcional"
+        />,
       )}
-      {field("ep-amount", "Valor Total",
-        <CurrencyInput id="ep-amount" value={form.totalAmount} onChange={(v) => setForm((f) => ({ ...f, totalAmount: v }))} required />
+      {field(
+        "ep-amount",
+        "Valor Total",
+        <CurrencyInput
+          id="ep-amount"
+          value={form.totalAmount}
+          onChange={(v) => setForm((f) => ({ ...f, totalAmount: v }))}
+          required
+        />,
       )}
-      {field("", "Data da Compra",
-        <DatePicker value={form.purchaseDate} onChange={(v) => setForm((f) => ({ ...f, purchaseDate: v }))} required />
+      {field(
+        "",
+        "Data da Compra",
+        <DatePicker
+          value={form.purchaseDate}
+          onChange={(v) => setForm((f) => ({ ...f, purchaseDate: v }))}
+          required
+        />,
       )}
-      {field("ep-card", "Cartão de Crédito",
-        <Select id="ep-card" value={form.creditCardId} onChange={(e) => setForm((f) => ({ ...f, creditCardId: e.target.value }))}>
+      {field(
+        "ep-card",
+        "Cartão de Crédito",
+        <Select
+          id="ep-card"
+          value={form.creditCardId}
+          onChange={(e) => setForm((f) => ({ ...f, creditCardId: e.target.value }))}
+        >
           <option value="">Nenhum</option>
-          {creditCards.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </Select>
+          {creditCards.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>,
       )}
-      {field("ep-cat", "Categoria",
-        <CategoryCombobox
-          categories={categories}
-          value={categoryId}
-          onChange={setCategoryId}
-        />
+      {field(
+        "ep-cat",
+        "Categoria",
+        <CategoryCombobox categories={categories} value={categoryId} onChange={setCategoryId} />,
       )}
       <div className="flex gap-2 pt-1">
-        <Button type="submit" size="sm" disabled={loading}>{loading ? "Salvando…" : "Salvar"}</Button>
-        <Button type="button" size="sm" variant="outline" onClick={onCancel}>Cancelar</Button>
+        <Button type="submit" size="sm" disabled={loading}>
+          {loading ? "Salvando…" : "Salvar"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
       </div>
     </form>
   );
@@ -176,10 +220,22 @@ function EditForm({
 
 function InstallmentStatusBadge({ inst }: { inst: Installment }) {
   if (inst.isCanceled)
-    return <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 text-xs">Cancelado</Badge>;
+    return (
+      <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 text-xs">
+        Cancelado
+      </Badge>
+    );
   if (inst.isPaid)
-    return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">Pago</Badge>;
-  return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">Pendente</Badge>;
+    return (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+        Pago
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+      Pendente
+    </Badge>
+  );
 }
 
 function ProgressBar({ paid, total }: { paid: number; total: number }) {
@@ -189,14 +245,21 @@ function ProgressBar({ paid, total }: { paid: number; total: number }) {
       <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
         <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs text-muted-foreground shrink-0">{paid}/{total}</span>
+      <span className="text-xs text-muted-foreground shrink-0">
+        {paid}/{total}
+      </span>
     </div>
   );
 }
 
 const PAGE_SIZE = 8;
 
-export function InstallmentsList({ people, purchases, currentPersonId, isGlobalLocked = false }: Props) {
+export function InstallmentsList({
+  people,
+  purchases,
+  currentPersonId,
+  isGlobalLocked = false,
+}: Props) {
   const router = useRouter();
   const [showCanceled, setShowCanceled] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -249,7 +312,10 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
         {editingPurchase && (
           <EditForm
             purchase={editingPurchase}
-            onSaved={() => { setEditingPurchase(null); router.refresh(); }}
+            onSaved={() => {
+              setEditingPurchase(null);
+              router.refresh();
+            }}
             onCancel={() => setEditingPurchase(null)}
           />
         )}
@@ -267,7 +333,9 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
             <Select id="person-filter" value={currentPersonId} onChange={handlePersonChange}>
               <option value="">Todas as pessoas</option>
               {people.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
               ))}
             </Select>
           )}
@@ -279,7 +347,9 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
             checked={showCanceled}
             onChange={(e) => setShowCanceled(e.target.checked)}
           />
-          <label htmlFor="show-canceled" className="text-sm">Mostrar cancelados</label>
+          <label htmlFor="show-canceled" className="text-sm">
+            Mostrar cancelados
+          </label>
         </div>
       </div>
 
@@ -298,11 +368,17 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
         const paidCount = activeInstallments.filter((i) => i.isPaid).length;
         const pendingInstallments = activeInstallments
           .filter((i) => !i.isPaid)
-          .sort((a, b) => a.dueYear !== b.dueYear ? a.dueYear - b.dueYear : a.dueMonth - b.dueMonth);
-        const amountPaid = activeInstallments.filter((i) => i.isPaid).reduce((s, i) => s + i.amount, 0);
+          .sort((a, b) =>
+            a.dueYear !== b.dueYear ? a.dueYear - b.dueYear : a.dueMonth - b.dueMonth,
+          );
+        const amountPaid = activeInstallments
+          .filter((i) => i.isPaid)
+          .reduce((s, i) => s + i.amount, 0);
         const amountRemaining = pendingInstallments.reduce((s, i) => s + i.amount, 0);
         const nextInstallment = pendingInstallments[0];
-        const visibleInstallments = purchase.installments.filter((i) => showCanceled || !i.isCanceled);
+        const visibleInstallments = purchase.installments.filter(
+          (i) => showCanceled || !i.isCanceled,
+        );
         const isExpanded = expandedId === purchase.id;
 
         return (
@@ -311,9 +387,12 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
             <div className="px-5 py-4 flex flex-col gap-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-w-0">
-                  <p className="font-semibold text-sm truncate">{purchase.description || "Sem descrição"}</p>
+                  <p className="font-semibold text-sm truncate">
+                    {purchase.description || "Sem descrição"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(purchase.purchaseDate).toLocaleDateString("pt-BR")} · {purchase.numberOfInstallments}x · {formatCurrency(purchase.totalAmount)}
+                    {new Date(purchase.purchaseDate).toLocaleDateString("pt-BR")} ·{" "}
+                    {purchase.numberOfInstallments}x · {formatCurrency(purchase.totalAmount)}
                   </p>
                 </div>
                 <DropdownMenu
@@ -354,17 +433,22 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
                 </div>
                 <div>
                   <p className="text-muted-foreground">Pago</p>
-                  <p className="font-semibold text-sm text-green-700">{formatCurrency(amountPaid)}</p>
+                  <p className="font-semibold text-sm text-green-700">
+                    {formatCurrency(amountPaid)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Restante</p>
-                  <p className="font-semibold text-sm text-amber-700">{formatCurrency(amountRemaining)}</p>
+                  <p className="font-semibold text-sm text-amber-700">
+                    {formatCurrency(amountRemaining)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Próxima parcela</p>
                   {nextInstallment ? (
                     <p className="font-semibold text-sm">
-                      {MONTH_NAMES[nextInstallment.dueMonth - 1]}/{nextInstallment.dueYear} · {formatCurrency(nextInstallment.amount)}
+                      {MONTH_NAMES[nextInstallment.dueMonth - 1]}/{nextInstallment.dueYear} ·{" "}
+                      {formatCurrency(nextInstallment.amount)}
                     </p>
                   ) : (
                     <p className="font-semibold text-sm text-green-700">Quitado</p>
@@ -378,7 +462,11 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
                 onClick={() => setExpandedId(isExpanded ? null : purchase.id)}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
               >
-                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {isExpanded ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
                 {isExpanded ? "Ocultar parcelas" : `Ver parcelas (${visibleInstallments.length})`}
               </button>
             </div>
@@ -387,7 +475,9 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
             {isExpanded && (
               <div className="border-t">
                 {visibleInstallments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground px-5 py-3">Nenhuma parcela a exibir.</p>
+                  <p className="text-sm text-muted-foreground px-5 py-3">
+                    Nenhuma parcela a exibir.
+                  </p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
@@ -401,11 +491,22 @@ export function InstallmentsList({ people, purchases, currentPersonId, isGlobalL
                     </thead>
                     <tbody>
                       {visibleInstallments.map((inst) => (
-                        <tr key={inst.id} className="border-b last:border-0 hover:bg-muted/10 transition-colors">
-                          <td className="px-5 py-2.5 text-xs text-muted-foreground">{inst.installmentNumber}</td>
-                          <td className="px-5 py-2.5 text-xs">{MONTH_NAMES[inst.dueMonth - 1]}/{inst.dueYear}</td>
-                          <td className="px-5 py-2.5 text-xs font-medium">{formatCurrency(inst.amount)}</td>
-                          <td className="px-5 py-2.5"><InstallmentStatusBadge inst={inst} /></td>
+                        <tr
+                          key={inst.id}
+                          className="border-b last:border-0 hover:bg-muted/10 transition-colors"
+                        >
+                          <td className="px-5 py-2.5 text-xs text-muted-foreground">
+                            {inst.installmentNumber}
+                          </td>
+                          <td className="px-5 py-2.5 text-xs">
+                            {MONTH_NAMES[inst.dueMonth - 1]}/{inst.dueYear}
+                          </td>
+                          <td className="px-5 py-2.5 text-xs font-medium">
+                            {formatCurrency(inst.amount)}
+                          </td>
+                          <td className="px-5 py-2.5">
+                            <InstallmentStatusBadge inst={inst} />
+                          </td>
                           <td className="px-5 py-2.5 text-right">
                             {!inst.isPaid && !inst.isCanceled && (
                               <Button

@@ -60,10 +60,7 @@ export function validateIncomeCategory(
   }
 }
 
-export function validateInvestmentCategory(
-  categoryId: string,
-  categories: CategoryRecord[],
-): void {
+export function validateInvestmentCategory(categoryId: string, categories: CategoryRecord[]): void {
   const category = categories.find((c) => c.id === categoryId);
   if (!category) throw new Error("Category not found");
 

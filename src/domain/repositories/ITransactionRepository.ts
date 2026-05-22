@@ -7,7 +7,15 @@ export interface TransactionRecord {
   amount: number;
   date: Date;
   description: string;
-  paymentMethod: "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "PIX" | "BANK_TRANSFER" | "BOLETO" | "ACCOUNT_DEBIT" | null;
+  paymentMethod:
+    | "CASH"
+    | "DEBIT_CARD"
+    | "CREDIT_CARD"
+    | "PIX"
+    | "BANK_TRANSFER"
+    | "BOLETO"
+    | "ACCOUNT_DEBIT"
+    | null;
   source: IncomeSource | null;
   categoryId: string | null;
   createdAt: Date;
@@ -22,6 +30,9 @@ export interface ITransactionRepository {
   findByYear(year: number): Promise<TransactionRecord[]>;
   findByPersonAndYear(personId: string, year: number): Promise<TransactionRecord[]>;
   save(transaction: Omit<TransactionRecord, "createdAt" | "updatedAt">): Promise<TransactionRecord>;
-  update(id: string, fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>): Promise<TransactionRecord>;
+  update(
+    id: string,
+    fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<TransactionRecord>;
   delete(id: string): Promise<void>;
 }

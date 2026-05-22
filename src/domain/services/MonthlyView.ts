@@ -20,7 +20,15 @@ type MonthlyViewResult = {
 };
 
 export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
-  const { transactions, installments, recurringRules = [], year, month, personId, filterBy = "dueMonth" } = input;
+  const {
+    transactions,
+    installments,
+    recurringRules = [],
+    year,
+    month,
+    personId,
+    filterBy = "dueMonth",
+  } = input;
 
   const matchesMonth = (date: Date) => {
     const d = new Date(date);

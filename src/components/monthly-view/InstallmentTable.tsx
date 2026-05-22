@@ -102,7 +102,10 @@ export function InstallmentTable({
   const PAGE_SIZE = 20;
 
   const byPersonId = useMemo(() => Object.fromEntries(people.map((p) => [p.id, p.name])), [people]);
-  const byCardId = useMemo(() => Object.fromEntries(creditCards.map((c) => [c.id, c.name])), [creditCards]);
+  const byCardId = useMemo(
+    () => Object.fromEntries(creditCards.map((c) => [c.id, c.name])),
+    [creditCards],
+  );
 
   async function handleDelete(id: string) {
     setLoadingId(id);
@@ -166,15 +169,37 @@ export function InstallmentTable({
         onClick={() => setSummaryOpen((o) => !o)}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`} />
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
+        />
         {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
       </button>
       {summaryOpen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard icon={Wallet} label="Total" value={fmt(total)} colorClass="text-foreground" />
-          <SummaryCard icon={CheckCircle2} label="Pago" value={fmt(paid)} colorClass="text-green-600" />
-          <SummaryCard icon={CreditCard} label="Restante" value={fmt(remaining)} colorClass="text-amber-600" />
-          <SummaryCard icon={Clock} label="Pendentes" value={String(pendingCount)} colorClass="text-muted-foreground" />
+          <SummaryCard
+            icon={Wallet}
+            label="Total"
+            value={fmt(total)}
+            colorClass="text-foreground"
+          />
+          <SummaryCard
+            icon={CheckCircle2}
+            label="Pago"
+            value={fmt(paid)}
+            colorClass="text-green-600"
+          />
+          <SummaryCard
+            icon={CreditCard}
+            label="Restante"
+            value={fmt(remaining)}
+            colorClass="text-amber-600"
+          />
+          <SummaryCard
+            icon={Clock}
+            label="Pendentes"
+            value={String(pendingCount)}
+            colorClass="text-muted-foreground"
+          />
         </div>
       )}
 
@@ -243,7 +268,9 @@ export function InstallmentTable({
                   <TableRow key={inst.id} className="group">
                     <TableCell>
                       <p className="text-sm font-medium">{description}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{metaParts.join(" · ")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {metaParts.join(" · ")}
+                      </p>
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums text-sm">
                       {fmt(inst.amount)}
@@ -278,11 +305,23 @@ export function InstallmentTable({
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-1">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+          >
             ← Anterior
           </Button>
-          <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <span className="text-sm text-muted-foreground">
+            {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page + 1 >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Próximo →
           </Button>
         </div>

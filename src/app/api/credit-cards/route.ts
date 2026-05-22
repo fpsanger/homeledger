@@ -18,8 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     if (!body.name) return Response.json({ error: "name is required" }, { status: 400 });
-    if (!body.closureType) return Response.json({ error: "closureType is required" }, { status: 400 });
-    if (!body.dueDayOfMonth) return Response.json({ error: "dueDayOfMonth is required" }, { status: 400 });
+    if (!body.closureType)
+      return Response.json({ error: "closureType is required" }, { status: 400 });
+    if (!body.dueDayOfMonth)
+      return Response.json({ error: "dueDayOfMonth is required" }, { status: 400 });
 
     const { creditCard } = createRepositories();
     const card = await createCreditCardUseCase(

@@ -76,29 +76,56 @@ export function InstallmentForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-person">Pessoa</Label>
-        <Select id="inst-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <Select
+          id="inst-person"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+          required
+        >
           <option value="">Selecione a pessoa</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-card">Cartão de Crédito</Label>
-        <Select id="inst-card" value={creditCardId} onChange={(e) => setCreditCardId(e.target.value)} required>
+        <Select
+          id="inst-card"
+          value={creditCardId}
+          onChange={(e) => setCreditCardId(e.target.value)}
+          required
+        >
           <option value="">Selecione o cartão</option>
           {creditCards.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-total">Valor Total</Label>
-        <CurrencyInput id="inst-total" value={totalAmount} onChange={(v) => { setTotalAmount(v); setNumberOfInstallments(""); }} required />
+        <CurrencyInput
+          id="inst-total"
+          value={totalAmount}
+          onChange={(v) => {
+            setTotalAmount(v);
+            setNumberOfInstallments("");
+          }}
+          required
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-count">Número de Parcelas</Label>
-        <Select id="inst-count" value={numberOfInstallments} onChange={(e) => setNumberOfInstallments(e.target.value)} required>
+        <Select
+          id="inst-count"
+          value={numberOfInstallments}
+          onChange={(e) => setNumberOfInstallments(e.target.value)}
+          required
+        >
           {(() => {
             const total = parseFloat(totalAmount);
             if (!total || total <= 0) {
@@ -125,9 +152,16 @@ export function InstallmentForm({
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="inst-description">Descrição</Label>
-        <Input id="inst-description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
+        <Input
+          id="inst-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Opcional"
+        />
       </div>
-      <Button type="submit" disabled={loading}>{loading ? "Adicionando…" : "Adicionar Compra"}</Button>
+      <Button type="submit" disabled={loading}>
+        {loading ? "Adicionando…" : "Adicionar Compra"}
+      </Button>
     </form>
   );
 }

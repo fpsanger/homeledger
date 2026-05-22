@@ -14,7 +14,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 
-const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MONTH_NAMES = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 function fmtFull(v: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
@@ -28,13 +41,23 @@ function fmtCompact(v: number) {
   return `${sign}R$${abs.toFixed(0)}`;
 }
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   const val = payload[0].value;
   return (
     <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs">
       <p className="text-muted-foreground mb-1 font-medium">{label}</p>
-      <p className={`font-semibold tabular-nums ${val >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+      <p
+        className={`font-semibold tabular-nums ${val >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+      >
         {fmtSigned(val)}
       </p>
     </div>
@@ -56,7 +79,11 @@ export function AnnualBalanceChart({ months }: ChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="35%">
+      <BarChart
+        data={data}
+        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+        barCategoryGap="35%"
+      >
         <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
         <XAxis
           dataKey="name"
@@ -96,7 +123,9 @@ export function AnnualBalanceCard({ months, totalBalance }: Props) {
         <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Balanço Anual
         </CardDescription>
-        <CardTitle className={`text-2xl font-bold tabular-nums ${totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+        <CardTitle
+          className={`text-2xl font-bold tabular-nums ${totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+        >
           {fmtSigned(totalBalance)}
         </CardTitle>
         <p className="text-xs text-muted-foreground">Diferença entre receitas e despesas por mês</p>

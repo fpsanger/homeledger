@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { DatePicker } from "@/components/ui/date-picker";
 
-type Program = { id: string; name: string };
+type Program = { id: string; name: string; type: string };
 
 type Props = {
   programs: Program[];
@@ -25,6 +25,8 @@ export function LoyaltyTransferForm({ programs, onSuccess }: Props) {
   const bonusNum = Number(bonusPercent) || 0;
   const pointsReceived = sentNum > 0 ? Math.round(sentNum * (1 + bonusNum / 100)) : 0;
 
+  const fromProgram = programs.find((p) => p.id === fromProgramId);
+  const isAirlineSource = fromProgram?.type === "AIRLINE";
   const destinationPrograms = programs.filter((p) => p.id !== fromProgramId);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -94,6 +96,12 @@ export function LoyaltyTransferForm({ programs, onSuccess }: Props) {
         </div>
       </div>
 
+      {isAirlineSource && (
+        <p className="text-sm text-destructive rounded-md bg-destructive/10 px-3 py-2">
+          Programas aéreos não podem transferir pontos para outros programas.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium" htmlFor="transfer-points">Pontos enviados</label>
@@ -146,7 +154,7 @@ export function LoyaltyTransferForm({ programs, onSuccess }: Props) {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || isAirlineSource}
         className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
       >
         {loading ? "Salvando..." : "Registrar Transferência"}

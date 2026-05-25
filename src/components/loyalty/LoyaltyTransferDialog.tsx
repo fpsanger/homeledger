@@ -3,7 +3,7 @@
 import { Dialog } from "@/components/ui/dialog";
 import { LoyaltyTransferForm } from "./LoyaltyTransferForm";
 
-type Program = { id: string; name: string };
+type Program = { id: string; name: string; type: string };
 
 type Props = {
   open: boolean;

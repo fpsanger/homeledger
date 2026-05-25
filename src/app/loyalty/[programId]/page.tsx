@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoyaltyProgramDetail } from "@/components/loyalty/LoyaltyProgramDetail";
+import { BackButton } from "@/components/loyalty/BackButton";
 
 type FifoData = {
   costBrl: number;
@@ -79,6 +80,7 @@ export default async function LoyaltyProgramPage({ params }: { params: Promise<{
 
   return (
     <div className="flex flex-col gap-6">
+      <BackButton label="Milhas" />
       <PageHeader
         eyebrow="Milhas"
         title={program.name}

@@ -30,7 +30,12 @@ export async function POST(request: NextRequest) {
     }
     if (!body.transferDate) return Response.json({ error: "transferDate is required" }, { status: 400 });
 
-    const { loyaltyTransfer, loyaltyTransaction } = createRepositories();
+    const { loyaltyTransfer, loyaltyTransaction, loyaltyProgram } = createRepositories();
+    const fromProgram = await loyaltyProgram.findById(body.fromProgramId);
+    if (!fromProgram) return Response.json({ error: "fromProgramId not found" }, { status: 400 });
+    if (fromProgram.type === "AIRLINE") {
+      return Response.json({ error: "Programas aéreos não podem transferir pontos." }, { status: 422 });
+    }
     const result = await createLoyaltyTransferUseCase(
       {
         transferId: crypto.randomUUID(),

@@ -14,6 +14,7 @@ const navLinks = [
   { href: "/transactions", label: "Transações" },
   { href: "/installments", label: "Parcelas" },
   { href: "/credit-cards", label: "Cartões de Crédito" },
+  { href: "/loyalty", label: "Milhas" },
   { href: "/categories", label: "Categorias" },
   { href: "/people", label: "Pessoas" },
 ];

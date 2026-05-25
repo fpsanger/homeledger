@@ -66,12 +66,12 @@ function parseInstallments(
 
 function parseDateDDMM(day: string, month: string, year?: string): Date {
   const y = year ? parseInt(year, 10) : new Date().getFullYear()
-  return new Date(y, parseInt(month, 10) - 1, parseInt(day, 10))
+  return new Date(Date.UTC(y, parseInt(month, 10) - 1, parseInt(day, 10)))
 }
 
 function parseDateISO(dateStr: string): Date {
   const [y, m, d] = dateStr.split("-")
-  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d))
+  return new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d)))
 }
 
 // DD/MM or DD/MM/YYYY  DESCRIPTION  R$ amount

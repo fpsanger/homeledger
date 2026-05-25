@@ -121,8 +121,8 @@ describe("parseBillingText", () => {
     it("parses date correctly", () => {
       const result = parseBillingText(ITAU_TEXT)
       const amazon = result.rows.find((r) => r.description.includes("AMAZON"))
-      expect(amazon!.date.getDate()).toBe(15)
-      expect(amazon!.date.getMonth()).toBe(2) // March = 2 (0-indexed)
+      expect(amazon!.date.getUTCDate()).toBe(15)
+      expect(amazon!.date.getUTCMonth()).toBe(2) // March = 2 (0-indexed)
     })
 
     it("skips header/footer lines (Total, Limite, Vencimento)", () => {

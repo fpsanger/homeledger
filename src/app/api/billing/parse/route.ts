@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import pdfParse from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
 import { parseStatementUseCase } from "../../../../application/use-cases/ParseStatementUseCase";
 import { reconcileStatementUseCase } from "../../../../application/use-cases/ReconcileStatementUseCase";
 import { createHybridStatementParser } from "../../../../infrastructure/parsing/HybridStatementParser";
 import type { SupportedBank } from "../../../../infrastructure/parsing/BillingRegexParser";
 import { createRepositories } from "../../_lib/repositories";
+import { InvalidBillingItemError } from "../../../../domain/errors";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,8 +19,8 @@ export async function POST(request: NextRequest) {
     const monthStr = formData.get("month") as string | null;
     const creditCardId = formData.get("creditCardId") as string | null;
     const bank = formData.get("bank") as string | null;
-    const ollamaBaseUrl = (formData.get("ollamaBaseUrl") as string | null) ?? "http://localhost:11434";
-    const model = (formData.get("model") as string | null) ?? "llama3";
+    const ollamaBaseUrl = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
+    const ollamaModel = process.env.OLLAMA_MODEL ?? "llama3";
 
     // Validate required fields
     if (!file) {
@@ -41,9 +43,24 @@ export async function POST(request: NextRequest) {
     if (Number.isNaN(year) || Number.isNaN(month)) {
       return NextResponse.json({ error: "Invalid year or month: must be numbers" }, { status: 400 });
     }
+    if (month < 1 || month > 12) {
+      return NextResponse.json({ error: "Month must be between 1 and 12" }, { status: 400 });
+    }
+    if (year < 2000) {
+      return NextResponse.json({ error: "Invalid year" }, { status: 400 });
+    }
     if (statementType === "credit-card" && !creditCardId) {
       return NextResponse.json(
         { error: "Missing required field: creditCardId (required when statementType is 'credit-card')" },
+        { status: 400 },
+      );
+    }
+
+    // Validate bank
+    const allowedBanks = ["itau", "bradesco", "c6", "btg", "unknown"];
+    if (bank && !allowedBanks.includes(bank)) {
+      return NextResponse.json(
+        { error: "Invalid bank. Must be one of: itau, bradesco, c6, btg, unknown" },
         { status: 400 },
       );
     }
@@ -56,7 +73,7 @@ export async function POST(request: NextRequest) {
     const parser = createHybridStatementParser({
       hintBank: bank as SupportedBank | undefined,
       ollamaBaseUrl,
-      model,
+      model: ollamaModel,
     });
 
     const { creditCardPurchase, transaction } = createRepositories();
@@ -85,7 +102,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(reconciledItems);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    if (err instanceof InvalidBillingItemError) {
+      return NextResponse.json(
+        { error: "Invalid data in billing statement" },
+        { status: 400 },
+      );
+    }
+    console.error("Billing parse error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

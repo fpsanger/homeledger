@@ -32,7 +32,6 @@ export function Step1Upload({ onSuccess }: Props) {
   const [year, setYear] = useState(CURRENT_YEAR);
   const [month, setMonth] = useState(CURRENT_MONTH);
   const [bank, setBank] = useState("unknown");
-  const [ollamaUrl, setOllamaUrl] = useState("http://localhost:11434");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
@@ -67,7 +66,6 @@ export function Step1Upload({ onSuccess }: Props) {
     formData.append("month", String(month));
     if (statementType === "credit-card") formData.append("creditCardId", creditCardId);
     if (bank && bank !== "unknown") formData.append("bank", bank);
-    formData.append("ollamaBaseUrl", ollamaUrl);
 
     try {
       const res = await fetch("/api/billing/parse", { method: "POST", body: formData });
@@ -210,18 +208,6 @@ export function Step1Upload({ onSuccess }: Props) {
               <option key={b.value} value={b.value}>{b.label}</option>
             ))}
           </select>
-        </div>
-
-        {/* Ollama URL */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Ollama URL (opcional)</label>
-          <input
-            type="text"
-            value={ollamaUrl}
-            onChange={(e) => setOllamaUrl(e.target.value)}
-            placeholder="http://localhost:11434"
-            className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-          />
         </div>
 
         {error && (

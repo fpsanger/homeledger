@@ -7,6 +7,7 @@ import { LoyaltyProgramCreateDialog } from "./LoyaltyProgramCreateDialog";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
 import { LoyaltyTransferTable } from "./LoyaltyTransferTable";
 import { PageHeader } from "@/components/ui/page-header";
+import { Select } from "@/components/ui/select";
 
 type Program = {
   id: string;
@@ -27,13 +28,18 @@ type Transfer = {
   description: string | null;
 };
 
+type Person = { id: string; name: string };
+
 type Props = {
   programs: Program[];
   transfers: Transfer[];
   balances: Record<string, number>;
+  people: Person[];
+  currentPersonId: string;
+  isGlobalLocked?: boolean;
 };
 
-export function LoyaltyPageClient({ programs, transfers, balances }: Props) {
+export function LoyaltyPageClient({ programs, transfers, balances, people, currentPersonId, isGlobalLocked = false }: Props) {
   const router = useRouter();
   const [openProgram, setOpenProgram] = useState(false);
   const [openTransfer, setOpenTransfer] = useState(false);
@@ -48,14 +54,37 @@ export function LoyaltyPageClient({ programs, transfers, balances }: Props) {
     router.refresh();
   }
 
+  function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const params = new URLSearchParams(window.location.search);
+    if (e.target.value) params.set("personId", e.target.value);
+    else params.delete("personId");
+    router.push(`/loyalty?${params.toString()}`);
+  }
+
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-6">
-        <PageHeader
-          eyebrow="Finanças"
-          title="Programas de Milhas"
-          description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
-        />
+        <div className="flex items-start justify-between gap-4">
+          <PageHeader
+            eyebrow="Finanças"
+            title="Programas de Milhas"
+            description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
+          />
+          {people.length > 1 && (
+            isGlobalLocked ? (
+              <span className="text-sm text-muted-foreground px-2 py-1 border rounded-md bg-muted/40 shrink-0 mt-1">
+                {people.find((p) => p.id === currentPersonId)?.name ?? "Todas as pessoas"}
+              </span>
+            ) : (
+              <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm shrink-0 mt-1">
+                <option value="">Todas as pessoas</option>
+                {people.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </Select>
+            )
+          )}
+        </div>
 
         {programs.length > 0 && (
           <>

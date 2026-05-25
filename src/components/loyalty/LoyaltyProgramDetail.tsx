@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { Select } from "@/components/ui/select";
 
 type FifoData = {
   costBrl: number;
@@ -42,12 +43,17 @@ type Program = {
   color: string;
 };
 
+type Person = { id: string; name: string };
+
 type Props = {
   program: Program;
   report: {
     summary: Summary;
     transactions: Transaction[];
   };
+  people: Person[];
+  currentPersonId: string;
+  isGlobalLocked?: boolean;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -316,7 +322,7 @@ type SortDir = "asc" | "desc";
 
 const EDITABLE_TYPES = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUSTMENT"];
 
-export function LoyaltyProgramDetail({ program, report }: Props) {
+export function LoyaltyProgramDetail({ program, report, people, currentPersonId, isGlobalLocked = false }: Props) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -324,6 +330,13 @@ export function LoyaltyProgramDetail({ program, report }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { summary, transactions } = report;
+
+  function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const params = new URLSearchParams(window.location.search);
+    if (e.target.value) params.set("personId", e.target.value);
+    else params.delete("personId");
+    router.push(`/loyalty/${program.id}?${params.toString()}`);
+  }
 
   async function handleDelete(tx: Transaction) {
     setDeletingId(tx.id);
@@ -390,17 +403,33 @@ export function LoyaltyProgramDetail({ program, report }: Props) {
 
       {/* Transaction list */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Transações
           </h2>
-          <button
-            type="button"
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            + Adicionar
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            {people.length > 1 && (
+              isGlobalLocked ? (
+                <span className="text-sm text-muted-foreground px-2 py-1 border rounded-md bg-muted/40 shrink-0">
+                  {people.find((p) => p.id === currentPersonId)?.name ?? "Todas as pessoas"}
+                </span>
+              ) : (
+                <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm">
+                  <option value="">Todas as pessoas</option>
+                  {people.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </Select>
+              )
+            )}
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              + Adicionar
+            </button>
+          </div>
         </div>
         {sorted.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma transação registrada.</p>

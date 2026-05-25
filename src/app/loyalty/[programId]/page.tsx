@@ -66,14 +66,35 @@ async function getReport(programId: string, personId?: string): Promise<Report |
   return res.json();
 }
 
-export default async function LoyaltyProgramPage({ params }: { params: Promise<{ programId: string }> }) {
+async function getPeople(): Promise<{ id: string; name: string }[]> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/people`,
+    { cache: "no-store" },
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.people ?? [];
+}
+
+type SearchParams = { personId?: string };
+
+export default async function LoyaltyProgramPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ programId: string }>;
+  searchParams: SearchParams;
+}) {
   const { programId } = await params;
   const cookieStore = await cookies();
-  const personId = cookieStore.get("global-person-id")?.value;
+  const globalPersonId = cookieStore.get("global-person-id")?.value ?? "";
+  const isGlobalLocked = !!globalPersonId;
+  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
 
-  const [program, report] = await Promise.all([
+  const [program, report, people] = await Promise.all([
     getProgram(programId),
     getReport(programId, personId || undefined),
+    getPeople(),
   ]);
 
   if (!program || !report) notFound();
@@ -86,7 +107,13 @@ export default async function LoyaltyProgramPage({ params }: { params: Promise<{
         title={program.name}
         description={`${report.summary.currentBalance.toLocaleString("pt-BR")} pontos`}
       />
-      <LoyaltyProgramDetail program={program} report={report} />
+      <LoyaltyProgramDetail
+        program={program}
+        report={report}
+        people={people}
+        currentPersonId={personId}
+        isGlobalLocked={isGlobalLocked}
+      />
     </div>
   );
 }

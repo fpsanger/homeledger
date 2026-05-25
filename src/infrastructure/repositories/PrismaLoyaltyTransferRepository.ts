@@ -34,6 +34,12 @@ export class PrismaLoyaltyTransferRepository implements ILoyaltyTransferReposito
     return this.prisma.loyaltyTransfer.findUnique({ where: { id } });
   }
 
+  async findAll(): Promise<LoyaltyTransferRecord[]> {
+    return this.prisma.loyaltyTransfer.findMany({
+      orderBy: { transferDate: "desc" },
+    });
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.loyaltyTransfer.delete({ where: { id } });
   }

@@ -12,7 +12,7 @@ type Transfer = {
   description: string | null;
 };
 
-type Program = { id: string; name: string };
+type Program = { id: string; name: string; type: string };
 
 async function getTransfers(): Promise<Transfer[]> {
   const res = await fetch(`${BASE}/api/loyalty/transfers`, { cache: "no-store" });

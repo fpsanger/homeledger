@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { MoreHorizontal } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
 type FifoData = {
   costBrl: number;
@@ -175,15 +178,17 @@ function AddTransactionModal({ programId, onClose, onSuccess }: { programId: str
               <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} required min="1" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground">Data</label>
               <DatePicker value={date} onChange={setDate} required />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Expiração</label>
-              <DatePicker value={expiresAt} onChange={setExpiresAt} endMonth={new Date(new Date().getFullYear() + 3, 11)} />
-            </div>
+            {type !== "REDEEM" && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">Expiração</label>
+                <DatePicker value={expiresAt} onChange={setExpiresAt} endMonth={new Date(new Date().getFullYear() + 3, 11)} />
+              </div>
+            )}
           </div>
           {type === "PURCHASE" && (
             <div className="flex flex-col gap-1">
@@ -219,15 +224,123 @@ function AddTransactionModal({ programId, onClose, onSuccess }: { programId: str
   );
 }
 
+function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onClose: () => void; onSuccess: () => void }) {
+  const [points, setPoints] = useState(String(tx.points));
+  const [date, setDate] = useState(tx.date.slice(0, 10));
+  const [description, setDescription] = useState(tx.description ?? "");
+  const [costBrl, setCostBrl] = useState(tx.costBrl != null ? String(tx.costBrl) : "");
+  const [expiresAt, setExpiresAt] = useState(tx.expiresAt ? tx.expiresAt.slice(0, 10) : "");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/loyalty/transactions/${tx.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          points: Number(points),
+          date,
+          description: description || null,
+          costBrl: costBrl ? Number(costBrl) : null,
+          expiresAt: expiresAt || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error ?? "Erro ao atualizar transação.");
+        return;
+      }
+      onSuccess();
+    } catch {
+      setError("Erro de conexão.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-background rounded-xl border shadow-lg p-6 w-full max-w-md flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-sm font-semibold">Editar Transação</h2>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Tipo: <span className="font-medium">{TYPE_LABELS[tx.type] ?? tx.type}</span>
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Pontos</label>
+            <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} required min="1" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          <div className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Data</label>
+              <DatePicker value={date} onChange={setDate} required />
+            </div>
+            {tx.type !== "REDEEM" && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">Expiração</label>
+                <DatePicker value={expiresAt} onChange={setExpiresAt} endMonth={new Date(new Date().getFullYear() + 3, 11)} />
+              </div>
+            )}
+          </div>
+          {tx.type === "PURCHASE" && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Custo (R$)</label>
+              <input type="number" step="0.01" value={costBrl} onChange={(e) => setCostBrl(e.target.value)} placeholder="0,00" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            </div>
+          )}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Descrição</label>
+            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <div className="flex gap-2 pt-1">
+            <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+              {loading ? "Salvando..." : "Salvar"}
+            </button>
+            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-muted transition-colors">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 type SortKey = "date" | "expiresAt";
 type SortDir = "asc" | "desc";
+
+const EDITABLE_TYPES = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUSTMENT"];
 
 export function LoyaltyProgramDetail({ program, report }: Props) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { summary, transactions } = report;
+
+  async function handleDelete(tx: Transaction) {
+    setDeletingId(tx.id);
+    const isTransfer = tx.type === "TRANSFER_IN" || tx.type === "TRANSFER_OUT";
+    const url = isTransfer
+      ? `/api/loyalty/transfers/${tx.transferId}`
+      : `/api/loyalty/transactions/${tx.id}`;
+    const res = await fetch(url, { method: "DELETE" });
+    setDeletingId(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error ?? "Falha ao excluir.");
+      return;
+    }
+    router.refresh();
+    toast.success(isTransfer ? "Transferência excluída." : "Transação excluída.");
+  }
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -267,6 +380,13 @@ export function LoyaltyProgramDetail({ program, report }: Props) {
           onSuccess={() => { setShowModal(false); router.refresh(); }}
         />
       )}
+      {editingTx && (
+        <EditTransactionModal
+          tx={editingTx}
+          onClose={() => setEditingTx(null)}
+          onSuccess={() => { setEditingTx(null); router.refresh(); }}
+        />
+      )}
 
       {/* Transaction list */}
       <div className="flex flex-col gap-2">
@@ -304,6 +424,7 @@ export function LoyaltyProgramDetail({ program, report }: Props) {
                     </button>
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
+                  <th className="w-8" />
                 </tr>
               </thead>
               <tbody>
@@ -340,6 +461,31 @@ export function LoyaltyProgramDetail({ program, report }: Props) {
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {tx.description ?? ""}
                       {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <DropdownMenu
+                        align="right"
+                        trigger={
+                          <button
+                            type="button"
+                            disabled={deletingId === tx.id}
+                            className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                            aria-label="Ações"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        }
+                        items={[
+                          ...(EDITABLE_TYPES.includes(tx.type)
+                            ? [{ label: "Editar", onClick: () => setEditingTx(tx) }]
+                            : []),
+                          {
+                            label: deletingId === tx.id ? "Excluindo..." : "Excluir",
+                            onClick: () => handleDelete(tx),
+                            variant: "destructive" as const,
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

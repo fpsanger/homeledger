@@ -59,9 +59,6 @@ export function createLoyaltyTransaction(input: CreateLoyaltyTransactionInput): 
     if (!input.costBrl || input.costBrl <= 0) throw new Error("PURCHASE requires costBrl > 0");
   }
 
-  if (input.type === "REDEEM") {
-    if (!input.valueBrl || input.valueBrl <= 0) throw new Error("REDEEM requires valueBrl > 0");
-  }
 
   const now = new Date();
   return {

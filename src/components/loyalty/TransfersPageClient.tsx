@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
 import { LoyaltyTransferTable } from "./LoyaltyTransferTable";
 
-type Program = { id: string; name: string };
+type Program = { id: string; name: string; type: string };
 
 type Transfer = {
   id: string;

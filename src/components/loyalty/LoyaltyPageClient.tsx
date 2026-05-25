@@ -62,15 +62,18 @@ export function LoyaltyPageClient({ programs, transfers, balances }: Props) {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Resumo de Pontos</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {programs.map((p) => (
-                <div key={p.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+                <div key={p.id} className="rounded-xl border bg-card overflow-hidden flex">
+                  <div className="w-1 shrink-0" style={{ backgroundColor: p.color }} />
+                  <div
+                    className="p-4 flex flex-col gap-1.5 flex-1 min-w-0"
+                    style={{ background: `linear-gradient(135deg, ${p.color}18 0%, transparent 70%)` }}
+                  >
                     <span className="text-xs font-medium text-muted-foreground truncate">{p.name}</span>
+                    <span className="text-2xl font-bold tabular-nums tracking-tight leading-none">
+                      {(balances[p.id] ?? 0).toLocaleString("pt-BR")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">pontos</span>
                   </div>
-                  <span className="text-xl font-semibold tabular-nums">
-                    {(balances[p.id] ?? 0).toLocaleString("pt-BR")}
-                  </span>
-                  <span className="text-xs text-muted-foreground">pontos</span>
                 </div>
               ))}
             </div>

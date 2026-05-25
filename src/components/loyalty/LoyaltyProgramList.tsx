@@ -25,33 +25,36 @@ export function LoyaltyProgramList({ programs, onAdd }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Programas</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="rounded-xl border overflow-hidden divide-y">
         {programs.map((p) => (
-          <Link key={p.id} href={`/loyalty/${p.id}`} className="group block">
-            <div className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3 h-full">
-              <div className="flex items-center gap-3">
-                <span
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: p.color }}
-                />
-                <span className="font-semibold text-sm truncate">{p.name}</span>
-                <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                  {TYPE_LABELS[p.type] ?? p.type}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                Ver detalhes →
-              </p>
-            </div>
+          <Link
+            key={p.id}
+            href={`/loyalty/${p.id}`}
+            className="group flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+          >
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+            <span className="font-medium text-sm flex-1 truncate">{p.name}</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+              {TYPE_LABELS[p.type] ?? p.type}
+            </span>
+            <svg
+              className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </Link>
         ))}
         <button
           type="button"
           onClick={onAdd}
-          className="rounded-xl border-2 border-dashed border-muted-foreground/30 bg-card p-5 min-h-[88px] flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-muted/30 transition-colors text-muted-foreground hover:text-foreground"
+          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-muted-foreground hover:text-foreground"
         >
-          <span className="text-2xl font-light leading-none">+</span>
-          <span className="text-xs font-medium">Adicionar Programa</span>
+          <span className="w-2.5 h-2.5 rounded-full border border-current shrink-0" />
+          <span className="text-sm">Adicionar Programa</span>
         </button>
       </div>
     </div>

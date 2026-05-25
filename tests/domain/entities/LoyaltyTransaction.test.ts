@@ -69,26 +69,14 @@ describe("LoyaltyTransaction entity", () => {
 
   describe("REDEEM", () => {
     it("creates a valid REDEEM transaction", () => {
-      const tx = createLoyaltyTransaction({ ...base, type: "REDEEM", points: 20000, valueBrl: 500 });
+      const tx = createLoyaltyTransaction({ ...base, type: "REDEEM", points: 20000 });
       expect(tx.type).toBe("REDEEM");
-      expect(tx.valueBrl).toBe(500);
-    });
-
-    it("throws when REDEEM has no valueBrl", () => {
-      expect(() =>
-        createLoyaltyTransaction({ ...base, type: "REDEEM", points: 20000, valueBrl: null }),
-      ).toThrow("REDEEM requires valueBrl");
-    });
-
-    it("throws when REDEEM valueBrl <= 0", () => {
-      expect(() =>
-        createLoyaltyTransaction({ ...base, type: "REDEEM", points: 20000, valueBrl: 0 }),
-      ).toThrow("REDEEM requires valueBrl");
+      expect(tx.valueBrl).toBeNull();
     });
 
     it("throws when REDEEM points <= 0", () => {
       expect(() =>
-        createLoyaltyTransaction({ ...base, type: "REDEEM", points: 0, valueBrl: 500 }),
+        createLoyaltyTransaction({ ...base, type: "REDEEM", points: 0 }),
       ).toThrow("points must be positive");
     });
   });

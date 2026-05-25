@@ -9,6 +9,7 @@ import type { Step1Data, ImportSummary } from "./BillingImportWizard";
 
 type Props = {
   reconciledItems: ReconciledItem[];
+  selectedIndices: number[];
   step1Data: Step1Data;
   onDone: (summary: ImportSummary) => void;
   onBack: () => void;
@@ -39,12 +40,12 @@ function estimatePurchaseDate(billingDate: Date | string, installmentNumber: num
   return d.toISOString().slice(0, 10);
 }
 
-export function Step4Import({ reconciledItems, step1Data, onDone, onBack }: Props) {
-  const missingItems = reconciledItems.filter((ri) => ri.status === "missing");
+export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDone, onBack }: Props) {
+  const itemsToImport = selectedIndices.map((i) => reconciledItems[i]);
   const alreadyRegistered = reconciledItems.filter((ri) => ri.status === "matched").length;
 
   const [installmentForms, setInstallmentForms] = useState<InstallmentForm[]>(() =>
-    missingItems.map((ri) => {
+    itemsToImport.map((ri) => {
       const item = ri.billingItem as InstallmentBillingItem;
       if (item.kind !== "installment") return {} as InstallmentForm;
       return {
@@ -59,7 +60,7 @@ export function Step4Import({ reconciledItems, step1Data, onDone, onBack }: Prop
   );
 
   const [transactionForms, setTransactionForms] = useState<TransactionForm[]>(() =>
-    missingItems.map((ri) => {
+    itemsToImport.map((ri) => {
       const item = ri.billingItem as TransactionBillingItem;
       if (item.kind !== "transaction") return {} as TransactionForm;
       return {
@@ -72,7 +73,7 @@ export function Step4Import({ reconciledItems, step1Data, onDone, onBack }: Prop
     }),
   );
 
-  const [statuses, setStatuses] = useState<ItemStatus[]>(missingItems.map(() => "pending"));
+  const [statuses, setStatuses] = useState<ItemStatus[]>(itemsToImport.map(() => "pending"));
   const [importing, setImporting] = useState(false);
 
   function setStatus(index: number, status: ItemStatus) {
@@ -155,8 +156,8 @@ export function Step4Import({ reconciledItems, step1Data, onDone, onBack }: Prop
   async function handleImportAll() {
     setImporting(true);
     let successCount = 0;
-    for (let i = 0; i < missingItems.length; i++) {
-      const ok = await importItem(i, missingItems[i]);
+    for (let i = 0; i < itemsToImport.length; i++) {
+      const ok = await importItem(i, itemsToImport[i]);
       if (ok) successCount++;
     }
     toast.success(`${successCount} itens importados!`);
@@ -172,7 +173,7 @@ export function Step4Import({ reconciledItems, step1Data, onDone, onBack }: Prop
       </p>
 
       <div className="space-y-4">
-        {missingItems.map((ri, i) => {
+        {itemsToImport.map((ri, i) => {
           const item = ri.billingItem;
           const status = statuses[i];
           return (
@@ -316,11 +317,11 @@ export function Step4Import({ reconciledItems, step1Data, onDone, onBack }: Prop
         <button
           type="button"
           onClick={handleImportAll}
-          disabled={importing || missingItems.length === 0}
+          disabled={importing || itemsToImport.length === 0}
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 flex items-center gap-2"
         >
           {importing && <Loader2 className="w-4 h-4 animate-spin" />}
-          Importar todos ({missingItems.length})
+          Importar todos ({itemsToImport.length})
         </button>
       </div>
     </div>

@@ -42,10 +42,12 @@ export function Step1Upload({ onSuccess }: Props) {
   useEffect(() => {
     fetch("/api/credit-cards")
       .then((r) => r.json())
-      .then((d) => setCreditCards(d.creditCards ?? []));
+      .then((d) => setCreditCards(d.creditCards ?? []))
+      .catch(() => setCreditCards([]));
     fetch("/api/people")
       .then((r) => r.json())
-      .then((d) => setPeople(d.people ?? []));
+      .then((d) => setPeople(d.people ?? []))
+      .catch(() => setPeople([]));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -145,6 +147,9 @@ export function Step1Upload({ onSuccess }: Props) {
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+            {creditCards.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">Não foi possível carregar cartões.</p>
+            )}
           </div>
         )}
 
@@ -161,6 +166,9 @@ export function Step1Upload({ onSuccess }: Props) {
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
+          {people.length === 0 && (
+            <p className="text-xs text-amber-600 mt-1">Não foi possível carregar pessoas.</p>
+          )}
         </div>
 
         {/* Month / Year */}

@@ -36,12 +36,14 @@ export function BillingImportWizard() {
   const [reconciledItems, setReconciledItems] = useState<ReconciledItem[]>([]);
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
   const [importSummary, setImportSummary] = useState<ImportSummary>({ imported: 0, alreadyRegistered: 0 });
+  const [selectedForImport, setSelectedForImport] = useState<number[]>([]);
 
   function reset() {
     setStep(1);
     setReconciledItems([]);
     setStep1Data(null);
     setImportSummary({ imported: 0, alreadyRegistered: 0 });
+    setSelectedForImport([]);
   }
 
   return (
@@ -101,6 +103,7 @@ export function BillingImportWizard() {
         <Step3Reconcile
           reconciledItems={reconciledItems}
           onNext={(selected) => {
+            setSelectedForImport(selected);
             setStep(4);
           }}
           onBack={() => setStep(2)}
@@ -114,6 +117,7 @@ export function BillingImportWizard() {
       {step === 4 && (
         <Step4Import
           reconciledItems={reconciledItems}
+          selectedIndices={selectedForImport}
           step1Data={step1Data!}
           onDone={(summary) => {
             setImportSummary(summary);

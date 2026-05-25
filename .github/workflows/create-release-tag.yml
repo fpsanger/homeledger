@@ -1,0 +1,61 @@
+name: Create Release Tag
+
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+
+jobs:
+  create-tag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get source branch
+        id: branch
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+
+          echo "Source branch: $BRANCH_NAME"
+
+          if [[ ! "$BRANCH_NAME" =~ ^release\/ ]]; then
+            echo "Not a release branch."
+            exit 1
+          fi
+
+          VERSION=${BRANCH_NAME#release/}
+          TAG="v$VERSION"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        run: |
+          TAG=${{ steps.branch.outputs.tag }}
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag already exists: $TAG"
+            exit 0
+          fi
+
+      - name: Create and push tag
+        run: |
+          TAG=${{ steps.branch.outputs.tag }}
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git tag "$TAG"
+          git push origin "$TAG"
+
+          echo "Created tag: $TAG"

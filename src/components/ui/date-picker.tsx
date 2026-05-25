@@ -13,9 +13,10 @@ type DatePickerProps = {
   onChange: (value: string) => void;
   required?: boolean;
   className?: string;
+  endMonth?: Date;
 };
 
-export function DatePicker({ value, onChange, required, className }: DatePickerProps) {
+export function DatePicker({ value, onChange, required, className, endMonth }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -46,6 +47,7 @@ export function DatePicker({ value, onChange, required, className }: DatePickerP
           locale={ptBR}
           captionLayout="dropdown"
           defaultMonth={value ? parseISO(value) : new Date()}
+          endMonth={endMonth}
           required={required}
         />
       </PopoverContent>

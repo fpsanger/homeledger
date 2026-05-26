@@ -1,12 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
 import { parseStatementUseCase } from "../../../../application/use-cases/ParseStatementUseCase";
+
+export const runtime = "nodejs";
 import { reconcileStatementUseCase } from "../../../../application/use-cases/ReconcileStatementUseCase";
 import { createHybridStatementParser } from "../../../../infrastructure/parsing/HybridStatementParser";
+import { parseC6Csv } from "../../../../infrastructure/parsing/C6CsvParser";
 import type { SupportedBank } from "../../../../infrastructure/parsing/BillingRegexParser";
+import type { BillingItem } from "../../../../domain/entities/BillingItem";
 import { createRepositories } from "../../_lib/repositories";
 import { InvalidBillingItemError } from "../../../../domain/errors";
+
+function isCSVFile(file: File): boolean {
+  return (
+    file.name.toLowerCase().endsWith(".csv") ||
+    file.type === "text/csv" ||
+    file.type === "application/csv"
+  );
+}
+
+function isPDFFile(file: File): boolean {
+  return (
+    file.name.toLowerCase().endsWith(".pdf") ||
+    file.type === "application/pdf"
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,11 +37,17 @@ export async function POST(request: NextRequest) {
     const creditCardId = formData.get("creditCardId") as string | null;
     const bank = formData.get("bank") as string | null;
     const ollamaBaseUrl = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
-    const ollamaModel = process.env.OLLAMA_MODEL ?? "llama3";
+    const ollamaModel = process.env.OLLAMA_MODEL ?? "llama3.2:3b";
 
     // Validate required fields
     if (!file) {
       return NextResponse.json({ error: "Missing required field: file" }, { status: 400 });
+    }
+    if (!isCSVFile(file) && !isPDFFile(file)) {
+      return NextResponse.json(
+        { error: "Unsupported file type. Please upload a PDF or CSV file." },
+        { status: 400 },
+      );
     }
     if (!statementType || (statementType !== "credit-card" && statementType !== "debit")) {
       return NextResponse.json(
@@ -65,30 +88,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract PDF text
     const buffer = Buffer.from(await file.arrayBuffer());
-    const { text } = await pdfParse(buffer);
 
-    // Create parser and repos
-    const parser = createHybridStatementParser({
-      hintBank: bank as SupportedBank | undefined,
-      ollamaBaseUrl,
-      model: ollamaModel,
-    });
+    let items: BillingItem[];
+
+    if (isCSVFile(file)) {
+      // C6 CSV exports are Latin-1 encoded
+      const csvText = new TextDecoder("latin1").decode(buffer);
+      items = parseC6Csv(csvText);
+    } else {
+      let text: string;
+      try {
+        const { extractText, getDocumentProxy } = await import("unpdf");
+        const pdf = await getDocumentProxy(new Uint8Array(buffer));
+        const { text: extracted } = await extractText(pdf, { mergePages: true });
+        // unpdf collapses lines into spaces; restore line breaks before each date
+        text = extracted.replace(/(?<!\n)(\d{2}\/\d{2}\/\d{4})/g, "\n$1").trim();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/password|encrypt/i.test(msg)) {
+          return NextResponse.json(
+            { error: "PDF is password-protected. Please remove the password before uploading." },
+            { status: 422 },
+          );
+        }
+        throw err;
+      }
+
+      const parser = createHybridStatementParser({
+        hintBank: bank as SupportedBank | undefined,
+        ollamaBaseUrl,
+        model: ollamaModel,
+      });
+
+      try {
+        items = await parseStatementUseCase(parser, text, statementType);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("PDF text is empty")) {
+          return NextResponse.json({ error: "PDF text is empty or unreadable" }, { status: 422 });
+        }
+        throw err;
+      }
+    }
 
     const { creditCardPurchase, transaction } = createRepositories();
-
-    // Parse and reconcile
-    let items;
-    try {
-      items = await parseStatementUseCase(parser, text, statementType);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (message.includes("PDF text is empty")) {
-        return NextResponse.json({ error: "PDF text is empty or unreadable" }, { status: 422 });
-      }
-      throw err;
-    }
 
     const reconciledItems = await reconcileStatementUseCase(
       creditCardPurchase,

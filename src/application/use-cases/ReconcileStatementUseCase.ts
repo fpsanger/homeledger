@@ -2,16 +2,7 @@ import type { BillingItem } from "../../domain/entities/BillingItem";
 import type { ReconciledItem } from "../../domain/entities/ReconciledItem";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ITransactionRepository } from "../../domain/repositories/ITransactionRepository";
-
-function normalizeDescription(desc: string): string {
-  return desc
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip accents
-    .replace(/\s+parcela\s+\d+\/\d+$/i, "") // strip " parcela X/Y"
-    .replace(/\s+\d+\/\d+$/, "") // strip " X/Y"
-    .trim();
-}
+import { normalizeDescription } from "../../domain/services/normalizeDescription";
 
 export async function reconcileStatementUseCase(
   creditCardPurchaseRepo: ICreditCardPurchaseRepository,

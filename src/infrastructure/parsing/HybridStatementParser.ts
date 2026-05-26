@@ -53,7 +53,7 @@ export function createHybridStatementParser(config?: HybridParserConfig): IState
             )
           }
         } catch (err) {
-          console.warn("HybridStatementParser: skipping invalid row", err)
+          console.warn(`HybridStatementParser: skipping invalid row - ${err instanceof Error ? err.message : String(err)}`)
         }
       }
 

@@ -1,3 +1,5 @@
+import { InvalidBillingItemError } from "../errors";
+
 export type InstallmentBillingItem = {
   kind: "installment";
   description: string;
@@ -36,27 +38,27 @@ export function createInstallmentBillingItem(
   input: CreateInstallmentInput
 ): InstallmentBillingItem {
   if (input.amount <= 0) {
-    throw new Error("Amount must be positive");
+    throw new InvalidBillingItemError("Amount must be positive");
   }
 
   if (!input.description || input.description.trim() === "") {
-    throw new Error("Description cannot be empty");
+    throw new InvalidBillingItemError("Description cannot be empty");
   }
 
   if (!input.date) {
-    throw new Error("Date is required");
+    throw new InvalidBillingItemError("Date is required");
   }
 
   if (input.installmentNumber < 1) {
-    throw new Error("Installment number must be >= 1");
+    throw new InvalidBillingItemError("Installment number must be >= 1");
   }
 
   if (input.totalInstallments < 1) {
-    throw new Error("Total installments must be >= 1");
+    throw new InvalidBillingItemError("Total installments must be >= 1");
   }
 
   if (input.installmentNumber > input.totalInstallments) {
-    throw new Error("Installment number cannot exceed total installments");
+    throw new InvalidBillingItemError("Installment number cannot exceed total installments");
   }
 
   return {
@@ -73,15 +75,15 @@ export function createTransactionBillingItem(
   input: CreateTransactionInput
 ): TransactionBillingItem {
   if (input.amount <= 0) {
-    throw new Error("Amount must be positive");
+    throw new InvalidBillingItemError("Amount must be positive");
   }
 
   if (!input.description || input.description.trim() === "") {
-    throw new Error("Description cannot be empty");
+    throw new InvalidBillingItemError("Description cannot be empty");
   }
 
   if (!input.date) {
-    throw new Error("Date is required");
+    throw new InvalidBillingItemError("Date is required");
   }
 
   return {

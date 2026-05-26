@@ -39,6 +39,8 @@ function detectBank(text: string): SupportedBank {
   if (/Bradesco|BRADESCO|BRADESCARD/i.test(text)) return "bradesco"
   if (/C6\s?Bank|C6BANK/i.test(text)) return "c6"
   if (/BTG\s?Pactual|BTGPACTUAL|BTG/i.test(text)) return "btg"
+  // Itaú account statement (extrato conta corrente) — no explicit bank name in text
+  if (/datalançamentos|extrato conta|lançamentos/i.test(text)) return "itau"
   return "unknown"
 }
 
@@ -74,29 +76,19 @@ function parseDateISO(dateStr: string): Date {
   return new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d)))
 }
 
-// DD/MM or DD/MM/YYYY  DESCRIPTION  R$ amount
+// DD/MM or DD/MM/YYYY  DESCRIPTION  R$ amount (credit card format)
+// Falls back to concatenated format (account statement format)
 function parseItauLine(line: string, bank: SupportedBank): RawBillingRow | null {
   const re = /^(\d{2})\/(\d{2})(?:\/(\d{4}))?\s+(.+?)\s+(-?R\$\s*[\d.,]+)\s*$/
   const m = line.match(re)
-  if (!m) return null
-
-  const date = parseDateDDMM(m[1], m[2], m[3])
-  const rawDesc = m[4]
-  const rawAmount = m[5]
-
-  const { amount, isCredit } = parseAmount(rawAmount)
-  const { description, installmentNumber, totalInstallments } = parseInstallments(rawDesc)
-
-  return {
-    description,
-    amount,
-    date,
-    rawText: line,
-    isCredit,
-    installmentNumber,
-    totalInstallments,
-    bank,
+  if (m) {
+    const date = parseDateDDMM(m[1], m[2], m[3])
+    const { amount, isCredit } = parseAmount(m[5])
+    const { description, installmentNumber, totalInstallments } = parseInstallments(m[4])
+    return { description, amount, date, rawText: line, isCredit, installmentNumber, totalInstallments, bank }
   }
+  // Itaú account statement: concatenated format (no spaces between date/desc/amount)
+  return parseConcatenatedLine(line, bank)
 }
 
 // DD/MM/YYYY  DESCRIPTION  amount (no R$ prefix, may be negative)
@@ -174,19 +166,52 @@ function parseBtgLine(line: string, bank: SupportedBank): RawBillingRow | null {
   }
 }
 
-// Generic fallback: DD/MM or DD/MM/YYYY  DESCRIPTION  R$/BRL/- amount
-function parseUnknownLine(line: string, bank: SupportedBank): RawBillingRow | null {
-  // Try with R$ prefix
-  const re = /^(\d{2})\/(\d{2})(?:\/(\d{4}))?\s+(.+?)\s+(-?(?:R\$|BRL)?\s*[\d.,]+)\s*$/
-  const m = line.match(re)
+function parseConcatenatedLine(line: string, bank: SupportedBank): RawBillingRow | null {
+  const normalized = line.trim().replace(/\s+/g, " ")
+
+  // Ignore balance/header lines
+  if (
+    normalized.includes("SALDO DO DIA") ||
+    normalized.includes("saldo em conta") ||
+    normalized.includes("extrato conta") ||
+    normalized.includes("período de visualização") ||
+    normalized.includes("emitido em") ||
+    normalized.includes("datalançamentos")
+  ) {
+    return null
+  }
+
+  // DD/MM/YYYY + description + amount at the end
+  const re = /^(\d{2}\/\d{2}\/\d{4})(.+?)(-?(?:\d{1,3}\.)*\d+,\d{2})$/
+
+  const m = normalized.match(re)
   if (!m) return null
 
-  const date = parseDateDDMM(m[1], m[2], m[3])
-  const rawDesc = m[4]
-  const rawAmount = m[5]
+  const [, dateStr, rawDesc, rawAmount] = m
 
-  const { amount, isCredit } = parseAmount(rawAmount)
-  const { description, installmentNumber, totalInstallments } = parseInstallments(rawDesc)
+  const [day, month, year] = dateStr.split("/")
+  const date = parseDateDDMM(day, month, year)
+
+  const isNegative = rawAmount.startsWith("-")
+  const isCredit = !isNegative
+
+  const amount = Number(
+    rawAmount
+      .replace("-", "")
+      .replace(/\./g, "")
+      .replace(",", "."),
+  )
+
+  if (!Number.isFinite(amount) || amount <= 0) return null
+
+  const cleanedDesc = rawDesc
+    .trim()
+    // remove date glued before amount: "FELIPE 22/05-5.000,00"
+    .replace(/\s?\d{2}\/\d{2}$/, "")
+    .trim()
+
+  const { description, installmentNumber, totalInstallments } =
+    parseInstallments(cleanedDesc)
 
   return {
     description,
@@ -198,6 +223,22 @@ function parseUnknownLine(line: string, bank: SupportedBank): RawBillingRow | nu
     totalInstallments,
     bank,
   }
+}
+
+// Generic fallback: tries space-separated then concatenated format
+function parseUnknownLine(line: string, bank: SupportedBank): RawBillingRow | null {
+  // Try space-separated first (DD/MM or DD/MM/YYYY  DESCRIPTION  R$/BRL/- amount)
+  const re = /^(\d{2})\/(\d{2})(?:\/(\d{4}))?\s+(.+?)\s+(-?(?:R\$|BRL)?\s*[\d.,]+)\s*$/
+  const m = line.match(re)
+  if (m) {
+    const date = parseDateDDMM(m[1], m[2], m[3])
+    const { amount, isCredit } = parseAmount(m[5])
+    const { description, installmentNumber, totalInstallments } = parseInstallments(m[4])
+    return { description, amount, date, rawText: line, isCredit, installmentNumber, totalInstallments, bank }
+  }
+
+  // Try concatenated format (debit account statements)
+  return parseConcatenatedLine(line, bank)
 }
 
 type LineParser = (line: string, bank: SupportedBank) => RawBillingRow | null

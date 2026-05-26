@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
-import type { InstallmentBillingItem, TransactionBillingItem } from "@/domain/entities/BillingItem";
+import type { InstallmentBillingItem } from "@/domain/entities/BillingItem";
 import type { Step1Data, ImportSummary } from "./BillingImportWizard";
 
 type Props = {
@@ -17,22 +17,24 @@ type Props = {
 
 type ItemStatus = "pending" | "loading" | "success" | "error";
 
-type InstallmentForm = {
-  description: string;
-  totalAmount: number;
-  numberOfInstallments: number;
-  purchaseDate: string;
-  creditCardId: string;
-  personId: string;
-};
-
-type TransactionForm = {
-  description: string;
-  amount: number;
-  date: string;
-  transactionType: "EXPENSE" | "INCOME" | "INVESTMENT";
-  personId: string;
-};
+type ItemForm =
+  | {
+      kind: "installment";
+      description: string;
+      totalAmount: number;
+      numberOfInstallments: number;
+      purchaseDate: string;
+      creditCardId: string;
+      personId: string;
+    }
+  | {
+      kind: "transaction";
+      description: string;
+      amount: number;
+      date: string;
+      transactionType: "EXPENSE" | "INCOME" | "INVESTMENT";
+      personId: string;
+    };
 
 function estimatePurchaseDate(billingDate: Date | string, installmentNumber: number): string {
   const d = new Date(billingDate);
@@ -44,32 +46,29 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
   const itemsToImport = selectedIndices.map((i) => reconciledItems[i]);
   const alreadyRegistered = reconciledItems.filter((ri) => ri.status === "matched").length;
 
-  const [installmentForms, setInstallmentForms] = useState<InstallmentForm[]>(() =>
+  const [forms, setForms] = useState<ItemForm[]>(() =>
     itemsToImport.map((ri) => {
-      const item = ri.billingItem as InstallmentBillingItem;
-      if (item.kind !== "installment") return {} as InstallmentForm;
-      return {
-        description: item.description,
-        totalAmount: item.amount * item.totalInstallments,
-        numberOfInstallments: item.totalInstallments,
-        purchaseDate: estimatePurchaseDate(item.date, item.installmentNumber),
-        creditCardId: step1Data.creditCardId ?? "",
-        personId: step1Data.personId,
-      };
-    }),
-  );
-
-  const [transactionForms, setTransactionForms] = useState<TransactionForm[]>(() =>
-    itemsToImport.map((ri) => {
-      const item = ri.billingItem as TransactionBillingItem;
-      if (item.kind !== "transaction") return {} as TransactionForm;
-      return {
-        description: item.description,
-        amount: item.amount,
-        date: new Date(item.date).toISOString().slice(0, 10),
-        transactionType: item.transactionType,
-        personId: step1Data.personId,
-      };
+      const item = ri.billingItem;
+      if (item.kind === "installment") {
+        return {
+          kind: "installment",
+          description: item.description,
+          totalAmount: item.amount * item.totalInstallments,
+          numberOfInstallments: item.totalInstallments,
+          purchaseDate: estimatePurchaseDate(item.date, item.installmentNumber),
+          creditCardId: step1Data.creditCardId ?? "",
+          personId: step1Data.personId,
+        };
+      } else {
+        return {
+          kind: "transaction",
+          description: item.description,
+          amount: item.amount,
+          date: new Date(item.date).toISOString().slice(0, 10),
+          transactionType: item.transactionType,
+          personId: step1Data.personId,
+        };
+      }
     }),
   );
 
@@ -80,20 +79,16 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
     setStatuses((prev) => prev.map((s, i) => (i === index ? status : s)));
   }
 
-  function updateInstallmentForm(index: number, changes: Partial<InstallmentForm>) {
-    setInstallmentForms((prev) => prev.map((f, i) => (i === index ? { ...f, ...changes } : f)));
-  }
-
-  function updateTransactionForm(index: number, changes: Partial<TransactionForm>) {
-    setTransactionForms((prev) => prev.map((f, i) => (i === index ? { ...f, ...changes } : f)));
+  function updateForm(index: number, changes: Partial<ItemForm>) {
+    setForms((prev) => prev.map((f, i) => (i === index ? { ...f, ...changes } as ItemForm : f)));
   }
 
   async function importItem(index: number, ri: ReconciledItem): Promise<boolean> {
     const item = ri.billingItem;
+    const form = forms[index];
     setStatus(index, "loading");
     try {
-      if (item.kind === "installment") {
-        const form = installmentForms[index];
+      if (item.kind === "installment" && form.kind === "installment") {
         const res = await fetch("/api/installments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -110,8 +105,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
           const err = await res.json();
           throw new Error(err.error ?? "Erro ao importar parcela");
         }
-      } else {
-        const form = transactionForms[index];
+      } else if (item.kind === "transaction" && form.kind === "transaction") {
         const endpoint =
           form.transactionType === "INCOME"
             ? "/api/incomes"
@@ -175,6 +169,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
       <div className="space-y-4">
         {itemsToImport.map((ri, i) => {
           const item = ri.billingItem;
+          const form = forms[i];
           const status = statuses[i];
           return (
             <div
@@ -198,14 +193,14 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                 </div>
               </div>
 
-              {item.kind === "installment" ? (
+              {form.kind === "installment" ? (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
                     <label className="block text-xs text-muted-foreground mb-1">Descrição</label>
                     <input
                       type="text"
-                      value={installmentForms[i]?.description ?? ""}
-                      onChange={(e) => updateInstallmentForm(i, { description: e.target.value })}
+                      value={form.description}
+                      onChange={(e) => updateForm(i, { description: e.target.value })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -215,8 +210,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                     <input
                       type="number"
                       step="0.01"
-                      value={installmentForms[i]?.totalAmount ?? 0}
-                      onChange={(e) => updateInstallmentForm(i, { totalAmount: parseFloat(e.target.value) || 0 })}
+                      value={form.totalAmount}
+                      onChange={(e) => updateForm(i, { totalAmount: parseFloat(e.target.value) || 0 })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -226,8 +221,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                     <input
                       type="number"
                       min={1}
-                      value={installmentForms[i]?.numberOfInstallments ?? 1}
-                      onChange={(e) => updateInstallmentForm(i, { numberOfInstallments: parseInt(e.target.value) || 1 })}
+                      value={form.numberOfInstallments}
+                      onChange={(e) => updateForm(i, { numberOfInstallments: parseInt(e.target.value) || 1 })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -236,8 +231,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                     <label className="block text-xs text-muted-foreground mb-1">Data da Compra</label>
                     <input
                       type="date"
-                      value={installmentForms[i]?.purchaseDate ?? ""}
-                      onChange={(e) => updateInstallmentForm(i, { purchaseDate: e.target.value })}
+                      value={form.purchaseDate}
+                      onChange={(e) => updateForm(i, { purchaseDate: e.target.value })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -258,8 +253,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                     <label className="block text-xs text-muted-foreground mb-1">Descrição</label>
                     <input
                       type="text"
-                      value={transactionForms[i]?.description ?? ""}
-                      onChange={(e) => updateTransactionForm(i, { description: e.target.value })}
+                      value={form.description}
+                      onChange={(e) => updateForm(i, { description: e.target.value })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -269,8 +264,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                     <input
                       type="number"
                       step="0.01"
-                      value={transactionForms[i]?.amount ?? 0}
-                      onChange={(e) => updateTransactionForm(i, { amount: parseFloat(e.target.value) || 0 })}
+                      value={form.amount}
+                      onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -279,8 +274,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                     <label className="block text-xs text-muted-foreground mb-1">Data</label>
                     <input
                       type="date"
-                      value={transactionForms[i]?.date ?? ""}
-                      onChange={(e) => updateTransactionForm(i, { date: e.target.value })}
+                      value={form.date}
+                      onChange={(e) => updateForm(i, { date: e.target.value })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
@@ -288,8 +283,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
                     <select
-                      value={transactionForms[i]?.transactionType ?? "EXPENSE"}
-                      onChange={(e) => updateTransactionForm(i, { transactionType: e.target.value as "EXPENSE" | "INCOME" | "INVESTMENT" })}
+                      value={form.transactionType}
+                      onChange={(e) => updateForm(i, { transactionType: e.target.value as "EXPENSE" | "INCOME" | "INVESTMENT" })}
                       disabled={status !== "pending"}
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     >

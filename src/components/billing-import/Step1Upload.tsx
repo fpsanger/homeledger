@@ -41,7 +41,7 @@ export function Step1Upload({ onSuccess }: Props) {
   useEffect(() => {
     fetch("/api/credit-cards")
       .then((r) => r.json())
-      .then((d) => setCreditCards(d.creditCards ?? []))
+      .then((d) => setCreditCards(d.cards ?? []))
       .catch(() => setCreditCards([]));
     fetch("/api/people")
       .then((r) => r.json())
@@ -89,7 +89,7 @@ export function Step1Upload({ onSuccess }: Props) {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* File upload */}
         <div>
-          <label className="block text-sm font-medium mb-1">Arquivo PDF</label>
+          <label className="block text-sm font-medium mb-1">Arquivo (PDF ou CSV)</label>
           <div
             className="border-2 border-dashed border-muted rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
             onClick={() => fileInputRef.current?.click()}
@@ -99,12 +99,12 @@ export function Step1Upload({ onSuccess }: Props) {
             {file ? (
               <p className="text-sm font-medium">{file.name}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">Clique para selecionar ou arraste um PDF</p>
+              <p className="text-sm text-muted-foreground">Clique para selecionar ou arraste um PDF ou CSV</p>
             )}
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.csv"
               className="hidden"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />

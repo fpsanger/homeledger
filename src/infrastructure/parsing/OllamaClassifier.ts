@@ -68,6 +68,7 @@ export async function classifyRows(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model,
+        temperature: 0,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -82,6 +83,9 @@ export async function classifyRows(
 
     const data = await response.json()
     const content = data?.choices?.[0]?.message?.content
+    if (!content) {
+      return fallbackClassification(rows)
+    }
     rawJson = JSON.parse(content)
   } catch {
     return fallbackClassification(rows)

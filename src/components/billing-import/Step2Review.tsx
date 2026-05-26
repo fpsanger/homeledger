@@ -16,7 +16,10 @@ function formatDate(date: Date | string) {
 }
 
 export function Step2Review({ reconciledItems, onUpdate, onNext, onBack }: Props) {
-  function updateItem(index: number, changes: Partial<{ description: string; amount: number }>) {
+  function updateItem(
+    index: number,
+    changes: Partial<{ description: string; amount: number; transactionType: "EXPENSE" | "INCOME" | "INVESTMENT" }>,
+  ) {
     const updated = reconciledItems.map((ri, i) => {
       if (i !== index) return ri;
       return { ...ri, billingItem: { ...ri.billingItem, ...changes } };
@@ -83,17 +86,19 @@ export function Step2Review({ reconciledItems, onUpdate, onNext, onBack }: Props
                           Parcela {item.installmentNumber}/{item.totalInstallments}
                         </span>
                       ) : (
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            item.transactionType === "INCOME"
-                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                              : item.transactionType === "INVESTMENT"
-                                ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                          }`}
+                        <select
+                          value={item.transactionType}
+                          onChange={(e) =>
+                            updateItem(i, {
+                              transactionType: e.target.value as "EXPENSE" | "INCOME" | "INVESTMENT",
+                            })
+                          }
+                          className="border rounded px-2 py-1 text-xs bg-background"
                         >
-                          {item.transactionType === "INCOME" ? "Receita" : item.transactionType === "INVESTMENT" ? "Investimento" : "Despesa"}
-                        </span>
+                          <option value="EXPENSE">Despesa</option>
+                          <option value="INCOME">Receita</option>
+                          <option value="INVESTMENT">Investimento</option>
+                        </select>
                       )}
                     </td>
                     <td className="py-2">

@@ -3,6 +3,7 @@ import {
   createTransactionBillingItem,
   isInstallmentBillingItem,
 } from "../../../src/domain/entities/BillingItem";
+import { InvalidBillingItemError } from "../../../src/domain/errors";
 
 const baseInstallment = {
   description: "Credit Card Purchase",
@@ -28,25 +29,25 @@ describe("BillingItem - Installment", () => {
     it("throws when amount is zero", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, amount: 0 })
-      ).toThrow("Amount must be positive");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when amount is negative", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, amount: -50 })
-      ).toThrow("Amount must be positive");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when description is empty", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, description: "" })
-      ).toThrow("Description cannot be empty");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when description is missing", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, description: "" })
-      ).toThrow("Description cannot be empty");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when date is missing", () => {
@@ -55,31 +56,31 @@ describe("BillingItem - Installment", () => {
           ...baseInstallment,
           date: null as unknown as Date,
         })
-      ).toThrow("Date is required");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when installmentNumber is zero", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, installmentNumber: 0 })
-      ).toThrow("Installment number must be >= 1");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when installmentNumber is negative", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, installmentNumber: -1 })
-      ).toThrow("Installment number must be >= 1");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when totalInstallments is zero", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, totalInstallments: 0 })
-      ).toThrow("Total installments must be >= 1");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when totalInstallments is negative", () => {
       expect(() =>
         createInstallmentBillingItem({ ...baseInstallment, totalInstallments: -1 })
-      ).toThrow("Total installments must be >= 1");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when installmentNumber > totalInstallments", () => {
@@ -89,7 +90,7 @@ describe("BillingItem - Installment", () => {
           installmentNumber: 4,
           totalInstallments: 3,
         })
-      ).toThrow("Installment number cannot exceed total installments");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("allows installmentNumber === totalInstallments", () => {
@@ -145,19 +146,19 @@ describe("BillingItem - Transaction", () => {
     it("throws when amount is zero", () => {
       expect(() =>
         createTransactionBillingItem({ ...baseTransaction, amount: 0 })
-      ).toThrow("Amount must be positive");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when amount is negative", () => {
       expect(() =>
         createTransactionBillingItem({ ...baseTransaction, amount: -100 })
-      ).toThrow("Amount must be positive");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when description is empty", () => {
       expect(() =>
         createTransactionBillingItem({ ...baseTransaction, description: "" })
-      ).toThrow("Description cannot be empty");
+      ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when date is missing", () => {
@@ -166,7 +167,7 @@ describe("BillingItem - Transaction", () => {
           ...baseTransaction,
           date: null as unknown as Date,
         })
-      ).toThrow("Date is required");
+      ).toThrow(InvalidBillingItemError);
     });
   });
 });

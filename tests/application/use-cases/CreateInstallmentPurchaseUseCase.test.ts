@@ -21,6 +21,7 @@ const VARIABLE_CARD: CreditCardRecord = {
   dueDayOfMonth: 10,
   alwaysNextMonth: false,
   closureNextMonth: false,
+  fixedClosurePreviousMonth: false,
   createdAt: new Date(),
 };
 
@@ -90,6 +91,19 @@ const FIXED_CARD: CreditCardRecord = {
   dueDayOfMonth: 17,
   alwaysNextMonth: false,
   closureNextMonth: false,
+  fixedClosurePreviousMonth: false,
+  createdAt: new Date(),
+};
+
+const FIXED_CARD_PREV_MONTH: CreditCardRecord = {
+  id: "card-1",
+  name: "Nubank",
+  closureType: "FIXED",
+  fixedClosureDay: 27,
+  dueDayOfMonth: 10,
+  alwaysNextMonth: false,
+  closureNextMonth: false,
+  fixedClosurePreviousMonth: true,
   createdAt: new Date(),
 };
 
@@ -146,6 +160,36 @@ describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
     );
     expect(result.isDuplicate).toBe(false);
     expect(result.record.id).toBe("purchase-1");
+  });
+});
+
+describe("createInstallmentPurchaseUseCase — FIXED card with fixedClosurePreviousMonth=true", () => {
+  // fixedClosureDay=27, fixedClosurePreviousMonth=true
+  // April billing closes March 27; May billing closes April 27
+  it("purchase on April 20 (before April 27 closure) → May billing", async () => {
+    const cardRepo = makeCardRepo(FIXED_CARD_PREV_MONTH, {});
+    const purchaseRepo = makePurchaseRepo();
+    const result = await createInstallmentPurchaseUseCase(
+      { ...BASE_INPUT, purchaseDate: new Date("2026-04-20T12:00:00Z") },
+      purchaseRepo,
+      cardRepo,
+    );
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    expect(installments[0].dueMonth).toBe(5); // May
+    expect(installments[0].dueYear).toBe(2026);
+  });
+
+  it("purchase on April 27 (on closure day) → June billing", async () => {
+    const cardRepo = makeCardRepo(FIXED_CARD_PREV_MONTH, {});
+    const purchaseRepo = makePurchaseRepo();
+    const result = await createInstallmentPurchaseUseCase(
+      { ...BASE_INPUT, purchaseDate: new Date("2026-04-27T12:00:00Z") },
+      purchaseRepo,
+      cardRepo,
+    );
+    const installments = (result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }).installments;
+    expect(installments[0].dueMonth).toBe(6); // June
+    expect(installments[0].dueYear).toBe(2026);
   });
 });
 

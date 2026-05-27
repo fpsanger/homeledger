@@ -24,6 +24,7 @@ type CreditCard = {
   name: string;
   closureType: "FIXED" | "VARIABLE";
   fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
   closureNextMonth: boolean;

@@ -9,6 +9,7 @@ type Input = {
   name: string;
   closureType: ClosureType;
   fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
   closureNextMonth: boolean;

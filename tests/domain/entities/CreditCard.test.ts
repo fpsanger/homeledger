@@ -8,6 +8,7 @@ const baseFixed = {
   dueDayOfMonth: 10,
   alwaysNextMonth: false,
   closureNextMonth: false,
+  fixedClosurePreviousMonth: false,
 };
 
 const baseVariable = {
@@ -89,5 +90,15 @@ describe("createCreditCard", () => {
   it("creates card with alwaysNextMonth true", () => {
     const card = createCreditCard({ ...baseFixed, alwaysNextMonth: true });
     expect(card.alwaysNextMonth).toBe(true);
+  });
+
+  it("creates FIXED card with fixedClosurePreviousMonth true", () => {
+    const card = createCreditCard({ ...baseFixed, fixedClosurePreviousMonth: true });
+    expect(card.fixedClosurePreviousMonth).toBe(true);
+  });
+
+  it("creates FIXED card with fixedClosurePreviousMonth false by default", () => {
+    const card = createCreditCard(baseFixed);
+    expect(card.fixedClosurePreviousMonth).toBe(false);
   });
 });

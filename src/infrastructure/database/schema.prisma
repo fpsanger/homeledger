@@ -34,11 +34,12 @@ model CreditCard {
   id               String               @id @default(uuid())
   name             String
   closureType      ClosureType
-  fixedClosureDay  Int?
-  dueDayOfMonth    Int
-  alwaysNextMonth  Boolean              @default(false)
-  createdAt        DateTime             @default(now())
-  closureNextMonth Boolean              @default(false)
+  fixedClosureDay           Int?
+  fixedClosurePreviousMonth Boolean              @default(false)
+  dueDayOfMonth             Int
+  alwaysNextMonth           Boolean              @default(false)
+  createdAt                 DateTime             @default(now())
+  closureNextMonth          Boolean              @default(false)
   closures         CreditCardClosure[]
   purchases        CreditCardPurchase[]
 }

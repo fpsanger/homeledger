@@ -27,6 +27,7 @@ export async function createInstallmentPurchaseUseCase(
   if (card.closureType === "FIXED") {
     if (card.fixedClosureDay == null) throw new Error("FIXED card is missing fixedClosureDay");
     closureDay = card.fixedClosureDay;
+    closureInPreviousMonth = card.fixedClosurePreviousMonth;
   } else {
     const purchaseYear = input.purchaseDate.getUTCFullYear();
     const purchaseMonth = input.purchaseDate.getUTCMonth() + 1;

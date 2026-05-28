@@ -16,6 +16,8 @@ model Person {
   loyaltyTransfers      LoyaltyTransfer[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  loyaltyTransfers      LoyaltyTransfer[]
 }
 
 model Category {
@@ -183,24 +185,24 @@ enum LoyaltyTransactionType {
 }
 
 model LoyaltyProgram {
-  id           String               @id @default(uuid())
-  name         String
-  type         LoyaltyProgramType
-  color        String
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  transactions LoyaltyTransaction[]
-  transfersFrom LoyaltyTransfer[]   @relation("TransferFrom")
-  transfersTo   LoyaltyTransfer[]   @relation("TransferTo")
+  id            String               @id @default(uuid())
+  name          String
+  type          LoyaltyProgramType
+  color         String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  transactions  LoyaltyTransaction[]
+  transfersFrom LoyaltyTransfer[]    @relation("TransferFrom")
+  transfersTo   LoyaltyTransfer[]    @relation("TransferTo")
 }
 
 model LoyaltyTransfer {
   id             String               @id @default(uuid())
   fromProgramId  String
   toProgramId    String
-  pointsSent     Float
-  pointsReceived Float
-  costBrl        Float?
+  pointsSent     Int
+  pointsReceived Int
+  costBrl        Decimal?             @db.Decimal(15, 2)
   transferDate   DateTime
   personId       String?
   description    String?
@@ -218,15 +220,15 @@ model LoyaltyTransaction {
   personId    String?
   transferId  String?
   type        LoyaltyTransactionType
-  points      Float
+  points      Int
   date        DateTime
   description String?
   expiresAt   DateTime?
-  costBrl     Float?
-  valueBrl    Float?
+  costBrl     Decimal?               @db.Decimal(15, 2)
+  valueBrl    Decimal?               @db.Decimal(15, 2)
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
   program     LoyaltyProgram         @relation(fields: [programId], references: [id])
   person      Person?                @relation(fields: [personId], references: [id])
-  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id])
 }

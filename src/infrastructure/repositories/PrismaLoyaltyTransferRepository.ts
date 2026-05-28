@@ -1,11 +1,28 @@
 import type { PrismaClient } from "@prisma/client";
 import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../domain/repositories/ILoyaltyTransferRepository";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toRecord(row: any): LoyaltyTransferRecord {
+  return {
+    id: row.id,
+    fromProgramId: row.fromProgramId,
+    toProgramId: row.toProgramId,
+    pointsSent: row.pointsSent,
+    pointsReceived: row.pointsReceived,
+    costBrl: row.costBrl == null ? null : typeof row.costBrl === "number" ? row.costBrl : row.costBrl.toNumber(),
+    transferDate: row.transferDate,
+    personId: row.personId,
+    description: row.description,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
 export class PrismaLoyaltyTransferRepository implements ILoyaltyTransferRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async save(transfer: LoyaltyTransferRecord): Promise<LoyaltyTransferRecord> {
-    return this.prisma.loyaltyTransfer.upsert({
+    const row = await this.prisma.loyaltyTransfer.upsert({
       where: { id: transfer.id },
       create: {
         id: transfer.id,
@@ -28,16 +45,19 @@ export class PrismaLoyaltyTransferRepository implements ILoyaltyTransferReposito
         updatedAt: transfer.updatedAt,
       },
     });
+    return toRecord(row);
   }
 
   async findById(id: string): Promise<LoyaltyTransferRecord | null> {
-    return this.prisma.loyaltyTransfer.findUnique({ where: { id } });
+    const row = await this.prisma.loyaltyTransfer.findUnique({ where: { id } });
+    return row ? toRecord(row) : null;
   }
 
   async findAll(): Promise<LoyaltyTransferRecord[]> {
-    return this.prisma.loyaltyTransfer.findMany({
+    const rows = await this.prisma.loyaltyTransfer.findMany({
       orderBy: { transferDate: "desc" },
     });
+    return rows.map(toRecord);
   }
 
   async delete(id: string): Promise<void> {

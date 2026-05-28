@@ -14,6 +14,8 @@ model Person {
   creditCardPurchases   CreditCardPurchase[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  loyaltyTransfers      LoyaltyTransfer[]
 }
 
 model Category {
@@ -150,4 +152,71 @@ enum FrequencyType {
 enum ClosureType {
   FIXED
   VARIABLE
+}
+
+enum LoyaltyProgramType {
+  AIRLINE
+  HOTEL
+  BANK
+  OTHER
+}
+
+enum LoyaltyTransactionType {
+  PURCHASE
+  EARN
+  BONUS
+  REDEEM
+  TRANSFER_OUT
+  TRANSFER_IN
+  EXPIRE
+  ADJUSTMENT
+}
+
+model LoyaltyProgram {
+  id            String               @id @default(uuid())
+  name          String
+  type          LoyaltyProgramType
+  color         String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  transactions  LoyaltyTransaction[]
+  transfersFrom LoyaltyTransfer[]    @relation("TransferFrom")
+  transfersTo   LoyaltyTransfer[]    @relation("TransferTo")
+}
+
+model LoyaltyTransfer {
+  id             String               @id @default(uuid())
+  fromProgramId  String
+  toProgramId    String
+  pointsSent     Int
+  pointsReceived Int
+  costBrl        Decimal?             @db.Decimal(15, 2)
+  transferDate   DateTime
+  personId       String?
+  description    String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  fromProgram    LoyaltyProgram       @relation("TransferFrom", fields: [fromProgramId], references: [id])
+  toProgram      LoyaltyProgram       @relation("TransferTo", fields: [toProgramId], references: [id])
+  person         Person?              @relation(fields: [personId], references: [id])
+  transactions   LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id          String                 @id @default(uuid())
+  programId   String
+  personId    String?
+  transferId  String?
+  type        LoyaltyTransactionType
+  points      Int
+  date        DateTime
+  description String?
+  expiresAt   DateTime?
+  costBrl     Decimal?               @db.Decimal(15, 2)
+  valueBrl    Decimal?               @db.Decimal(15, 2)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  program     LoyaltyProgram         @relation(fields: [programId], references: [id])
+  person      Person?                @relation(fields: [personId], references: [id])
+  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id])
 }

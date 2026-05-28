@@ -1,4 +1,4 @@
-name: Create Release Tag
+name: Release and Tags Workflow
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - closed
 
 jobs:
-  create-tag:
+  create-tag-and-release:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
@@ -21,15 +21,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get source branch
+      - name: Extract version from release branch
         id: branch
         run: |
           BRANCH_NAME="${{ github.head_ref }}"
 
-          echo "Source branch: $BRANCH_NAME"
+          echo "Branch name: $BRANCH_NAME"
 
           if [[ ! "$BRANCH_NAME" =~ ^release\/ ]]; then
-            echo "Not a release branch."
+            echo "This is not a release branch."
             exit 1
           fi
 
@@ -48,7 +48,7 @@ jobs:
             exit 0
           fi
 
-      - name: Create and push tag
+      - name: Create git tag
         run: |
           TAG=${{ steps.branch.outputs.tag }}
 
@@ -58,4 +58,9 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
-          echo "Created tag: $TAG"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.branch.outputs.tag }}
+          name: Release ${{ steps.branch.outputs.tag }}
+          generate_release_notes: true

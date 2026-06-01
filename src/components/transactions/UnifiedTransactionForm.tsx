@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
@@ -12,13 +12,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
-import { parseCurrencyBR } from "@/lib/utils";
+import { parseCurrencyBR, formatAmountBR } from "@/lib/utils";
 
 type FormType = "expense" | "income" | "credit";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
-type CreditCard = { id: string; name: string };
+type CreditCard = {
+  id: string;
+  name: string;
+  closureType: "FIXED" | "VARIABLE";
+  fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
+  alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
+};
+
+const MONTH_NAMES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+function computeBillingMonths(
+  totalAmount: number,
+  n: number,
+  date: string,
+  card: CreditCard,
+): Array<{ installmentNumber: number; dueYear: number; dueMonth: number; amount: number }> {
+  const d = new Date(`${date}T00:00:00Z`);
+  const purchaseDay = d.getUTCDate();
+  const purchaseYear = d.getUTCFullYear();
+  const purchaseMonth = d.getUTCMonth() + 1;
+  const closureDay = card.fixedClosureDay!;
+
+  const shiftNext =
+    card.alwaysNextMonth ||
+    card.fixedClosurePreviousMonth ||
+    (!card.closureNextMonth && purchaseDay >= closureDay);
+
+  let firstYear = purchaseYear;
+  let firstMonth = purchaseMonth;
+
+  if (shiftNext) {
+    const shiftBy = card.fixedClosurePreviousMonth && purchaseDay >= closureDay ? 2 : 1;
+    const targetMonth = purchaseMonth + shiftBy;
+    if (targetMonth > 12) {
+      firstYear = purchaseYear + 1;
+      firstMonth = targetMonth - 12;
+    } else {
+      firstMonth = targetMonth;
+    }
+  }
+
+  const baseAmount = Math.floor((totalAmount / n) * 100) / 100;
+  const firstAbsolute = (firstYear - 1) * 12 + (firstMonth - 1);
+
+  return Array.from({ length: n }, (_, i) => {
+    const absolute = firstAbsolute + i;
+    const dueYear = Math.floor(absolute / 12) + 1;
+    const dueMonth = (absolute % 12) + 1;
+    const isLast = i === n - 1;
+    const amount = isLast
+      ? Math.round((totalAmount - baseAmount * (n - 1)) * 100) / 100
+      : baseAmount;
+    return { installmentNumber: i + 1, dueYear, dueMonth, amount };
+  });
+}
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro" },
@@ -91,6 +147,21 @@ export function UnifiedTransactionForm({
   const [numberOfInstallments, setNumberOfInstallments] = useState("2");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  type ClosureRecord = { year: number; month: number; closureDay: number; previousMonth: boolean };
+  const [cardClosures, setCardClosures] = useState<ClosureRecord[]>([]);
+
+  useEffect(() => {
+    const card = creditCards.find((c) => c.id === creditCardId);
+    if (!card || card.closureType !== "VARIABLE") {
+      setCardClosures([]);
+      return;
+    }
+    fetch(`/api/credit-cards/${creditCardId}/closures`)
+      .then((r) => r.json())
+      .then((data) => setCardClosures(data.closures ?? []))
+      .catch(() => setCardClosures([]));
+  }, [creditCardId, creditCards]);
 
   const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
   const isDuplicate = useDuplicateCheck(
@@ -358,6 +429,71 @@ export function UnifiedTransactionForm({
                   });
                 })()}
               </Select>
+              {(() => {
+                const selectedCard = creditCards.find((c) => c.id === creditCardId);
+                const total = parseCurrencyBR(amount);
+                if (!selectedCard || !total || total <= 0 || !date) return null;
+                const n = parseInt(numberOfInstallments, 10);
+                if (!n || n < 1) return null;
+
+                if (selectedCard.closureType === "VARIABLE") {
+                  const d = new Date(`${date}T00:00:00Z`);
+                  const purchaseYear = d.getUTCFullYear();
+                  const purchaseMonth = d.getUTCMonth() + 1;
+                  const closure = cardClosures.find(
+                    (c) => c.year === purchaseYear && c.month === purchaseMonth,
+                  );
+                  if (!closure) {
+                    return (
+                      <p className="text-xs text-amber-600">
+                        Fechamento do mês {MONTH_NAMES_PT[purchaseMonth - 1]}/{purchaseYear} não
+                        configurado. Adicione um fechamento para este cartão antes de registrar a
+                        compra.
+                      </p>
+                    );
+                  }
+                  const variableCard = {
+                    ...selectedCard,
+                    fixedClosureDay: closure.closureDay,
+                    fixedClosurePreviousMonth: closure.previousMonth,
+                  };
+                  const months = computeBillingMonths(total, n, date, variableCard);
+                  return (
+                    <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
+                      {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
+                        <div
+                          key={installmentNumber}
+                          className="flex justify-between text-xs text-muted-foreground"
+                        >
+                          <span>Parcela {installmentNumber}/{n}</span>
+                          <span>
+                            {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                const months = computeBillingMonths(total, n, date, selectedCard);
+                return (
+                  <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
+                    {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
+                      <div
+                        key={installmentNumber}
+                        className="flex justify-between text-xs text-muted-foreground"
+                      >
+                        <span>
+                          Parcela {installmentNumber}/{n}
+                        </span>
+                        <span>
+                          {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </>

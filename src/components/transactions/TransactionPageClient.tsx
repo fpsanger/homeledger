@@ -15,7 +15,15 @@ import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string; parentId: string | null };
-type CreditCard = { id: string; name: string };
+type CreditCard = {
+  id: string;
+  name: string;
+  closureType: "FIXED" | "VARIABLE";
+  fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
+  alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
+};
 
 type Transaction = {
   id: string;

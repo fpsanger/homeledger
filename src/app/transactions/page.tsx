@@ -4,7 +4,15 @@ import { cookies } from "next/headers";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
-type CreditCard = { id: string; name: string };
+type CreditCard = {
+  id: string;
+  name: string;
+  closureType: "FIXED" | "VARIABLE";
+  fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
+  alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
+};
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 

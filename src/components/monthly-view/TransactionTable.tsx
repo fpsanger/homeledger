@@ -18,6 +18,7 @@ import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { TransactionAmount } from "../transactions/TransactionAmount";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Transaction = {
   id: string;
@@ -44,28 +45,15 @@ const PAYMENT_LABELS: Record<string, string> = {
   ACCOUNT_DEBIT: "Déb. Conta",
 };
 
-const MONTH_ABBR = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
+
 
 function fmtCurrency(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function fmtDate(date: Date | string) {
-  const d = new Date(date);
-  return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTH_ABBR[d.getUTCMonth()]}`;
+  const iso = typeof date === "string" ? date : date.toISOString();
+  return formatDatePtBR(iso);
 }
 
 function SummaryCard({

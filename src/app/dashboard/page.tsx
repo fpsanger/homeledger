@@ -11,17 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { cookies } from "next/headers";
 
-type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-
-async function getPeople(): Promise<Person[]> {
-  const res = await fetch(`${BASE_URL}/api/people`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.people;
-}
 
 async function getCategories(): Promise<Category[]> {
   const res = await fetch(`${BASE_URL}/api/categories`, { cache: "no-store" });
@@ -52,21 +44,17 @@ async function getAnnualReport(year: number, personId?: string) {
 
 type SearchParams = {
   annualYear?: string;
-  annualPersonId?: string;
   monthYear?: string;
   monthMonth?: string;
-  monthPersonId?: string;
 };
 
 export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
   const now = new Date();
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
-  const isGlobalLocked = !!globalPersonId;
 
   const annualYear = searchParams.annualYear
     ? parseInt(searchParams.annualYear, 10)
     : now.getFullYear();
-  const annualPersonId = isGlobalLocked ? globalPersonId : (searchParams.annualPersonId ?? "");
 
   const monthYear = searchParams.monthYear
     ? parseInt(searchParams.monthYear, 10)
@@ -74,13 +62,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const monthMonth = searchParams.monthMonth
     ? parseInt(searchParams.monthMonth, 10)
     : now.getMonth() + 1;
-  const monthPersonId = isGlobalLocked ? globalPersonId : (searchParams.monthPersonId ?? "");
 
-  const [people, categories, { transactions, installments }, annualReport] = await Promise.all([
-    getPeople(),
+  const [categories, { transactions, installments }, annualReport] = await Promise.all([
     getCategories(),
-    getMonthlyView(monthYear, monthMonth, monthPersonId || undefined),
-    getAnnualReport(annualYear, annualPersonId || undefined),
+    getMonthlyView(monthYear, monthMonth, globalPersonId || undefined),
+    getAnnualReport(annualYear, globalPersonId || undefined),
   ]);
 
   return (
@@ -90,12 +76,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle>Relatório Anual</CardTitle>
-            <YearNav
-              year={annualYear}
-              people={people}
-              currentPersonId={annualPersonId}
-              isGlobalLocked={isGlobalLocked}
-            />
+            <YearNav year={annualYear} />
           </div>
         </CardHeader>
         <CardContent>
@@ -122,11 +103,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
             <MonthNav
               year={monthYear}
               month={monthMonth}
-              people={people}
-              currentPersonId={monthPersonId}
               paramPrefix="month"
               basePath="/dashboard"
-              isGlobalLocked={isGlobalLocked}
             />
           </div>
         </CardHeader>

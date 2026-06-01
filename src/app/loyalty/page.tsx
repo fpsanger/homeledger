@@ -22,8 +22,6 @@ type Transfer = {
   description: string | null;
 };
 
-type Person = { id: string; name: string };
-
 async function getLoyaltyPrograms(): Promise<LoyaltyProgramRecord[]> {
   const res = await fetch(`${BASE}/api/loyalty/programs`, { cache: "no-store" });
   if (!res.ok) return [];
@@ -38,13 +36,6 @@ async function getTransfers(): Promise<Transfer[]> {
   return data.transfers ?? [];
 }
 
-async function getPeople(): Promise<Person[]> {
-  const res = await fetch(`${BASE}/api/people`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.people ?? [];
-}
-
 async function getProgramBalance(id: string, personId?: string): Promise<number> {
   const url = new URL(`${BASE}/api/loyalty/programs/${id}/report`);
   if (personId) url.searchParams.set("personId", personId);
@@ -54,23 +45,18 @@ async function getProgramBalance(id: string, personId?: string): Promise<number>
   return data.summary?.currentBalance ?? 0;
 }
 
-type SearchParams = { personId?: string };
-
-export default async function LoyaltyPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function LoyaltyPage() {
   const cookieStore = await cookies();
   const globalPersonId = cookieStore.get("global-person-id")?.value ?? "";
-  const isGlobalLocked = !!globalPersonId;
-  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
 
-  const [programs, transfers, people] = await Promise.all([
+  const [programs, transfers] = await Promise.all([
     getLoyaltyPrograms(),
     getTransfers(),
-    getPeople(),
   ]);
 
   const balances = Object.fromEntries(
     await Promise.all(
-      programs.map(async (p) => [p.id, await getProgramBalance(p.id, personId || undefined)] as [string, number]),
+      programs.map(async (p) => [p.id, await getProgramBalance(p.id, globalPersonId || undefined)] as [string, number]),
     ),
   );
 
@@ -79,9 +65,6 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Sear
       programs={programs}
       transfers={transfers}
       balances={balances}
-      people={people}
-      currentPersonId={personId}
-      isGlobalLocked={isGlobalLocked}
     />
   );
 }

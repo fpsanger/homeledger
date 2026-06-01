@@ -83,7 +83,6 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout repository
@@ -99,12 +98,15 @@ jobs:
         run: npm ci
 
       - name: Run Biome checks
+        continue-on-error: true
         run: npm run lint
 
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
-    continue-on-error: true
+
+    env:
+      DATABASE_URL: postgresql://homeledger:homeledger@localhost:5432/homeledger
 
     steps:
       - name: Checkout repository
@@ -119,7 +121,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Check TypeScript
+        continue-on-error: true
         run: npx tsc --noEmit
 
   build:
@@ -141,6 +147,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Build application
         run: npm run build

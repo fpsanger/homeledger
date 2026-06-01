@@ -19,14 +19,16 @@ export function InstallmentForm({
   people,
   categories,
   creditCards,
+  defaultPersonId = "",
 }: {
   people: Person[];
   categories: Category[];
   creditCards: CreditCard[];
+  defaultPersonId?: string;
 }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [creditCardId, setCreditCardId] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
   const [numberOfInstallments, setNumberOfInstallments] = useState("2");

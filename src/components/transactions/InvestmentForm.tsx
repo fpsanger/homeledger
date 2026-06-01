@@ -18,15 +18,17 @@ type Category = { id: string; name: string; parentId: string | null; path: strin
 export function InvestmentForm({
   people,
   categories,
+  defaultPersonId = "",
   onSuccess,
 }: {
   people: Person[];
   categories: Category[];
+  defaultPersonId?: string;
   onSuccess?: () => void;
 }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
   const [categoryId, setCategoryId] = useState("");

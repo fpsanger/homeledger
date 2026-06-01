@@ -51,8 +51,7 @@ type Props = {
   year: number;
   month: number;
   people: Person[];
-  currentPersonId: string;
-  isGlobalLocked?: boolean;
+  currentPersonId?: string;
   categories: Category[];
   creditCards: CreditCard[];
   transactions: Transaction[];
@@ -68,8 +67,7 @@ export function TransactionPageClient({
   year,
   month,
   people,
-  currentPersonId,
-  isGlobalLocked = false,
+  currentPersonId = "",
   categories,
   creditCards,
   transactions,
@@ -88,10 +86,7 @@ export function TransactionPageClient({
         <MonthNav
           year={year}
           month={month}
-          people={people}
-          currentPersonId={currentPersonId}
           basePath="/transactions"
-          isGlobalLocked={isGlobalLocked}
         />
         <div className="flex gap-2">
           <Button
@@ -125,6 +120,7 @@ export function TransactionPageClient({
         <RecurringTransactionForm
           people={people}
           categories={categories}
+          defaultPersonId={currentPersonId}
           onSuccess={() => setRecurringDialogOpen(false)}
         />
       </Dialog>
@@ -137,6 +133,7 @@ export function TransactionPageClient({
         <InvestmentForm
           people={people}
           categories={categories}
+          defaultPersonId={currentPersonId}
           onSuccess={() => setInvestmentDialogOpen(false)}
         />
       </Dialog>
@@ -146,6 +143,7 @@ export function TransactionPageClient({
           people={people}
           categories={categories}
           creditCards={creditCards}
+          defaultPersonId={currentPersonId}
           onSuccess={() => setDialogOpen(false)}
         />
       </Dialog>

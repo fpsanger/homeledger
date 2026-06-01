@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDatePtBR } from "@/lib/format-date";
+
 type Program = { id: string; name: string };
 
 type Transfer = {
@@ -18,8 +20,7 @@ type Props = {
 };
 
 function formatDate(iso: string) {
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("pt-BR");
+  return formatDatePtBR(iso);
 }
 
 function formatPts(n: number) {

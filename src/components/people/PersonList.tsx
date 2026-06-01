@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Person = {
   id: string;
@@ -57,7 +58,7 @@ export function PersonList({ people }: { people: Person[] }) {
             <TableRow key={person.id}>
               <TableCell className="font-medium text-sm">{person.name}</TableCell>
               <TableCell className="text-muted-foreground text-sm">
-                {new Date(person.createdAt).toLocaleDateString("pt-BR")}
+                {formatDatePtBR(person.createdAt)}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu

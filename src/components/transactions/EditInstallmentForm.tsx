@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Person = { id: string; name: string };
 type CreditCard = { id: string; name: string };
@@ -32,28 +33,12 @@ type Props = {
   onSuccess: () => void;
 };
 
-const MONTH_ABBR = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
-
 function fmtCurrency(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 function fmtDate(date: Date | string) {
-  const d = new Date(date);
-  return `${String(d.getDate()).padStart(2, "0")} ${MONTH_ABBR[d.getMonth()]} ${d.getFullYear()}`;
+  return formatDatePtBR(String(date));
 }
 
 export function EditInstallmentForm({

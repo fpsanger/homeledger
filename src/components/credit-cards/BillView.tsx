@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string };
@@ -51,7 +52,7 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("pt-BR");
+  return formatDatePtBR(dateStr);
 }
 
 function SummaryCard({

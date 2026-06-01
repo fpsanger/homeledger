@@ -63,7 +63,7 @@ export async function getCreditCardBillUseCase(
     result.push({
       card,
       dueDayOfMonth: card.dueDayOfMonth,
-      installments: insts,
+      installments: insts.sort((a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime()),
       total: insts.reduce((sum, i) => sum + i.amount, 0),
     });
   }

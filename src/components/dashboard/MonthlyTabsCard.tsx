@@ -32,7 +32,6 @@ type Props = {
   year: number;
   month: number;
   people: Person[];
-  currentPersonId: string;
   transactions: Transaction[];
   installments: Installment[];
 };
@@ -41,7 +40,6 @@ export function MonthlyTabsCard({
   year,
   month,
   people,
-  currentPersonId,
   transactions,
   installments,
 }: Props) {
@@ -52,7 +50,7 @@ export function MonthlyTabsCard({
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <CardTitle>Visão Mensal</CardTitle>
-          <MonthNav year={year} month={month} people={people} currentPersonId={currentPersonId} />
+          <MonthNav year={year} month={month} />
         </div>
         <div className="flex gap-1.5 mt-4">
           <button

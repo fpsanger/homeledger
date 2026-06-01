@@ -42,22 +42,19 @@ async function getMonthlyView(year: number, month: number, personId?: string) {
 type SearchParams = {
   year?: string;
   month?: string;
-  personId?: string;
 };
 
 export default async function TransactionsPage({ searchParams }: { searchParams: SearchParams }) {
   const now = new Date();
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
-  const isGlobalLocked = !!globalPersonId;
   const year = searchParams.year ? parseInt(searchParams.year, 10) : now.getUTCFullYear();
   const month = searchParams.month ? parseInt(searchParams.month, 10) : now.getUTCMonth() + 1;
-  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
 
   const [people, categories, creditCards, { transactions, installments }] = await Promise.all([
     getPeople(),
     getCategories(),
     getCreditCards(),
-    getMonthlyView(year, month, personId || undefined),
+    getMonthlyView(year, month, globalPersonId || undefined),
   ]);
 
   return (
@@ -73,8 +70,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         year={year}
         month={month}
         people={people}
-        currentPersonId={personId}
-        isGlobalLocked={isGlobalLocked}
+        currentPersonId={globalPersonId}
         categories={categories}
         creditCards={creditCards}
         transactions={transactions}

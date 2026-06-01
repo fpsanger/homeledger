@@ -6,15 +6,6 @@ import { cookies } from "next/headers";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
-type Person = { id: string; name: string };
-
-async function getPeople(): Promise<Person[]> {
-  const res = await fetch(`${BASE_URL}/api/people`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.people;
-}
-
 async function getPurchases(personId?: string) {
   const params = personId ? `?personId=${personId}` : "";
   const res = await fetch(`${BASE_URL}/api/credit-card-purchases${params}`, { cache: "no-store" });
@@ -25,9 +16,7 @@ async function getPurchases(personId?: string) {
 
 export default async function InstallmentsPage() {
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
-  const isGlobalLocked = !!globalPersonId;
-  const personId = globalPersonId;
-  const [people, purchases] = await Promise.all([getPeople(), getPurchases(personId || undefined)]);
+  const purchases = await getPurchases(globalPersonId || undefined);
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,13 +29,11 @@ export default async function InstallmentsPage() {
         defaultTab="purchases"
         purchasesView={
           <InstallmentsList
-            people={people}
             purchases={purchases}
-            currentPersonId={personId}
-            isGlobalLocked={isGlobalLocked}
+            currentPersonId={globalPersonId}
           />
         }
-        billView={<BillView initialPersonId={personId} isGlobalLocked={isGlobalLocked} />}
+        billView={<BillView initialPersonId={globalPersonId} />}
       />
     </div>
   );

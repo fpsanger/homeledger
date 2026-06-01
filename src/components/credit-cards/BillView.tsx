@@ -76,10 +76,9 @@ function SummaryCard({
 
 type BillViewProps = {
   initialPersonId?: string;
-  isGlobalLocked?: boolean;
 };
 
-export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillViewProps) {
+export function BillView({ initialPersonId = "" }: BillViewProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -87,7 +86,6 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
   const [loading, setLoading] = useState(false);
   const [people, setPeople] = useState<Person[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [personId, setPersonId] = useState<string>(initialPersonId);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [paying, setPaying] = useState<Set<string>>(new Set());
   const [unpaying, setUnpaying] = useState<Set<string>>(new Set());
@@ -115,8 +113,8 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
   }
 
   useEffect(() => {
-    load(year, month, personId);
-  }, [year, month, personId]);
+    load(year, month, initialPersonId);
+  }, [year, month, initialPersonId]);
 
   function prev() {
     if (month === 1) {
@@ -251,20 +249,6 @@ export function BillView({ initialPersonId = "", isGlobalLocked = false }: BillV
         <Button variant="outline" size="sm" onClick={next}>
           →
         </Button>
-        {!isGlobalLocked && (
-          <select
-            className="ml-auto border rounded px-2 py-1 text-sm bg-background"
-            value={personId}
-            onChange={(e) => setPersonId(e.target.value)}
-          >
-            <option value="">Todas as pessoas</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        )}
       </div>
 
       {loading && <p className="text-sm text-muted-foreground">Carregando…</p>}

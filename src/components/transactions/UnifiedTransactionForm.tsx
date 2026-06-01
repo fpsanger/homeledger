@@ -59,6 +59,7 @@ type Props = {
   people: Person[];
   categories: Category[];
   creditCards: CreditCard[];
+  defaultPersonId?: string;
   onSuccess?: () => void;
   editMode?: EditMode;
   initialValues?: InitialValues;
@@ -68,6 +69,7 @@ export function UnifiedTransactionForm({
   people,
   categories,
   creditCards,
+  defaultPersonId = "",
   onSuccess,
   editMode,
   initialValues,
@@ -77,7 +79,7 @@ export function UnifiedTransactionForm({
   const isEditMode = editMode !== undefined;
 
   const [type, setType] = useState<FormType>(initialValues?.type ?? "expense");
-  const [personId, setPersonId] = useState(initialValues?.personId ?? "");
+  const [personId, setPersonId] = useState(initialValues?.personId ?? defaultPersonId);
   const [amount, setAmount] = useState(initialValues?.amount ?? "");
   const [date, setDate] = useState(initialValues?.date ?? today);
   const [description, setDescription] = useState(initialValues?.description ?? "");

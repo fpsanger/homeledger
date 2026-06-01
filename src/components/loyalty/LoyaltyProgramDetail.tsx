@@ -6,8 +6,6 @@ import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { Select } from "@/components/ui/select";
-
 type FifoData = {
   costBrl: number;
   costPer1kPoints: number;
@@ -43,17 +41,13 @@ type Program = {
   color: string;
 };
 
-type Person = { id: string; name: string };
-
 type Props = {
   program: Program;
   report: {
     summary: Summary;
     transactions: Transaction[];
   };
-  people: Person[];
-  currentPersonId: string;
-  isGlobalLocked?: boolean;
+  defaultPersonId?: string;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -114,7 +108,7 @@ const TRANSACTION_TYPES = [
   { value: "ADJUSTMENT", label: "Ajuste" },
 ];
 
-function AddTransactionModal({ programId, onClose, onSuccess }: { programId: string; onClose: () => void; onSuccess: () => void }) {
+function AddTransactionModal({ programId, defaultPersonId = "", onClose, onSuccess }: { programId: string; defaultPersonId?: string; onClose: () => void; onSuccess: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
   const [type, setType] = useState("EARN");
   const [points, setPoints] = useState("");
@@ -123,7 +117,7 @@ function AddTransactionModal({ programId, onClose, onSuccess }: { programId: str
   const [costBrl, setCostBrl] = useState("");
   const [valueBrl, setValueBrl] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -322,7 +316,7 @@ type SortDir = "asc" | "desc";
 
 const EDITABLE_TYPES = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUSTMENT"];
 
-export function LoyaltyProgramDetail({ program, report, people, currentPersonId, isGlobalLocked = false }: Props) {
+export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: Props) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -330,13 +324,6 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { summary, transactions } = report;
-
-  function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const params = new URLSearchParams(window.location.search);
-    if (e.target.value) params.set("personId", e.target.value);
-    else params.delete("personId");
-    router.push(`/loyalty/${program.id}?${params.toString()}`);
-  }
 
   async function handleDelete(tx: Transaction) {
     setDeletingId(tx.id);
@@ -389,6 +376,7 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
       {showModal && (
         <AddTransactionModal
           programId={program.id}
+          defaultPersonId={defaultPersonId}
           onClose={() => setShowModal(false)}
           onSuccess={() => { setShowModal(false); router.refresh(); }}
         />
@@ -408,20 +396,6 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
             Transações
           </h2>
           <div className="flex items-center gap-2 ml-auto">
-            {people.length > 1 && (
-              isGlobalLocked ? (
-                <span className="text-sm text-muted-foreground px-2 py-1 border rounded-md bg-muted/40 shrink-0">
-                  {people.find((p) => p.id === currentPersonId)?.name ?? "Todas as pessoas"}
-                </span>
-              ) : (
-                <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm">
-                  <option value="">Todas as pessoas</option>
-                  {people.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </Select>
-              )
-            )}
             <button
               type="button"
               onClick={() => setShowModal(true)}

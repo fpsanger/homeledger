@@ -28,14 +28,15 @@ const PAYMENT_METHODS = [
 type Props = {
   people: Person[];
   categories: Category[];
+  defaultPersonId?: string;
   onSuccess?: () => void;
 };
 
-export function RecurringTransactionForm({ people, categories, onSuccess }: Props) {
+export function RecurringTransactionForm({ people, categories, defaultPersonId = "", onSuccess }: Props) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
 
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("ACCOUNT_DEBIT");

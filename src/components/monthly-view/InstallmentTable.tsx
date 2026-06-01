@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Installment = {
   id: string;
@@ -28,6 +29,7 @@ type Installment = {
   personId?: string;
   creditCardId?: string | null;
   numberOfInstallments?: number;
+  purchaseDate?: string | Date;
 };
 
 type Person = { id: string; name: string };
@@ -223,6 +225,7 @@ export function InstallmentTable({
           <TableHeader>
             <TableRow className="bg-muted/40">
               <TableHead>Compra</TableHead>
+              <TableHead>Data</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-8" />
@@ -231,7 +234,7 @@ export function InstallmentTable({
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-8">
                   Nenhuma parcela encontrada
                 </TableCell>
               </TableRow>
@@ -244,6 +247,13 @@ export function InstallmentTable({
                 const personName = inst.personId ? (byPersonId[inst.personId] ?? null) : null;
                 const cardName = inst.creditCardId ? (byCardId[inst.creditCardId] ?? null) : null;
                 const metaParts = [installmentLabel, personName, cardName].filter(Boolean);
+                const dateStr = inst.purchaseDate
+                  ? formatDatePtBR(
+                      typeof inst.purchaseDate === "string"
+                        ? inst.purchaseDate
+                        : inst.purchaseDate.toISOString(),
+                    )
+                  : "—";
 
                 const actions = [];
                 if (onEditInstallment) {
@@ -271,6 +281,9 @@ export function InstallmentTable({
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {metaParts.join(" · ")}
                       </p>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {dateStr}
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums text-sm">
                       {fmt(inst.amount)}

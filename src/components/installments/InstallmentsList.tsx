@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Category = { id: string; name: string; parentId: string | null; path: string };
 type CreditCard = { id: string; name: string };
@@ -362,7 +363,7 @@ export function InstallmentsList({
                     {purchase.description || "Sem descrição"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(purchase.purchaseDate).toLocaleDateString("pt-BR")} ·{" "}
+                    {formatDatePtBR(purchase.purchaseDate)} ·{" "}
                     {purchase.numberOfInstallments}x · {formatCurrency(purchase.totalAmount)}
                   </p>
                 </div>

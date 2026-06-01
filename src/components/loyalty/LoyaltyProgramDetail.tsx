@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { formatDatePtBR } from "@/lib/format-date";
 type FifoData = {
   costBrl: number;
   costPer1kPoints: number;
@@ -81,8 +82,7 @@ function formatPts(value: number) {
 }
 
 function formatDate(iso: string) {
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("pt-BR");
+  return formatDatePtBR(iso);
 }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {

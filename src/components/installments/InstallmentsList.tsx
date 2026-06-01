@@ -17,7 +17,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 
-type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null; path: string };
 type CreditCard = { id: string; name: string };
 
@@ -59,10 +58,8 @@ const MONTH_NAMES = [
 ];
 
 type Props = {
-  people: Person[];
   purchases: Purchase[];
   currentPersonId: string;
-  isGlobalLocked?: boolean;
 };
 
 type EditState = {
@@ -255,10 +252,8 @@ function ProgressBar({ paid, total }: { paid: number; total: number }) {
 const PAGE_SIZE = 8;
 
 export function InstallmentsList({
-  people,
   purchases,
   currentPersonId,
-  isGlobalLocked = false,
 }: Props) {
   const router = useRouter();
   const [showCanceled, setShowCanceled] = useState(false);
@@ -267,13 +262,6 @@ export function InstallmentsList({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
-
-  function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const pid = e.target.value;
-    const params = new URLSearchParams();
-    if (pid) params.set("personId", pid);
-    router.push(`/installments${params.size ? `?${params.toString()}` : ""}`);
-  }
 
   async function markPaid(installmentId: string) {
     setPendingId(installmentId);
@@ -323,24 +311,7 @@ export function InstallmentsList({
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="person-filter">Pessoa</Label>
-          {isGlobalLocked ? (
-            <span className="text-sm text-muted-foreground px-2 py-1 border rounded-md bg-muted/40 w-40 truncate">
-              {people.find((p) => p.id === currentPersonId)?.name ?? "Todas as pessoas"}
-            </span>
-          ) : (
-            <Select id="person-filter" value={currentPersonId} onChange={handlePersonChange}>
-              <option value="">Todas as pessoas</option>
-              {people.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
-          )}
-        </div>
-        <div className="flex items-center gap-2 mt-5">
+        <div className="flex items-center gap-2">
           <input
             id="show-canceled"
             type="checkbox"

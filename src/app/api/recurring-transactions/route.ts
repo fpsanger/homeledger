@@ -13,6 +13,7 @@ const VALID_PAYMENT_METHODS: TransactionRecord["paymentMethod"][] = [
   "PIX",
   "BANK_TRANSFER",
   "BOLETO",
+  "ACCOUNT_DEBIT",
 ];
 
 export async function POST(request: NextRequest) {
@@ -20,8 +21,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (!body.personId) return Response.json({ error: "personId is required" }, { status: 400 });
-    if (!VALID_TYPES.includes(body.type)) return Response.json({ error: "type must be INCOME or EXPENSE" }, { status: 400 });
-    if (typeof body.amount !== "number") return Response.json({ error: "amount must be a number" }, { status: 400 });
+    if (!VALID_TYPES.includes(body.type))
+      return Response.json({ error: "type must be INCOME or EXPENSE" }, { status: 400 });
+    if (typeof body.amount !== "number")
+      return Response.json({ error: "amount must be a number" }, { status: 400 });
     if (!VALID_PAYMENT_METHODS.includes(body.paymentMethod)) {
       return Response.json({ error: "invalid paymentMethod" }, { status: 400 });
     }

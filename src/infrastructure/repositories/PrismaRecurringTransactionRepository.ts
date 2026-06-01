@@ -102,7 +102,12 @@ export class PrismaRecurringTransactionRepository implements IRecurringTransacti
 
   async update(
     id: string,
-    changes: Partial<Pick<RecurringTransactionRecord, "endDate" | "amount" | "description" | "categoryId" | "paymentMethod" | "frequency">>,
+    changes: Partial<
+      Pick<
+        RecurringTransactionRecord,
+        "endDate" | "amount" | "description" | "categoryId" | "paymentMethod" | "frequency"
+      >
+    >,
   ): Promise<RecurringTransactionRecord> {
     const row = await this.prisma.recurringTransaction.update({
       where: { id },

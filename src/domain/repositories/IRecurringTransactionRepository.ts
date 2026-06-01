@@ -4,7 +4,14 @@ export interface RecurringTransactionRecord {
   type: "INCOME" | "EXPENSE";
   amount: number;
   description: string;
-  paymentMethod: "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "PIX" | "BANK_TRANSFER" | "BOLETO";
+  paymentMethod:
+    | "CASH"
+    | "DEBIT_CARD"
+    | "CREDIT_CARD"
+    | "PIX"
+    | "BANK_TRANSFER"
+    | "BOLETO"
+    | "ACCOUNT_DEBIT";
   categoryId: string | null;
   frequency: "MONTHLY";
   startDate: Date;

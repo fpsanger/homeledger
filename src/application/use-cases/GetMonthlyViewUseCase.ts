@@ -34,16 +34,24 @@ export async function getMonthlyViewUseCase(
       ? transactionRepo.findByPersonAndMonth(personId, year, month)
       : transactionRepo.findByMonth(year, month),
     filterBy === "purchaseDate"
-      ? (personId
-          ? creditCardRepo.findInstallmentsByPurchaseMonth(personId, year, month)
-          : creditCardRepo.findAllInstallmentsByPurchaseMonth(year, month))
-      : (personId
-          ? creditCardRepo.findInstallmentsByMonth(personId, year, month)
-          : creditCardRepo.findAllInstallmentsByMonth(year, month)),
+      ? personId
+        ? creditCardRepo.findInstallmentsByPurchaseMonth(personId, year, month)
+        : creditCardRepo.findAllInstallmentsByPurchaseMonth(year, month)
+      : personId
+        ? creditCardRepo.findInstallmentsByMonth(personId, year, month)
+        : creditCardRepo.findAllInstallmentsByMonth(year, month),
     personId
       ? recurringRepo.findActiveByPersonAndMonth(personId, year, month)
       : recurringRepo.findAllActiveByMonth(year, month),
   ]);
 
-  return buildMonthlyView({ transactions, installments, recurringRules, year, month, personId, filterBy });
+  return buildMonthlyView({
+    transactions,
+    installments,
+    recurringRules,
+    year,
+    month,
+    personId,
+    filterBy,
+  });
 }

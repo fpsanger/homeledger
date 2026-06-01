@@ -33,7 +33,9 @@ async function getCategories(): Promise<Category[]> {
 async function getMonthlyView(year: number, month: number, personId?: string) {
   const params = new URLSearchParams({ year: String(year), month: String(month) });
   if (personId) params.set("personId", personId);
-  const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, { cache: "no-store" });
+  const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, {
+    cache: "no-store",
+  });
   if (!res.ok) return { transactions: [], installments: [] };
   return res.json();
 }
@@ -41,7 +43,9 @@ async function getMonthlyView(year: number, month: number, personId?: string) {
 async function getAnnualReport(year: number, personId?: string) {
   const params = new URLSearchParams({ year: String(year) });
   if (personId) params.set("personId", personId);
-  const res = await fetch(`${BASE_URL}/api/annual-report?${params.toString()}`, { cache: "no-store" });
+  const res = await fetch(`${BASE_URL}/api/annual-report?${params.toString()}`, {
+    cache: "no-store",
+  });
   if (!res.ok) return null;
   return res.json();
 }
@@ -59,11 +63,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
   const isGlobalLocked = !!globalPersonId;
 
-  const annualYear = searchParams.annualYear ? parseInt(searchParams.annualYear, 10) : now.getFullYear();
+  const annualYear = searchParams.annualYear
+    ? parseInt(searchParams.annualYear, 10)
+    : now.getFullYear();
   const annualPersonId = isGlobalLocked ? globalPersonId : (searchParams.annualPersonId ?? "");
 
-  const monthYear = searchParams.monthYear ? parseInt(searchParams.monthYear, 10) : now.getFullYear();
-  const monthMonth = searchParams.monthMonth ? parseInt(searchParams.monthMonth, 10) : now.getMonth() + 1;
+  const monthYear = searchParams.monthYear
+    ? parseInt(searchParams.monthYear, 10)
+    : now.getFullYear();
+  const monthMonth = searchParams.monthMonth
+    ? parseInt(searchParams.monthMonth, 10)
+    : now.getMonth() + 1;
   const monthPersonId = isGlobalLocked ? globalPersonId : (searchParams.monthPersonId ?? "");
 
   const [people, categories, { transactions, installments }, annualReport] = await Promise.all([
@@ -80,7 +90,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle>Relatório Anual</CardTitle>
-            <YearNav year={annualYear} people={people} currentPersonId={annualPersonId} isGlobalLocked={isGlobalLocked} />
+            <YearNav
+              year={annualYear}
+              people={people}
+              currentPersonId={annualPersonId}
+              isGlobalLocked={isGlobalLocked}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -93,7 +108,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       </Card>
       {annualReport && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <MonthlyExpensesCard months={annualReport.months} totalExpenses={annualReport.totalExpenses} />
+          <MonthlyExpensesCard
+            months={annualReport.months}
+            totalExpenses={annualReport.totalExpenses}
+          />
           <IncomeExpenseBalanceCard months={annualReport.months} />
         </div>
       )}
@@ -125,7 +143,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
                 Ver transações →
               </Link>
             </div>
-            <CategoryBreakdownChart transactions={transactions} installments={installments} categories={categories} />
+            <CategoryBreakdownChart
+              transactions={transactions}
+              installments={installments}
+              categories={categories}
+            />
           </div>
         </CardContent>
       </Card>

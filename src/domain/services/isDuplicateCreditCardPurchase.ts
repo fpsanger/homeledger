@@ -20,8 +20,6 @@ export function isDuplicateCreditCardPurchase(
 
   return existing.some(
     (p) =>
-      p.totalAmount === amount &&
-      p.creditCardId === creditCardId &&
-      sameDay(p.purchaseDate, date),
+      p.totalAmount === amount && p.creditCardId === creditCardId && sameDay(p.purchaseDate, date),
   );
 }

@@ -35,7 +35,12 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const isDuplicate = useDuplicateCheck("INCOME", amount ? parseCurrencyBR(amount) : null, date, refreshKey);
+  const isDuplicate = useDuplicateCheck(
+    "INCOME",
+    amount ? parseCurrencyBR(amount) : null,
+    date,
+    refreshKey,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,10 +82,17 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="income-person">Pessoa</Label>
-        <Select id="income-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <Select
+          id="income-person"
+          value={personId}
+          onChange={(e) => setPersonId(e.target.value)}
+          required
+        >
           <option value="">Selecione a pessoa</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       </div>
@@ -94,9 +106,16 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="income-source">Fonte</Label>
-        <Select id="income-source" value={source} onChange={(e) => setSource(e.target.value)} required>
+        <Select
+          id="income-source"
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          required
+        >
           {INCOME_SOURCES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
           ))}
         </Select>
       </div>
@@ -115,7 +134,8 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
       </div>
       {isDuplicate && (
         <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar mesmo assim.
+          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
+          mesmo assim.
         </p>
       )}
       <Button type="submit" disabled={loading}>

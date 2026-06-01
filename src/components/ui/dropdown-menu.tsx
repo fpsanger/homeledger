@@ -51,7 +51,9 @@ export function DropdownMenu({ trigger, items, align = "right" }: DropdownMenuPr
       style={{
         position: "absolute",
         top: coords.top,
-        ...(align === "right" ? { right: document.documentElement.clientWidth - coords.left } : { left: coords.left }),
+        ...(align === "right"
+          ? { right: document.documentElement.clientWidth - coords.left }
+          : { left: coords.left }),
         zIndex: 9999,
       }}
       className="min-w-[140px] rounded-md border bg-background shadow-md py-1"
@@ -60,7 +62,10 @@ export function DropdownMenu({ trigger, items, align = "right" }: DropdownMenuPr
         <button
           key={item.label}
           type="button"
-          onClick={() => { setOpen(false); item.onClick(); }}
+          onClick={() => {
+            setOpen(false);
+            item.onClick();
+          }}
           className={cn(
             "w-full text-left px-3 py-1.5 text-sm hover:bg-muted transition-colors",
             item.variant === "destructive" && "text-destructive hover:text-destructive",

@@ -35,21 +35,21 @@ describe("RecurringTransaction service", () => {
     });
 
     it("throws when personId is missing", () => {
-      expect(() =>
-        createRecurringTransaction({ ...baseInput, personId: "" }),
-      ).toThrow("Person is required");
+      expect(() => createRecurringTransaction({ ...baseInput, personId: "" })).toThrow(
+        "Person is required",
+      );
     });
 
     it("throws when amount is zero", () => {
-      expect(() =>
-        createRecurringTransaction({ ...baseInput, amount: 0 }),
-      ).toThrow("Amount must be positive");
+      expect(() => createRecurringTransaction({ ...baseInput, amount: 0 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("throws when amount is negative", () => {
-      expect(() =>
-        createRecurringTransaction({ ...baseInput, amount: -100 }),
-      ).toThrow("Amount must be positive");
+      expect(() => createRecurringTransaction({ ...baseInput, amount: -100 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("accepts an endDate", () => {
@@ -74,6 +74,11 @@ describe("RecurringTransaction service", () => {
       expect(() =>
         createRecurringTransaction({ ...baseInput, startDate: null as unknown as Date }),
       ).toThrow("Start date is required");
+    });
+
+    it("accepts ACCOUNT_DEBIT as payment method", () => {
+      const record = createRecurringTransaction({ ...baseInput, paymentMethod: "ACCOUNT_DEBIT" });
+      expect(record.paymentMethod).toBe("ACCOUNT_DEBIT");
     });
   });
 

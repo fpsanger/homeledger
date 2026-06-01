@@ -33,9 +33,7 @@ export function buildAnnualReport(input: AnnualReportInput): AnnualReportResult 
     })
     .filter((t) => (personId ? t.personId === personId : true));
 
-  const filteredInstallments = installments.filter(
-    (i) => i.dueYear === year && !i.isCanceled,
-  );
+  const filteredInstallments = installments.filter((i) => i.dueYear === year && !i.isCanceled);
 
   const months: MonthSummary[] = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1;

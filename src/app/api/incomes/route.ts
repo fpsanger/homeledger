@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     if (!body.personId) return Response.json({ error: "personId is required" }, { status: 400 });
-    if (typeof body.amount !== "number") return Response.json({ error: "amount must be a number" }, { status: 400 });
+    if (typeof body.amount !== "number")
+      return Response.json({ error: "amount must be a number" }, { status: 400 });
     if (!body.date) return Response.json({ error: "date is required" }, { status: 400 });
     if (!VALID_SOURCES.includes(body.source)) {
       return Response.json({ error: "invalid source" }, { status: 400 });
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       transaction,
       category,
     );
-    return Response.json(result, { status: 201 });
+    return Response.json({ ...result.record, isDuplicate: result.isDuplicate }, { status: 201 });
   } catch (error) {
     return errorResponse(error);
   }

@@ -32,7 +32,9 @@ async function getCreditCards(): Promise<CreditCard[]> {
 async function getMonthlyView(year: number, month: number, personId?: string) {
   const params = new URLSearchParams({ year: String(year), month: String(month) });
   if (personId) params.set("personId", personId);
-  const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, { cache: "no-store" });
+  const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, {
+    cache: "no-store",
+  });
   if (!res.ok) return { transactions: [], installments: [] };
   return res.json();
 }
@@ -60,7 +62,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Finanças" title="Transações" description={transactions.length > 0 ? `${transactions.length} transações no mês` : undefined} />
+      <PageHeader
+        eyebrow="Finanças"
+        title="Transações"
+        description={
+          transactions.length > 0 ? `${transactions.length} transações no mês` : undefined
+        }
+      />
       <TransactionPageClient
         year={year}
         month={month}

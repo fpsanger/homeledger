@@ -27,7 +27,7 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   dueMonth: 5,
   isPaid: false,
   isCanceled: false,
-      categoryId: null,
+  categoryId: null,
   ...overrides,
 });
 
@@ -147,7 +147,12 @@ describe("MonthlyView service", () => {
     it("monthly view shows installment amount not the total purchase amount", () => {
       const installment = makeInstallment({ amount: 100, dueYear: 2026, dueMonth: 5 });
 
-      const view = buildMonthlyView({ transactions: [], installments: [installment], year: 2026, month: 5 });
+      const view = buildMonthlyView({
+        transactions: [],
+        installments: [installment],
+        year: 2026,
+        month: 5,
+      });
 
       expect(view.installments[0].amount).toBe(100);
       expect(view.installments[0].amount).not.toBe(1200);
@@ -158,7 +163,12 @@ describe("MonthlyView service", () => {
         makeInstallment({ id: `inst-${i + 1}`, amount: 100, dueYear: 2026, dueMonth: i + 1 }),
       );
 
-      const januaryView = buildMonthlyView({ transactions: [], installments, year: 2026, month: 1 });
+      const januaryView = buildMonthlyView({
+        transactions: [],
+        installments,
+        year: 2026,
+        month: 1,
+      });
 
       expect(januaryView.installments).toHaveLength(1);
       expect(januaryView.installments[0].amount).toBe(100);

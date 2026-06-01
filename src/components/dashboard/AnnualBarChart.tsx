@@ -13,7 +13,20 @@ import {
 } from "recharts";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 
-const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MONTH_NAMES = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 type Props = {
   months: MonthSummary[];
@@ -68,7 +81,11 @@ export function AnnualBarChart({ months }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <ComposedChart data={data} margin={{ top: 8, right: 24, left: 4, bottom: 0 }} barCategoryGap="38%">
+      <ComposedChart
+        data={data}
+        margin={{ top: 8, right: 24, left: 4, bottom: 0 }}
+        barCategoryGap="38%"
+      >
         <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.08)" />
         <XAxis
           dataKey="name"
@@ -87,7 +104,11 @@ export function AnnualBarChart({ months }: Props) {
         <Legend
           iconType="circle"
           iconSize={7}
-          wrapperStyle={{ fontSize: "12px", paddingTop: "14px", color: "hsl(var(--muted-foreground))" }}
+          wrapperStyle={{
+            fontSize: "12px",
+            paddingTop: "14px",
+            color: "hsl(var(--muted-foreground))",
+          }}
         />
         <Bar dataKey="Receita" fill="hsl(160 35% 38%)" radius={[3, 3, 0, 0]} maxBarSize={26} />
         <Bar dataKey="Despesas" fill="hsl(0 40% 42%)" radius={[3, 3, 0, 0]} maxBarSize={26} />

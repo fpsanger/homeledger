@@ -14,10 +14,7 @@ class MockRecurringTransactionRepository implements IRecurringTransactionReposit
   ): Promise<RecurringTransactionRecord[]> {
     return [];
   }
-  async findAllActiveByMonth(
-    _year: number,
-    _month: number,
-  ): Promise<RecurringTransactionRecord[]> {
+  async findAllActiveByMonth(_year: number, _month: number): Promise<RecurringTransactionRecord[]> {
     return [];
   }
   async save(

@@ -1,6 +1,12 @@
 import { createIncomeUseCase } from "../../../src/application/use-cases/CreateIncomeUseCase";
-import type { ICategoryRepository, CategoryRecord } from "../../../src/domain/repositories/ICategoryRepository";
-import type { ITransactionRepository, TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type {
+  ICategoryRepository,
+  CategoryRecord,
+} from "../../../src/domain/repositories/ICategoryRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../../src/domain/repositories/ITransactionRepository";
 
 const makeTransactionRepo = (
   overrides: Partial<ITransactionRepository> = {},
@@ -10,8 +16,22 @@ const makeTransactionRepo = (
   findByPersonAndMonth: async () => [],
   findByYear: async () => [],
   findByPersonAndYear: async () => [],
-  save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() } as TransactionRecord),
-  update: async (id, fields) => ({ id, createdAt: new Date(), updatedAt: new Date(), personId: "", type: "INCOME", amount: 0, date: new Date(), description: "", paymentMethod: null, source: null, categoryId: null, ...fields } as TransactionRecord),
+  save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }) as TransactionRecord,
+  update: async (id, fields) =>
+    ({
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      personId: "",
+      type: "INCOME",
+      amount: 0,
+      date: new Date(),
+      description: "",
+      paymentMethod: null,
+      source: null,
+      categoryId: null,
+      ...fields,
+    }) as TransactionRecord,
   delete: async () => {},
   ...overrides,
 });
@@ -22,7 +42,8 @@ const makeCategoryRepo = (
 ): ICategoryRepository => ({
   findAll: async () => categories,
   findById: async (id) => categories.find((c) => c.id === id) ?? null,
-  findRootByName: async (name) => categories.find((c) => c.parentId === null && c.name === name) ?? null,
+  findRootByName: async (name) =>
+    categories.find((c) => c.parentId === null && c.name === name) ?? null,
   save: async (c) => ({ ...c, createdAt: new Date() }),
   delete: async () => {},
   ...overrides,
@@ -65,10 +86,11 @@ describe("CreateIncomeUseCase", () => {
 
     const result = await createIncomeUseCase(baseInput, transactionRepo, categoryRepo);
 
-    expect(result.id).toBe("inc-1");
-    expect(result.type).toBe("INCOME");
-    expect(result.amount).toBe(5000);
-    expect(result.source).toBe("SALARY");
+    expect(result.record.id).toBe("inc-1");
+    expect(result.record.type).toBe("INCOME");
+    expect(result.record.amount).toBe(5000);
+    expect(result.record.source).toBe("SALARY");
+    expect(result.isDuplicate).toBe(false);
   });
 
   it("saves and returns the income when categoryId is a leaf", async () => {
@@ -81,7 +103,7 @@ describe("CreateIncomeUseCase", () => {
       categoryRepo,
     );
 
-    expect(result.categoryId).toBe("cat-leaf");
+    expect(result.record.categoryId).toBe("cat-leaf");
   });
 
   it("throws when categoryId is a non-leaf category", async () => {
@@ -89,7 +111,11 @@ describe("CreateIncomeUseCase", () => {
     const categoryRepo = makeCategoryRepo([parentCategory, leafCategory]);
 
     await expect(
-      createIncomeUseCase({ ...baseInput, categoryId: "cat-parent" }, transactionRepo, categoryRepo),
+      createIncomeUseCase(
+        { ...baseInput, categoryId: "cat-parent" },
+        transactionRepo,
+        categoryRepo,
+      ),
     ).rejects.toThrow("Income must use the most specific category");
   });
 
@@ -98,7 +124,11 @@ describe("CreateIncomeUseCase", () => {
     const categoryRepo = makeCategoryRepo([]);
 
     await expect(
-      createIncomeUseCase({ ...baseInput, categoryId: "cat-nonexistent" }, transactionRepo, categoryRepo),
+      createIncomeUseCase(
+        { ...baseInput, categoryId: "cat-nonexistent" },
+        transactionRepo,
+        categoryRepo,
+      ),
     ).rejects.toThrow("Category not found");
   });
 
@@ -127,5 +157,53 @@ describe("CreateIncomeUseCase", () => {
     await expect(
       createIncomeUseCase({ ...baseInput, source: "" as never }, transactionRepo, categoryRepo),
     ).rejects.toThrow("Source is required");
+  });
+
+  it("returns isDuplicate=true when same income exists on same day", async () => {
+    const existing: TransactionRecord = {
+      id: "inc-existing",
+      personId: "person-1",
+      type: "INCOME",
+      amount: 5000,
+      date: new Date("2026-05-01"),
+      description: "Other salary",
+      paymentMethod: null,
+      source: "SALARY",
+      categoryId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const transactionRepo = makeTransactionRepo({
+      findByPersonAndMonth: async () => [existing],
+    });
+    const categoryRepo = makeCategoryRepo([]);
+
+    const result = await createIncomeUseCase(baseInput, transactionRepo, categoryRepo);
+    expect(result.isDuplicate).toBe(true);
+    expect(result.record.id).toBe("inc-1");
+  });
+
+  it("returns isDuplicate=false when same amount but different day", async () => {
+    const existing: TransactionRecord = {
+      id: "inc-existing",
+      personId: "person-1",
+      type: "INCOME",
+      amount: 5000,
+      date: new Date("2026-05-02"),
+      description: "Other salary",
+      paymentMethod: null,
+      source: "SALARY",
+      categoryId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const transactionRepo = makeTransactionRepo({
+      findByPersonAndMonth: async () => [existing],
+    });
+    const categoryRepo = makeCategoryRepo([]);
+
+    const result = await createIncomeUseCase(baseInput, transactionRepo, categoryRepo);
+    expect(result.isDuplicate).toBe(false);
+    expect(result.record.id).toBe("inc-1");
   });
 });

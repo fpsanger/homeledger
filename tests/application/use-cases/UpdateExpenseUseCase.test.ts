@@ -1,6 +1,12 @@
 import { updateExpenseUseCase } from "../../../src/application/use-cases/UpdateExpenseUseCase";
-import type { ICategoryRepository, CategoryRecord } from "../../../src/domain/repositories/ICategoryRepository";
-import type { ITransactionRepository, TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type {
+  ICategoryRepository,
+  CategoryRecord,
+} from "../../../src/domain/repositories/ICategoryRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../../src/domain/repositories/ITransactionRepository";
 
 const makeTransactionRepo = (
   overrides: Partial<ITransactionRepository> = {},
@@ -10,16 +16,34 @@ const makeTransactionRepo = (
   findByPersonAndMonth: async () => [],
   findByYear: async () => [],
   findByPersonAndYear: async () => [],
-  save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() } as TransactionRecord),
-  update: async (id, fields) => ({ id, createdAt: new Date(), updatedAt: new Date(), personId: "", type: "EXPENSE", amount: 0, date: new Date(), description: "", paymentMethod: null, source: null, categoryId: null, ...fields } as TransactionRecord),
+  save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }) as TransactionRecord,
+  update: async (id, fields) =>
+    ({
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      personId: "",
+      type: "EXPENSE",
+      amount: 0,
+      date: new Date(),
+      description: "",
+      paymentMethod: null,
+      source: null,
+      categoryId: null,
+      ...fields,
+    }) as TransactionRecord,
   delete: async () => {},
   ...overrides,
 });
 
-const makeCategoryRepo = (categories: CategoryRecord[] = [], overrides = {}): ICategoryRepository => ({
+const makeCategoryRepo = (
+  categories: CategoryRecord[] = [],
+  overrides = {},
+): ICategoryRepository => ({
   findAll: async () => categories,
-  findById: async (id) => categories.find(c => c.id === id) ?? null,
-  findRootByName: async (name) => categories.find(c => c.parentId === null && c.name === name) ?? null,
+  findById: async (id) => categories.find((c) => c.id === id) ?? null,
+  findRootByName: async (name) =>
+    categories.find((c) => c.parentId === null && c.name === name) ?? null,
   save: async (c) => ({ ...c, createdAt: new Date() }),
   delete: async () => {},
   ...overrides,
@@ -62,61 +86,81 @@ describe("UpdateExpenseUseCase", () => {
   });
 
   it("calls repo.update with the correct fields", async () => {
-    const updateFn = jest.fn(async (id: string, fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>) => ({
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      personId: "",
-      type: "EXPENSE" as const,
-      amount: 0,
-      date: new Date(),
-      description: "",
-      paymentMethod: null,
-      source: null,
-      categoryId: null,
-      ...fields,
-    }));
+    const updateFn = jest.fn(
+      async (
+        id: string,
+        fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>,
+      ) => ({
+        id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        personId: "",
+        type: "EXPENSE" as const,
+        amount: 0,
+        date: new Date(),
+        description: "",
+        paymentMethod: null,
+        source: null,
+        categoryId: null,
+        ...fields,
+      }),
+    );
     const repo = makeRepoWithExisting({ update: updateFn });
     await updateExpenseUseCase(baseInput, repo, makeCategoryRepo());
-    expect(updateFn).toHaveBeenCalledWith("exp-1", expect.objectContaining({
-      personId: "person-1",
-      amount: 50,
-      paymentMethod: "PIX",
-    }));
+    expect(updateFn).toHaveBeenCalledWith(
+      "exp-1",
+      expect.objectContaining({
+        personId: "person-1",
+        amount: 50,
+        paymentMethod: "PIX",
+      }),
+    );
   });
 
   it("throws when personId is missing", async () => {
     const repo = makeRepoWithExisting();
-    await expect(updateExpenseUseCase({ ...baseInput, personId: "" }, repo, makeCategoryRepo())).rejects.toThrow("Person is required");
+    await expect(
+      updateExpenseUseCase({ ...baseInput, personId: "" }, repo, makeCategoryRepo()),
+    ).rejects.toThrow("Person is required");
   });
 
   it("throws when amount is not positive", async () => {
     const repo = makeRepoWithExisting();
-    await expect(updateExpenseUseCase({ ...baseInput, amount: 0 }, repo, makeCategoryRepo())).rejects.toThrow("Amount must be positive");
+    await expect(
+      updateExpenseUseCase({ ...baseInput, amount: 0 }, repo, makeCategoryRepo()),
+    ).rejects.toThrow("Amount must be positive");
   });
 
   it("throws when amount is negative", async () => {
     const repo = makeRepoWithExisting();
-    await expect(updateExpenseUseCase({ ...baseInput, amount: -5 }, repo, makeCategoryRepo())).rejects.toThrow("Amount must be positive");
+    await expect(
+      updateExpenseUseCase({ ...baseInput, amount: -5 }, repo, makeCategoryRepo()),
+    ).rejects.toThrow("Amount must be positive");
   });
 
   it("throws when paymentMethod is invalid", async () => {
     const repo = makeRepoWithExisting();
     await expect(
-      updateExpenseUseCase({ ...baseInput, paymentMethod: "INVALID" as any }, repo, makeCategoryRepo())
+      updateExpenseUseCase(
+        { ...baseInput, paymentMethod: "INVALID" as any },
+        repo,
+        makeCategoryRepo(),
+      ),
     ).rejects.toThrow("Invalid payment method");
   });
 
   it("throws when transaction does not exist", async () => {
     const repo = makeTransactionRepo({ findById: async () => null });
-    await expect(updateExpenseUseCase(baseInput, repo, makeCategoryRepo())).rejects.toThrow("Transaction not found");
+    await expect(updateExpenseUseCase(baseInput, repo, makeCategoryRepo())).rejects.toThrow(
+      "Transaction not found",
+    );
   });
 
   it("throws when categoryId is set and category does not exist", async () => {
     const repo = makeRepoWithExisting();
     const categoryRepo = makeCategoryRepo([]);
     await expect(
-      updateExpenseUseCase({ ...baseInput, categoryId: "non-existent-cat" }, repo, categoryRepo)
+      updateExpenseUseCase({ ...baseInput, categoryId: "non-existent-cat" }, repo, categoryRepo),
     ).rejects.toThrow();
   });
 });

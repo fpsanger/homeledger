@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Plus, CreditCard as CreditCardIcon, Calendar, Lock, Shuffle } from "lucide-react";
+import {
+  MoreHorizontal,
+  Plus,
+  CreditCard as CreditCardIcon,
+  Calendar,
+  Lock,
+  Shuffle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +24,7 @@ type CreditCard = {
   name: string;
   closureType: "FIXED" | "VARIABLE";
   fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
   closureNextMonth: boolean;
@@ -68,9 +76,21 @@ export function CreditCardList({ initialCards }: Props) {
       {/* Summary strip */}
       {cards.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
-          <SummaryCard label="Total de Cartões" value={cards.length} icon={<CreditCardIcon className="w-4 h-4" />} />
-          <SummaryCard label="Fechamento Fixo" value={fixedCount} icon={<Lock className="w-4 h-4" />} />
-          <SummaryCard label="Fechamento Variável" value={variableCount} icon={<Shuffle className="w-4 h-4" />} />
+          <SummaryCard
+            label="Total de Cartões"
+            value={cards.length}
+            icon={<CreditCardIcon className="w-4 h-4" />}
+          />
+          <SummaryCard
+            label="Fechamento Fixo"
+            value={fixedCount}
+            icon={<Lock className="w-4 h-4" />}
+          />
+          <SummaryCard
+            label="Fechamento Variável"
+            value={variableCount}
+            icon={<Shuffle className="w-4 h-4" />}
+          />
         </div>
       )}
 
@@ -80,7 +100,9 @@ export function CreditCardList({ initialCards }: Props) {
           <CreditCardIcon className="w-10 h-10 opacity-20" />
           <div className="text-center">
             <p className="text-sm font-medium">Nenhum cartão cadastrado</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Clique em "Novo Cartão" para começar.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Clique em "Novo Cartão" para começar.
+            </p>
           </div>
         </div>
       )}
@@ -101,17 +123,27 @@ export function CreditCardList({ initialCards }: Props) {
       {/* Create dialog */}
       <Dialog open={formOpen} onClose={() => setFormOpen(false)} title="Novo Cartão de Crédito">
         <CreditCardForm
-          onSaved={() => { setFormOpen(false); refresh(); }}
+          onSaved={() => {
+            setFormOpen(false);
+            refresh();
+          }}
           onCancel={() => setFormOpen(false)}
         />
       </Dialog>
 
       {/* Edit dialog */}
-      <Dialog open={!!editingCard} onClose={() => setEditingCard(null)} title="Editar Cartão de Crédito">
+      <Dialog
+        open={!!editingCard}
+        onClose={() => setEditingCard(null)}
+        title="Editar Cartão de Crédito"
+      >
         {editingCard && (
           <CreditCardForm
             card={editingCard}
-            onSaved={() => { setEditingCard(null); refresh(); }}
+            onSaved={() => {
+              setEditingCard(null);
+              refresh();
+            }}
             onCancel={() => setEditingCard(null)}
           />
         )}
@@ -119,16 +151,21 @@ export function CreditCardList({ initialCards }: Props) {
 
       {/* Closure manager dialog */}
       {closureCardId && (
-        <ClosureManagerDialog
-          cardId={closureCardId}
-          onClose={() => setClosureCardId(null)}
-        />
+        <ClosureManagerDialog cardId={closureCardId} onClose={() => setClosureCardId(null)} />
       )}
     </div>
   );
 }
 
-function SummaryCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+function SummaryCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+}) {
   return (
     <Card className="px-4 py-3 flex items-center gap-3">
       <div className="text-muted-foreground">{icon}</div>

@@ -1,6 +1,9 @@
 import type { CreditCardRecord } from "../../domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
-import type { ICreditCardPurchaseRepository, InstallmentRecord } from "../../domain/repositories/ICreditCardPurchaseRepository";
+import type {
+  ICreditCardPurchaseRepository,
+  InstallmentRecord,
+} from "../../domain/repositories/ICreditCardPurchaseRepository";
 
 export type BillInstallmentItem = InstallmentRecord & {
   purchaseDescription: string;

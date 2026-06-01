@@ -1,13 +1,9 @@
 import { NextRequest } from "next/server";
-import { cancelRecurringTransactionUseCase } from "../../../../application/use-cases/CancelRecurringTransactionUseCase";
 import { updateRecurringTransactionUseCase } from "../../../../application/use-cases/UpdateRecurringTransactionUseCase";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await request.json();
     const updates: Record<string, unknown> = {};
@@ -34,13 +30,10 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { recurring } = createRepositories();
-    await cancelRecurringTransactionUseCase(params.id, new Date(), recurring);
+    await recurring.delete(params.id);
     return new Response(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

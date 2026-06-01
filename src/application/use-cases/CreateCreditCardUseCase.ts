@@ -1,10 +1,15 @@
-import { createCreditCard, type ClosureType, type CreditCardRecord } from "../../domain/entities/CreditCard";
+import {
+  createCreditCard,
+  type ClosureType,
+  type CreditCardRecord,
+} from "../../domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 
 type Input = {
   name: string;
   closureType: ClosureType;
   fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
   alwaysNextMonth: boolean;
   closureNextMonth: boolean;

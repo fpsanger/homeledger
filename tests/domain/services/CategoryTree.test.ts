@@ -5,6 +5,7 @@ import {
   isCircularReference,
   isLeafCategory,
   validateExpenseCategory,
+  validateInvestmentCategory,
 } from "../../../src/domain/services/CategoryTree";
 
 type CategoryRecord = {
@@ -224,6 +225,22 @@ describe("Category-Expense integration", () => {
     it("throws when categoryId points to a non-leaf category", () => {
       expect(() => validateExpenseCategory("cat-1", categories)).toThrow(
         "Expense must use the most specific category",
+      );
+    });
+  });
+
+  describe("validateInvestmentCategory", () => {
+    it("passes when categoryId points to a leaf category", () => {
+      expect(() => validateInvestmentCategory("cat-3", categories)).not.toThrow();
+    });
+
+    it("throws when categoryId does not exist in category list", () => {
+      expect(() => validateInvestmentCategory("cat-999", categories)).toThrow("Category not found");
+    });
+
+    it("throws when categoryId points to a non-leaf category", () => {
+      expect(() => validateInvestmentCategory("cat-1", categories)).toThrow(
+        "Investment must use the most specific category",
       );
     });
   });

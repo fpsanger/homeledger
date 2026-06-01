@@ -1,14 +1,130 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+model Person {
+  id                    String                 @id @default(uuid())
+  name                  String
+  createdAt             DateTime               @default(now())
+  creditCardPurchases   CreditCardPurchase[]
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  loyaltyTransfers      LoyaltyTransfer[]
+}
+
+model Category {
+  id                    String                 @id @default(uuid())
+  name                  String                 @unique(map: "categories_root_name_unique", where: raw("(\"parentId\" IS NULL)"))
+  parentId              String?
+  createdAt             DateTime               @default(now())
+  level                 Int                    @default(0)
+  path                  String?                @default("")
+  parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children              Category[]             @relation("CategoryHierarchy")
+  creditCardPurchases   CreditCardPurchase[]
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+}
+
+model CreditCard {
+  id               String               @id @default(uuid())
+  name             String
+  closureType      ClosureType
+  fixedClosureDay           Int?
+  fixedClosurePreviousMonth Boolean              @default(false)
+  dueDayOfMonth             Int
+  alwaysNextMonth           Boolean              @default(false)
+  createdAt                 DateTime             @default(now())
+  closureNextMonth          Boolean              @default(false)
+  closures         CreditCardClosure[]
+  purchases        CreditCardPurchase[]
+}
+
+model CreditCardClosure {
+  id            String     @id @default(uuid())
+  creditCardId  String
+  year          Int
+  month         Int
+  closureDay    Int
+  previousMonth Boolean    @default(false)
+  creditCard    CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+
+  @@unique([creditCardId, year, month])
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  personId      String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(15, 2)
+  date          DateTime
+  description   String
+  paymentMethod PaymentMethod?
+  categoryId    String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  source        IncomeSource?
+  category      Category?       @relation(fields: [categoryId], references: [id])
+  person        Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+model CreditCardPurchase {
+  id                   String        @id @default(uuid())
+  personId             String
+  description          String
+  totalAmount          Decimal       @db.Decimal(15, 2)
+  numberOfInstallments Int
+  purchaseDate         DateTime
+  categoryId           String?
+  createdAt            DateTime      @default(now())
+  creditCardId         String?
+  category             Category?     @relation(fields: [categoryId], references: [id])
+  creditCard           CreditCard?   @relation(fields: [creditCardId], references: [id])
+  person               Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  installments         Installment[]
+}
+
+model Installment {
+  id                   String             @id @default(uuid())
+  creditCardPurchaseId String
+  installmentNumber    Int
+  amount               Decimal            @db.Decimal(15, 2)
+  dueYear              Int
+  dueMonth             Int
+  isPaid               Boolean            @default(false)
+  isCanceled           Boolean            @default(false)
+  creditCardPurchase   CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
+
+  @@unique([creditCardPurchaseId, installmentNumber])
+}
+
+model RecurringTransaction {
+  id            String          @id @default(uuid())
+  personId      String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(15, 2)
+  description   String
+  paymentMethod PaymentMethod
+  categoryId    String?
+  startDate     DateTime
+  endDate       DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  frequency     FrequencyType   @default(MONTHLY)
+  category      Category?       @relation(fields: [categoryId], references: [id])
+  person        Person          @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
 enum TransactionType {
   INCOME
   EXPENSE
+  INVESTMENT
 }
 
 enum PaymentMethod {
@@ -18,6 +134,7 @@ enum PaymentMethod {
   PIX
   BANK_TRANSFER
   BOLETO
+  ACCOUNT_DEBIT
 }
 
 enum IncomeSource {
@@ -37,121 +154,69 @@ enum ClosureType {
   VARIABLE
 }
 
-model Person {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-
-  transactions          Transaction[]
-  creditCardPurchases   CreditCardPurchase[]
-  recurringTransactions RecurringTransaction[]
+enum LoyaltyProgramType {
+  AIRLINE
+  HOTEL
+  BANK
+  OTHER
 }
 
-model Category {
-  id        String   @id @default(uuid())
-  name      String
-  parentId  String?
-  path      String   @default("")
-  level     Int      @default(0)
-  createdAt DateTime @default(now())
-
-  parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children              Category[]             @relation("CategoryHierarchy")
-  transactions          Transaction[]
-  recurringTransactions RecurringTransaction[]
-  creditCardPurchases   CreditCardPurchase[]
+enum LoyaltyTransactionType {
+  PURCHASE
+  EARN
+  BONUS
+  REDEEM
+  TRANSFER_OUT
+  TRANSFER_IN
+  EXPIRE
+  ADJUSTMENT
 }
 
-model CreditCard {
-  id               String      @id @default(uuid())
-  name             String
-  closureType      ClosureType
-  fixedClosureDay  Int?
-  dueDayOfMonth    Int
-  alwaysNextMonth  Boolean     @default(false)
-  closureNextMonth Boolean     @default(false)
-  createdAt        DateTime    @default(now())
-
-  purchases CreditCardPurchase[]
-  closures  CreditCardClosure[]
+model LoyaltyProgram {
+  id            String               @id @default(uuid())
+  name          String
+  type          LoyaltyProgramType
+  color         String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  transactions  LoyaltyTransaction[]
+  transfersFrom LoyaltyTransfer[]    @relation("TransferFrom")
+  transfersTo   LoyaltyTransfer[]    @relation("TransferTo")
 }
 
-model CreditCardClosure {
-  id            String     @id @default(uuid())
-  creditCardId  String
-  year          Int
-  month         Int
-  closureDay    Int
-  previousMonth Boolean    @default(false)
-
-  creditCard CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
-
-  @@unique([creditCardId, year, month])
+model LoyaltyTransfer {
+  id             String               @id @default(uuid())
+  fromProgramId  String
+  toProgramId    String
+  pointsSent     Int
+  pointsReceived Int
+  costBrl        Decimal?             @db.Decimal(15, 2)
+  transferDate   DateTime
+  personId       String?
+  description    String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  fromProgram    LoyaltyProgram       @relation("TransferFrom", fields: [fromProgramId], references: [id])
+  toProgram      LoyaltyProgram       @relation("TransferTo", fields: [toProgramId], references: [id])
+  person         Person?              @relation(fields: [personId], references: [id])
+  transactions   LoyaltyTransaction[]
 }
 
-model Transaction {
-  id            String          @id @default(uuid())
-  personId      String
-  type          TransactionType
-  amount        Decimal         @db.Decimal(15, 2)
-  date          DateTime
-  description   String
-  paymentMethod PaymentMethod?
-  source        IncomeSource?
-  categoryId    String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  person   Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-}
-
-model CreditCardPurchase {
-  id                   String   @id @default(uuid())
-  personId             String
-  creditCardId         String?
-  description          String
-  totalAmount          Decimal  @db.Decimal(15, 2)
-  numberOfInstallments Int
-  purchaseDate         DateTime
-  categoryId           String?
-  createdAt            DateTime @default(now())
-
-  person       Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
-  creditCard   CreditCard?   @relation(fields: [creditCardId], references: [id])
-  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  installments Installment[]
-}
-
-model Installment {
-  id                   String  @id @default(uuid())
-  creditCardPurchaseId String
-  installmentNumber    Int
-  amount               Decimal @db.Decimal(15, 2)
-  dueYear              Int
-  dueMonth             Int
-  isPaid               Boolean @default(false)
-  isCanceled           Boolean @default(false)
-
-  creditCardPurchase CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
-
-  @@unique([creditCardPurchaseId, installmentNumber])
-}
-
-model RecurringTransaction {
-  id            String          @id @default(uuid())
-  personId      String
-  type          TransactionType
-  amount        Decimal         @db.Decimal(15, 2)
-  description   String
-  paymentMethod PaymentMethod
-  categoryId    String?
-  frequency     FrequencyType   @default(MONTHLY)
-  startDate     DateTime
-  endDate       DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  person   Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+model LoyaltyTransaction {
+  id          String                 @id @default(uuid())
+  programId   String
+  personId    String?
+  transferId  String?
+  type        LoyaltyTransactionType
+  points      Int
+  date        DateTime
+  description String?
+  expiresAt   DateTime?
+  costBrl     Decimal?               @db.Decimal(15, 2)
+  valueBrl    Decimal?               @db.Decimal(15, 2)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  program     LoyaltyProgram         @relation(fields: [programId], references: [id])
+  person      Person?                @relation(fields: [personId], references: [id])
+  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id])
 }

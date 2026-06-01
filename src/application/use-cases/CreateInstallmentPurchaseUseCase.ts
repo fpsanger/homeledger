@@ -1,6 +1,7 @@
 import { createInstallmentPurchase } from "../../domain/services/InstallmentPurchase";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
+import { isDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
 
 type Input = {
   id: string;
@@ -26,6 +27,7 @@ export async function createInstallmentPurchaseUseCase(
   if (card.closureType === "FIXED") {
     if (card.fixedClosureDay == null) throw new Error("FIXED card is missing fixedClosureDay");
     closureDay = card.fixedClosureDay;
+    closureInPreviousMonth = card.fixedClosurePreviousMonth;
   } else {
     const purchaseYear = input.purchaseDate.getUTCFullYear();
     const purchaseMonth = input.purchaseDate.getUTCMonth() + 1;
@@ -35,13 +37,21 @@ export async function createInstallmentPurchaseUseCase(
     // Try next billing month first; fall back to current month (same-month closures).
     const nextBMMonth = purchaseMonth === 12 ? 1 : purchaseMonth + 1;
     const nextBMYear = purchaseMonth === 12 ? purchaseYear + 1 : purchaseYear;
-    const nextClosure = await creditCardRepo.findClosure(input.creditCardId, nextBMYear, nextBMMonth);
+    const nextClosure = await creditCardRepo.findClosure(
+      input.creditCardId,
+      nextBMYear,
+      nextBMMonth,
+    );
 
     if (nextClosure?.previousMonth) {
       closureDay = nextClosure.closureDay;
       closureInPreviousMonth = true;
     } else {
-      const currentClosure = await creditCardRepo.findClosure(input.creditCardId, purchaseYear, purchaseMonth);
+      const currentClosure = await creditCardRepo.findClosure(
+        input.creditCardId,
+        purchaseYear,
+        purchaseMonth,
+      );
       if (!currentClosure) {
         throw new Error(
           `No closure date set for ${card.name} in ${purchaseYear}-${String(purchaseMonth).padStart(2, "0")}. Set a closure date before registering purchases.`,
@@ -52,6 +62,12 @@ export async function createInstallmentPurchaseUseCase(
     }
   }
 
+  const year = input.purchaseDate.getUTCFullYear();
+  const month = input.purchaseDate.getUTCMonth() + 1;
+  const existing = await repo.findPurchasesByPersonAndMonth(input.personId, year, month);
+  const dateStr = input.purchaseDate.toISOString().slice(0, 10);
+  const isDuplicate = isDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId);
+
   const { purchase, installments } = createInstallmentPurchase({
     ...input,
     closureDay,
@@ -60,5 +76,6 @@ export async function createInstallmentPurchaseUseCase(
     closureNextMonth: card.closureNextMonth,
   });
 
-  return repo.save(purchase, installments);
+  const record = await repo.save(purchase, installments);
+  return { record, isDuplicate };
 }

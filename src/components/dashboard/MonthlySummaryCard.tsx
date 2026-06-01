@@ -13,9 +13,7 @@ function formatAmount(amount: number): string {
 }
 
 export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
-  const income = transactions
-    .filter((t) => t.type === "INCOME")
-    .reduce((s, t) => s + t.amount, 0);
+  const income = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
   const installmentExpenses = installments
     .filter((i) => !i.isCanceled)
     .reduce((s, i) => s + i.amount, 0);
@@ -56,7 +54,9 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-card rounded-xl border border-l-4 border-l-emerald-600 p-4 flex items-start justify-between card-hover">
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Receita</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Receita
+            </p>
             <p className="text-xl font-bold mt-1 amount-display">{formatAmount(income)}</p>
           </div>
           <span className="p-2 rounded-lg text-emerald-600 bg-emerald-500/10">
@@ -66,7 +66,9 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
 
         <div className="bg-card rounded-xl border border-l-4 border-l-red-500 p-4 flex items-start justify-between card-hover">
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Despesas</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Despesas
+            </p>
             <p className="text-xl font-bold mt-1 amount-display">{formatAmount(expenses)}</p>
           </div>
           <span className="p-2 rounded-lg text-red-500 bg-red-500/10">

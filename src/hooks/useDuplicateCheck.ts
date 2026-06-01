@@ -5,7 +5,7 @@ import { isDuplicateTransaction } from "../domain/services/isDuplicateTransactio
 import type { TransactionRecord } from "../domain/repositories/ITransactionRepository";
 
 export function useDuplicateCheck(
-  type: "EXPENSE" | "INCOME",
+  type: "EXPENSE" | "INCOME" | "INVESTMENT",
   amount: number | null,
   date: string | null,
   refreshKey = 0,

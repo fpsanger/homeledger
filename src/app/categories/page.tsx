@@ -28,7 +28,9 @@ export default async function CategoriesPage() {
       <PageHeader
         eyebrow="Configurações"
         title="Categorias"
-        description={categories.length > 0 ? `${categories.length} categorias cadastradas` : undefined}
+        description={
+          categories.length > 0 ? `${categories.length} categorias cadastradas` : undefined
+        }
       />
       <CategoryList categories={categories} />
     </div>

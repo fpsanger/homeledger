@@ -37,7 +37,14 @@ type Props = {
   installments: Installment[];
 };
 
-export function MonthlyTabsCard({ year, month, people, currentPersonId, transactions, installments }: Props) {
+export function MonthlyTabsCard({
+  year,
+  month,
+  people,
+  currentPersonId,
+  transactions,
+  installments,
+}: Props) {
   const [tab, setTab] = useState<"transactions" | "installments">("transactions");
 
   return (
@@ -59,11 +66,13 @@ export function MonthlyTabsCard({ year, month, people, currentPersonId, transact
           >
             Transações
             {transactions.length > 0 && (
-              <span className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
-                tab === "transactions"
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}>
+              <span
+                className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
+                  tab === "transactions"
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
                 {transactions.length}
               </span>
             )}
@@ -79,11 +88,13 @@ export function MonthlyTabsCard({ year, month, people, currentPersonId, transact
           >
             Parcelas
             {installments.length > 0 && (
-              <span className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
-                tab === "installments"
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              }`}>
+              <span
+                className={`text-xs rounded-full px-1.5 py-0.5 leading-none ${
+                  tab === "installments"
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
                 {installments.length}
               </span>
             )}

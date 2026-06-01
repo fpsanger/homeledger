@@ -7,8 +7,18 @@ import { Select } from "@/components/ui/select";
 type Person = { id: string; name: string };
 
 const MONTH_NAMES = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 type Props = {
@@ -21,7 +31,15 @@ type Props = {
   isGlobalLocked?: boolean;
 };
 
-export function MonthNav({ year, month, people, currentPersonId, basePath = "/dashboard", paramPrefix = "", isGlobalLocked = false }: Props) {
+export function MonthNav({
+  year,
+  month,
+  people,
+  currentPersonId,
+  basePath = "/dashboard",
+  paramPrefix = "",
+  isGlobalLocked = false,
+}: Props) {
   const router = useRouter();
 
   const yearKey = paramPrefix ? `${paramPrefix}Year` : "year";
@@ -87,7 +105,9 @@ export function MonthNav({ year, month, people, currentPersonId, basePath = "/da
         <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm">
           <option value="">Todas as pessoas</option>
           {people.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
           ))}
         </Select>
       )}

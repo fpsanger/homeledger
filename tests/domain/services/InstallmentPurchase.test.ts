@@ -213,15 +213,15 @@ describe("InstallmentPurchase service", () => {
     });
 
     it("throws when personId is missing", () => {
-      expect(() =>
-        createInstallmentPurchase({ ...basePurchaseWithId, personId: "" }),
-      ).toThrow("Person is required");
+      expect(() => createInstallmentPurchase({ ...basePurchaseWithId, personId: "" })).toThrow(
+        "Person is required",
+      );
     });
 
     it("throws when totalAmount is not positive", () => {
-      expect(() =>
-        createInstallmentPurchase({ ...basePurchaseWithId, totalAmount: 0 }),
-      ).toThrow("Amount must be positive");
+      expect(() => createInstallmentPurchase({ ...basePurchaseWithId, totalAmount: 0 })).toThrow(
+        "Amount must be positive",
+      );
     });
 
     it("generates correct installment count", () => {
@@ -241,7 +241,7 @@ describe("InstallmentPurchase service", () => {
     it("each installment has due_month set correctly", () => {
       const result = createInstallmentPurchase({
         ...basePurchaseWithId,
-        purchaseDate: new Date("2026-03-01"),  // day 1 < closure 25 → starts March
+        purchaseDate: new Date("2026-03-01"), // day 1 < closure 25 → starts March
         numberOfInstallments: 3,
         totalAmount: 300,
       });
@@ -280,7 +280,10 @@ describe("InstallmentPurchase service", () => {
     });
 
     it("marks all installments as canceled", () => {
-      const installments = [makeInstallmentRecord({ installmentNumber: 1 }), makeInstallmentRecord({ installmentNumber: 2 })];
+      const installments = [
+        makeInstallmentRecord({ installmentNumber: 1 }),
+        makeInstallmentRecord({ installmentNumber: 2 }),
+      ];
 
       const canceled = cancelInstallmentPurchase(installments);
 
@@ -304,7 +307,9 @@ describe("InstallmentPurchase service", () => {
     });
 
     it("preserves all original installment fields after cancellation", () => {
-      const installments = [makeInstallmentRecord({ installmentNumber: 3, amount: 150, dueMonth: 7 })];
+      const installments = [
+        makeInstallmentRecord({ installmentNumber: 3, amount: 150, dueMonth: 7 }),
+      ];
 
       const canceled = cancelInstallmentPurchase(installments);
 

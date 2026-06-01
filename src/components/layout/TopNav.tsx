@@ -14,6 +14,7 @@ const navLinks = [
   { href: "/transactions", label: "Transações" },
   { href: "/installments", label: "Parcelas" },
   { href: "/credit-cards", label: "Cartões de Crédito" },
+  { href: "/loyalty", label: "Milhas" },
   { href: "/categories", label: "Categorias" },
   { href: "/people", label: "Pessoas" },
 ];
@@ -38,7 +39,7 @@ export function TopNav() {
   useEffect(() => {
     setGlobalPersonId(getCookie("global-person-id"));
     fetch("/api/people")
-      .then((r) => r.ok ? r.json() : { people: [] })
+      .then((r) => (r.ok ? r.json() : { people: [] }))
       .then((d) => setPeople(d.people ?? []));
   }, []);
 
@@ -91,10 +92,16 @@ export function TopNav() {
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           <User className="w-4 h-4 text-muted-foreground" />
-          <Select value={globalPersonId} onChange={handleGlobalPersonChange} className="h-8 text-sm w-40">
+          <Select
+            value={globalPersonId}
+            onChange={handleGlobalPersonChange}
+            className="h-8 text-sm w-40"
+          >
             <option value="">Todas as pessoas</option>
             {people.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
             ))}
           </Select>
         </div>

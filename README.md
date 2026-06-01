@@ -39,6 +39,12 @@ Homeledger is a private personal project. The basic product surface is implement
 
 ## Getting Started
 
+Use Node.js 22:
+
+```bash
+nvm use
+```
+
 Install dependencies:
 
 ```bash
@@ -101,6 +107,31 @@ npm run lint     # Run Biome checks against src and tests
 npm run format   # Format src and tests with Biome
 npm test         # Run Jest tests
 ```
+
+## CI and Releases
+
+GitHub Actions validates pull requests targeting `develop` or `master`. The initial required
+checks are:
+
+- Jest tests.
+- Prisma schema validation.
+- Applying every Prisma migration to an empty PostgreSQL 16 database.
+- Building the production application.
+
+Biome linting and TypeScript checks also run in CI. They are initially informational while the
+existing baseline is cleaned up, and should become required checks once they pass consistently.
+
+Changes normally flow through:
+
+```text
+feature/* or fix/* -> pull request -> develop -> pull request -> master
+```
+
+Direct pushes to `develop` and `master` should be blocked with GitHub rulesets. Before merging
+`develop` into `master`, update the version in `package.json` and move the relevant changelog
+entries from `[Unreleased]` into that version. A successful merge from `develop` into `master`
+creates the matching Git tag and GitHub Release automatically. The version must be newer than the
+latest existing Git tag.
 
 ## Architecture
 

@@ -9,7 +9,9 @@ on:
 
 jobs:
   create-tag-and-release:
-    if: github.event.pull_request.merged == true
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'develop'
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,19 +23,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract version from release branch
-        id: branch
+      - name: Extract version from package.json
+        id: release
         run: |
-          BRANCH_NAME="${{ github.head_ref }}"
+          VERSION=$(node -p "require('./package.json').version")
 
-          echo "Branch name: $BRANCH_NAME"
-
-          if [[ ! "$BRANCH_NAME" =~ ^release\/ ]]; then
-            echo "This is not a release branch."
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid package.json version: $VERSION"
             exit 1
           fi
 
-          VERSION=${BRANCH_NAME#release/}
           TAG="v$VERSION"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -41,16 +40,26 @@ jobs:
 
       - name: Check if tag already exists
         run: |
-          TAG=${{ steps.branch.outputs.tag }}
+          TAG=${{ steps.release.outputs.tag }}
 
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
+          if git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
             echo "Tag already exists: $TAG"
-            exit 0
+            exit 1
+          fi
+
+      - name: Check if version is newer than the latest release
+        run: |
+          TAG=${{ steps.release.outputs.tag }}
+          LATEST_TAG=$(git tag --list "v*" --sort=-v:refname | head -n 1)
+
+          if [[ -n "$LATEST_TAG" ]] && [[ "$(printf '%s\n' "$LATEST_TAG" "$TAG" | sort -V | tail -n 1)" != "$TAG" ]]; then
+            echo "Version $TAG must be newer than the latest release: $LATEST_TAG"
+            exit 1
           fi
 
       - name: Create git tag
         run: |
-          TAG=${{ steps.branch.outputs.tag }}
+          TAG=${{ steps.release.outputs.tag }}
 
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -61,6 +70,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.branch.outputs.tag }}
-          name: Release ${{ steps.branch.outputs.tag }}
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Release ${{ steps.release.outputs.tag }}
           generate_release_notes: true

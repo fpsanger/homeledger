@@ -52,16 +52,19 @@ export function parseC6Csv(csvText: string): BillingItem[] {
     const isCredit = amount < 0
 
     const installmentMatch = parcelaStr.match(/^(\d+)\/(\d+)$/)
+    const isSingleInstallment = parcelaStr === "Única"
 
     try {
-      if (installmentMatch) {
+      if (installmentMatch || isSingleInstallment) {
+        const installmentNumber = installmentMatch ? parseInt(installmentMatch[1], 10) : 1
+        const totalInstallments = installmentMatch ? parseInt(installmentMatch[2], 10) : 1
         items.push(
           createInstallmentBillingItem({
             description,
             amount: absAmount,
             date,
-            installmentNumber: parseInt(installmentMatch[1], 10),
-            totalInstallments: parseInt(installmentMatch[2], 10),
+            installmentNumber,
+            totalInstallments,
           }),
         )
       } else {

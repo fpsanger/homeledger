@@ -2,7 +2,6 @@ import type { BillingItem } from "../../domain/entities/BillingItem";
 import type { ReconciledItem } from "../../domain/entities/ReconciledItem";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ITransactionRepository } from "../../domain/repositories/ITransactionRepository";
-import { normalizeDescription } from "../../domain/services/normalizeDescription";
 
 export async function reconcileStatementUseCase(
   creditCardPurchaseRepo: ICreditCardPurchaseRepository,
@@ -33,12 +32,10 @@ export async function reconcileStatementUseCase(
 
   return items.map((item): ReconciledItem => {
     if (item.kind === "installment") {
-      const normalizedItem = normalizeDescription(item.description);
       const match = filteredInstallments.find((existing) => {
         const amountMatch = Math.abs(existing.amount - item.amount) <= 0.01;
-        const existingDesc = existing.purchaseDescription ?? "";
-        const descMatch = normalizeDescription(existingDesc) === normalizedItem;
-        return amountMatch && descMatch;
+        const installmentMatch = existing.installmentNumber === item.installmentNumber;
+        return amountMatch && installmentMatch;
       });
 
       if (match) {

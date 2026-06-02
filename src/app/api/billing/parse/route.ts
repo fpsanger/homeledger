@@ -93,8 +93,7 @@ export async function POST(request: NextRequest) {
     let items: BillingItem[];
 
     if (isCSVFile(file)) {
-      // C6 CSV exports are Latin-1 encoded
-      const csvText = new TextDecoder("latin1").decode(buffer);
+      const csvText = new TextDecoder("utf-8").decode(buffer);
       items = parseC6Csv(csvText);
     } else {
       let text: string;

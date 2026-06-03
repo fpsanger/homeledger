@@ -175,7 +175,7 @@ describe("reconcileStatementUseCase", () => {
       installmentNumber: 2,
       totalInstallments: 12,
     };
-    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0 });
+    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0, installmentNumber: 2 });
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
@@ -198,7 +198,7 @@ describe("reconcileStatementUseCase", () => {
       installmentNumber: 2,
       totalInstallments: 12,
     };
-    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0 });
+    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0, installmentNumber: 2 });
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),

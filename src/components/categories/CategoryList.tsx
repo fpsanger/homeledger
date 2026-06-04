@@ -19,11 +19,11 @@ import {
 } from "@/components/ui/table";
 import { CategoryCreateDialog } from "./CategoryCreateDialog";
 import { CategoryEditDialog } from "./CategoryEditDialog";
+import { getFullPath } from "@/lib/categoryUtils";
 
 type Category = {
   id: string;
   name: string;
-  path: string;
   parentId: string | null;
   level: number;
   createdAt: string;
@@ -331,7 +331,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
                       {cat.name}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {cat.path || cat.name}
+                      {getFullPath(cat.id, categories)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu

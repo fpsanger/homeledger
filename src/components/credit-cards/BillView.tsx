@@ -16,9 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { formatDatePtBR } from "@/lib/format-date";
+import { getFullPath } from "@/lib/categoryUtils";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 type BillInstallmentItem = {
   id: string;
@@ -234,7 +235,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
   }
 
   const personMap = new Map(people.map((p) => [p.id, p.name]));
-  const categoryMap = new Map(categories.map((c) => [c.id, c.path]));
+  const categoryMap = new Map(categories.map((c) => [c.id, getFullPath(c.id, categories)]));
   const totalBill = bill.reduce((sum, e) => sum + e.total, 0);
   const totalItems = bill.reduce((sum, e) => sum + e.installments.length, 0);
   const uniquePeople = new Set(bill.flatMap((e) => e.installments.map((i) => i.personId))).size;

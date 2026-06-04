@@ -1,0 +1,1 @@
+ALTER TABLE "Category" DROP COLUMN IF EXISTS "path";

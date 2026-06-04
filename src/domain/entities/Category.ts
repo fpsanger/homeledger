@@ -5,7 +5,7 @@ type CreateCategoryInput = {
   name: string;
   parentId: string | null;
   householdId: string;
-  parent?: { path: string; level: number } | null;
+  parent?: { level: number } | null;
 };
 
 export function createCategory(input: CreateCategoryInput): CategoryRecord {
@@ -19,7 +19,6 @@ export function createCategory(input: CreateCategoryInput): CategoryRecord {
     throw new Error("Household is required");
   }
 
-  const path = input.parent?.path ? `${input.parent.path}/${name}` : name;
   const level = input.parent ? input.parent.level + 1 : 0;
 
   return {
@@ -27,7 +26,6 @@ export function createCategory(input: CreateCategoryInput): CategoryRecord {
     name,
     parentId: input.parentId,
     householdId: input.householdId,
-    path,
     level,
     createdAt: new Date(),
   };

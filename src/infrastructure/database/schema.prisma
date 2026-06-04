@@ -185,24 +185,24 @@ enum LoyaltyTransactionType {
 }
 
 model LoyaltyProgram {
-  id            String               @id @default(uuid())
-  name          String
-  type          LoyaltyProgramType
-  color         String
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  transactions  LoyaltyTransaction[]
-  transfersFrom LoyaltyTransfer[]    @relation("TransferFrom")
-  transfersTo   LoyaltyTransfer[]    @relation("TransferTo")
+  id           String               @id @default(uuid())
+  name         String
+  type         LoyaltyProgramType
+  color        String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  transactions LoyaltyTransaction[]
+  transfersFrom LoyaltyTransfer[]   @relation("TransferFrom")
+  transfersTo   LoyaltyTransfer[]   @relation("TransferTo")
 }
 
 model LoyaltyTransfer {
   id             String               @id @default(uuid())
   fromProgramId  String
   toProgramId    String
-  pointsSent     Int
-  pointsReceived Int
-  costBrl        Decimal?             @db.Decimal(15, 2)
+  pointsSent     Float
+  pointsReceived Float
+  costBrl        Float?
   transferDate   DateTime
   personId       String?
   description    String?
@@ -220,15 +220,15 @@ model LoyaltyTransaction {
   personId    String?
   transferId  String?
   type        LoyaltyTransactionType
-  points      Int
+  points      Float
   date        DateTime
   description String?
   expiresAt   DateTime?
-  costBrl     Decimal?               @db.Decimal(15, 2)
-  valueBrl    Decimal?               @db.Decimal(15, 2)
+  costBrl     Float?
+  valueBrl    Float?
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
   program     LoyaltyProgram         @relation(fields: [programId], references: [id])
   person      Person?                @relation(fields: [personId], references: [id])
-  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id])
+  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id], onDelete: Cascade)
 }

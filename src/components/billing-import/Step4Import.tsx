@@ -149,13 +149,42 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
     }
   }
 
+  async function recordMerchantHistory(
+    successfulItems: Array<{ description: string; categoryId: string }>,
+  ) {
+    if (successfulItems.length === 0) return;
+    try {
+      await fetch("/api/billing/categorize/learn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: successfulItems }),
+      });
+    } catch {
+      // best-effort — don't block the user
+    }
+  }
+
   async function handleImportAll() {
     setImporting(true);
     let successCount = 0;
+    const learnItems: Array<{ description: string; categoryId: string }> = [];
+
     for (let i = 0; i < itemsToImport.length; i++) {
-      const ok = await importItem(i, itemsToImport[i]);
-      if (ok) successCount++;
+      const ri = itemsToImport[i];
+      const ok = await importItem(i, ri);
+      if (ok) {
+        successCount++;
+        if (ri.categoryId) {
+          learnItems.push({
+            description: ri.billingItem.description,
+            categoryId: ri.categoryId,
+          });
+        }
+      }
     }
+
+    recordMerchantHistory(learnItems);
+
     toast.success(`${successCount} itens importados!`);
     onDone({ imported: successCount, alreadyRegistered });
     setImporting(false);

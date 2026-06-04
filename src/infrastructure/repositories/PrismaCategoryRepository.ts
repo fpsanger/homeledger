@@ -10,7 +10,7 @@ type PrismaCategoryRow = {
   id: string;
   name: string;
   parentId: string | null;
-  path: string;
+  path: string | null;
   level: number;
   createdAt: Date;
 };
@@ -20,7 +20,7 @@ function toRecord(row: PrismaCategoryRow): CategoryRecord {
     id: row.id,
     name: row.name,
     parentId: row.parentId,
-    path: row.path,
+    path: row.path ?? "",
     level: row.level,
     householdId: HOUSEHOLD_ID,
     createdAt: row.createdAt,

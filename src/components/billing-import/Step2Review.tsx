@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Sparkles, Loader2 } from "lucide-react";
+import { Trash2, Sparkles, Loader2, Zap, History } from "lucide-react";
 import { toast } from "sonner";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./BillingImportWizard";
@@ -30,6 +30,7 @@ function formatDate(date: Date | string) {
 export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBack }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categorizing, setCategorizing] = useState(false);
+  const [categorySources, setCategorySources] = useState<Record<number, "rule" | "history" | "ai">>({});
 
   useEffect(() => {
     fetch("/api/categories")
@@ -47,6 +48,7 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
 
   function updateCategory(index: number, categoryId: string) {
     onUpdate(reconciledItems.map((ri, i) => (i !== index ? ri : { ...ri, categoryId: categoryId || undefined })));
+    setCategorySources((prev) => { const next = { ...prev }; delete next[index]; return next; });
   }
 
   function deleteItem(index: number) {
@@ -54,8 +56,6 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
   }
 
   async function autoCategorize() {
-    console.log("Iniciando auto-categorization para items:", reconciledItems);
-    console.log("categories:", categories);
     if (categories.length === 0) {
       toast.error("Nenhuma categoria disponível.");
       return;
@@ -66,21 +66,18 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
         index,
         description: ri.billingItem.description,
       }));
-      console.log("items:", items);
       const res = await fetch("/api/billing/categorize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items, categories }),
       });
       const data = await res.json();
-      console.log("Resposta da IA:", data);
-      const suggestions: { index: number; categoryId: string }[] = data.suggestions ?? [];
+      const suggestions: { index: number; categoryId: string; source: "rule" | "history" | "ai" }[] = data.suggestions ?? [];
       if (suggestions.length === 0) {
         toast.error("IA não retornou sugestões. Verifique se o Ollama está rodando.");
         return;
       }
       const categoryIds = new Set(categories.map((c) => c.id));
-      console.log("[categorize] suggestions:", suggestions, "valid ids:", [...categoryIds].slice(0, 3));
       const validSuggestions = suggestions.filter((s) => categoryIds.has(s.categoryId));
       if (validSuggestions.length === 0) {
         toast.error("IA retornou categorias inválidas. Tente novamente.");
@@ -90,6 +87,9 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
         const suggestion = validSuggestions.find((s) => s.index === i);
         return suggestion ? { ...ri, categoryId: suggestion.categoryId } : ri;
       });
+      const sources: Record<number, "rule" | "history" | "ai"> = {};
+      for (const s of validSuggestions) sources[s.index] = s.source;
+      setCategorySources(sources);
       onUpdate(updated);
       toast.success(`${validSuggestions.length} categorias sugeridas!`);
     } catch {
@@ -202,6 +202,29 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                         onChange={(id) => updateCategory(i, id)}
                         placeholder="Sem categoria"
                       />
+                      {categorySources[i] && (
+                        <span
+                          title={
+                            categorySources[i] === "rule"
+                              ? "Categorizado por regra automática"
+                              : categorySources[i] === "history"
+                                ? "Categorizado pelo histórico do usuário"
+                                : "Categorizado por inteligência artificial"
+                          }
+                          className={`inline-flex items-center gap-1 mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                            categorySources[i] === "rule"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                              : categorySources[i] === "history"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                          }`}
+                        >
+                          {categorySources[i] === "rule" && <Zap className="w-2.5 h-2.5" />}
+                          {categorySources[i] === "history" && <History className="w-2.5 h-2.5" />}
+                          {categorySources[i] === "ai" && <Sparkles className="w-2.5 h-2.5" />}
+                          {categorySources[i] === "rule" ? "Regra" : categorySources[i] === "history" ? "Histórico" : "IA"}
+                        </span>
+                      )}
                     </td>
                     <td className="py-2">
                       <button

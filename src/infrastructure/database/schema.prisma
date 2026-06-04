@@ -12,22 +12,34 @@ model Person {
   name                  String
   createdAt             DateTime               @default(now())
   creditCardPurchases   CreditCardPurchase[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  loyaltyTransfers      LoyaltyTransfer[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
 }
 
 model Category {
-  id                    String                 @id @default(uuid())
-  name                  String                 @unique(map: "categories_root_name_unique", where: raw("(\"parentId\" IS NULL)"))
+  id                    String                    @id @default(uuid())
+  name                  String                    @unique(map: "categories_root_name_unique", where: raw("(\"parentId\" IS NULL)"))
   parentId              String?
-  createdAt             DateTime               @default(now())
-  level                 Int                    @default(0)
-  path                  String?                @default("")
-  parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children              Category[]             @relation("CategoryHierarchy")
+  createdAt             DateTime                  @default(now())
+  level                 Int                       @default(0)
+  path                  String?                   @default("")
+  parent                Category?                 @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children              Category[]                @relation("CategoryHierarchy")
   creditCardPurchases   CreditCardPurchase[]
+  merchantHistory       MerchantCategoryHistory[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
+}
+
+model MerchantCategoryHistory {
+  id          String   @id @default(uuid())
+  merchantKey String   @unique
+  categoryId  String
+  usageCount  Int      @default(1)
+  updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id])
 }
 
 model CreditCard {
@@ -149,4 +161,71 @@ enum FrequencyType {
 enum ClosureType {
   FIXED
   VARIABLE
+}
+
+enum LoyaltyProgramType {
+  AIRLINE
+  HOTEL
+  BANK
+  OTHER
+}
+
+enum LoyaltyTransactionType {
+  PURCHASE
+  EARN
+  BONUS
+  REDEEM
+  TRANSFER_OUT
+  TRANSFER_IN
+  EXPIRE
+  ADJUSTMENT
+}
+
+model LoyaltyProgram {
+  id           String               @id @default(uuid())
+  name         String
+  type         LoyaltyProgramType
+  color        String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  transactions LoyaltyTransaction[]
+  transfersFrom LoyaltyTransfer[]   @relation("TransferFrom")
+  transfersTo   LoyaltyTransfer[]   @relation("TransferTo")
+}
+
+model LoyaltyTransfer {
+  id             String               @id @default(uuid())
+  fromProgramId  String
+  toProgramId    String
+  pointsSent     Float
+  pointsReceived Float
+  costBrl        Float?
+  transferDate   DateTime
+  personId       String?
+  description    String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  fromProgram    LoyaltyProgram       @relation("TransferFrom", fields: [fromProgramId], references: [id])
+  toProgram      LoyaltyProgram       @relation("TransferTo", fields: [toProgramId], references: [id])
+  person         Person?              @relation(fields: [personId], references: [id])
+  transactions   LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id          String                 @id @default(uuid())
+  programId   String
+  personId    String?
+  transferId  String?
+  type        LoyaltyTransactionType
+  points      Float
+  date        DateTime
+  description String?
+  expiresAt   DateTime?
+  costBrl     Float?
+  valueBrl    Float?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  program     LoyaltyProgram         @relation(fields: [programId], references: [id])
+  person      Person?                @relation(fields: [personId], references: [id])
+  transfer    LoyaltyTransfer?       @relation(fields: [transferId], references: [id], onDelete: Cascade)
 }

@@ -1,7 +1,7 @@
 import {
   buildCategoryTree,
   canDeleteCategory,
-  computeUpdatedPaths,
+  computeUpdatedLevels,
   isCircularReference,
   isLeafCategory,
   validateExpenseCategory,
@@ -13,7 +13,6 @@ type CategoryRecord = {
   name: string;
   parentId: string | null;
   householdId: string;
-  path: string;
   level: number;
   createdAt: Date;
 };
@@ -23,31 +22,27 @@ const makeCategory = (overrides: Partial<CategoryRecord> = {}): CategoryRecord =
   name: "Food",
   parentId: null,
   householdId: "household-1",
-  path: "Food",
   level: 0,
   createdAt: new Date(),
   ...overrides,
 });
 
-const food = makeCategory({ id: "cat-1", name: "Food", path: "Food", level: 0 });
+const food = makeCategory({ id: "cat-1", name: "Food", level: 0 });
 const restaurants = makeCategory({
   id: "cat-2",
   name: "Restaurants",
   parentId: "cat-1",
-  path: "Food/Restaurants",
   level: 1,
 });
 const italian = makeCategory({
   id: "cat-3",
   name: "Italian",
   parentId: "cat-2",
-  path: "Food/Restaurants/Italian",
   level: 2,
 });
 const transport = makeCategory({
   id: "cat-4",
   name: "Transport",
-  path: "Transport",
   level: 0,
 });
 
@@ -80,7 +75,7 @@ describe("CategoryTree service", () => {
     });
 
     it("returns false when assigning sibling as parent", () => {
-      const health = makeCategory({ id: "cat-5", name: "Health", path: "Health", level: 0 });
+      const health = makeCategory({ id: "cat-5", name: "Health", level: 0 });
       const categories = [food, transport, health];
 
       expect(isCircularReference("cat-1", "cat-5", categories)).toBe(false);
@@ -107,43 +102,39 @@ describe("CategoryTree service", () => {
     });
   });
 
-  describe("computeUpdatedPaths", () => {
-    it("updates path when parent is reassigned", () => {
+  describe("computeUpdatedLevels", () => {
+    it("updates level when parent is reassigned", () => {
       const categories = [food, restaurants, italian, transport];
       // Move restaurants under transport
-      const updated = computeUpdatedPaths("cat-2", transport, categories);
+      const updated = computeUpdatedLevels("cat-2", transport, categories);
 
       const updatedRestaurants = updated.find((c) => c.id === "cat-2");
-      expect(updatedRestaurants?.path).toBe("Transport/Restaurants");
       expect(updatedRestaurants?.level).toBe(1);
     });
 
-    it("cascades path update to all descendants", () => {
+    it("cascades level update to all descendants", () => {
       const categories = [food, restaurants, italian, transport];
       // Move restaurants under transport — italian must also update
-      const updated = computeUpdatedPaths("cat-2", transport, categories);
+      const updated = computeUpdatedLevels("cat-2", transport, categories);
 
       const updatedItalian = updated.find((c) => c.id === "cat-3");
-      expect(updatedItalian?.path).toBe("Transport/Restaurants/Italian");
       expect(updatedItalian?.level).toBe(2);
     });
 
-    it("updates path correctly when moving category to root (no parent)", () => {
+    it("updates level correctly when moving category to root (no parent)", () => {
       const categories = [food, restaurants, italian];
       // Promote restaurants to root
-      const updated = computeUpdatedPaths("cat-2", null, categories);
+      const updated = computeUpdatedLevels("cat-2", null, categories);
 
       const updatedRestaurants = updated.find((c) => c.id === "cat-2");
-      expect(updatedRestaurants?.path).toBe("Restaurants");
       expect(updatedRestaurants?.level).toBe(0);
     });
 
     it("cascades correctly when category promoted to root", () => {
       const categories = [food, restaurants, italian];
-      const updated = computeUpdatedPaths("cat-2", null, categories);
+      const updated = computeUpdatedLevels("cat-2", null, categories);
 
       const updatedItalian = updated.find((c) => c.id === "cat-3");
-      expect(updatedItalian?.path).toBe("Restaurants/Italian");
       expect(updatedItalian?.level).toBe(1);
     });
   });

@@ -19,7 +19,7 @@ export async function updateCategoryUseCase(
   const existing = await repo.findById(input.id);
   if (!existing) throw new Error("Category not found");
 
-  let parent: { path: string; level: number } | null = null;
+  let parent: { level: number } | null = null;
 
   if (input.parentId === null) {
     const existing = await repo.findRootByName(input.name.trim(), input.householdId);
@@ -30,10 +30,14 @@ export async function updateCategoryUseCase(
     if (input.parentId === input.id) throw new Error("Category cannot be its own parent");
     const parentRecord = await repo.findById(input.parentId);
     if (!parentRecord) throw new Error("Parent category not found");
-    if ((parentRecord.path ?? "").startsWith((existing.path ?? "") + "/")) {
-      throw new Error("Cannot move category under one of its own descendants");
+
+    let cur: CategoryRecord | null = parentRecord;
+    while (cur) {
+      if (cur.id === input.id) throw new Error("Cannot move category under one of its own descendants");
+      cur = cur.parentId ? await repo.findById(cur.parentId) : null;
     }
-    parent = { path: parentRecord.path, level: parentRecord.level };
+
+    parent = { level: parentRecord.level };
   }
 
   const updated = createCategory({
@@ -44,7 +48,6 @@ export async function updateCategoryUseCase(
     parent,
   });
 
-  // Preserve original createdAt by reconstructing after save
   const saved = await repo.save(updated);
   return saved;
 }

@@ -2,7 +2,6 @@ export interface CategoryRecord {
   id: string;
   name: string;
   parentId: string | null;
-  path: string;
   level: number;
   householdId: string;
   createdAt: Date;

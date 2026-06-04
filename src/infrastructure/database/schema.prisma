@@ -24,7 +24,6 @@ model Category {
   parentId              String?
   createdAt             DateTime               @default(now())
   level                 Int                    @default(0)
-  path                  String?                @default("")
   parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children              Category[]             @relation("CategoryHierarchy")
   creditCardPurchases   CreditCardPurchase[]

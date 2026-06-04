@@ -203,27 +203,29 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                         placeholder="Sem categoria"
                       />
                       {categorySources[i] && (
-                        <span
-                          title={
-                            categorySources[i] === "rule"
-                              ? "Categorizado por regra automática"
-                              : categorySources[i] === "history"
-                                ? "Categorizado pelo histórico do usuário"
-                                : "Categorizado por inteligência artificial"
-                          }
-                          className={`inline-flex items-center gap-1 mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                            categorySources[i] === "rule"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                              : categorySources[i] === "history"
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                          }`}
-                        >
-                          {categorySources[i] === "rule" && <Zap className="w-2.5 h-2.5" />}
-                          {categorySources[i] === "history" && <History className="w-2.5 h-2.5" />}
-                          {categorySources[i] === "ai" && <Sparkles className="w-2.5 h-2.5" />}
-                          {categorySources[i] === "rule" ? "Regra" : categorySources[i] === "history" ? "Histórico" : "IA"}
-                        </span>
+                        <div className="mt-1">
+                          <span
+                            title={
+                              categorySources[i] === "rule"
+                                ? "Categorizado por regra automática"
+                                : categorySources[i] === "history"
+                                  ? "Categorizado pelo histórico do usuário"
+                                  : "Categorizado por inteligência artificial"
+                            }
+                            className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                              categorySources[i] === "rule"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                : categorySources[i] === "history"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                  : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                            }`}
+                          >
+                            {categorySources[i] === "rule" && <Zap className="w-2.5 h-2.5" />}
+                            {categorySources[i] === "history" && <History className="w-2.5 h-2.5" />}
+                            {categorySources[i] === "ai" && <Sparkles className="w-2.5 h-2.5" />}
+                            {categorySources[i] === "rule" ? "Regra" : categorySources[i] === "history" ? "Histórico" : "IA"}
+                          </span>
+                        </div>
                       )}
                     </td>
                     <td className="py-2">

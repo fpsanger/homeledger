@@ -99,6 +99,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
             purchaseDate: form.purchaseDate,
             description: form.description,
             creditCardId: form.creditCardId,
+            categoryId: ri.categoryId ?? null,
           }),
         });
         if (!res.ok) {
@@ -126,6 +127,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
           body.categoryId = null;
         } else {
           body.paymentMethod = step1Data.statementType === "credit-card" ? "CREDIT_CARD" : "DEBIT_CARD";
+          body.categoryId = ri.categoryId ?? null;
         }
 
         const res = await fetch(endpoint, {

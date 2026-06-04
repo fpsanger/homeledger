@@ -24,6 +24,25 @@ const BANK_OPTIONS = [
 const CURRENT_YEAR = new Date().getFullYear();
 const CURRENT_MONTH = new Date().getMonth() + 1;
 
+const BANK_LABELS: Record<string, string> = {
+  bradesco: "Bradesco", itau: "Itaú", c6: "C6 Bank", btg: "BTG",
+  nubank: "Nubank", inter: "Inter", santander: "Santander", caixa: "Caixa", bb: "Banco do Brasil",
+};
+
+function inferBankFromCardName(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("bradesco")) return "bradesco";
+  if (lower.includes("itaú") || lower.includes("itau")) return "itau";
+  if (lower.includes("c6")) return "c6";
+  if (lower.includes("btg")) return "btg";
+  if (lower.includes("nubank") || lower.includes("nu ")) return "nubank";
+  if (lower.includes("inter")) return "inter";
+  if (lower.includes("santander")) return "santander";
+  if (lower.includes("caixa")) return "caixa";
+  if (lower.includes("banco do brasil") || lower.includes(" bb ") || lower.endsWith(" bb")) return "bb";
+  return "unknown";
+}
+
 export function Step1Upload({ onSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [statementType, setStatementType] = useState<"credit-card" | "debit">("credit-card");
@@ -55,6 +74,10 @@ export function Step1Upload({ onSuccess }: Props) {
     if (!personId) { setError("Selecione uma pessoa."); return; }
     if (statementType === "credit-card" && !creditCardId) { setError("Selecione um cartão de crédito."); return; }
 
+    const selectedCard = creditCards.find((c) => c.id === creditCardId);
+    const inferredBank = selectedCard ? inferBankFromCardName(selectedCard.name) : "unknown";
+    const effectiveBank = bank !== "unknown" ? bank : inferredBank;
+
     setLoading(true);
     setError(null);
 
@@ -65,7 +88,7 @@ export function Step1Upload({ onSuccess }: Props) {
     formData.append("year", String(year));
     formData.append("month", String(month));
     if (statementType === "credit-card") formData.append("creditCardId", creditCardId);
-    if (bank && bank !== "unknown") formData.append("bank", bank);
+    if (effectiveBank && effectiveBank !== "unknown") formData.append("bank", effectiveBank);
 
     try {
       const res = await fetch("/api/billing/parse", { method: "POST", body: formData });
@@ -74,8 +97,10 @@ export function Step1Upload({ onSuccess }: Props) {
         setError(data.error ?? "Erro ao processar extrato.");
         return;
       }
-      toast.success("Extrato processado com sucesso!");
-      onSuccess(data, { statementType, creditCardId: creditCardId || undefined, personId, year, month });
+      const resolvedBank = (data.detectedBank && data.detectedBank !== "unknown" ? data.detectedBank : effectiveBank) as string;
+      const bankLabel = resolvedBank && resolvedBank !== "unknown" ? ` (${BANK_LABELS[resolvedBank] ?? resolvedBank})` : "";
+      toast.success(`Extrato processado com sucesso!${bankLabel}`);
+      onSuccess(data.items ?? data, { statementType, creditCardId: creditCardId || undefined, personId, year, month, detectedBank: resolvedBank !== "unknown" ? resolvedBank : undefined });
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
@@ -208,6 +233,18 @@ export function Step1Upload({ onSuccess }: Props) {
               <option key={b.value} value={b.value}>{b.label}</option>
             ))}
           </select>
+          {(() => {
+            const selectedCard = creditCards.find((c) => c.id === creditCardId);
+            const inferredBank = selectedCard ? inferBankFromCardName(selectedCard.name) : "unknown";
+            if (bank !== "unknown" && inferredBank !== "unknown" && bank !== inferredBank) {
+              return (
+                <p className="text-xs text-amber-500 mt-1">
+                  Cartão sugere {BANK_LABELS[inferredBank] ?? inferredBank} — banco selecionado pode não corresponder.
+                </p>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {error && (

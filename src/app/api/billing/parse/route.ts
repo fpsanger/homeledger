@@ -5,7 +5,9 @@ export const runtime = "nodejs";
 import { reconcileStatementUseCase } from "../../../../application/use-cases/ReconcileStatementUseCase";
 import { createHybridStatementParser } from "../../../../infrastructure/parsing/HybridStatementParser";
 import { parseC6Csv } from "../../../../infrastructure/parsing/C6CsvParser";
-import type { SupportedBank } from "../../../../infrastructure/parsing/BillingRegexParser";
+import { parseBradescoCsv } from "../../../../infrastructure/parsing/BradescoCsvParser";
+import { parseBtgCsv } from "../../../../infrastructure/parsing/BtgCsvParser";
+import { parseBillingText, type SupportedBank } from "../../../../infrastructure/parsing/BillingRegexParser";
 import type { BillingItem } from "../../../../domain/entities/BillingItem";
 import { createRepositories } from "../../_lib/repositories";
 import { InvalidBillingItemError } from "../../../../domain/errors";
@@ -92,9 +94,13 @@ export async function POST(request: NextRequest) {
 
     let items: BillingItem[];
 
+    let detectedBank = bank ?? "unknown";
     if (isCSVFile(file)) {
-      const csvText = new TextDecoder("utf-8").decode(buffer);
-      items = parseC6Csv(csvText);
+      const isBtg = detectedBank === "btg";
+      const encoding = isBtg ? "utf-8" : "latin1";
+      const csvText = new TextDecoder(encoding).decode(buffer);
+      const isBradesco = detectedBank === "bradesco";
+      items = isBtg ? parseBtgCsv(csvText) : isBradesco ? parseBradescoCsv(csvText) : parseC6Csv(csvText);
     } else {
       let text: string;
       try {
@@ -114,8 +120,11 @@ export async function POST(request: NextRequest) {
         throw err;
       }
 
+      const statement = parseBillingText(text, bank as SupportedBank | undefined);
+      detectedBank = statement.bank !== "unknown" ? statement.bank : (bank ?? "unknown");
+
       const parser = createHybridStatementParser({
-        hintBank: bank as SupportedBank | undefined,
+        hintBank: statement.bank,
         ollamaBaseUrl,
         model: ollamaModel,
       });
@@ -143,7 +152,7 @@ export async function POST(request: NextRequest) {
       creditCardId ?? undefined,
     );
 
-    return NextResponse.json(reconciledItems);
+    return NextResponse.json({ items: reconciledItems, detectedBank });
   } catch (err) {
     if (err instanceof InvalidBillingItemError) {
       return NextResponse.json(

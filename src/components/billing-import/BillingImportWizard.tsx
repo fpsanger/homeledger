@@ -16,6 +16,7 @@ export type Step1Data = {
   personId: string;
   year: number;
   month: number;
+  detectedBank?: string;
 };
 
 export type ImportSummary = {
@@ -94,6 +95,7 @@ export function BillingImportWizard() {
       {step === 2 && (
         <Step2Review
           reconciledItems={reconciledItems}
+          step1Data={step1Data!}
           onUpdate={setReconciledItems}
           onNext={() => setStep(3)}
           onBack={() => setStep(1)}

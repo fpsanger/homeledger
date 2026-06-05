@@ -4,7 +4,6 @@ CREATE TABLE "MerchantCategoryHistory" (
     "merchantKey" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
     "usageCount" INTEGER NOT NULL DEFAULT 1,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "MerchantCategoryHistory_pkey" PRIMARY KEY ("id")

@@ -126,9 +126,9 @@ export function CategoryList({ categories }: { categories: Category[] }) {
           setQuery(e.target.value);
           setPage(0);
         }}
-        className="max-w-xs"
+        className="flex-1 min-w-0 max-w-xs"
       />
-      <div className="flex items-center border rounded-md overflow-hidden ml-auto">
+      <div className="flex items-center border rounded-md overflow-hidden shrink-0">
         <button
           type="button"
           onClick={() => setView("cards")}
@@ -154,7 +154,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
           <List className="w-4 h-4" />
         </button>
       </div>
-      <Button size="sm" onClick={() => openCreate()}>
+      <Button size="sm" onClick={() => openCreate()} className="shrink-0 whitespace-nowrap">
         <Plus className="w-3.5 h-3.5 mr-1.5" /> Nova Categoria
       </Button>
     </div>
@@ -302,7 +302,7 @@ export function CategoryList({ categories }: { categories: Category[] }) {
       {/* ── TABLE VIEW ── */}
       {view === "table" && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-lg border overflow-hidden">
+          <div className="rounded-lg border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40">

@@ -451,6 +451,7 @@ export function InstallmentsList({
                     Nenhuma parcela a exibir.
                   </p>
                 ) : (
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-muted-foreground border-b bg-muted/20">
@@ -496,6 +497,7 @@ export function InstallmentsList({
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 )}
               </div>
             )}

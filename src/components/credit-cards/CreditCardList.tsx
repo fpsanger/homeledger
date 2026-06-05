@@ -75,7 +75,7 @@ export function CreditCardList({ initialCards }: Props) {
 
       {/* Summary strip */}
       {cards.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <SummaryCard
             label="Total de Cartões"
             value={cards.length}

@@ -152,10 +152,26 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
   async function handleImportAll() {
     setImporting(true);
     let successCount = 0;
+    const learnEntries: { description: string; categoryId: string }[] = [];
+
     for (let i = 0; i < itemsToImport.length; i++) {
-      const ok = await importItem(i, itemsToImport[i]);
+      const ri = itemsToImport[i];
+      const ok = await importItem(i, ri);
+      if (ok && ri.categoryId) {
+        const description = forms[i]?.description ?? ri.billingItem.description;
+        learnEntries.push({ description, categoryId: ri.categoryId });
+      }
       if (ok) successCount++;
     }
+
+    if (learnEntries.length > 0) {
+      fetch("/api/billing/learn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: learnEntries }),
+      }).catch(() => {});
+    }
+
     toast.success(`${successCount} itens importados!`);
     onDone({ imported: successCount, alreadyRegistered });
     setImporting(false);

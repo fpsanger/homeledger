@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Trash2, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
+import type { CategorySource, ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./BillingImportWizard";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 
@@ -15,6 +15,12 @@ type Props = {
   onUpdate: (items: ReconciledItem[]) => void;
   onNext: () => void;
   onBack: () => void;
+};
+
+const SOURCE_BADGE: Record<CategorySource, { label: string; className: string; title: string }> = {
+  rule:    { label: "Regra",    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",   title: "Categorizado por regra estática de merchant" },
+  history: { label: "Histórico", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300", title: "Categorizado pelo histórico de importações anteriores" },
+  ai:      { label: "IA",       className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300", title: "Categorizado pelo Ollama (IA local)" },
 };
 
 const BANK_LABELS: Record<string, string> = {
@@ -46,7 +52,9 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
   }
 
   function updateCategory(index: number, categoryId: string) {
-    onUpdate(reconciledItems.map((ri, i) => (i !== index ? ri : { ...ri, categoryId: categoryId || undefined })));
+    onUpdate(reconciledItems.map((ri, i) =>
+      i !== index ? ri : { ...ri, categoryId: categoryId || undefined, categorySource: undefined }
+    ));
   }
 
   function deleteItem(index: number) {
@@ -73,7 +81,7 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
         body: JSON.stringify({ items, categories }),
       });
       const data = await res.json();
-      const suggestions: { index: number; categoryId: string }[] = data.suggestions ?? [];
+      const suggestions: { index: number; categoryId: string; source: CategorySource }[] = data.suggestions ?? [];
       if (suggestions.length === 0) {
         toast.error("IA não retornou sugestões. Verifique se o Ollama está rodando.");
         return;
@@ -86,7 +94,9 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
       }
       const updated = reconciledItems.map((ri, i) => {
         const suggestion = validSuggestions.find((s) => s.index === i);
-        return suggestion ? { ...ri, categoryId: suggestion.categoryId } : ri;
+        return suggestion
+          ? { ...ri, categoryId: suggestion.categoryId, categorySource: suggestion.source }
+          : ri;
       });
       onUpdate(updated);
       toast.success(`${validSuggestions.length} categorias sugeridas!`);
@@ -194,12 +204,25 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                       )}
                     </td>
                     <td className="py-2 pr-4 min-w-[180px]">
-                      <CategoryCombobox
-                        categories={categories}
-                        value={ri.categoryId ?? ""}
-                        onChange={(id) => updateCategory(i, id)}
-                        placeholder="Sem categoria"
-                      />
+                      <div className="flex items-center gap-1.5">
+                        <CategoryCombobox
+                          categories={categories}
+                          value={ri.categoryId ?? ""}
+                          onChange={(id) => updateCategory(i, id)}
+                          placeholder="Sem categoria"
+                        />
+                        {ri.categoryId && ri.categorySource && (() => {
+                          const badge = SOURCE_BADGE[ri.categorySource];
+                          return (
+                            <span
+                              title={badge.title}
+                              className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${badge.className}`}
+                            >
+                              {badge.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="py-2">
                       <button

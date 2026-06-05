@@ -73,14 +73,12 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
         body: JSON.stringify({ items, categories }),
       });
       const data = await res.json();
-      console.log("Resposta da IA:", data);
       const suggestions: { index: number; categoryId: string }[] = data.suggestions ?? [];
       if (suggestions.length === 0) {
         toast.error("IA não retornou sugestões. Verifique se o Ollama está rodando.");
         return;
       }
       const categoryIds = new Set(categories.map((c) => c.id));
-      console.log("[categorize] suggestions:", suggestions, "valid ids:", [...categoryIds].slice(0, 3));
       const validSuggestions = suggestions.filter((s) => categoryIds.has(s.categoryId));
       if (validSuggestions.length === 0) {
         toast.error("IA retornou categorias inválidas. Tente novamente.");

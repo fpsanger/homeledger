@@ -11,12 +11,13 @@ import { cn } from "@/lib/utils";
 type DatePickerProps = {
   value: string; // yyyy-MM-dd
   onChange: (value: string) => void;
+  placeholder?: string;
   required?: boolean;
   className?: string;
   endMonth?: Date;
 };
 
-export function DatePicker({ value, onChange, required, className, endMonth }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "Selecione uma data", required, className, endMonth }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -30,8 +31,8 @@ export function DatePicker({ value, onChange, required, className, endMonth }: D
         )}
       >
         {value
-          ? format(parseISO(value), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-          : "Selecione uma data"}
+          ? format(parseISO(value), "dd/MM/yyyy")
+          : placeholder}
         <CalendarIcon className="size-4 text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

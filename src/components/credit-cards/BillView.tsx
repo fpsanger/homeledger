@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -10,12 +10,26 @@ import {
   Package,
   Receipt,
   Users,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { formatDatePtBR } from "@/lib/format-date";
+
+type BillSortKey = "description" | "amount";
+type BillSortDir = "asc" | "desc";
+
+function BillSortIcon({ col, sortKey, sortDir }: { col: BillSortKey; sortKey: BillSortKey | null; sortDir: BillSortDir }) {
+  if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+  return sortDir === "asc" ? <ArrowUp className="w-3 h-3 ml-1" /> : <ArrowDown className="w-3 h-3 ml-1" />;
+}
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string };
@@ -72,6 +86,194 @@ function SummaryCard({
         <p className="text-lg font-semibold leading-none">{value}</p>
       </div>
     </Card>
+  );
+}
+
+function CardInstallmentTable({
+  installments,
+  personMap,
+  categoryMap,
+}: {
+  installments: BillInstallmentItem[];
+  personMap: Map<string, string>;
+  categoryMap: Map<string, string>;
+}) {
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [amountMin, setAmountMin] = useState("");
+  const [sortKey, setSortKey] = useState<BillSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<BillSortDir>("asc");
+
+  function toggleSort(key: BillSortKey) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  const usedCategories = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const i of installments) {
+      if (i.categoryId) seen.set(i.categoryId, categoryMap.get(i.categoryId) ?? i.categoryId);
+    }
+    return Array.from(seen.entries());
+  }, [installments, categoryMap]);
+
+  const filtered = useMemo(() => {
+    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
+    const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
+    return installments.filter((i) => {
+      if (search && !i.purchaseDescription.toLowerCase().includes(search.toLowerCase())) return false;
+      if (categoryFilter && i.categoryId !== categoryFilter) return false;
+      if (fromMs !== null && new Date(i.purchaseDate).getTime() < fromMs) return false;
+      if (minAmt !== null && i.amount < minAmt) return false;
+      return true;
+    });
+  }, [installments, search, categoryFilter, dateFrom, amountMin]);
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    if (sortKey === "description") {
+      arr.sort((a, b) => {
+        const diff = a.purchaseDescription.localeCompare(b.purchaseDescription);
+        return sortDir === "asc" ? diff : -diff;
+      });
+    } else if (sortKey === "amount") {
+      arr.sort((a, b) => {
+        const diff = a.amount - b.amount;
+        return sortDir === "asc" ? diff : -diff;
+      });
+    }
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
+  return (
+    <>
+      {/* Filters */}
+      <div className="px-5 py-2 border-b flex gap-2 flex-wrap">
+        <Input
+          placeholder="Buscar descrição..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-7 w-44 text-xs"
+        />
+        {usedCategories.length > 1 && (
+          <Select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-7 w-40 text-xs"
+          >
+            <option value="">Todas categorias</option>
+            {usedCategories.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </Select>
+        )}
+        <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-7 w-36 text-xs" />
+        <Input
+          type="number"
+          placeholder="Valor mín"
+          value={amountMin}
+          onChange={(e) => setAmountMin(e.target.value)}
+          className="h-7 w-28 text-xs"
+          min={0}
+        />
+        {(search || categoryFilter || dateFrom || amountMin) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs text-muted-foreground"
+            onClick={() => { setSearch(""); setCategoryFilter(""); setDateFrom(""); setAmountMin(""); }}
+          >
+            Limpar ×
+          </Button>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-muted-foreground border-b">
+              <th
+                className="px-5 py-2.5 font-medium text-xs cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("description")}
+              >
+                <span className="inline-flex items-center">
+                  Compra
+                  <BillSortIcon col="description" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </th>
+              <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
+              <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Data</th>
+              <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Pessoa</th>
+              <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Categoria</th>
+              <th
+                className="px-5 py-2.5 font-medium text-xs text-right cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("amount")}
+              >
+                <span className="inline-flex items-center justify-end w-full">
+                  Valor
+                  <BillSortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((inst) => (
+              <tr
+                key={inst.id}
+                className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}`}
+              >
+                <td className="px-5 py-3">
+                  <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+                </td>
+                <td className="px-5 py-3">
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {inst.installmentNumber}/{inst.numberOfInstallments}
+                  </Badge>
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  {formatDatePtBR(inst.purchaseDate)}
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  {personMap.get(inst.personId) ?? "—"}
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
+                </td>
+                <td className="px-5 py-3 text-right font-medium text-sm">
+                  {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="sm:hidden flex flex-col divide-y">
+        {sorted.map((inst) => (
+          <div key={inst.id} className="px-4 py-3 flex flex-col gap-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+              <p className="font-semibold text-sm shrink-0">
+                {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="font-mono text-xs">
+                {inst.installmentNumber}/{inst.numberOfInstallments}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{formatDatePtBR(inst.purchaseDate)}</span>
+              <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
+              {inst.categoryId && (
+                <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -368,83 +570,11 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    {/* Desktop table */}
-                    <div className="hidden sm:block overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-muted-foreground border-b">
-                            <th className="px-5 py-2.5 font-medium text-xs">Compra</th>
-                            <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
-                            <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Pessoa</th>
-                            <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Categoria</th>
-                            <th className="px-5 py-2.5 font-medium text-xs text-right">Valor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {entry.installments.map((inst) => (
-                            <tr
-                              key={inst.id}
-                              className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}`}
-                            >
-                              <td className="px-5 py-3">
-                                <p className="font-medium text-sm">
-                                  {inst.purchaseDescription || "Sem descrição"}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatDate(inst.purchaseDate)}
-                                </p>
-                              </td>
-                              <td className="px-5 py-3">
-                                <Badge variant="outline" className="font-mono text-xs">
-                                  {inst.installmentNumber}/{inst.numberOfInstallments}
-                                </Badge>
-                              </td>
-                              <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
-                                {personMap.get(inst.personId) ?? "—"}
-                              </td>
-                              <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
-                                {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
-                              </td>
-                              <td className="px-5 py-3 text-right font-medium text-sm">
-                                {formatCurrency(inst.amount)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Mobile cards */}
-                    <div className="sm:hidden flex flex-col divide-y">
-                      {entry.installments.map((inst) => (
-                        <div key={inst.id} className="px-4 py-3 flex flex-col gap-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="font-medium text-sm">
-                              {inst.purchaseDescription || "Sem descrição"}
-                            </p>
-                            <p className="font-semibold text-sm shrink-0">
-                              {formatCurrency(inst.amount)}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="font-mono text-xs">
-                              {inst.installmentNumber}/{inst.numberOfInstallments}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {personMap.get(inst.personId) ?? "—"}
-                            </span>
-                            {inst.categoryId && (
-                              <span className="text-xs text-muted-foreground">
-                                {categoryMap.get(inst.categoryId)}
-                              </span>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(inst.purchaseDate)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <CardInstallmentTable
+                      installments={entry.installments}
+                      personMap={personMap}
+                      categoryMap={categoryMap}
+                    />
                   </CollapsibleContent>
                 </Card>
               </Collapsible>

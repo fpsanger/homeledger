@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, CreditCard, Wallet, CheckCircle2, Clock, ChevronDown } from "lucide-react";
+import { MoreHorizontal, CreditCard, Wallet, CheckCircle2, Clock, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,7 +13,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { formatDatePtBR } from "@/lib/format-date";
 
@@ -35,8 +37,16 @@ type Installment = {
 type Person = { id: string; name: string };
 type CreditCardItem = { id: string; name: string };
 
+type SortKey = "description" | "date" | "amount";
+type SortDir = "asc" | "desc";
+
 function fmt(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function toDateMs(date: string | Date | undefined): number {
+  if (!date) return 0;
+  return new Date(date).getTime();
 }
 
 function SummaryCard({
@@ -83,6 +93,13 @@ function StatusBadge({ inst }: { inst: Installment }) {
   );
 }
 
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
+  if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+  return sortDir === "asc"
+    ? <ArrowUp className="w-3 h-3 ml-1" />
+    : <ArrowDown className="w-3 h-3 ml-1" />;
+}
+
 export function InstallmentTable({
   installments,
   people = [],
@@ -99,6 +116,10 @@ export function InstallmentTable({
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [amountMin, setAmountMin] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
@@ -108,6 +129,15 @@ export function InstallmentTable({
     () => Object.fromEntries(creditCards.map((c) => [c.id, c.name])),
     [creditCards],
   );
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
 
   async function handleDelete(id: string) {
     setLoadingId(id);
@@ -143,16 +173,45 @@ export function InstallmentTable({
 
   const filtered = useMemo(() => {
     setPage(0);
+    const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
+    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
+
     return installments.filter((i) => {
-      if (statusFilter === "paid") return i.isPaid && !i.isCanceled;
-      if (statusFilter === "pending") return !i.isPaid && !i.isCanceled;
-      if (statusFilter === "canceled") return i.isCanceled;
+      if (statusFilter === "paid") { if (!(i.isPaid && !i.isCanceled)) return false; }
+      else if (statusFilter === "pending") { if (!(!i.isPaid && !i.isCanceled)) return false; }
+      else if (statusFilter === "canceled") { if (!i.isCanceled) return false; }
+      const dMs = toDateMs(i.purchaseDate);
+      if (fromMs !== null && dMs < fromMs) return false;
+      if (minAmt !== null && i.amount < minAmt) return false;
       return true;
     });
-  }, [installments, statusFilter]);
+  }, [installments, statusFilter, dateFrom, amountMin]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const sortedInstallments = useMemo(() => {
+    const arr = [...filtered];
+    if (sortKey === "description") {
+      arr.sort((a, b) => {
+        const diff = (a.purchaseDescription ?? "").localeCompare(b.purchaseDescription ?? "");
+        return sortDir === "asc" ? diff : -diff;
+      });
+    } else if (sortKey === "date") {
+      arr.sort((a, b) => {
+        const diff = toDateMs(a.purchaseDate) - toDateMs(b.purchaseDate);
+        return sortDir === "asc" ? diff : -diff;
+      });
+    } else if (sortKey === "amount") {
+      arr.sort((a, b) => {
+        const diff = a.amount - b.amount;
+        return sortDir === "asc" ? diff : -diff;
+      });
+    } else {
+      arr.sort((a, b) => toDateMs(b.purchaseDate) - toDateMs(a.purchaseDate));
+    }
+    return arr;
+  }, [filtered, sortKey, sortDir]);
+
+  const totalPages = Math.ceil(sortedInstallments.length / PAGE_SIZE);
+  const paginated = sortedInstallments.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   if (installments.length === 0) {
     return (
@@ -165,7 +224,6 @@ export function InstallmentTable({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Summary cards */}
       <button
         type="button"
         onClick={() => setSummaryOpen((o) => !o)}
@@ -178,34 +236,14 @@ export function InstallmentTable({
       </button>
       {summaryOpen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard
-            icon={Wallet}
-            label="Total"
-            value={fmt(total)}
-            colorClass="text-foreground"
-          />
-          <SummaryCard
-            icon={CheckCircle2}
-            label="Pago"
-            value={fmt(paid)}
-            colorClass="text-green-600"
-          />
-          <SummaryCard
-            icon={CreditCard}
-            label="Restante"
-            value={fmt(remaining)}
-            colorClass="text-amber-600"
-          />
-          <SummaryCard
-            icon={Clock}
-            label="Pendentes"
-            value={String(pendingCount)}
-            colorClass="text-muted-foreground"
-          />
+          <SummaryCard icon={Wallet} label="Total" value={fmt(total)} colorClass="text-foreground" />
+          <SummaryCard icon={CheckCircle2} label="Pago" value={fmt(paid)} colorClass="text-green-600" />
+          <SummaryCard icon={CreditCard} label="Restante" value={fmt(remaining)} colorClass="text-amber-600" />
+          <SummaryCard icon={Clock} label="Pendentes" value={String(pendingCount)} colorClass="text-muted-foreground" />
         </div>
       )}
 
-      {/* Filter */}
+      {/* Filters */}
       <div className="flex flex-wrap gap-2">
         <Select
           value={statusFilter}
@@ -217,6 +255,25 @@ export function InstallmentTable({
           <option value="paid">Pago</option>
           <option value="canceled">Cancelado</option>
         </Select>
+        <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-8 w-36 text-sm" />
+        <Input
+          type="number"
+          placeholder="Valor mín"
+          value={amountMin}
+          onChange={(e) => setAmountMin(e.target.value)}
+          className="h-8 w-28 text-sm"
+          min={0}
+        />
+        {(statusFilter || dateFrom || amountMin) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs text-muted-foreground"
+            onClick={() => { setStatusFilter(""); setDateFrom(""); setAmountMin(""); }}
+          >
+            Limpar filtros ×
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -224,9 +281,33 @@ export function InstallmentTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead>Compra</TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("description")}
+              >
+                <span className="inline-flex items-center">
+                  Compra
+                  <SortIcon col="description" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("date")}
+              >
+                <span className="inline-flex items-center">
+                  Data
+                  <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </TableHead>
+              <TableHead
+                className="text-right cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("amount")}
+              >
+                <span className="inline-flex items-center justify-end w-full">
+                  Valor
+                  <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-8" />
             </TableRow>

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash } from "lucide-react";
+import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { TransactionAmount } from "../transactions/TransactionAmount";
@@ -35,6 +36,9 @@ type Transaction = {
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; path: string; parentId: string | null };
 
+type SortKey = "date" | "amount";
+type SortDir = "asc" | "desc";
+
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: "Dinheiro",
   DEBIT_CARD: "Débito",
@@ -45,8 +49,6 @@ const PAYMENT_LABELS: Record<string, string> = {
   ACCOUNT_DEBIT: "Déb. Conta",
 };
 
-
-
 function fmtCurrency(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -54,6 +56,10 @@ function fmtCurrency(amount: number) {
 function fmtDate(date: Date | string) {
   const iso = typeof date === "string" ? date : date.toISOString();
   return formatDatePtBR(iso);
+}
+
+function toMs(date: Date | string) {
+  return new Date(date).getTime();
 }
 
 function SummaryCard({
@@ -76,6 +82,13 @@ function SummaryCard({
       <p className={`text-lg font-semibold tabular-nums ${colorClass}`}>{value}</p>
     </div>
   );
+}
+
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
+  if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+  return sortDir === "asc"
+    ? <ArrowUp className="w-3 h-3 ml-1" />
+    : <ArrowDown className="w-3 h-3 ml-1" />;
 }
 
 export function TransactionTable({
@@ -105,8 +118,21 @@ export function TransactionTable({
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [amountMin, setAmountMin] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
 
   async function handleDelete(id: string, isRecurring?: boolean) {
     setDeletingId(id);
@@ -151,6 +177,9 @@ export function TransactionTable({
 
   const filtered = useMemo(() => {
     setPage(0);
+    const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
+    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
+
     return transactions.filter((t) => {
       if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
       if (categoryFilter) {
@@ -159,13 +188,30 @@ export function TransactionTable({
         if (parentId !== categoryFilter) return false;
       }
       if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
+      const tMs = toMs(t.date);
+      if (fromMs !== null && tMs < fromMs) return false;
+      if (minAmt !== null && t.amount < minAmt) return false;
       return true;
     });
-  }, [transactions, search, categoryFilter, paymentFilter]);
+  }, [transactions, search, categoryFilter, paymentFilter, dateFrom, amountMin]);
 
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [filtered]);
+    const arr = [...filtered];
+    if (sortKey === "date") {
+      arr.sort((a, b) => {
+        const diff = toMs(a.date) - toMs(b.date);
+        return sortDir === "asc" ? diff : -diff;
+      });
+    } else if (sortKey === "amount") {
+      arr.sort((a, b) => {
+        const diff = a.amount - b.amount;
+        return sortDir === "asc" ? diff : -diff;
+      });
+    } else {
+      arr.sort((a, b) => toMs(a.date) - toMs(b.date));
+    }
+    return arr;
+  }, [filtered, sortKey, sortDir]);
 
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -245,6 +291,25 @@ export function TransactionTable({
             ))}
           </Select>
         )}
+        <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-8 w-36 text-sm" />
+        <Input
+          type="number"
+          placeholder="Valor mín"
+          value={amountMin}
+          onChange={(e) => setAmountMin(e.target.value)}
+          className="h-8 w-28 text-sm"
+          min={0}
+        />
+        {(search || categoryFilter || paymentFilter || dateFrom || amountMin) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2 text-xs text-muted-foreground"
+            onClick={() => { setSearch(""); setCategoryFilter(""); setPaymentFilter(""); setDateFrom(""); setAmountMin(""); }}
+          >
+            Limpar filtros ×
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -252,12 +317,28 @@ export function TransactionTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">
-              <TableHead className="w-20">Data</TableHead>
+              <TableHead
+                className="w-20 cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("date")}
+              >
+                <span className="inline-flex items-center">
+                  Data
+                  <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </TableHead>
               <TableHead>Pessoa</TableHead>
               <TableHead>Descrição</TableHead>
               {showCategoryCol && <TableHead>Categoria</TableHead>}
               <TableHead>Método</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead
+                className="text-right cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("amount")}
+              >
+                <span className="inline-flex items-center justify-end w-full">
+                  Valor
+                  <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </TableHead>
               <TableHead className="w-8" />
             </TableRow>
           </TableHeader>
@@ -272,58 +353,54 @@ export function TransactionTable({
                 </TableCell>
               </TableRow>
             ) : (
-              (() => {
-                return paginated.map((t) => {
-                  return (
-                    <TableRow key={t.id} className="group">
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {fmtDate(t.date)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {byPersonId[t.personId] ?? t.personId}
-                      </TableCell>
-                      <TableCell className="text-sm">{t.description || "—"}</TableCell>
-                      {showCategoryCol && (
-                        <TableCell className="text-sm text-muted-foreground">
-                          {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
-                        </TableCell>
-                      )}
-                      <TableCell className="text-sm text-muted-foreground">
-                        {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums text-sm">
-                        <TransactionAmount type={t.type} amount={t.amount} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu
-                          align="right"
-                          trigger={
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground"
-                              aria-label="Ações"
-                              disabled={deletingId === t.id}
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          }
-                          items={[
-                            ...(!t.isRecurring && onEdit
-                              ? [{ label: "Editar", onClick: () => onEdit(t) }]
-                              : []),
-                            {
-                              label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                              onClick: () => handleDelete(t.id, t.isRecurring),
-                              variant: "destructive" as const,
-                            },
-                          ]}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                });
-              })()
+              paginated.map((t) => (
+                <TableRow key={t.id} className="group">
+                  <TableCell className="text-sm text-muted-foreground tabular-nums">
+                    {fmtDate(t.date)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {byPersonId[t.personId] ?? t.personId}
+                  </TableCell>
+                  <TableCell className="text-sm">{t.description || "—"}</TableCell>
+                  {showCategoryCol && (
+                    <TableCell className="text-sm text-muted-foreground">
+                      {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
+                    </TableCell>
+                  )}
+                  <TableCell className="text-sm text-muted-foreground">
+                    {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
+                  </TableCell>
+                  <TableCell className="text-right font-medium tabular-nums text-sm">
+                    <TransactionAmount type={t.type} amount={t.amount} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu
+                      align="right"
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground"
+                          aria-label="Ações"
+                          disabled={deletingId === t.id}
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      }
+                      items={[
+                        ...(!t.isRecurring && onEdit
+                          ? [{ label: "Editar", onClick: () => onEdit(t) }]
+                          : []),
+                        {
+                          label: deletingId === t.id ? "Excluindo..." : "Excluir",
+                          onClick: () => handleDelete(t.id, t.isRecurring),
+                          variant: "destructive" as const,
+                        },
+                      ]}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>

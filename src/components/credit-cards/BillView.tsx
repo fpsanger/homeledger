@@ -369,14 +369,14 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
 
                   <CollapsibleContent>
                     {/* Desktop table */}
-                    <div className="hidden sm:block">
+                    <div className="hidden sm:block overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-muted-foreground border-b">
                             <th className="px-5 py-2.5 font-medium text-xs">Compra</th>
                             <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
-                            <th className="px-5 py-2.5 font-medium text-xs">Pessoa</th>
-                            <th className="px-5 py-2.5 font-medium text-xs">Categoria</th>
+                            <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Pessoa</th>
+                            <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Categoria</th>
                             <th className="px-5 py-2.5 font-medium text-xs text-right">Valor</th>
                           </tr>
                         </thead>
@@ -399,10 +399,10 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                                   {inst.installmentNumber}/{inst.numberOfInstallments}
                                 </Badge>
                               </td>
-                              <td className="px-5 py-3 text-sm text-muted-foreground">
+                              <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                                 {personMap.get(inst.personId) ?? "—"}
                               </td>
-                              <td className="px-5 py-3 text-sm text-muted-foreground">
+                              <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                                 {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
                               </td>
                               <td className="px-5 py-3 text-right font-medium text-sm">

@@ -408,7 +408,7 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
         {sorted.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma transação registrada.</p>
         ) : (
-          <div className="rounded-xl border overflow-hidden">
+          <div className="rounded-xl border overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>

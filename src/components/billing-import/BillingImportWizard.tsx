@@ -48,7 +48,7 @@ export function BillingImportWizard() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold mb-4">Importar Extrato</h1>
         <div className="flex items-center gap-0">
@@ -75,7 +75,7 @@ export function BillingImportWizard() {
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`w-16 h-0.5 mx-1 mb-4 ${step > stepNum ? "bg-primary" : "bg-muted"}`} />
+                  <div className={`w-6 sm:w-16 h-0.5 mx-1 mb-4 ${step > stepNum ? "bg-primary" : "bg-muted"}`} />
                 )}
               </div>
             );

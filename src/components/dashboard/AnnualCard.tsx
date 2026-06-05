@@ -72,7 +72,7 @@ export function AnnualCard({ title, total, months, field }: Props) {
         </span>
       </div>
 
-      <div className="border-t pt-2">
+      <div className="border-t pt-2 overflow-x-auto">
         <table className="w-full text-sm">
           <tbody>
             {months.map((m) => {

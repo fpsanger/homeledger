@@ -11,3 +11,10 @@ export class DuplicateCategoryError extends Error {
     this.name = "DuplicateCategoryError";
   }
 }
+
+export class InvalidBillingItemError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidBillingItemError";
+  }
+}

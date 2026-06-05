@@ -265,7 +265,11 @@ export function TransactionPageClient({
               </span>
             </h2>
             <InstallmentTable
-              installments={installments}
+              installments={[...installments].sort((a, b) => {
+                const da = new Date(a.purchaseDate ?? 0).getTime();
+                const db = new Date(b.purchaseDate ?? 0).getTime();
+                return db - da;
+              })}
               people={people}
               creditCards={creditCards}
               onEditInstallment={(inst) => setEditingInstallment(inst)}

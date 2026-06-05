@@ -11,8 +11,7 @@ import { CategoryCombobox } from "@/components/ui/category-combobox";
 type Category = {
   id: string;
   name: string;
-  path: string;
-  parentId: string | null;
+parentId: string | null;
 };
 
 type Props = {

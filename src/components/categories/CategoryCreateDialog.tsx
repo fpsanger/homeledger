@@ -6,8 +6,7 @@ import { CategoryForm } from "./CategoryForm";
 type Category = {
   id: string;
   name: string;
-  path: string;
-  parentId: string | null;
+parentId: string | null;
 };
 
 type Props = {

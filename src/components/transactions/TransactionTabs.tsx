@@ -5,7 +5,7 @@ import { ExpenseForm } from "./ExpenseForm";
 import { IncomeForm } from "./IncomeForm";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string; parentId: string | null };
+type Category = { id: string; name: string; parentId: string | null };
 
 type Props = {
   people: Person[];

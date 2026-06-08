@@ -33,7 +33,7 @@ type Transaction = {
 };
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string; parentId: string | null };
+type Category = { id: string; name: string; parentId: string | null };
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: "Dinheiro",
@@ -223,7 +223,6 @@ export function TransactionTable({
               id: cid,
               name: byCategoryId[cid] ?? cid,
               parentId: null,
-              path: byCategoryId[cid] ?? cid,
             }))}
             value={categoryFilter}
             onChange={setCategoryFilter}

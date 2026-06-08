@@ -13,7 +13,7 @@ import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro" },

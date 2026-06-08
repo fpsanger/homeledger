@@ -17,7 +17,7 @@ import { parseCurrencyBR, formatAmountBR } from "@/lib/utils";
 type FormType = "expense" | "income" | "credit";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 type CreditCard = {
   id: string;
   name: string;

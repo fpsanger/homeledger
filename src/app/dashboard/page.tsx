@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { cookies } from "next/headers";
 
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 

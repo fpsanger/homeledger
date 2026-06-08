@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/ui/page-header";
 type CategoryRecord = {
   id: string;
   name: string;
-  path: string;
   parentId: string | null;
   level: number;
   createdAt: string;

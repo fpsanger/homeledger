@@ -22,7 +22,7 @@ const INCOME_SOURCES = [
 ];
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 export function IncomeForm({ people, categories }: { people: Person[]; categories: Category[] }) {
   const router = useRouter();

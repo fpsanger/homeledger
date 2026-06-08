@@ -12,7 +12,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 type CreditCard = { id: string; name: string };
 
 export function InstallmentForm({

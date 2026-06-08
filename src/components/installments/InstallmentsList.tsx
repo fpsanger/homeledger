@@ -18,7 +18,7 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 import { formatDatePtBR } from "@/lib/format-date";
 
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 type CreditCard = { id: string; name: string };
 
 type Installment = {

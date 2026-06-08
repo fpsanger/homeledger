@@ -24,6 +24,7 @@ export async function createInstallmentPurchaseUseCase(
 
   let closureDay: number;
   let closureInPreviousMonth = false;
+  let effectiveClosureNextMonth = card.closureNextMonth;
   if (card.closureType === "FIXED") {
     if (card.fixedClosureDay == null) throw new Error("FIXED card is missing fixedClosureDay");
     closureDay = card.fixedClosureDay;
@@ -59,6 +60,7 @@ export async function createInstallmentPurchaseUseCase(
       }
       closureDay = currentClosure.closureDay;
       closureInPreviousMonth = currentClosure.previousMonth;
+      effectiveClosureNextMonth = card.closureNextMonth;
     }
   }
 
@@ -73,7 +75,7 @@ export async function createInstallmentPurchaseUseCase(
     closureDay,
     closureInPreviousMonth,
     alwaysNextMonth: card.alwaysNextMonth,
-    closureNextMonth: card.closureNextMonth,
+    closureNextMonth: effectiveClosureNextMonth,
   });
 
   const record = await repo.save(purchase, installments);

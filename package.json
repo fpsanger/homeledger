@@ -16,9 +16,18 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.ts"
+    ],
     "transform": {
-      "^.+\\.(ts|tsx)$": ["ts-jest", { "tsconfig": { "jsx": "react-jsx" } }]
+      "^.+\\.(ts|tsx)$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "jsx": "react-jsx"
+          }
+        }
+      ]
     }
   },
   "dependencies": {

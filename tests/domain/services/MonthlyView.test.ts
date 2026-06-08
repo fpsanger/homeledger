@@ -25,6 +25,8 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   amount: 100,
   dueYear: 2026,
   dueMonth: 5,
+  transactionYear: 2026,
+  transactionMonth: 5,
   isPaid: false,
   isCanceled: false,
   categoryId: null,
@@ -275,6 +277,92 @@ describe("MonthlyView service", () => {
       });
 
       expect(view.transactions).toHaveLength(1);
+    });
+
+    describe("filterBy transactionMonth", () => {
+      it("returns installments whose transactionMonth matches the view month", () => {
+        const installments = [
+          makeInstallment({ id: "i1", transactionYear: 2026, transactionMonth: 6, dueYear: 2026, dueMonth: 7 }),
+          makeInstallment({ id: "i2", transactionYear: 2026, transactionMonth: 7, dueYear: 2026, dueMonth: 8 }),
+        ];
+
+        const view = buildMonthlyView({
+          transactions: [],
+          installments,
+          year: 2026,
+          month: 6,
+          filterBy: "transactionMonth",
+        });
+
+        expect(view.installments).toHaveLength(1);
+        expect(view.installments[0].id).toBe("i1");
+      });
+
+      it("does not use dueMonth when filterBy is transactionMonth", () => {
+        // installment dueMonth=6 but transactionMonth=5 — should appear in May view not June
+        const installment = makeInstallment({
+          id: "i1",
+          transactionYear: 2026,
+          transactionMonth: 5,
+          dueYear: 2026,
+          dueMonth: 6,
+        });
+
+        const juneView = buildMonthlyView({
+          transactions: [],
+          installments: [installment],
+          year: 2026,
+          month: 6,
+          filterBy: "transactionMonth",
+        });
+        const mayView = buildMonthlyView({
+          transactions: [],
+          installments: [installment],
+          year: 2026,
+          month: 5,
+          filterBy: "transactionMonth",
+        });
+
+        expect(juneView.installments).toHaveLength(0);
+        expect(mayView.installments).toHaveLength(1);
+      });
+
+      it("excludes canceled installments even when transactionMonth matches", () => {
+        const installment = makeInstallment({
+          id: "i1",
+          transactionYear: 2026,
+          transactionMonth: 5,
+          isCanceled: true,
+        });
+
+        const view = buildMonthlyView({
+          transactions: [],
+          installments: [installment],
+          year: 2026,
+          month: 5,
+          filterBy: "transactionMonth",
+        });
+
+        expect(view.installments).toHaveLength(0);
+      });
+
+      it("handles year boundary — transactionYear must also match", () => {
+        const installments = [
+          makeInstallment({ id: "i1", transactionYear: 2026, transactionMonth: 1 }),
+          makeInstallment({ id: "i2", transactionYear: 2027, transactionMonth: 1 }),
+        ];
+
+        const view = buildMonthlyView({
+          transactions: [],
+          installments,
+          year: 2027,
+          month: 1,
+          filterBy: "transactionMonth",
+        });
+
+        expect(view.installments).toHaveLength(1);
+        expect(view.installments[0].id).toBe("i2");
+      });
     });
   });
 });

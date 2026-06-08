@@ -146,6 +146,68 @@ describe("InstallmentPurchase service", () => {
       }
     });
 
+    it("first transactionMonth equals purchase month regardless of card rules", () => {
+      // basePurchase: Jan 15, closureDay 25, alwaysNextMonth false
+      // purchase before closure → dueMonth = Jan, transactionMonth = Jan
+      const installments = createInstallments(basePurchase);
+
+      expect(installments[0].transactionYear).toBe(2026);
+      expect(installments[0].transactionMonth).toBe(1);
+    });
+
+    it("transactionMonth advances sequentially from purchase month, ignoring card rules", () => {
+      // alwaysNextMonth=true shifts dueMonth by 1, but transactionMonth always starts at purchase month
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-06-20"),
+        numberOfInstallments: 3,
+        alwaysNextMonth: true,
+      };
+      const installments = createInstallments(purchase);
+
+      // dueMonths would be Jul, Aug, Sep (shifted by alwaysNextMonth)
+      // transactionMonths must be Jun, Jul, Aug (starts at purchase month)
+      expect(installments[0].transactionYear).toBe(2026);
+      expect(installments[0].transactionMonth).toBe(6);
+      expect(installments[1].transactionYear).toBe(2026);
+      expect(installments[1].transactionMonth).toBe(7);
+      expect(installments[2].transactionYear).toBe(2026);
+      expect(installments[2].transactionMonth).toBe(8);
+    });
+
+    it("transactionMonth handles year rollover correctly", () => {
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-11-01"),
+        numberOfInstallments: 3,
+      };
+      const installments = createInstallments(purchase);
+
+      expect(installments[0].transactionYear).toBe(2026);
+      expect(installments[0].transactionMonth).toBe(11);
+      expect(installments[1].transactionYear).toBe(2026);
+      expect(installments[1].transactionMonth).toBe(12);
+      expect(installments[2].transactionYear).toBe(2027);
+      expect(installments[2].transactionMonth).toBe(1);
+    });
+
+    it("transactionMonth is independent of closureInPreviousMonth shift", () => {
+      // closureInPreviousMonth shifts dueMonth by 1 or 2, transactionMonth unaffected
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-03-28"),
+        closureDay: 27,
+        closureInPreviousMonth: true,
+        numberOfInstallments: 2,
+      };
+      const installments = createInstallments(purchase);
+
+      // dueMonths: purchaseDay(28) >= closureDay(27) + closureInPreviousMonth → shift 2 → May, Jun
+      // transactionMonths must always be Mar, Apr
+      expect(installments[0].transactionMonth).toBe(3);
+      expect(installments[1].transactionMonth).toBe(4);
+    });
+
     it("rounding difference goes to last installment so total amount is preserved", () => {
       const installments = createInstallments({
         ...basePurchase,
@@ -482,5 +544,6 @@ describe("InstallmentPurchase service", () => {
       });
       expect(result).toEqual({ year: 2026, month: 11 });
     });
+
   });
 });

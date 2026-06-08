@@ -267,3 +267,4 @@ describe("createInstallmentPurchaseUseCase — billing month assignment (previou
     expect(installments[0].dueYear).toBe(2026);
   });
 });
+

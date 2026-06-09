@@ -13,7 +13,6 @@ type Transaction = {
 type Installment = {
   id: string;
   amount: number;
-  isCanceled: boolean;
   categoryId: string | null;
 };
 
@@ -68,7 +67,7 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
     const label = t.categoryId ? (catById[t.categoryId]?.name ?? "Outro") : "Sem categoria";
     grouped[label] = (grouped[label] ?? 0) + t.amount;
   }
-  for (const i of installments.filter((i) => !i.isCanceled)) {
+  for (const i of installments) {
     const label = i.categoryId ? (catById[i.categoryId]?.name ?? "Outro") : "Sem categoria";
     grouped[label] = (grouped[label] ?? 0) + i.amount;
   }

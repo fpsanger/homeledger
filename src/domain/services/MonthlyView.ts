@@ -40,7 +40,6 @@ export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
     .filter((t) => (personId ? t.personId === personId : true));
 
   const filteredInstallments = installments.filter((i) => {
-    if (i.isCanceled) return false;
     if (filterBy === "purchaseDate") {
       const d = i.purchaseDate ? new Date(i.purchaseDate) : null;
       return !!d && d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;

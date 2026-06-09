@@ -100,7 +100,6 @@ model Installment {
   transactionYear      Int
   transactionMonth     Int
   isPaid               Boolean            @default(false)
-  isCanceled           Boolean            @default(false)
   creditCardPurchase   CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
 
   @@unique([creditCardPurchaseId, installmentNumber])

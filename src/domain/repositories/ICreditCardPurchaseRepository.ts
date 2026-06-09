@@ -20,7 +20,6 @@ export interface InstallmentRecord {
   transactionYear: number;
   transactionMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   categoryId: string | null;
   purchaseDescription?: string;
   purchaseDate?: Date;
@@ -73,7 +72,6 @@ export interface ICreditCardPurchaseRepository {
   deleteInstallment(installmentId: string): Promise<void>;
   findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
   updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void>;
-  updateInstallments(installments: InstallmentRecord[]): Promise<void>;
   findAllPurchasesWithInstallments(personId?: string): Promise<CreditCardPurchaseWithInstallments[]>;
   findPurchasesByPersonAndMonth(personId: string, year: number, month: number): Promise<CreditCardPurchaseRecord[]>;
 }

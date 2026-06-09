@@ -1,5 +1,4 @@
 import {
-  cancelInstallmentPurchase,
   createInstallmentPurchase,
   createInstallments,
   resolveFirstDueMonth,
@@ -327,65 +326,6 @@ describe("InstallmentPurchase service", () => {
     });
   });
 
-  describe("cancelInstallmentPurchase", () => {
-    const makeInstallmentRecord = (overrides = {}) => ({
-      id: "inst-1",
-      creditCardPurchaseId: "purchase-1",
-      installmentNumber: 1,
-      amount: 100,
-      dueYear: 2026,
-      dueMonth: 5,
-      isPaid: false,
-      isCanceled: false,
-      categoryId: null,
-      ...overrides,
-    });
-
-    it("marks all installments as canceled", () => {
-      const installments = [
-        makeInstallmentRecord({ installmentNumber: 1 }),
-        makeInstallmentRecord({ installmentNumber: 2 }),
-      ];
-
-      const canceled = cancelInstallmentPurchase(installments);
-
-      for (const inst of canceled) {
-        expect(inst.isCanceled).toBe(true);
-      }
-    });
-
-    it("cancels all installments regardless of paid status", () => {
-      const installments = [
-        makeInstallmentRecord({ isPaid: true }),
-        makeInstallmentRecord({ isPaid: false }),
-      ];
-
-      const canceled = cancelInstallmentPurchase(installments);
-
-      expect(canceled).toHaveLength(2);
-      for (const inst of canceled) {
-        expect(inst.isCanceled).toBe(true);
-      }
-    });
-
-    it("preserves all original installment fields after cancellation", () => {
-      const installments = [
-        makeInstallmentRecord({ installmentNumber: 3, amount: 150, dueMonth: 7 }),
-      ];
-
-      const canceled = cancelInstallmentPurchase(installments);
-
-      expect(canceled[0].installmentNumber).toBe(3);
-      expect(canceled[0].amount).toBe(150);
-      expect(canceled[0].dueMonth).toBe(7);
-    });
-
-    it("canceling empty list returns empty list", () => {
-      const canceled = cancelInstallmentPurchase([]);
-
-      expect(canceled).toHaveLength(0);
-    });
-  });
 
   describe("resolveFirstDueMonth", () => {
     it("purchase before closure day goes to current month", () => {

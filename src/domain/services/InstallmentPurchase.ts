@@ -9,7 +9,6 @@ export type InstallmentDraft = {
   transactionYear: number;
   transactionMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   categoryId: string | null;
 };
 
@@ -124,7 +123,6 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
       transactionYear,
       transactionMonth,
       isPaid: false,
-      isCanceled: false,
       categoryId: input.categoryId,
     };
   });
@@ -176,10 +174,4 @@ export function createInstallmentPurchase(
   };
 
   return { purchase, installments };
-}
-
-export function cancelInstallmentPurchase(
-  installments: InstallmentRecord[],
-): (InstallmentRecord & { isCanceled: true })[] {
-  return installments.map((inst) => ({ ...inst, isCanceled: true as const }));
 }

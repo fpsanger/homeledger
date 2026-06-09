@@ -26,7 +26,6 @@ type Installment = {
   dueYear: number;
   dueMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   purchaseDescription?: string;
   personId?: string;
   creditCardId?: string | null;
@@ -72,13 +71,6 @@ function SummaryCard({
 }
 
 function StatusBadge({ inst }: { inst: Installment }) {
-  if (inst.isCanceled) {
-    return (
-      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
-        Cancelado
-      </span>
-    );
-  }
   if (inst.isPaid) {
     return (
       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200">
@@ -165,11 +157,10 @@ export function InstallmentTable({
     toast.success("Parcelamento atualizado.");
   }
 
-  const active = installments.filter((i) => !i.isCanceled);
-  const total = active.reduce((s, i) => s + i.amount, 0);
-  const paid = active.filter((i) => i.isPaid).reduce((s, i) => s + i.amount, 0);
+  const total = installments.reduce((s, i) => s + i.amount, 0);
+  const paid = installments.filter((i) => i.isPaid).reduce((s, i) => s + i.amount, 0);
   const remaining = total - paid;
-  const pendingCount = active.filter((i) => !i.isPaid).length;
+  const pendingCount = installments.filter((i) => !i.isPaid).length;
 
   const filtered = useMemo(() => {
     setPage(0);
@@ -177,9 +168,8 @@ export function InstallmentTable({
     const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
 
     return installments.filter((i) => {
-      if (statusFilter === "paid") { if (!(i.isPaid && !i.isCanceled)) return false; }
-      else if (statusFilter === "pending") { if (!(!i.isPaid && !i.isCanceled)) return false; }
-      else if (statusFilter === "canceled") { if (!i.isCanceled) return false; }
+      if (statusFilter === "paid") { if (!i.isPaid) return false; }
+      else if (statusFilter === "pending") { if (i.isPaid) return false; }
       const dMs = toDateMs(i.purchaseDate);
       if (fromMs !== null && dMs < fromMs) return false;
       if (minAmt !== null && i.amount < minAmt) return false;
@@ -253,7 +243,6 @@ export function InstallmentTable({
           <option value="">Todos status</option>
           <option value="pending">Pendente</option>
           <option value="paid">Pago</option>
-          <option value="canceled">Cancelado</option>
         </Select>
         <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-8 w-36 text-sm" />
         <Input
@@ -343,7 +332,7 @@ export function InstallmentTable({
                 if (onEditPurchase) {
                   actions.push({ label: "Editar compra", onClick: () => onEditPurchase(inst) });
                 }
-                if (!inst.isPaid && !inst.isCanceled) {
+                if (!inst.isPaid) {
                   actions.push({
                     label: loadingId === inst.id ? "Salvando…" : "Marcar pago",
                     onClick: () => handleMarkPaid(inst.id),

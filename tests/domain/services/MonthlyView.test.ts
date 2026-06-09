@@ -28,7 +28,6 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   transactionYear: 2026,
   transactionMonth: 5,
   isPaid: false,
-  isCanceled: false,
   categoryId: null,
   ...overrides,
 });
@@ -179,18 +178,6 @@ describe("MonthlyView service", () => {
       expect(monthTotal).not.toBe(1200);
     });
 
-    it("canceled installments are excluded from monthly view", () => {
-      const installments = [
-        makeInstallment({ id: "i1", isCanceled: false }),
-        makeInstallment({ id: "i2", isCanceled: true }),
-      ];
-
-      const view = buildMonthlyView({ transactions: [], installments, year: 2026, month: 5 });
-
-      expect(view.installments).toHaveLength(1);
-      expect(view.installments[0].id).toBe("i1");
-    });
-
     it("includes a recurring occurrence for an active rule in the target month", () => {
       const rule = makeRecurringRule();
       const view = buildMonthlyView({
@@ -325,25 +312,6 @@ describe("MonthlyView service", () => {
 
         expect(juneView.installments).toHaveLength(0);
         expect(mayView.installments).toHaveLength(1);
-      });
-
-      it("excludes canceled installments even when transactionMonth matches", () => {
-        const installment = makeInstallment({
-          id: "i1",
-          transactionYear: 2026,
-          transactionMonth: 5,
-          isCanceled: true,
-        });
-
-        const view = buildMonthlyView({
-          transactions: [],
-          installments: [installment],
-          year: 2026,
-          month: 5,
-          filterBy: "transactionMonth",
-        });
-
-        expect(view.installments).toHaveLength(0);
       });
 
       it("handles year boundary — transactionYear must also match", () => {

@@ -43,7 +43,6 @@ type BillInstallmentItem = {
   dueYear: number;
   dueMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   purchaseDescription: string;
   personId: string;
   categoryId: string | null;
@@ -334,7 +333,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
   }
 
   async function payFatura(cardId: string, installments: BillInstallmentItem[]) {
-    const ids = installments.filter((i) => !i.isPaid && !i.isCanceled).map((i) => i.id);
+    const ids = installments.filter((i) => !i.isPaid).map((i) => i.id);
     if (ids.length === 0) return;
     setPaying((prev) => new Set(prev).add(cardId));
     setBill((prev) =>
@@ -381,7 +380,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
   }
 
   async function unpayFatura(cardId: string, installments: BillInstallmentItem[]) {
-    const ids = installments.filter((i) => i.isPaid && !i.isCanceled).map((i) => i.id);
+    const ids = installments.filter((i) => i.isPaid).map((i) => i.id);
     if (ids.length === 0) return;
     setUnpaying((prev) => new Set(prev).add(cardId));
     setBill((prev) =>
@@ -495,8 +494,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
           {/* Card groups */}
           {bill.map((entry) => {
             const isOpen = !collapsed.has(entry.card.id);
-            const activeParcelas = entry.installments.filter((i) => !i.isCanceled);
-            const allPaid = activeParcelas.length > 0 && activeParcelas.every((i) => i.isPaid);
+            const allPaid = entry.installments.length > 0 && entry.installments.every((i) => i.isPaid);
             return (
               <Collapsible
                 key={entry.card.id}
@@ -534,7 +532,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {entry.installments.some((i) => !i.isPaid && !i.isCanceled) && (
+                      {entry.installments.some((i) => !i.isPaid) && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -547,7 +545,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                           {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
                         </Button>
                       )}
-                      {entry.installments.some((i) => i.isPaid && !i.isCanceled) && (
+                      {entry.installments.some((i) => i.isPaid) && (
                         <Button
                           variant="destructive"
                           size="sm"

@@ -1,7 +1,7 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 type Transaction = { type: string; amount: number };
-type Installment = { amount: number; isCanceled: boolean };
+type Installment = { amount: number };
 
 type Props = {
   transactions: Transaction[];
@@ -14,9 +14,7 @@ function formatAmount(amount: number): string {
 
 export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
   const income = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
-  const installmentExpenses = installments
-    .filter((i) => !i.isCanceled)
-    .reduce((s, i) => s + i.amount, 0);
+  const installmentExpenses = installments.reduce((s, i) => s + i.amount, 0);
   const expenses =
     transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) +
     installmentExpenses;

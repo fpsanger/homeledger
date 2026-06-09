@@ -60,7 +60,6 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
     _id: string,
     _fields: { amount: number; description: string },
   ): Promise<void> {}
-  async updateInstallments(_installments: InstallmentRecord[]): Promise<void> {}
   async findAllPurchasesWithInstallments(
     _personId?: string,
   ): Promise<CreditCardPurchaseWithInstallments[]> {
@@ -78,8 +77,4 @@ describe("ICreditCardPurchaseRepository interface", () => {
     await expect(repo.findByPurchaseId("purchase-1")).resolves.toEqual([]);
   });
 
-  it("updateInstallments is part of the contract", async () => {
-    const repo = new MockCreditCardPurchaseRepository();
-    await expect(repo.updateInstallments([])).resolves.toBeUndefined();
-  });
 });

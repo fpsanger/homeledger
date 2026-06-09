@@ -44,7 +44,6 @@ type Installment = {
   dueYear: number;
   dueMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   creditCardPurchaseId?: string;
   personId?: string;
   categoryId?: string | null;
@@ -247,9 +246,7 @@ export function TransactionPageClient({
           </h2>
           <TransactionTable
             transactions={transactions}
-            installmentExpenses={installments
-              .filter((i) => !i.isCanceled)
-              .reduce((s, i) => s + i.amount, 0)}
+            installmentExpenses={installments.reduce((s, i) => s + i.amount, 0)}
             people={people}
             categories={categories}
             onEdit={(t) => setEditingTransaction(t)}

@@ -35,10 +35,8 @@ export async function getCreditCardBillUseCase(
 
   const purchaseMap = new Map(purchases.map((p) => [p.id, p]));
 
-  // Group enriched installments by creditCardId (skip canceled)
   const byCard = new Map<string, BillInstallmentItem[]>();
   for (const inst of installments) {
-    if (inst.isCanceled) continue;
     const purchase = purchaseMap.get(inst.creditCardPurchaseId);
     if (!purchase?.creditCardId) continue;
     const enriched: BillInstallmentItem = {

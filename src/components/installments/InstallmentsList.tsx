@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { MoreHorizontal, ShoppingBag, ChevronDown, ChevronUp } from "lucide-react";
@@ -28,7 +28,6 @@ type Installment = {
   dueYear: number;
   dueMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
 };
 
 type Purchase = {
@@ -61,6 +60,8 @@ const MONTH_NAMES = [
 type Props = {
   purchases: Purchase[];
   currentPersonId: string;
+  categories: Category[];
+  creditCards: CreditCard[];
 };
 
 type EditState = {
@@ -217,12 +218,6 @@ function EditForm({
 }
 
 function InstallmentStatusBadge({ inst }: { inst: Installment }) {
-  if (inst.isCanceled)
-    return (
-      <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 text-xs">
-        Cancelado
-      </Badge>
-    );
   if (inst.isPaid)
     return (
       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
@@ -255,14 +250,53 @@ const PAGE_SIZE = 8;
 export function InstallmentsList({
   purchases,
   currentPersonId,
+  categories,
+  creditCards,
 }: Props) {
   const router = useRouter();
-  const [showCanceled, setShowCanceled] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [creditCardFilter, setCreditCardFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+
+  const usedCreditCardIds = useMemo(
+    () => new Set(purchases.map((p) => p.creditCardId).filter(Boolean)),
+    [purchases],
+  );
+  const visibleCreditCards = creditCards.filter((c) => usedCreditCardIds.has(c.id));
+
+  const hasActiveFilters = search || statusFilter !== "all" || creditCardFilter || categoryFilter;
+
+  function clearFilters() {
+    setSearch("");
+    setStatusFilter("all");
+    setCreditCardFilter("");
+    setCategoryFilter("");
+    setPage(0);
+  }
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, statusFilter, creditCardFilter, categoryFilter]);
+
+  const filtered = useMemo(() => {
+    return purchases
+      .filter((p) => !search || p.description.toLowerCase().includes(search.toLowerCase()))
+      .filter((p) => {
+        if (statusFilter === "pending") return p.installments.some((i) => !i.isPaid);
+        if (statusFilter === "paid") {
+          return p.installments.length > 0 && p.installments.every((i) => i.isPaid);
+        }
+        return true;
+      })
+      .filter((p) => !creditCardFilter || p.creditCardId === creditCardFilter)
+      .filter((p) => !categoryFilter || p.categoryId === categoryFilter);
+  }, [purchases, search, statusFilter, creditCardFilter, categoryFilter]);
 
   async function markPaid(installmentId: string) {
     setPendingId(installmentId);
@@ -311,22 +345,59 @@ export function InstallmentsList({
       </Dialog>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <input
-            id="show-canceled"
-            type="checkbox"
-            checked={showCanceled}
-            onChange={(e) => setShowCanceled(e.target.checked)}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-3">
+          <Input
+            placeholder="Buscar por descrição…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-48"
           />
-          <label htmlFor="show-canceled" className="text-sm">
-            Mostrar cancelados
-          </label>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-44"
+          >
+            <option value="all">Todos os status</option>
+            <option value="pending">Com pendências</option>
+            <option value="paid">Quitados</option>
+          </Select>
+          {visibleCreditCards.length > 0 && (
+            <Select
+              value={creditCardFilter}
+              onChange={(e) => setCreditCardFilter(e.target.value)}
+              className="w-44"
+            >
+              <option value="">Todos os cartões</option>
+              {visibleCreditCards.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          )}
+          <CategoryCombobox
+            categories={categories}
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            placeholder="Categoria"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Limpar filtros ×
+            </button>
+          )}
         </div>
       </div>
 
       {/* Empty state */}
-      {purchases.length === 0 && (
+      {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground border rounded-lg">
           <ShoppingBag className="w-10 h-10 opacity-25" />
           <p className="text-sm font-medium">Nenhuma compra parcelada encontrada</p>
@@ -335,22 +406,19 @@ export function InstallmentsList({
       )}
 
       {/* Purchase cards */}
-      {purchases.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((purchase) => {
-        const activeInstallments = purchase.installments.filter((i) => !i.isCanceled);
-        const paidCount = activeInstallments.filter((i) => i.isPaid).length;
-        const pendingInstallments = activeInstallments
+      {filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((purchase) => {
+        const paidCount = purchase.installments.filter((i) => i.isPaid).length;
+        const pendingInstallments = purchase.installments
           .filter((i) => !i.isPaid)
           .sort((a, b) =>
             a.dueYear !== b.dueYear ? a.dueYear - b.dueYear : a.dueMonth - b.dueMonth,
           );
-        const amountPaid = activeInstallments
+        const amountPaid = purchase.installments
           .filter((i) => i.isPaid)
           .reduce((s, i) => s + i.amount, 0);
         const amountRemaining = pendingInstallments.reduce((s, i) => s + i.amount, 0);
         const nextInstallment = pendingInstallments[0];
-        const visibleInstallments = purchase.installments.filter(
-          (i) => showCanceled || !i.isCanceled,
-        );
+        const visibleInstallments = purchase.installments;
         const isExpanded = expandedId === purchase.id;
 
         return (
@@ -395,7 +463,7 @@ export function InstallmentsList({
               </div>
 
               {/* Progress bar */}
-              <ProgressBar paid={paidCount} total={activeInstallments.length} />
+              <ProgressBar paid={paidCount} total={purchase.installments.length} />
 
               {/* Stats row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -481,7 +549,7 @@ export function InstallmentsList({
                             <InstallmentStatusBadge inst={inst} />
                           </td>
                           <td className="px-5 py-2.5 text-right">
-                            {!inst.isPaid && !inst.isCanceled && (
+                            {!inst.isPaid && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -506,7 +574,7 @@ export function InstallmentsList({
       })}
 
       {/* Pagination */}
-      {purchases.length > PAGE_SIZE && (
+      {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between pt-2">
           <Button
             type="button"
@@ -518,13 +586,13 @@ export function InstallmentsList({
             ← Anterior
           </Button>
           <span className="text-sm text-muted-foreground">
-            {page + 1} / {Math.ceil(purchases.length / PAGE_SIZE)}
+            {page + 1} / {Math.ceil(filtered.length / PAGE_SIZE)}
           </span>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={(page + 1) * PAGE_SIZE >= purchases.length}
+            disabled={(page + 1) * PAGE_SIZE >= filtered.length}
             onClick={() => setPage((p) => p + 1)}
           >
             Próximo →

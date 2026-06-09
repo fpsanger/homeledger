@@ -23,7 +23,6 @@ type Installment = {
   dueYear: number;
   dueMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
 };
 
 type Person = { id: string; name: string };

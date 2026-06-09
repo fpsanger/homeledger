@@ -69,7 +69,7 @@ export function validateInvestmentCategory(categoryId: string, categories: Categ
   }
 }
 
-export function computeUpdatedPaths(
+export function computeUpdatedLevels(
   categoryId: string,
   newParent: CategoryRecord | null,
   categories: CategoryRecord[],
@@ -77,22 +77,20 @@ export function computeUpdatedPaths(
   const target = categories.find((c) => c.id === categoryId);
   if (!target) return categories;
 
-  const newPath = newParent?.path ? `${newParent.path}/${target.name}` : target.name;
   const newLevel = newParent ? newParent.level + 1 : 0;
 
   const updatedTarget: CategoryRecord = {
     ...target,
     parentId: newParent?.id ?? null,
-    path: newPath,
     level: newLevel,
   };
 
   const withUpdatedTarget = categories.map((c) => (c.id === categoryId ? updatedTarget : c));
 
-  return cascadeDescendants(categoryId, updatedTarget, withUpdatedTarget);
+  return cascadeDescendantLevels(categoryId, updatedTarget, withUpdatedTarget);
 }
 
-function cascadeDescendants(
+function cascadeDescendantLevels(
   parentId: string,
   updatedParent: CategoryRecord,
   categories: CategoryRecord[],
@@ -103,11 +101,10 @@ function cascadeDescendants(
   for (const child of children) {
     const updatedChild: CategoryRecord = {
       ...child,
-      path: updatedParent.path ? `${updatedParent.path}/${child.name}` : child.name,
       level: updatedParent.level + 1,
     };
     result = result.map((c) => (c.id === child.id ? updatedChild : c));
-    result = cascadeDescendants(child.id, updatedChild, result);
+    result = cascadeDescendantLevels(child.id, updatedChild, result);
   }
 
   return result;

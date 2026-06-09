@@ -14,7 +14,7 @@ import { TransactionTable } from "@/components/monthly-view/TransactionTable";
 import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string; parentId: string | null };
+type Category = { id: string; name: string; parentId: string | null };
 type CreditCard = {
   id: string;
   name: string;

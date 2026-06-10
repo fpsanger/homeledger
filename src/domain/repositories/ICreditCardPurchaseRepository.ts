@@ -17,6 +17,8 @@ export interface InstallmentRecord {
   amount: number;
   dueYear: number;
   dueMonth: number;
+  transactionYear: number;
+  transactionMonth: number;
   isPaid: boolean;
   isCanceled: boolean;
   categoryId: string | null;
@@ -45,6 +47,12 @@ export interface ICreditCardPurchaseRepository {
   ): Promise<InstallmentRecord[]>;
   findAllInstallmentsByPurchaseMonth(year: number, month: number): Promise<InstallmentRecord[]>;
   findInstallmentsByPurchaseMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<InstallmentRecord[]>;
+  findAllInstallmentsByTransactionMonth(year: number, month: number): Promise<InstallmentRecord[]>;
+  findInstallmentsByTransactionMonth(
     personId: string,
     year: number,
     month: number,

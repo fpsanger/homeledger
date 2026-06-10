@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   MoreHorizontal,
@@ -33,6 +34,7 @@ type CreditCard = {
 type Props = { initialCards: CreditCard[] };
 
 export function CreditCardList({ initialCards }: Props) {
+  const router = useRouter();
   const [cards, setCards] = useState(initialCards);
   const [formOpen, setFormOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
@@ -44,6 +46,7 @@ export function CreditCardList({ initialCards }: Props) {
       const data = await res.json();
       setCards(data.cards);
     }
+    router.refresh();
   }
 
   async function handleDelete(id: string) {

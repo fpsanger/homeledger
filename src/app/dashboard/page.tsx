@@ -23,7 +23,11 @@ async function getCategories(): Promise<Category[]> {
 }
 
 async function getMonthlyView(year: number, month: number, personId?: string) {
-  const params = new URLSearchParams({ year: String(year), month: String(month) });
+  const params = new URLSearchParams({
+    year: String(year),
+    month: String(month),
+    filterBy: "transactionMonth",
+  });
   if (personId) params.set("personId", personId);
   const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, {
     cache: "no-store",

@@ -97,6 +97,8 @@ model Installment {
   amount               Decimal            @db.Decimal(15, 2)
   dueYear              Int
   dueMonth             Int
+  transactionYear      Int
+  transactionMonth     Int
   isPaid               Boolean            @default(false)
   isCanceled           Boolean            @default(false)
   creditCardPurchase   CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)

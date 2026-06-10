@@ -13,7 +13,7 @@ type Input = {
   year: number;
   month: number;
   personId?: string;
-  filterBy?: "dueMonth" | "purchaseDate";
+  filterBy?: "dueMonth" | "purchaseDate" | "transactionMonth";
 };
 
 type Output = {
@@ -37,9 +37,13 @@ export async function getMonthlyViewUseCase(
       ? personId
         ? creditCardRepo.findInstallmentsByPurchaseMonth(personId, year, month)
         : creditCardRepo.findAllInstallmentsByPurchaseMonth(year, month)
-      : personId
-        ? creditCardRepo.findInstallmentsByMonth(personId, year, month)
-        : creditCardRepo.findAllInstallmentsByMonth(year, month),
+      : filterBy === "transactionMonth"
+        ? personId
+          ? creditCardRepo.findInstallmentsByTransactionMonth(personId, year, month)
+          : creditCardRepo.findAllInstallmentsByTransactionMonth(year, month)
+        : personId
+          ? creditCardRepo.findInstallmentsByMonth(personId, year, month)
+          : creditCardRepo.findAllInstallmentsByMonth(year, month),
     personId
       ? recurringRepo.findActiveByPersonAndMonth(personId, year, month)
       : recurringRepo.findAllActiveByMonth(year, month),

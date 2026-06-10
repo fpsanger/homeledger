@@ -19,8 +19,8 @@ export async function getAnnualReportUseCase(
       ? transactionRepo.findByPersonAndYear(personId, year)
       : transactionRepo.findByYear(year),
     personId
-      ? creditCardRepo.findInstallmentsByYear(personId, year)
-      : creditCardRepo.findAllInstallmentsByYear(year),
+      ? creditCardRepo.findInstallmentsByTransactionYear(personId, year)
+      : creditCardRepo.findAllInstallmentsByTransactionYear(year),
   ]);
 
   return buildAnnualReport({ transactions, installments, year, personId });

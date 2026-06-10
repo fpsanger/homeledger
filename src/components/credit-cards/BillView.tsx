@@ -24,7 +24,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/component
 import { formatDatePtBR } from "@/lib/format-date";
 import { getFullPath } from "@/lib/categoryUtils";
 
-type BillSortKey = "description" | "amount";
+type BillSortKey = "description" | "amount" | "date";
 type BillSortDir = "asc" | "desc";
 
 function BillSortIcon({ col, sortKey, sortDir }: { col: BillSortKey; sortKey: BillSortKey | null; sortDir: BillSortDir }) {
@@ -142,6 +142,11 @@ function CardInstallmentTable({
         const diff = a.amount - b.amount;
         return sortDir === "asc" ? diff : -diff;
       });
+    } else if (sortKey === "date") {
+      arr.sort((a, b) => {
+        const diff = new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime();
+        return sortDir === "asc" ? diff : -diff;
+      });
     }
     return arr;
   }, [filtered, sortKey, sortDir]);
@@ -204,7 +209,15 @@ function CardInstallmentTable({
                 </span>
               </th>
               <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
-              <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Data</th>
+              <th
+                className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell cursor-pointer select-none hover:text-foreground"
+                onClick={() => toggleSort("date")}
+              >
+                <span className="inline-flex items-center">
+                  Data
+                  <BillSortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+                </span>
+              </th>
               <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Pessoa</th>
               <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Categoria</th>
               <th

@@ -24,6 +24,8 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   amount: 200,
   dueYear: 2025,
   dueMonth: 1,
+  transactionYear: 2025,
+  transactionMonth: 1,
   isPaid: false,
   categoryId: null,
   ...overrides,
@@ -55,7 +57,7 @@ describe("buildAnnualReport", () => {
   });
 
   it("includes installment amounts in expenses", () => {
-    const installments = [makeInstallment({ id: "i1", amount: 200, dueYear: 2025, dueMonth: 2 })];
+    const installments = [makeInstallment({ id: "i1", amount: 200, transactionYear: 2025, transactionMonth: 2 })];
     const result = buildAnnualReport({ transactions: [], installments, year: 2025 });
     expect(result.months[1].expenses).toBe(200);
   });
@@ -74,7 +76,7 @@ describe("buildAnnualReport", () => {
       makeTransaction({ id: "t1", type: "INCOME", amount: 2000, date: new Date("2025-01-01") }),
       makeTransaction({ id: "t2", type: "EXPENSE", amount: 800, date: new Date("2025-01-15") }),
     ];
-    const installments = [makeInstallment({ id: "i1", amount: 200, dueYear: 2025, dueMonth: 1 })];
+    const installments = [makeInstallment({ id: "i1", amount: 200, transactionYear: 2025, transactionMonth: 1 })];
     const result = buildAnnualReport({ transactions, installments, year: 2025 });
     expect(result.totalIncome).toBe(2000);
     expect(result.totalExpenses).toBe(1000);

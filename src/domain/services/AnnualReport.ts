@@ -33,7 +33,7 @@ export function buildAnnualReport(input: AnnualReportInput): AnnualReportResult 
     })
     .filter((t) => (personId ? t.personId === personId : true));
 
-  const filteredInstallments = installments.filter((i) => i.dueYear === year);
+  const filteredInstallments = installments.filter((i) => i.transactionYear === year);
 
   const months: MonthSummary[] = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1;
@@ -53,7 +53,7 @@ export function buildAnnualReport(input: AnnualReportInput): AnnualReportResult 
       .reduce((sum, t) => sum + t.amount, 0);
 
     const expenseInstallments = filteredInstallments
-      .filter((i) => i.dueMonth === month)
+      .filter((i) => i.transactionMonth === month)
       .reduce((sum, i) => sum + i.amount, 0);
 
     const expenses = expenseTransactions + expenseInstallments;

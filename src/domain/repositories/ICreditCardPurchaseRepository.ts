@@ -58,6 +58,8 @@ export interface ICreditCardPurchaseRepository {
   ): Promise<InstallmentRecord[]>;
   findAllInstallmentsByYear(year: number): Promise<InstallmentRecord[]>;
   findInstallmentsByYear(personId: string, year: number): Promise<InstallmentRecord[]>;
+  findAllInstallmentsByTransactionYear(year: number): Promise<InstallmentRecord[]>;
+  findInstallmentsByTransactionYear(personId: string, year: number): Promise<InstallmentRecord[]>;
   updatePurchase(
     id: string,
     data: Pick<

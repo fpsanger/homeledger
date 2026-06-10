@@ -50,6 +50,8 @@ function makeInstallmentRecord(overrides: Partial<InstallmentRecord> = {}): Inst
     amount: 100.0,
     dueYear: 2025,
     dueMonth: 5,
+    transactionYear: 2025,
+    transactionMonth: 5,
     isPaid: false,
     categoryId: null,
     purchaseDescription: "Notebook",

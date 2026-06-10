@@ -87,8 +87,12 @@ function makePurchaseRepo(): ICreditCardPurchaseRepository {
     findInstallmentsByMonth: jest.fn(),
     findAllInstallmentsByPurchaseMonth: jest.fn(),
     findInstallmentsByPurchaseMonth: jest.fn(),
+    findAllInstallmentsByTransactionMonth: jest.fn(),
+    findInstallmentsByTransactionMonth: jest.fn(),
     findAllInstallmentsByYear: jest.fn(),
     findInstallmentsByYear: jest.fn(),
+    findAllInstallmentsByTransactionYear: jest.fn(),
+    findInstallmentsByTransactionYear: jest.fn(),
     updatePurchase: jest.fn(),
     deletePurchase: jest.fn(),
     markInstallmentPaid: jest.fn(),
@@ -98,6 +102,7 @@ function makePurchaseRepo(): ICreditCardPurchaseRepository {
     findByPurchaseId: jest.fn(),
     updateInstallment: jest.fn(),
     findAllPurchasesWithInstallments: jest.fn().mockResolvedValue([purchase1, purchase2]),
+    findPurchasesByPersonAndMonth: jest.fn().mockResolvedValue([]),
   };
 }
 

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,6 +17,7 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageSizeSelector } from "@/components/ui/page-size-selector";
 import { TransactionAmount } from "../transactions/TransactionAmount";
 import { formatDatePtBR } from "@/lib/format-date";
+import { SummaryCard } from "./SummaryCard";
 
 type Transaction = {
   id: string;
@@ -67,27 +68,6 @@ function toMs(date: Date | string) {
   return new Date(date).getTime();
 }
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  colorClass,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  colorClass: string;
-}) {
-  return (
-    <div className="rounded-lg border bg-card p-4 flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide">
-        <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
-        {label}
-      </div>
-      <p className={`text-lg font-semibold tabular-nums ${colorClass}`}>{value}</p>
-    </div>
-  );
-}
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
   if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
@@ -98,14 +78,12 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | 
 
 export function TransactionTable({
   transactions,
-  installmentExpenses = 0,
   people,
   categories = [],
   filters,
   onEdit,
 }: {
   transactions: Transaction[];
-  installmentExpenses?: number;
   people: Person[];
   categories?: Category[];
   filters?: TransactionFilters;
@@ -121,6 +99,7 @@ export function TransactionTable({
       return [c.id, displayName];
     }),
   );
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -154,8 +133,7 @@ export function TransactionTable({
     .filter((t) => t.type === "INCOME")
     .reduce((s, t) => s + t.amount, 0);
   const totalExpenses =
-    transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) +
-    installmentExpenses;
+    transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpenses;
 
   const usedParentCategoryIds = useMemo(() => {
@@ -226,33 +204,44 @@ export function TransactionTable({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <SummaryCard
-          icon={TrendingDown}
-          label="Despesas"
-          value={`-${fmtCurrency(totalExpenses)}`}
-          colorClass="text-red-600"
+      <button
+        type="button"
+        onClick={() => setSummaryOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+      >
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
         />
-        <SummaryCard
-          icon={TrendingUp}
-          label="Receitas"
-          value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)}
-          colorClass="text-green-600"
-        />
-        <SummaryCard
-          icon={Wallet}
-          label="Saldo"
-          value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`}
-          colorClass={balance >= 0 ? "text-green-700" : "text-red-700"}
-        />
-        <SummaryCard
-          icon={Hash}
-          label="Lançamentos"
-          value={String(transactions.length)}
-          colorClass="text-muted-foreground"
-        />
-      </div>
+        {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
+      </button>
+      {summaryOpen && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <SummaryCard
+            icon={TrendingDown}
+            label="Despesas"
+            value={`-${fmtCurrency(totalExpenses)}`}
+            colorClass="text-red-600"
+          />
+          <SummaryCard
+            icon={TrendingUp}
+            label="Receitas"
+            value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)}
+            colorClass="text-green-600"
+          />
+          <SummaryCard
+            icon={Wallet}
+            label="Saldo"
+            value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`}
+            colorClass={balance >= 0 ? "text-green-700" : "text-red-700"}
+          />
+          <SummaryCard
+            icon={Hash}
+            label="Lançamentos"
+            value={String(transactions.length)}
+            colorClass="text-muted-foreground"
+          />
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-lg border overflow-x-auto">

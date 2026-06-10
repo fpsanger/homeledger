@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { formatAmountBR } from "@/lib/utils";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { TransactionTable } from "@/components/monthly-view/TransactionTable";
 import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
+import { SummaryCard } from "@/components/monthly-view/SummaryCard";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null };
@@ -156,6 +157,18 @@ export function TransactionPageClient({
   const installmentFilters = { statusFilter, dateFrom, amountMin };
 
   const hasInstallments = installments.length > 0;
+
+  const combinedIncome = transactions
+    .filter((t) => t.type === "INCOME")
+    .reduce((s, t) => s + t.amount, 0);
+  const combinedExpenses =
+    transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) +
+    installments.reduce((s, i) => s + i.amount, 0);
+  const combinedBalance = combinedIncome - combinedExpenses;
+
+  function fmtCurrency(amount: number) {
+    return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -353,6 +366,32 @@ export function TransactionPageClient({
         </FilterGroup.Section>
       </FilterGroup>
 
+      <div className="flex flex-col gap-4">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Resumo do mês
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <SummaryCard
+            icon={TrendingUp}
+            label="Receitas"
+            value={combinedIncome > 0 ? `+${fmtCurrency(combinedIncome)}` : fmtCurrency(0)}
+            colorClass="text-green-600"
+          />
+          <SummaryCard
+            icon={TrendingDown}
+            label="Despesas"
+            value={`-${fmtCurrency(combinedExpenses)}`}
+            colorClass="text-red-600"
+          />
+          <SummaryCard
+            icon={Wallet}
+            label="Saldo"
+            value={`${combinedBalance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(combinedBalance))}`}
+            colorClass={combinedBalance >= 0 ? "text-green-700" : "text-red-700"}
+          />
+        </div>
+      </div>
+
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-4">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -365,7 +404,6 @@ export function TransactionPageClient({
           </h2>
           <TransactionTable
             transactions={transactions}
-            installmentExpenses={installments.reduce((s, i) => s + i.amount, 0)}
             people={people}
             categories={categories}
             filters={transactionFilters}

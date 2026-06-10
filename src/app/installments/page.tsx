@@ -14,9 +14,27 @@ async function getPurchases(personId?: string) {
   return data.purchases;
 }
 
+async function getCategories() {
+  const res = await fetch(`${BASE_URL}/api/categories`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.categories ?? [];
+}
+
+async function getCreditCards() {
+  const res = await fetch(`${BASE_URL}/api/credit-cards`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.cards ?? [];
+}
+
 export default async function InstallmentsPage() {
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
-  const purchases = await getPurchases(globalPersonId || undefined);
+  const [purchases, categories, creditCards] = await Promise.all([
+    getPurchases(globalPersonId || undefined),
+    getCategories(),
+    getCreditCards(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,6 +49,8 @@ export default async function InstallmentsPage() {
           <InstallmentsList
             purchases={purchases}
             currentPersonId={globalPersonId}
+            categories={categories}
+            creditCards={creditCards}
           />
         }
         billView={<BillView initialPersonId={globalPersonId} />}

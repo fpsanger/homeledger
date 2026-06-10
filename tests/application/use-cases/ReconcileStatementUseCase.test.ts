@@ -22,7 +22,6 @@ function makeCreditCardPurchaseRepo(
     deleteInstallment: jest.fn(),
     findByPurchaseId: jest.fn(),
     updateInstallment: jest.fn(),
-    updateInstallments: jest.fn(),
     findAllPurchasesWithInstallments: jest.fn(),
     findPurchasesByPersonAndMonth: jest.fn(),
   } as unknown as ICreditCardPurchaseRepository;
@@ -52,7 +51,6 @@ function makeInstallmentRecord(overrides: Partial<InstallmentRecord> = {}): Inst
     dueYear: 2025,
     dueMonth: 5,
     isPaid: false,
-    isCanceled: false,
     categoryId: null,
     purchaseDescription: "Notebook",
     creditCardId: "card-1",

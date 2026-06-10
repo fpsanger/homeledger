@@ -31,7 +31,6 @@ const installment1 = {
   dueYear: 2026,
   dueMonth: 5,
   isPaid: false,
-  isCanceled: false,
 };
 const installment2 = {
   id: "i-2",
@@ -41,7 +40,6 @@ const installment2 = {
   dueYear: 2026,
   dueMonth: 5,
   isPaid: false,
-  isCanceled: false,
 };
 
 const purchase1 = {
@@ -99,7 +97,6 @@ function makePurchaseRepo(): ICreditCardPurchaseRepository {
     deleteInstallment: jest.fn(),
     findByPurchaseId: jest.fn(),
     updateInstallment: jest.fn(),
-    updateInstallments: jest.fn(),
     findAllPurchasesWithInstallments: jest.fn().mockResolvedValue([purchase1, purchase2]),
   };
 }

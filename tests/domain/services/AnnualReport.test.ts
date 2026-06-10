@@ -25,7 +25,6 @@ const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): Installmen
   dueYear: 2025,
   dueMonth: 1,
   isPaid: false,
-  isCanceled: false,
   categoryId: null,
   ...overrides,
 });
@@ -59,14 +58,6 @@ describe("buildAnnualReport", () => {
     const installments = [makeInstallment({ id: "i1", amount: 200, dueYear: 2025, dueMonth: 2 })];
     const result = buildAnnualReport({ transactions: [], installments, year: 2025 });
     expect(result.months[1].expenses).toBe(200);
-  });
-
-  it("excludes canceled installments", () => {
-    const installments = [
-      makeInstallment({ id: "i1", amount: 200, dueYear: 2025, dueMonth: 2, isCanceled: true }),
-    ];
-    const result = buildAnnualReport({ transactions: [], installments, year: 2025 });
-    expect(result.months[1].expenses).toBe(0);
   });
 
   it("computes balance as income minus expenses per month", () => {

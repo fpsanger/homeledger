@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 import { formatDatePtBR } from "@/lib/format-date";
 
@@ -245,7 +246,6 @@ function ProgressBar({ paid, total }: { paid: number; total: number }) {
   );
 }
 
-const PAGE_SIZE = 8;
 
 export function InstallmentsList({
   purchases,
@@ -263,6 +263,7 @@ export function InstallmentsList({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   const usedCreditCardIds = useMemo(
     () => new Set(purchases.map((p) => p.creditCardId).filter(Boolean)),
@@ -406,7 +407,7 @@ export function InstallmentsList({
       )}
 
       {/* Purchase cards */}
-      {filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((purchase) => {
+      {filtered.slice(page * pageSize, (page + 1) * pageSize).map((purchase) => {
         const paidCount = purchase.installments.filter((i) => i.isPaid).length;
         const pendingInstallments = purchase.installments
           .filter((i) => !i.isPaid)
@@ -574,31 +575,37 @@ export function InstallmentsList({
       })}
 
       {/* Pagination */}
-      {filtered.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            ← Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {page + 1} / {Math.ceil(filtered.length / PAGE_SIZE)}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={(page + 1) * PAGE_SIZE >= filtered.length}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Próximo →
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center justify-between pt-2">
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => { setPageSize(size); setPage(0); }}
+        />
+        {filtered.length > pageSize && (
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {Math.ceil(filtered.length / pageSize)}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={(page + 1) * pageSize >= filtered.length}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

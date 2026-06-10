@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
 import { CategoryCreateDialog } from "./CategoryCreateDialog";
 import { CategoryEditDialog } from "./CategoryEditDialog";
 import { getFullPath } from "@/lib/categoryUtils";
@@ -40,8 +41,8 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<ViewMode>("cards");
 
-  const PAGE_SIZE = 12;
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
   const { roots, childrenOf } = useMemo(() => {
     const roots = categories
@@ -96,8 +97,8 @@ export function CategoryList({ categories }: { categories: Category[] }) {
     return result;
   }, [roots, childrenOf, query]);
 
-  const totalPages = Math.ceil(flatFiltered.length / PAGE_SIZE);
-  const paged = flatFiltered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(flatFiltered.length / pageSize);
+  const paged = flatFiltered.slice(page * pageSize, (page + 1) * pageSize);
 
   async function handleDelete(id: string) {
     setDeleting(id);
@@ -362,31 +363,37 @@ export function CategoryList({ categories }: { categories: Category[] }) {
               </TableBody>
             </Table>
           </div>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                ← Anterior
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {page + 1} / {totalPages}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Próximo →
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center justify-between pt-1">
+            <PageSizeSelector
+              value={pageSize}
+              onChange={(size) => { setPageSize(size); setPage(0); }}
+            />
+            {totalPages > 1 && (
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  ← Anterior
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {page + 1} / {totalPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Próximo →
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

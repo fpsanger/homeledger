@@ -13,10 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
 import { formatDatePtBR } from "@/lib/format-date";
 
 type Installment = {
@@ -38,6 +36,12 @@ type CreditCardItem = { id: string; name: string };
 
 type SortKey = "description" | "date" | "amount";
 type SortDir = "asc" | "desc";
+
+export type InstallmentFilters = {
+  statusFilter: string;
+  dateFrom: string;
+  amountMin: string;
+};
 
 function fmt(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -96,25 +100,24 @@ export function InstallmentTable({
   installments,
   people = [],
   creditCards = [],
+  filters,
   onEditInstallment,
   onEditPurchase,
 }: {
   installments: Installment[];
   people?: Person[];
   creditCards?: CreditCardItem[];
+  filters?: InstallmentFilters;
   onEditInstallment?: (inst: Installment) => void;
   onEditPurchase?: (inst: Installment) => void;
 }) {
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [amountMin, setAmountMin] = useState("");
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   const byPersonId = useMemo(() => Object.fromEntries(people.map((p) => [p.id, p.name])), [people]);
   const byCardId = useMemo(
@@ -164,6 +167,9 @@ export function InstallmentTable({
 
   const filtered = useMemo(() => {
     setPage(0);
+    if (!filters) return installments;
+
+    const { statusFilter, dateFrom, amountMin } = filters;
     const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
     const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
 
@@ -175,7 +181,7 @@ export function InstallmentTable({
       if (minAmt !== null && i.amount < minAmt) return false;
       return true;
     });
-  }, [installments, statusFilter, dateFrom, amountMin]);
+  }, [installments, filters]);
 
   const sortedInstallments = useMemo(() => {
     const arr = [...filtered];
@@ -200,8 +206,8 @@ export function InstallmentTable({
     return arr;
   }, [filtered, sortKey, sortDir]);
 
-  const totalPages = Math.ceil(sortedInstallments.length / PAGE_SIZE);
-  const paginated = sortedInstallments.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(sortedInstallments.length / pageSize);
+  const paginated = sortedInstallments.slice(page * pageSize, (page + 1) * pageSize);
 
   if (installments.length === 0) {
     return (
@@ -232,38 +238,6 @@ export function InstallmentTable({
           <SummaryCard icon={Clock} label="Pendentes" value={String(pendingCount)} colorClass="text-muted-foreground" />
         </div>
       )}
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-8 w-40 text-sm"
-        >
-          <option value="">Todos status</option>
-          <option value="pending">Pendente</option>
-          <option value="paid">Pago</option>
-        </Select>
-        <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-8 w-36 text-sm" />
-        <Input
-          type="number"
-          placeholder="Valor mín"
-          value={amountMin}
-          onChange={(e) => setAmountMin(e.target.value)}
-          className="h-8 w-28 text-sm"
-          min={0}
-        />
-        {(statusFilter || dateFrom || amountMin) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs text-muted-foreground"
-            onClick={() => { setStatusFilter(""); setDateFrom(""); setAmountMin(""); }}
-          >
-            Limpar filtros ×
-          </Button>
-        )}
-      </div>
 
       {/* Table */}
       <div className="rounded-lg border overflow-x-auto">
@@ -386,29 +360,35 @@ export function InstallmentTable({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            ← Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {page + 1} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page + 1 >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Próximo →
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center justify-between pt-1">
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => { setPageSize(size); setPage(0); }}
+        />
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

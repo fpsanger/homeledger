@@ -13,11 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
 import { TransactionAmount } from "../transactions/TransactionAmount";
 import { formatDatePtBR } from "@/lib/format-date";
 
@@ -38,6 +35,14 @@ type Category = { id: string; name: string; parentId: string | null };
 
 type SortKey = "date" | "amount";
 type SortDir = "asc" | "desc";
+
+export type TransactionFilters = {
+  search: string;
+  categoryFilter: string;
+  paymentFilter: string;
+  dateFrom: string;
+  amountMin: string;
+};
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: "Dinheiro",
@@ -96,12 +101,14 @@ export function TransactionTable({
   installmentExpenses = 0,
   people,
   categories = [],
+  filters,
   onEdit,
 }: {
   transactions: Transaction[];
   installmentExpenses?: number;
   people: Person[];
   categories?: Category[];
+  filters?: TransactionFilters;
   onEdit?: (t: Transaction) => void;
 }) {
   const router = useRouter();
@@ -115,15 +122,10 @@ export function TransactionTable({
     }),
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [amountMin, setAmountMin] = useState("");
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -156,12 +158,6 @@ export function TransactionTable({
     installmentExpenses;
   const balance = totalIncome - totalExpenses;
 
-  const paymentMethods = useMemo(() => {
-    const seen = new Set<string>();
-    for (const t of transactions) if (t.paymentMethod) seen.add(t.paymentMethod);
-    return Array.from(seen);
-  }, [transactions]);
-
   const usedParentCategoryIds = useMemo(() => {
     const seen = new Set<string>();
     for (const t of transactions) {
@@ -177,6 +173,9 @@ export function TransactionTable({
 
   const filtered = useMemo(() => {
     setPage(0);
+    if (!filters) return transactions;
+
+    const { search, categoryFilter, paymentFilter, dateFrom, amountMin } = filters;
     const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
     const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
 
@@ -193,7 +192,7 @@ export function TransactionTable({
       if (minAmt !== null && t.amount < minAmt) return false;
       return true;
     });
-  }, [transactions, search, categoryFilter, paymentFilter, dateFrom, amountMin]);
+  }, [transactions, filters, categories]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -213,8 +212,8 @@ export function TransactionTable({
     return arr;
   }, [filtered, sortKey, sortDir]);
 
-  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-  const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(sorted.length / pageSize);
+  const paginated = sorted.slice(page * pageSize, (page + 1) * pageSize);
 
   if (transactions.length === 0) {
     return (
@@ -253,62 +252,6 @@ export function TransactionTable({
           value={String(transactions.length)}
           colorClass="text-muted-foreground"
         />
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        <Input
-          placeholder="Buscar descrição..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-8 w-48 text-sm"
-        />
-        {showCategoryCol && (
-          <CategoryCombobox
-            categories={usedParentCategoryIds.map((cid) => ({
-              id: cid,
-              name: byCategoryId[cid] ?? cid,
-              parentId: null,
-            }))}
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            placeholder="Todas categorias"
-            className="h-8 w-44 text-sm"
-          />
-        )}
-        {paymentMethods.length > 0 && (
-          <Select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="h-8 w-40 text-sm"
-          >
-            <option value="">Todos métodos</option>
-            {paymentMethods.map((pm) => (
-              <option key={pm} value={pm}>
-                {PAYMENT_LABELS[pm] ?? pm}
-              </option>
-            ))}
-          </Select>
-        )}
-        <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-8 w-36 text-sm" />
-        <Input
-          type="number"
-          placeholder="Valor mín"
-          value={amountMin}
-          onChange={(e) => setAmountMin(e.target.value)}
-          className="h-8 w-28 text-sm"
-          min={0}
-        />
-        {(search || categoryFilter || paymentFilter || dateFrom || amountMin) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs text-muted-foreground"
-            onClick={() => { setSearch(""); setCategoryFilter(""); setPaymentFilter(""); setDateFrom(""); setAmountMin(""); }}
-          >
-            Limpar filtros ×
-          </Button>
-        )}
       </div>
 
       {/* Table */}
@@ -405,29 +348,35 @@ export function TransactionTable({
         </Table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            ← Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {page + 1} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page + 1 >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Próximo →
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center justify-between pt-1">
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => { setPageSize(size); setPage(0); }}
+        />
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

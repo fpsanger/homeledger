@@ -292,7 +292,16 @@ export function TransactionTable({
                   <TableCell className="text-sm">
                     {byPersonId[t.personId] ?? t.personId}
                   </TableCell>
-                  <TableCell className="text-sm">{t.description || "—"}</TableCell>
+                  <TableCell className="text-sm">
+                    <span className="inline-flex items-center gap-2">
+                      {t.description || "—"}
+                      {t.isRecurring && (
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          Recorrente
+                        </span>
+                      )}
+                    </span>
+                  </TableCell>
                   {showCategoryCol && (
                     <TableCell className="text-sm text-muted-foreground">
                       {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}

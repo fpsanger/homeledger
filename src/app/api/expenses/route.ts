@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createExpenseUseCase } from "../../../application/use-cases/CreateExpenseUseCase";
 import type { TransactionRecord } from "../../../domain/repositories/ITransactionRepository";
+import { parseDateUTC } from "../_lib/date";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
         id: crypto.randomUUID(),
         personId: body.personId,
         amount: body.amount,
-        date: new Date(body.date),
+        date: parseDateUTC(body.date),
         description: body.description ?? "",
         paymentMethod: body.paymentMethod,
         categoryId: body.categoryId ?? null,

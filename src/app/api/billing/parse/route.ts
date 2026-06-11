@@ -97,9 +97,9 @@ export async function POST(request: NextRequest) {
     let detectedBank = bank ?? "unknown";
     if (isCSVFile(file)) {
       const isBtg = detectedBank === "btg";
-      const encoding = isBtg ? "utf-8" : "latin1";
-      const csvText = new TextDecoder(encoding).decode(buffer);
       const isBradesco = detectedBank === "bradesco";
+      const encoding = "utf-8";
+      const csvText = new TextDecoder(encoding).decode(buffer);
       items = isBtg ? parseBtgCsv(csvText) : isBradesco ? parseBradescoCsv(csvText) : parseC6Csv(csvText);
     } else {
       let text: string;

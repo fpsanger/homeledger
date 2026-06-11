@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { deleteTransactionUseCase } from "../../../../application/use-cases/DeleteTransactionUseCase";
 import { updateExpenseUseCase } from "../../../../application/use-cases/UpdateExpenseUseCase";
+import { parseDateUTC } from "../../_lib/date";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
@@ -34,7 +35,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         id: params.id,
         personId,
         amount,
-        date: new Date(date),
+        date: parseDateUTC(date),
         paymentMethod: paymentMethod as PaymentMethod,
         categoryId,
         description,

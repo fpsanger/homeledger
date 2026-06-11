@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { updateIncomeUseCase } from "../../../../application/use-cases/UpdateIncomeUseCase";
 import type { IncomeSource } from "../../../../domain/repositories/ITransactionRepository";
+import { parseDateUTC } from "../../_lib/date";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
@@ -25,7 +26,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         id: params.id,
         personId,
         amount,
-        date: new Date(date),
+        date: parseDateUTC(date),
         source: source as IncomeSource,
         categoryId,
         description,

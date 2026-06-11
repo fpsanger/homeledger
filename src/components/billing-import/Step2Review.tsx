@@ -30,7 +30,10 @@ const BANK_LABELS: Record<string, string> = {
 
 function formatDate(date: Date | string) {
   const d = new Date(date);
-  return d.toLocaleDateString("pt-BR");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBack }: Props) {

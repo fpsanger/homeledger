@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createLoyaltyTransactionUseCase } from "../../../../application/use-cases/loyalty/CreateLoyaltyTransactionUseCase";
+import { parseDateUTC } from "../../_lib/date";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 import type { LoyaltyTransactionType } from "../../../../domain/entities/LoyaltyTransaction";
@@ -29,9 +30,9 @@ export async function POST(request: NextRequest) {
         personId: body.personId ?? null,
         type: body.type,
         points: body.points,
-        date: new Date(body.date),
+        date: parseDateUTC(body.date),
         description: body.description ?? null,
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+        expiresAt: body.expiresAt ? parseDateUTC(body.expiresAt) : null,
         costBrl: body.costBrl ?? null,
         valueBrl: body.valueBrl ?? null,
       },

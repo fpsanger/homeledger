@@ -448,6 +448,11 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     }));
   }
 
+  async findPurchaseById(id: string): Promise<CreditCardPurchaseRecord | null> {
+    const row = await this.prisma.creditCardPurchase.findUnique({ where: { id } });
+    return row ? purchaseToRecord(row) : null;
+  }
+
   async findPurchasesByPersonAndMonth(
     personId: string,
     year: number,

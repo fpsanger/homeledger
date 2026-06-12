@@ -140,12 +140,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const filteredItems = items.filter((item) => {
+      const d = item.date;
+      return d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
+    });
+
     const { creditCardPurchase, transaction } = createRepositories();
 
     const reconciledItems = await reconcileStatementUseCase(
       creditCardPurchase,
       transaction,
-      items,
+      filteredItems,
       personId,
       year,
       month,

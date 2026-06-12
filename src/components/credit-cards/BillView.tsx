@@ -7,7 +7,9 @@ import {
   ChevronDown,
   ChevronRight,
   CreditCard,
+  MoreHorizontal,
   Package,
+  Plus,
   Receipt,
   Users,
   ArrowUp,
@@ -20,8 +22,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog } from "@/components/ui/dialog";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 import { formatDatePtBR } from "@/lib/format-date";
+import { formatAmountBR } from "@/lib/utils";
 import { getFullPath } from "@/lib/categoryUtils";
 
 type BillSortKey = "description" | "amount" | "date";
@@ -34,6 +40,26 @@ function BillSortIcon({ col, sortKey, sortDir }: { col: BillSortKey; sortKey: Bi
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null };
+type CreditCardFull = {
+  id: string;
+  name: string;
+  closureType: "FIXED" | "VARIABLE";
+  fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
+  alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
+};
+
+type PurchaseRecord = {
+  id: string;
+  personId: string;
+  creditCardId: string | null;
+  description: string;
+  totalAmount: number;
+  numberOfInstallments: number;
+  purchaseDate: string;
+  categoryId: string | null;
+};
 
 type BillInstallmentItem = {
   id: string;
@@ -65,10 +91,6 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function formatDate(dateStr: string) {
-  return formatDatePtBR(dateStr);
-}
-
 function SummaryCard({
   icon,
   label,
@@ -93,10 +115,16 @@ function CardInstallmentTable({
   installments,
   personMap,
   categoryMap,
+  onEdit,
+  onDelete,
+  deletingId,
 }: {
   installments: BillInstallmentItem[];
   personMap: Map<string, string>;
   categoryMap: Map<string, string>;
+  onEdit: (purchaseId: string) => void;
+  onDelete: (purchaseId: string) => void;
+  deletingId: string | null;
 }) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -229,62 +257,123 @@ function CardInstallmentTable({
                   <BillSortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
                 </span>
               </th>
+              <th className="px-5 py-2.5 font-medium text-xs w-10" />
             </tr>
           </thead>
           <tbody>
-            {sorted.map((inst) => (
-              <tr
-                key={inst.id}
-                className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}`}
-              >
-                <td className="px-5 py-3">
-                  <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-                </td>
-                <td className="px-5 py-3">
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {inst.installmentNumber}/{inst.numberOfInstallments}
-                  </Badge>
-                </td>
-                <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
-                  {formatDatePtBR(inst.purchaseDate)}
-                </td>
-                <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
-                  {personMap.get(inst.personId) ?? "—"}
-                </td>
-                <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
-                  {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
-                </td>
-                <td className="px-5 py-3 text-right font-medium text-sm">
-                  {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </td>
-              </tr>
-            ))}
+            {sorted.map((inst) => {
+              const isDeleting = deletingId === inst.creditCardPurchaseId;
+              return (
+                <tr
+                  key={inst.id}
+                  className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}${isDeleting ? " opacity-50" : ""}`}
+                >
+                  <td className="px-5 py-3">
+                    <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+                  </td>
+                  <td className="px-5 py-3">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {inst.installmentNumber}/{inst.numberOfInstallments}
+                    </Badge>
+                  </td>
+                  <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                    {formatDatePtBR(inst.purchaseDate)}
+                  </td>
+                  <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                    {personMap.get(inst.personId) ?? "—"}
+                  </td>
+                  <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                    {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-right font-medium text-sm">
+                    {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <DropdownMenu
+                      align="right"
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground"
+                          aria-label="Ações"
+                          disabled={isDeleting}
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      }
+                      items={[
+                        {
+                          label: "Editar compra",
+                          onClick: () => onEdit(inst.creditCardPurchaseId),
+                        },
+                        {
+                          label: isDeleting ? "Excluindo…" : "Excluir compra",
+                          onClick: () => onDelete(inst.creditCardPurchaseId),
+                          variant: "destructive",
+                        },
+                      ]}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       {/* Mobile cards */}
       <div className="sm:hidden flex flex-col divide-y">
-        {sorted.map((inst) => (
-          <div key={inst.id} className="px-4 py-3 flex flex-col gap-1">
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-              <p className="font-semibold text-sm shrink-0">
-                {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-              </p>
+        {sorted.map((inst) => {
+          const isDeleting = deletingId === inst.creditCardPurchaseId;
+          return (
+            <div key={inst.id} className={`px-4 py-3 flex flex-col gap-1${isDeleting ? " opacity-50" : ""}`}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+                <div className="flex items-center gap-1 shrink-0">
+                  <p className="font-semibold text-sm">
+                    {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </p>
+                  <DropdownMenu
+                    align="right"
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground"
+                        aria-label="Ações"
+                        disabled={isDeleting}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    }
+                    items={[
+                      {
+                        label: "Editar compra",
+                        onClick: () => onEdit(inst.creditCardPurchaseId),
+                      },
+                      {
+                        label: isDeleting ? "Excluindo…" : "Excluir compra",
+                        onClick: () => onDelete(inst.creditCardPurchaseId),
+                        variant: "destructive",
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="outline" className="font-mono text-xs">
+                  {inst.installmentNumber}/{inst.numberOfInstallments}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{formatDatePtBR(inst.purchaseDate)}</span>
+                <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
+                {inst.categoryId && (
+                  <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="font-mono text-xs">
-                {inst.installmentNumber}/{inst.numberOfInstallments}
-              </Badge>
-              <span className="text-xs text-muted-foreground">{formatDatePtBR(inst.purchaseDate)}</span>
-              <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
-              {inst.categoryId && (
-                <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
@@ -296,25 +385,41 @@ type BillViewProps = {
 
 export function BillView({ initialPersonId = "" }: BillViewProps) {
   const now = new Date();
+  const today = now.toISOString().split("T")[0];
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [bill, setBill] = useState<BillEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [people, setPeople] = useState<Person[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [creditCards, setCreditCards] = useState<CreditCardFull[]>([]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [paying, setPaying] = useState<Set<string>>(new Set());
   const [unpaying, setUnpaying] = useState<Set<string>>(new Set());
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingPurchaseId, setEditingPurchaseId] = useState<string | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<PurchaseRecord | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/people").then((r) => r.json()),
       fetch("/api/categories").then((r) => r.json()),
-    ]).then(([pd, cd]) => {
+      fetch("/api/credit-cards").then((r) => r.json()),
+    ]).then(([pd, cd, cc]) => {
       setPeople(pd.people ?? []);
       setCategories(cd.categories ?? []);
+      setCreditCards(cc.cards ?? []);
     });
   }, []);
+
+  useEffect(() => {
+    if (!editingPurchaseId) { setEditingPurchase(null); return; }
+    fetch(`/api/credit-card-purchases/${editingPurchaseId}`)
+      .then((r) => r.json())
+      .then((d) => setEditingPurchase(d.purchase ?? null));
+  }, [editingPurchaseId]);
 
   async function load(y: number, m: number, pid: string) {
     setLoading(true);
@@ -333,16 +438,21 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
   }, [year, month, initialPersonId]);
 
   function prev() {
-    if (month === 1) {
-      setYear((y) => y - 1);
-      setMonth(12);
-    } else setMonth((m) => m - 1);
+    if (month === 1) { setYear((y) => y - 1); setMonth(12); }
+    else setMonth((m) => m - 1);
   }
   function next() {
-    if (month === 12) {
-      setYear((y) => y + 1);
-      setMonth(1);
-    } else setMonth((m) => m + 1);
+    if (month === 12) { setYear((y) => y + 1); setMonth(1); }
+    else setMonth((m) => m + 1);
+  }
+
+  async function deletePurchase(purchaseId: string) {
+    setDeletingId(purchaseId);
+    const res = await fetch(`/api/credit-card-purchases/${purchaseId}`, { method: "DELETE" });
+    setDeletingId(null);
+    if (!res.ok) { toast.error("Falha ao excluir."); return; }
+    toast.success("Compra excluída.");
+    load(year, month, initialPersonId);
   }
 
   async function payFatura(cardId: string, installments: BillInstallmentItem[]) {
@@ -352,12 +462,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
     setBill((prev) =>
       prev.map((entry) =>
         entry.card.id === cardId
-          ? {
-              ...entry,
-              installments: entry.installments.map((i) =>
-                ids.includes(i.id) ? { ...i, isPaid: true } : i,
-              ),
-            }
+          ? { ...entry, installments: entry.installments.map((i) => ids.includes(i.id) ? { ...i, isPaid: true } : i) }
           : entry,
       ),
     );
@@ -373,22 +478,13 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
       setBill((prev) =>
         prev.map((entry) =>
           entry.card.id === cardId
-            ? {
-                ...entry,
-                installments: entry.installments.map((i) =>
-                  ids.includes(i.id) ? { ...i, isPaid: false } : i,
-                ),
-              }
+            ? { ...entry, installments: entry.installments.map((i) => ids.includes(i.id) ? { ...i, isPaid: false } : i) }
             : entry,
         ),
       );
       toast.error("Erro ao pagar fatura.");
     } finally {
-      setPaying((prev) => {
-        const next = new Set(prev);
-        next.delete(cardId);
-        return next;
-      });
+      setPaying((prev) => { const next = new Set(prev); next.delete(cardId); return next; });
     }
   }
 
@@ -399,12 +495,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
     setBill((prev) =>
       prev.map((entry) =>
         entry.card.id === cardId
-          ? {
-              ...entry,
-              installments: entry.installments.map((i) =>
-                ids.includes(i.id) ? { ...i, isPaid: false } : i,
-              ),
-            }
+          ? { ...entry, installments: entry.installments.map((i) => ids.includes(i.id) ? { ...i, isPaid: false } : i) }
           : entry,
       ),
     );
@@ -420,22 +511,13 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
       setBill((prev) =>
         prev.map((entry) =>
           entry.card.id === cardId
-            ? {
-                ...entry,
-                installments: entry.installments.map((i) =>
-                  ids.includes(i.id) ? { ...i, isPaid: true } : i,
-                ),
-              }
+            ? { ...entry, installments: entry.installments.map((i) => ids.includes(i.id) ? { ...i, isPaid: true } : i) }
             : entry,
         ),
       );
       toast.error("Erro ao estornar fatura.");
     } finally {
-      setUnpaying((prev) => {
-        const next = new Set(prev);
-        next.delete(cardId);
-        return next;
-      });
+      setUnpaying((prev) => { const next = new Set(prev); next.delete(cardId); return next; });
     }
   }
 
@@ -456,15 +538,67 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Filters */}
+      {/* Add dialog */}
+      <Dialog open={showAdd} onClose={() => setShowAdd(false)} title="Nova transação">
+        <UnifiedTransactionForm
+          people={people}
+          categories={categories}
+          creditCards={creditCards}
+          allowedTypes={["credit"]}
+          initialValues={{
+            type: "credit",
+            personId: "",
+            amount: "",
+            date: today,
+            paymentMethod: "CREDIT_CARD",
+            source: "SALARY",
+            creditCardId: "",
+            categoryId: "",
+            description: "",
+          }}
+          onSuccess={() => { setShowAdd(false); load(year, month, initialPersonId); }}
+        />
+      </Dialog>
+
+      {/* Edit dialog */}
+      <Dialog
+        open={!!editingPurchase}
+        onClose={() => setEditingPurchaseId(null)}
+        title="Editar compra"
+      >
+        {editingPurchase && (
+          <UnifiedTransactionForm
+            people={people}
+            categories={categories}
+            creditCards={creditCards}
+            editMode={{ purchaseId: editingPurchase.id }}
+            initialValues={{
+              type: "credit",
+              personId: editingPurchase.personId,
+              amount: formatAmountBR(editingPurchase.totalAmount),
+              date: editingPurchase.purchaseDate.toString().split("T")[0],
+              paymentMethod: "CREDIT_CARD",
+              source: "SALARY",
+              creditCardId: editingPurchase.creditCardId ?? "",
+              categoryId: editingPurchase.categoryId ?? "",
+              description: editingPurchase.description,
+            }}
+            onSuccess={() => { setEditingPurchaseId(null); load(year, month, initialPersonId); }}
+          />
+        )}
+      </Dialog>
+
+      {/* Filters + Nova compra */}
       <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="outline" size="sm" onClick={prev}>
-          ←
-        </Button>
+        <Button variant="outline" size="sm" onClick={prev}>←</Button>
         <span className="font-medium capitalize">{formatMonth(year, month)}</span>
-        <Button variant="outline" size="sm" onClick={next}>
-          →
-        </Button>
+        <Button variant="outline" size="sm" onClick={next}>→</Button>
+        <div className="ml-auto">
+          <Button size="sm" onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-1" />
+            Nova compra
+          </Button>
+        </div>
       </div>
 
       {loading && <p className="text-sm text-muted-foreground">Carregando…</p>}
@@ -473,26 +607,10 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <SummaryCard
-              icon={<Receipt className="w-5 h-5" />}
-              label="Total da fatura"
-              value={formatCurrency(totalBill)}
-            />
-            <SummaryCard
-              icon={<CreditCard className="w-5 h-5" />}
-              label="Cartões"
-              value={String(bill.length)}
-            />
-            <SummaryCard
-              icon={<Package className="w-5 h-5" />}
-              label="Parcelas"
-              value={String(totalItems)}
-            />
-            <SummaryCard
-              icon={<Users className="w-5 h-5" />}
-              label="Pessoas"
-              value={String(uniquePeople)}
-            />
+            <SummaryCard icon={<Receipt className="w-5 h-5" />} label="Total da fatura" value={formatCurrency(totalBill)} />
+            <SummaryCard icon={<CreditCard className="w-5 h-5" />} label="Cartões" value={String(bill.length)} />
+            <SummaryCard icon={<Package className="w-5 h-5" />} label="Parcelas" value={String(totalItems)} />
+            <SummaryCard icon={<Users className="w-5 h-5" />} label="Pessoas" value={String(uniquePeople)} />
           </div>
 
           {/* Empty state */}
@@ -539,9 +657,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Vence: dia {entry.dueDayOfMonth}
-                        </p>
+                        <p className="text-xs text-muted-foreground">Vence: dia {entry.dueDayOfMonth}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -550,10 +666,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                           variant="outline"
                           size="sm"
                           disabled={paying.has(entry.card.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            payFatura(entry.card.id, entry.installments);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); payFatura(entry.card.id, entry.installments); }}
                         >
                           {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
                         </Button>
@@ -563,10 +676,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                           variant="destructive"
                           size="sm"
                           disabled={unpaying.has(entry.card.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            unpayFatura(entry.card.id, entry.installments);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); unpayFatura(entry.card.id, entry.installments); }}
                         >
                           {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
                         </Button>
@@ -586,6 +696,9 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                       installments={entry.installments}
                       personMap={personMap}
                       categoryMap={categoryMap}
+                      onEdit={setEditingPurchaseId}
+                      onDelete={deletePurchase}
+                      deletingId={deletingId}
                     />
                   </CollapsibleContent>
                 </Card>

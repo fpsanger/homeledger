@@ -2,6 +2,17 @@ import { NextRequest } from "next/server";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
+export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const { creditCardPurchase } = createRepositories();
+    const purchase = await creditCardPurchase.findPurchaseById(params.id);
+    if (!purchase) return Response.json({ error: "Not found" }, { status: 404 });
+    return Response.json({ purchase });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { creditCardPurchase } = createRepositories();

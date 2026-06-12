@@ -70,6 +70,11 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
   ): Promise<import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord[]> {
     return [];
   }
+  async findPurchaseById(
+    _id: string,
+  ): Promise<import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord | null> {
+    return null;
+  }
   async updatePurchase(
     _id: string,
     _data: Pick<

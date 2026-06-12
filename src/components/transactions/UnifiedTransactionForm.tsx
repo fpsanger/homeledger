@@ -119,6 +119,7 @@ type Props = {
   onSuccess?: () => void;
   editMode?: EditMode;
   initialValues?: InitialValues;
+  allowedTypes?: FormType[];
 };
 
 export function UnifiedTransactionForm({
@@ -129,6 +130,7 @@ export function UnifiedTransactionForm({
   onSuccess,
   editMode,
   initialValues,
+  allowedTypes,
 }: Props) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
@@ -304,7 +306,7 @@ export function UnifiedTransactionForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {!isEditMode && (
         <div className="flex rounded-lg border overflow-hidden">
-          {(["expense", "income", "credit"] as FormType[]).map((t) => (
+          {(allowedTypes ?? (["expense", "income", "credit"] as FormType[])).map((t) => (
             <button
               key={t}
               type="button"

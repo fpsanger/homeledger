@@ -1,13 +1,12 @@
 import type { CreditCardPurchaseRecord } from "../repositories/ICreditCardPurchaseRepository";
 
-function sameDay(a: Date | string, dateStr: string): boolean {
+const DUPLICATE_WINDOW_DAYS = 30;
+
+function withinDays(a: Date | string, dateStr: string): boolean {
   const aDate = a instanceof Date ? a : new Date(a);
   const b = new Date(dateStr);
-  return (
-    aDate.getUTCFullYear() === b.getUTCFullYear() &&
-    aDate.getUTCMonth() === b.getUTCMonth() &&
-    aDate.getUTCDate() === b.getUTCDate()
-  );
+  const diff = Math.abs(aDate.getTime() - b.getTime());
+  return diff <= DUPLICATE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 }
 
 export function isDuplicateCreditCardPurchase(
@@ -20,6 +19,6 @@ export function isDuplicateCreditCardPurchase(
 
   return existing.some(
     (p) =>
-      p.totalAmount === amount && p.creditCardId === creditCardId && sameDay(p.purchaseDate, date),
+      p.totalAmount === amount && p.creditCardId === creditCardId && withinDays(p.purchaseDate, date),
   );
 }

@@ -19,13 +19,19 @@ export function useCrossEntityDuplicateCheck(
     }
 
     const d = date ? new Date(date) : new Date();
-    const year = d.getUTCFullYear();
-    const month = d.getUTCMonth() + 1;
+    const months = [-1, 0, 1].map((offset) => {
+      const m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1));
+      return { year: m.getUTCFullYear(), month: m.getUTCMonth() + 1 };
+    });
 
-    fetch(`/api/credit-card-purchases?year=${year}&month=${month}`)
-      .then((res) => res.json())
-      .then((data) => setPurchases(data.purchases ?? []))
-      .catch(() => {});
+    Promise.all(
+      months.map(({ year, month }) =>
+        fetch(`/api/credit-card-purchases?year=${year}&month=${month}`)
+          .then((res) => res.json())
+          .then((data) => data.purchases ?? [])
+          .catch(() => []),
+      ),
+    ).then((results) => setPurchases(results.flat()));
   }, [date, paymentMethod, refreshKey]);
 
   return isCrossEntityDuplicate(purchases, amount, date);

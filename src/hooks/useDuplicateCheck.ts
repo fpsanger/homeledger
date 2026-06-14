@@ -14,13 +14,19 @@ export function useDuplicateCheck(
 
   useEffect(() => {
     const d = date ? new Date(date) : new Date();
-    const year = d.getUTCFullYear();
-    const month = d.getUTCMonth() + 1;
+    const months = [-1, 0, 1].map((offset) => {
+      const m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1));
+      return { year: m.getUTCFullYear(), month: m.getUTCMonth() + 1 };
+    });
 
-    fetch(`/api/monthly-view?year=${year}&month=${month}`)
-      .then((res) => res.json())
-      .then((data) => setTransactions(data.transactions ?? []))
-      .catch(() => {});
+    Promise.all(
+      months.map(({ year, month }) =>
+        fetch(`/api/monthly-view?year=${year}&month=${month}`)
+          .then((res) => res.json())
+          .then((data) => data.transactions ?? [])
+          .catch(() => []),
+      ),
+    ).then((results) => setTransactions(results.flat()));
   }, [date, refreshKey]);
 
   return isDuplicateTransaction(transactions, type, amount, date);

@@ -1,13 +1,12 @@
 import type { CreditCardPurchaseRecord } from "../repositories/ICreditCardPurchaseRepository";
 
-function sameDay(a: Date | string, dateStr: string): boolean {
+const DUPLICATE_WINDOW_DAYS = 30;
+
+function withinDays(a: Date | string, dateStr: string): boolean {
   const aDate = a instanceof Date ? a : new Date(a);
   const b = new Date(dateStr);
-  return (
-    aDate.getUTCFullYear() === b.getUTCFullYear() &&
-    aDate.getUTCMonth() === b.getUTCMonth() &&
-    aDate.getUTCDate() === b.getUTCDate()
-  );
+  const diff = Math.abs(aDate.getTime() - b.getTime());
+  return diff <= DUPLICATE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 }
 
 export function isCrossEntityDuplicate(
@@ -16,5 +15,5 @@ export function isCrossEntityDuplicate(
   date: string | null,
 ): boolean {
   if (amount === null || date === null) return false;
-  return existing.some((p) => p.totalAmount === amount && sameDay(p.purchaseDate, date));
+  return existing.some((p) => p.totalAmount === amount && withinDays(p.purchaseDate, date));
 }

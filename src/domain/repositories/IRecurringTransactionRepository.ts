@@ -29,6 +29,7 @@ type UpdateableFields = Partial<
 
 export interface IRecurringTransactionRepository {
   findById(id: string): Promise<RecurringTransactionRecord | null>;
+  findAll(personId?: string): Promise<RecurringTransactionRecord[]>;
   findActiveByPersonAndMonth(
     personId: string,
     year: number,

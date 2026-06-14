@@ -13,15 +13,15 @@ export function useCreditCardDuplicateCheck(
   const [purchases, setPurchases] = useState<CreditCardPurchaseRecord[]>([]);
 
   useEffect(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    const d = date ? new Date(date) : new Date();
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth() + 1;
 
     fetch(`/api/credit-card-purchases?year=${year}&month=${month}`)
       .then((res) => res.json())
       .then((data) => setPurchases(data.purchases ?? []))
       .catch(() => {});
-  }, [refreshKey]);
+  }, [date, refreshKey]);
 
   return isDuplicateCreditCardPurchase(purchases, amount, date, creditCardId);
 }

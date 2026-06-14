@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { useCreditCardDuplicateCheck } from "@/hooks/useCreditCardDuplicateCheck";
+import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -176,6 +177,12 @@ export function UnifiedTransactionForm({
     type === "credit" && amount ? parseCurrencyBR(amount) : null,
     type === "credit" ? date : null,
     type === "credit" ? creditCardId : null,
+    refreshKey,
+  );
+  const isCrossEntityDup = useCrossEntityDuplicateCheck(
+    type === "expense" && amount ? parseCurrencyBR(amount) : null,
+    type === "expense" ? date : null,
+    type === "expense" ? paymentMethod : null,
     refreshKey,
   );
 
@@ -516,7 +523,7 @@ export function UnifiedTransactionForm({
         />
       </div>
 
-      {!isEditMode && (isDuplicate || isCreditDuplicate) && (
+      {!isEditMode && (isDuplicate || isCreditDuplicate || isCrossEntityDup) && (
         <p className="text-sm text-amber-600">
           Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
           mesmo assim.

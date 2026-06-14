@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { createRecurringTransactionUseCase } from "../../../application/use-cases/CreateRecurringTransactionUseCase";
 import type { RecurringTransactionRecord } from "../../../domain/repositories/IRecurringTransactionRepository";
-import type { TransactionRecord } from "../../../domain/repositories/ITransactionRepository";
+import type { PaymentMethod } from "../../../domain/entities/Transaction";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
 const VALID_TYPES: RecurringTransactionRecord["type"][] = ["INCOME", "EXPENSE"];
-const VALID_PAYMENT_METHODS: TransactionRecord["paymentMethod"][] = [
+const VALID_PAYMENT_METHODS: PaymentMethod[] = [
   "CASH",
   "DEBIT_CARD",
   "CREDIT_CARD",

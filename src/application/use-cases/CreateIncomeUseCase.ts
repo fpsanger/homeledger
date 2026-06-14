@@ -3,7 +3,7 @@ import type { ICategoryRepository } from "../../domain/repositories/ICategoryRep
 import type {
   IncomeSource,
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../domain/repositories/ITransactionRepository";
 import { validateIncomeCategory } from "../../domain/services/CategoryTree";
 import { isDuplicateTransaction } from "../../domain/services/isDuplicateTransaction";
@@ -22,7 +22,7 @@ export async function createIncomeUseCase(
   input: Input,
   repo: ITransactionRepository,
   categoryRepo: ICategoryRepository,
-): Promise<{ record: TransactionRecord; isDuplicate: boolean }> {
+): Promise<{ record: Transaction; isDuplicate: boolean }> {
   const income = createIncome(input);
 
   const year = input.date.getUTCFullYear();

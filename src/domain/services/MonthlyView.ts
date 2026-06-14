@@ -1,10 +1,10 @@
 import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
 import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
-import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import type { Transaction } from "../repositories/ITransactionRepository";
 
 type MonthlyViewInput = {
-  transactions: TransactionRecord[];
+  transactions: Transaction[];
   /** Must already be scoped to personId by the caller — InstallmentRecord has no personId field */
   installments: InstallmentRecord[];
   recurringRules?: RecurringTransactionRecord[];
@@ -15,7 +15,7 @@ type MonthlyViewInput = {
 };
 
 type MonthlyViewResult = {
-  transactions: TransactionRecord[];
+  transactions: Transaction[];
   installments: InstallmentRecord[];
 };
 

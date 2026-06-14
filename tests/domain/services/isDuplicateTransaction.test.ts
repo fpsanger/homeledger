@@ -1,7 +1,7 @@
 import { isDuplicateTransaction } from "../../../src/domain/services/isDuplicateTransaction";
-import type { TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type { Transaction } from "../../../src/domain/repositories/ITransactionRepository";
 
-function makeTransaction(overrides: Partial<TransactionRecord> = {}): TransactionRecord {
+function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
   return {
     id: "1",
     personId: "person-1",
@@ -12,8 +12,6 @@ function makeTransaction(overrides: Partial<TransactionRecord> = {}): Transactio
     paymentMethod: "CASH",
     source: null,
     categoryId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...overrides,
   };
 }

@@ -1,16 +1,16 @@
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../../src/domain/repositories/ITransactionRepository";
 
 class InMemoryTransactionRepository implements ITransactionRepository {
-  private store: TransactionRecord[] = [];
+  private store: Transaction[] = [];
 
-  async findById(id: string): Promise<TransactionRecord | null> {
+  async findById(id: string): Promise<Transaction | null> {
     return this.store.find((t) => t.id === id) ?? null;
   }
 
-  async findByMonth(year: number, month: number): Promise<TransactionRecord[]> {
+  async findByMonth(year: number, month: number): Promise<Transaction[]> {
     return this.store.filter((t) => {
       const d = new Date(t.date);
       return d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
@@ -21,7 +21,7 @@ class InMemoryTransactionRepository implements ITransactionRepository {
     personId: string,
     year: number,
     month: number,
-  ): Promise<TransactionRecord[]> {
+  ): Promise<Transaction[]> {
     return this.store.filter((t) => {
       const d = new Date(t.date);
       return (
@@ -30,38 +30,37 @@ class InMemoryTransactionRepository implements ITransactionRepository {
     });
   }
 
-  async findByYear(year: number): Promise<TransactionRecord[]> {
+  async findByYear(year: number): Promise<Transaction[]> {
     return this.store.filter((t) => {
       const d = new Date(t.date);
       return d.getUTCFullYear() === year;
     });
   }
 
-  async findByPersonAndYear(personId: string, year: number): Promise<TransactionRecord[]> {
+  async findByPersonAndYear(personId: string, year: number): Promise<Transaction[]> {
     return this.store.filter((t) => {
       const d = new Date(t.date);
       return t.personId === personId && d.getUTCFullYear() === year;
     });
   }
 
-  async save(t: Omit<TransactionRecord, "createdAt" | "updatedAt">): Promise<TransactionRecord> {
-    const record: TransactionRecord = { ...t, createdAt: new Date(), updatedAt: new Date() };
+  async save(t: Transaction): Promise<Transaction> {
     const idx = this.store.findIndex((r) => r.id === t.id);
     if (idx >= 0) {
-      this.store[idx] = record;
+      this.store[idx] = t;
     } else {
-      this.store.push(record);
+      this.store.push(t);
     }
-    return record;
+    return t;
   }
 
   async update(
     id: string,
-    fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>,
-  ): Promise<TransactionRecord> {
+    fields: Partial<Omit<Transaction, "id">>,
+  ): Promise<Transaction> {
     const idx = this.store.findIndex((t) => t.id === id);
     if (idx < 0) throw new Error(`Transaction ${id} not found`);
-    this.store[idx] = { ...this.store[idx], ...fields, updatedAt: new Date() };
+    this.store[idx] = { ...this.store[idx], ...fields };
     return this.store[idx];
   }
 
@@ -70,9 +69,7 @@ class InMemoryTransactionRepository implements ITransactionRepository {
   }
 }
 
-const makeExpense = (
-  overrides: Partial<TransactionRecord> = {},
-): Omit<TransactionRecord, "createdAt" | "updatedAt"> => ({
+const makeExpense = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: "txn-1",
   personId: "person-1",
   type: "EXPENSE",

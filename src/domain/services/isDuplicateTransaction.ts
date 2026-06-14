@@ -1,4 +1,4 @@
-import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import type { Transaction } from "../repositories/ITransactionRepository";
 
 function sameDay(a: Date | string, dateStr: string): boolean {
   const aDate = a instanceof Date ? a : new Date(a);
@@ -11,7 +11,7 @@ function sameDay(a: Date | string, dateStr: string): boolean {
 }
 
 export function isDuplicateTransaction(
-  existing: TransactionRecord[],
+  existing: Transaction[],
   type: "EXPENSE" | "INCOME" | "INVESTMENT",
   amount: number | null,
   date: string | null,

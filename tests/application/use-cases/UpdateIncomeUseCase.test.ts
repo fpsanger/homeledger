@@ -5,7 +5,7 @@ import type {
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../../src/domain/repositories/ITransactionRepository";
 
 const makeTransactionRepo = (
@@ -16,12 +16,10 @@ const makeTransactionRepo = (
   findByPersonAndMonth: async () => [],
   findByYear: async () => [],
   findByPersonAndYear: async () => [],
-  save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }) as TransactionRecord,
+  save: async (r) => ({ ...r }),
   update: async (id, fields) =>
     ({
       id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
       personId: "",
       type: "INCOME",
       amount: 0,
@@ -31,7 +29,7 @@ const makeTransactionRepo = (
       source: null,
       categoryId: null,
       ...fields,
-    }) as TransactionRecord,
+    }) as Transaction,
   delete: async () => {},
   ...overrides,
 });
@@ -49,7 +47,7 @@ const makeCategoryRepo = (
   ...overrides,
 });
 
-const existingRecord: TransactionRecord = {
+const existingRecord: Transaction = {
   id: "inc-1",
   personId: "person-1",
   type: "INCOME",
@@ -59,8 +57,6 @@ const existingRecord: TransactionRecord = {
   paymentMethod: null,
   source: "SALARY",
   categoryId: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
 };
 
 const makeRepoWithExisting = (overrides: Partial<ITransactionRepository> = {}) =>
@@ -89,11 +85,9 @@ describe("UpdateIncomeUseCase", () => {
     const updateFn = jest.fn(
       async (
         id: string,
-        fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>,
+        fields: Partial<Omit<Transaction, "id">>,
       ) => ({
         id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
         personId: "",
         type: "INCOME" as const,
         amount: 0,

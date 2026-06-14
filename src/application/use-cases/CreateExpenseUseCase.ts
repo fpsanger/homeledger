@@ -2,8 +2,9 @@ import { createExpense } from "../../domain/entities/Transaction";
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../domain/repositories/ITransactionRepository";
+import type { PaymentMethod } from "../../domain/entities/Transaction";
 import { validateExpenseCategory } from "../../domain/services/CategoryTree";
 import { isDuplicateTransaction } from "../../domain/services/isDuplicateTransaction";
 
@@ -13,7 +14,7 @@ type Input = {
   amount: number;
   date: Date;
   description: string;
-  paymentMethod: Exclude<TransactionRecord["paymentMethod"], null>;
+  paymentMethod: PaymentMethod;
   categoryId: string | null;
 };
 
@@ -21,7 +22,7 @@ export async function createExpenseUseCase(
   input: Input,
   repo: ITransactionRepository,
   categoryRepo: ICategoryRepository,
-): Promise<{ record: TransactionRecord; isDuplicate: boolean }> {
+): Promise<{ record: Transaction; isDuplicate: boolean }> {
   const expense = createExpense(input);
 
   const year = input.date.getUTCFullYear();

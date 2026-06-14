@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isDuplicateTransaction } from "../domain/services/isDuplicateTransaction";
-import type { TransactionRecord } from "../domain/repositories/ITransactionRepository";
+import type { Transaction } from "../domain/repositories/ITransactionRepository";
 
 export function useDuplicateCheck(
   type: "EXPENSE" | "INCOME" | "INVESTMENT",
@@ -10,7 +10,7 @@ export function useDuplicateCheck(
   date: string | null,
   refreshKey = 0,
 ): boolean {
-  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     const now = new Date();

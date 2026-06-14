@@ -1,5 +1,5 @@
 import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
-import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import type { Transaction } from "../repositories/ITransactionRepository";
 
 type CreateRecurringInput = {
   id: string;
@@ -65,7 +65,7 @@ export function generateOccurrence(
   rule: RecurringTransactionRecord,
   year: number,
   month: number,
-): TransactionRecord {
+): Transaction {
   const startDay = rule.startDate.getUTCDate();
   const lastDayOfMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const day = Math.min(startDay, lastDayOfMonth);
@@ -80,8 +80,6 @@ export function generateOccurrence(
     paymentMethod: rule.paymentMethod,
     source: null,
     categoryId: rule.categoryId,
-    createdAt: rule.createdAt,
-    updatedAt: rule.updatedAt,
     isRecurring: true,
   };
 }

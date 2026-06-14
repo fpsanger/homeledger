@@ -1,4 +1,26 @@
-import type { IncomeSource, TransactionRecord } from "../repositories/ITransactionRepository";
+export type IncomeSource = "SALARY" | "FREELANCE" | "RENTAL" | "INVESTMENT" | "OTHER";
+
+export type PaymentMethod =
+  | "CASH"
+  | "DEBIT_CARD"
+  | "CREDIT_CARD"
+  | "PIX"
+  | "BANK_TRANSFER"
+  | "BOLETO"
+  | "ACCOUNT_DEBIT";
+
+export interface Transaction {
+  id: string;
+  personId: string;
+  type: "INCOME" | "EXPENSE" | "INVESTMENT";
+  amount: number;
+  date: Date;
+  description: string;
+  paymentMethod: PaymentMethod | null;
+  source: IncomeSource | null;
+  categoryId: string | null;
+  isRecurring?: boolean;
+}
 
 type CreateInvestmentInput = {
   id: string;
@@ -15,7 +37,7 @@ type CreateExpenseInput = {
   amount: number;
   date: Date;
   description: string;
-  paymentMethod: Exclude<TransactionRecord["paymentMethod"], null>;
+  paymentMethod: PaymentMethod;
   categoryId: string | null;
 };
 
@@ -29,7 +51,7 @@ type CreateIncomeInput = {
   categoryId: string | null;
 };
 
-export function createInvestment(input: CreateInvestmentInput): TransactionRecord {
+export function createInvestment(input: CreateInvestmentInput): Transaction {
   if (!input.personId) {
     throw new Error("Person is required");
   }
@@ -56,12 +78,10 @@ export function createInvestment(input: CreateInvestmentInput): TransactionRecor
     paymentMethod: null,
     source: null,
     categoryId: input.categoryId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 }
 
-export function createExpense(input: CreateExpenseInput): TransactionRecord {
+export function createExpense(input: CreateExpenseInput): Transaction {
   if (!input.personId) {
     throw new Error("Person is required");
   }
@@ -84,12 +104,10 @@ export function createExpense(input: CreateExpenseInput): TransactionRecord {
     paymentMethod: input.paymentMethod,
     source: null,
     categoryId: input.categoryId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 }
 
-export function createIncome(input: CreateIncomeInput): TransactionRecord {
+export function createIncome(input: CreateIncomeInput): Transaction {
   if (!input.personId) {
     throw new Error("Person is required");
   }
@@ -116,7 +134,5 @@ export function createIncome(input: CreateIncomeInput): TransactionRecord {
     paymentMethod: null,
     source: input.source,
     categoryId: input.categoryId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 }

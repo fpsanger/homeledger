@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { createExpenseUseCase } from "../../../application/use-cases/CreateExpenseUseCase";
-import type { TransactionRecord } from "../../../domain/repositories/ITransactionRepository";
+import type { PaymentMethod } from "../../../domain/entities/Transaction";
 import { parseDateUTC } from "../_lib/date";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
-const VALID_PAYMENT_METHODS: TransactionRecord["paymentMethod"][] = [
+const VALID_PAYMENT_METHODS: PaymentMethod[] = [
   "CASH",
   "DEBIT_CARD",
   "CREDIT_CARD",

@@ -1,6 +1,6 @@
 import { reconcileStatementUseCase } from "../../../src/application/use-cases/ReconcileStatementUseCase";
 import type { ICreditCardPurchaseRepository, InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
-import type { ITransactionRepository, TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type { ITransactionRepository, Transaction } from "../../../src/domain/repositories/ITransactionRepository";
 import type { BillingItem } from "../../../src/domain/entities/BillingItem";
 
 function makeCreditCardPurchaseRepo(
@@ -28,7 +28,7 @@ function makeCreditCardPurchaseRepo(
 }
 
 function makeTransactionRepo(
-  transactions: TransactionRecord[] = [],
+  transactions: Transaction[] = [],
 ): ITransactionRepository {
   return {
     findByPersonAndMonth: jest.fn().mockResolvedValue(transactions),
@@ -61,7 +61,7 @@ function makeInstallmentRecord(overrides: Partial<InstallmentRecord> = {}): Inst
   };
 }
 
-function makeTransactionRecord(overrides: Partial<TransactionRecord> = {}): TransactionRecord {
+function makeTransactionRecord(overrides: Partial<Transaction> = {}): Transaction {
   return {
     id: "tx-1",
     personId: "person-1",
@@ -72,8 +72,6 @@ function makeTransactionRecord(overrides: Partial<TransactionRecord> = {}): Tran
     paymentMethod: null,
     source: null,
     categoryId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
     ...overrides,
   };
 }

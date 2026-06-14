@@ -1,7 +1,7 @@
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../domain/repositories/ITransactionRepository";
 import { validateExpenseCategory } from "../../domain/services/CategoryTree";
 
@@ -30,7 +30,7 @@ export async function updateExpenseUseCase(
   input: Input,
   repo: ITransactionRepository,
   categoryRepo: ICategoryRepository,
-): Promise<TransactionRecord> {
+): Promise<Transaction> {
   if (!input.personId) throw new Error("Person is required");
   if (input.amount <= 0) throw new Error("Amount must be positive");
   if (!input.date) throw new Error("Date is required");

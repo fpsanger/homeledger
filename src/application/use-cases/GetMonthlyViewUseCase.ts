@@ -5,7 +5,7 @@ import type {
 import type { IRecurringTransactionRepository } from "../../domain/repositories/IRecurringTransactionRepository";
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../domain/repositories/ITransactionRepository";
 import { buildMonthlyView } from "../../domain/services/MonthlyView";
 
@@ -17,7 +17,7 @@ type Input = {
 };
 
 type Output = {
-  transactions: TransactionRecord[];
+  transactions: Transaction[];
   installments: InstallmentRecord[];
 };
 

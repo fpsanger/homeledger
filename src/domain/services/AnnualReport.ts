@@ -1,8 +1,8 @@
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
-import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import type { Transaction } from "../repositories/ITransactionRepository";
 
 type AnnualReportInput = {
-  transactions: TransactionRecord[];
+  transactions: Transaction[];
   installments: InstallmentRecord[];
   year: number;
   personId?: string;

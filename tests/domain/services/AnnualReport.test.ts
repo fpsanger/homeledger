@@ -1,8 +1,8 @@
 import type { InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
-import type { TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type { Transaction } from "../../../src/domain/repositories/ITransactionRepository";
 import { buildAnnualReport } from "../../../src/domain/services/AnnualReport";
 
-const makeTransaction = (overrides: Partial<TransactionRecord> = {}): TransactionRecord => ({
+const makeTransaction = (overrides: Partial<Transaction> = {}): Transaction => ({
   id: "txn-1",
   personId: "person-1",
   type: "EXPENSE",
@@ -12,8 +12,6 @@ const makeTransaction = (overrides: Partial<TransactionRecord> = {}): Transactio
   paymentMethod: "CASH",
   source: null,
   categoryId: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
   ...overrides,
 });
 

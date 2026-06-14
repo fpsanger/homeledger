@@ -1,38 +1,17 @@
-export type IncomeSource = "SALARY" | "FREELANCE" | "RENTAL" | "INVESTMENT" | "OTHER";
+export type { IncomeSource, PaymentMethod, Transaction } from "../entities/Transaction";
 
-export interface TransactionRecord {
-  id: string;
-  personId: string;
-  type: "INCOME" | "EXPENSE" | "INVESTMENT";
-  amount: number;
-  date: Date;
-  description: string;
-  paymentMethod:
-    | "CASH"
-    | "DEBIT_CARD"
-    | "CREDIT_CARD"
-    | "PIX"
-    | "BANK_TRANSFER"
-    | "BOLETO"
-    | "ACCOUNT_DEBIT"
-    | null;
-  source: IncomeSource | null;
-  categoryId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  isRecurring?: boolean;
-}
+import type { Transaction } from "../entities/Transaction";
 
 export interface ITransactionRepository {
-  findById(id: string): Promise<TransactionRecord | null>;
-  findByMonth(year: number, month: number): Promise<TransactionRecord[]>;
-  findByPersonAndMonth(personId: string, year: number, month: number): Promise<TransactionRecord[]>;
-  findByYear(year: number): Promise<TransactionRecord[]>;
-  findByPersonAndYear(personId: string, year: number): Promise<TransactionRecord[]>;
-  save(transaction: Omit<TransactionRecord, "createdAt" | "updatedAt">): Promise<TransactionRecord>;
+  findById(id: string): Promise<Transaction | null>;
+  findByMonth(year: number, month: number): Promise<Transaction[]>;
+  findByPersonAndMonth(personId: string, year: number, month: number): Promise<Transaction[]>;
+  findByYear(year: number): Promise<Transaction[]>;
+  findByPersonAndYear(personId: string, year: number): Promise<Transaction[]>;
+  save(transaction: Transaction): Promise<Transaction>;
   update(
     id: string,
-    fields: Partial<Omit<TransactionRecord, "id" | "createdAt" | "updatedAt">>,
-  ): Promise<TransactionRecord>;
+    fields: Partial<Omit<Transaction, "id">>,
+  ): Promise<Transaction>;
   delete(id: string): Promise<void>;
 }

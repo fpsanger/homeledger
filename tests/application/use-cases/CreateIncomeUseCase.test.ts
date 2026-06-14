@@ -5,7 +5,7 @@ import type {
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../../src/domain/repositories/ITransactionRepository";
 
 const makeTransactionRepo = (
@@ -16,12 +16,10 @@ const makeTransactionRepo = (
   findByPersonAndMonth: async () => [],
   findByYear: async () => [],
   findByPersonAndYear: async () => [],
-  save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }) as TransactionRecord,
+  save: async (r) => ({ ...r }),
   update: async (id, fields) =>
     ({
       id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
       personId: "",
       type: "INCOME",
       amount: 0,
@@ -31,7 +29,7 @@ const makeTransactionRepo = (
       source: null,
       categoryId: null,
       ...fields,
-    }) as TransactionRecord,
+    }) as Transaction,
   delete: async () => {},
   ...overrides,
 });
@@ -160,7 +158,7 @@ describe("CreateIncomeUseCase", () => {
   });
 
   it("returns isDuplicate=true when same income exists on same day", async () => {
-    const existing: TransactionRecord = {
+    const existing: Transaction = {
       id: "inc-existing",
       personId: "person-1",
       type: "INCOME",
@@ -170,8 +168,6 @@ describe("CreateIncomeUseCase", () => {
       paymentMethod: null,
       source: "SALARY",
       categoryId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
     const transactionRepo = makeTransactionRepo({
       findByPersonAndMonth: async () => [existing],
@@ -184,7 +180,7 @@ describe("CreateIncomeUseCase", () => {
   });
 
   it("returns isDuplicate=false when same amount but different day", async () => {
-    const existing: TransactionRecord = {
+    const existing: Transaction = {
       id: "inc-existing",
       personId: "person-1",
       type: "INCOME",
@@ -194,8 +190,6 @@ describe("CreateIncomeUseCase", () => {
       paymentMethod: null,
       source: "SALARY",
       categoryId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
     const transactionRepo = makeTransactionRepo({
       findByPersonAndMonth: async () => [existing],

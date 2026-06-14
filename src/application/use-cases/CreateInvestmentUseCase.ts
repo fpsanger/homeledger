@@ -2,7 +2,7 @@ import { createInvestment } from "../../domain/entities/Transaction";
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
-  TransactionRecord,
+  Transaction,
 } from "../../domain/repositories/ITransactionRepository";
 import { validateInvestmentCategory } from "../../domain/services/CategoryTree";
 
@@ -19,7 +19,7 @@ export async function createInvestmentUseCase(
   input: Input,
   repo: ITransactionRepository,
   categoryRepo: ICategoryRepository,
-): Promise<TransactionRecord> {
+): Promise<Transaction> {
   const categories = await categoryRepo.findAll();
   validateInvestmentCategory(input.categoryId, categories);
 

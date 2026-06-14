@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isDuplicateCreditCardPurchase } from "../domain/services/isDuplicateCreditCardPurchase";
+import { findDuplicateCreditCardPurchase } from "../domain/services/isDuplicateCreditCardPurchase";
 import type { CreditCardPurchaseRecord } from "../domain/repositories/ICreditCardPurchaseRepository";
 
 export function useCreditCardDuplicateCheck(
@@ -9,7 +9,7 @@ export function useCreditCardDuplicateCheck(
   date: string | null,
   creditCardId: string | null,
   refreshKey = 0,
-): boolean {
+): CreditCardPurchaseRecord | null {
   const [purchases, setPurchases] = useState<CreditCardPurchaseRecord[]>([]);
 
   useEffect(() => {
@@ -29,5 +29,5 @@ export function useCreditCardDuplicateCheck(
     ).then((results) => setPurchases(results.flat()));
   }, [date, refreshKey]);
 
-  return isDuplicateCreditCardPurchase(purchases, amount, date, creditCardId);
+  return findDuplicateCreditCardPurchase(purchases, amount, date, creditCardId);
 }

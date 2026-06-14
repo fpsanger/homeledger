@@ -1,7 +1,7 @@
 import { createInstallmentPurchase } from "../../domain/services/InstallmentPurchase";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
-import { isDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
+import { findDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
 
 type Input = {
   id: string;
@@ -78,7 +78,7 @@ export async function createInstallmentPurchaseUseCase(
     ),
   );
   const existing = existingArrays.flat();
-  const isDuplicate = isDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId);
+  const isDuplicate = findDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId) !== null;
 
   const { purchase, installments } = createInstallmentPurchase({
     ...input,

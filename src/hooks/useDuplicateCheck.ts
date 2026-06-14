@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isDuplicateTransaction } from "../domain/services/isDuplicateTransaction";
+import { findDuplicateTransaction } from "../domain/services/isDuplicateTransaction";
 import type { TransactionRecord } from "../domain/repositories/ITransactionRepository";
 
 export function useDuplicateCheck(
@@ -9,7 +9,7 @@ export function useDuplicateCheck(
   amount: number | null,
   date: string | null,
   refreshKey = 0,
-): boolean {
+): TransactionRecord | null {
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
 
   useEffect(() => {
@@ -29,5 +29,5 @@ export function useDuplicateCheck(
     ).then((results) => setTransactions(results.flat()));
   }, [date, refreshKey]);
 
-  return isDuplicateTransaction(transactions, type, amount, date);
+  return findDuplicateTransaction(transactions, type, amount, date);
 }

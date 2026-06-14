@@ -6,7 +6,7 @@ import type {
   TransactionRecord,
 } from "../../domain/repositories/ITransactionRepository";
 import { validateIncomeCategory } from "../../domain/services/CategoryTree";
-import { isDuplicateTransaction } from "../../domain/services/isDuplicateTransaction";
+import { findDuplicateTransaction } from "../../domain/services/isDuplicateTransaction";
 
 type Input = {
   id: string;
@@ -39,7 +39,7 @@ export async function createIncomeUseCase(
     ),
   );
   const existing = existingArrays.flat();
-  const isDuplicate = isDuplicateTransaction(existing, "INCOME", input.amount, dateStr);
+  const isDuplicate = findDuplicateTransaction(existing, "INCOME", input.amount, dateStr) !== null;
 
   if (income.categoryId !== null) {
     const categories = await categoryRepo.findAll();

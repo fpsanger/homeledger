@@ -9,11 +9,20 @@ function withinDays(a: Date | string, dateStr: string): boolean {
   return diff <= DUPLICATE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 }
 
-export function isCrossEntityDuplicate(
+export function findCrossEntityDuplicate(
   existing: CreditCardPurchaseRecord[],
   amount: number | null,
   date: string | null,
-): boolean {
-  if (amount === null || date === null) return false;
-  return existing.some((p) => p.totalAmount === amount && withinDays(p.purchaseDate, date));
+): CreditCardPurchaseRecord | null {
+  if (amount === null || date === null) return null;
+
+  const matches = existing.filter((p) => p.totalAmount === amount && withinDays(p.purchaseDate, date));
+  if (matches.length === 0) return null;
+
+  const targetMs = new Date(date).getTime();
+  return matches.reduce((closest, p) => {
+    const dA = Math.abs(new Date(p.purchaseDate).getTime() - targetMs);
+    const dB = Math.abs(new Date(closest.purchaseDate).getTime() - targetMs);
+    return dA < dB ? p : closest;
+  });
 }

@@ -189,7 +189,7 @@ describe("CreateIncomeUseCase", () => {
       personId: "person-1",
       type: "INCOME",
       amount: 5000,
-      date: new Date("2026-05-02"),
+      date: new Date("2026-06-10"),
       description: "Other salary",
       paymentMethod: null,
       source: "SALARY",

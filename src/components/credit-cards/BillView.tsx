@@ -29,6 +29,7 @@ import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransac
 import { formatDatePtBR } from "@/lib/format-date";
 import { formatAmountBR } from "@/lib/utils";
 import { getFullPath } from "@/lib/categoryUtils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type BillSortKey = "description" | "amount" | "date";
 type BillSortDir = "asc" | "desc";
@@ -601,7 +602,20 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+      {loading && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </div>
+      )}
 
       {!loading && (
         <>

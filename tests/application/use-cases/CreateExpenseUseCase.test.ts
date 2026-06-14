@@ -180,7 +180,7 @@ describe("CreateExpenseUseCase", () => {
       personId: "person-1",
       type: "EXPENSE",
       amount: 50,
-      date: new Date("2026-05-05"),
+      date: new Date("2026-06-10"),
       description: "Other lunch",
       paymentMethod: "CASH",
       source: null,

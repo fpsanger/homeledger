@@ -1,9 +1,12 @@
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
+import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
 
 type AnnualReportInput = {
   transactions: TransactionRecord[];
   installments: InstallmentRecord[];
+  recurringRules?: RecurringTransactionRecord[];
   year: number;
   personId?: string;
 };
@@ -24,7 +27,7 @@ export type AnnualReportResult = {
 };
 
 export function buildAnnualReport(input: AnnualReportInput): AnnualReportResult {
-  const { transactions, installments, year, personId } = input;
+  const { transactions, installments, recurringRules = [], year, personId } = input;
 
   const filteredTransactions = transactions
     .filter((t) => {
@@ -38,14 +41,20 @@ export function buildAnnualReport(input: AnnualReportInput): AnnualReportResult 
   const months: MonthSummary[] = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1;
 
-    const income = filteredTransactions
+    const activeRecurring = recurringRules
+      .filter((r) => isActiveInMonth(r, year, month) && (personId ? r.personId === personId : true))
+      .map((r) => generateOccurrence(r, year, month));
+
+    const allTransactions = [...filteredTransactions, ...activeRecurring];
+
+    const income = allTransactions
       .filter((t) => {
         const d = new Date(t.date);
         return d.getUTCMonth() + 1 === month && t.type === "INCOME";
       })
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const expenseTransactions = filteredTransactions
+    const expenseTransactions = allTransactions
       .filter((t) => {
         const d = new Date(t.date);
         return d.getUTCMonth() + 1 === month && t.type === "EXPENSE";

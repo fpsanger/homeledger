@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { useCreditCardDuplicateCheck } from "@/hooks/useCreditCardDuplicateCheck";
+import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -13,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { parseCurrencyBR, formatAmountBR } from "@/lib/utils";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type FormType = "expense" | "income" | "credit";
 
@@ -166,18 +168,27 @@ export function UnifiedTransactionForm({
   }, [creditCardId, creditCards]);
 
   const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
-  const isDuplicate = useDuplicateCheck(
+  const duplicateTransaction = useDuplicateCheck(
     dupType,
     type !== "credit" && amount ? parseCurrencyBR(amount) : null,
     date,
     refreshKey,
   );
-  const isCreditDuplicate = useCreditCardDuplicateCheck(
+  const duplicateCreditCard = useCreditCardDuplicateCheck(
     type === "credit" && amount ? parseCurrencyBR(amount) : null,
     type === "credit" ? date : null,
     type === "credit" ? creditCardId : null,
     refreshKey,
   );
+  const duplicateCrossEntity = useCrossEntityDuplicateCheck(
+    type === "expense" && amount ? parseCurrencyBR(amount) : null,
+    type === "expense" ? date : null,
+    type === "expense" ? paymentMethod : null,
+    refreshKey,
+  );
+
+  const duplicateMatch = duplicateTransaction ?? duplicateCreditCard ?? duplicateCrossEntity;
+  const isCrossType = !duplicateTransaction && !!duplicateCrossEntity;
 
   function reset() {
     setPersonId("");
@@ -516,11 +527,23 @@ export function UnifiedTransactionForm({
         />
       </div>
 
-      {!isEditMode && (isDuplicate || isCreditDuplicate) && (
-        <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
-          mesmo assim.
-        </p>
+      {!isEditMode && duplicateMatch && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <p className="font-medium text-amber-500">Possível duplicata encontrada</p>
+          <p className="mt-1 text-amber-400">
+            {duplicateMatch.description || "Sem descrição"}
+            {" · "}
+            {formatAmountBR("totalAmount" in duplicateMatch ? duplicateMatch.totalAmount : duplicateMatch.amount)}
+            {" · "}
+            {formatDatePtBR(
+              String("purchaseDate" in duplicateMatch ? duplicateMatch.purchaseDate : duplicateMatch.date).slice(0, 10),
+            )}
+          </p>
+          {isCrossType && (
+            <p className="mt-1 text-xs text-amber-400/70">Compra de cartão com mesmo valor</p>
+          )}
+          <p className="mt-1 text-xs text-amber-400/70">Você pode continuar mesmo assim.</p>
+        </div>
       )}
 
       <Button type="submit" disabled={loading}>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
 import { parseCurrencyBR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,12 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
     "EXPENSE",
     amount ? parseCurrencyBR(amount) : null,
     date,
+    refreshKey,
+  );
+  const isCrossEntityDup = useCrossEntityDuplicateCheck(
+    amount ? parseCurrencyBR(amount) : null,
+    date,
+    paymentMethod,
     refreshKey,
   );
 
@@ -134,7 +141,7 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
           placeholder="Opcional"
         />
       </div>
-      {isDuplicate && (
+      {(isDuplicate || isCrossEntityDup) && (
         <p className="text-sm text-amber-600">
           Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
           mesmo assim.

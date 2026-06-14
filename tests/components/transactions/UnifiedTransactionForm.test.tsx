@@ -20,10 +20,13 @@ jest.mock("@/components/ui/date-picker", () => ({
   DatePicker: () => null,
 }));
 jest.mock("@/hooks/useDuplicateCheck", () => ({
-  useDuplicateCheck: () => ({ isDuplicate: false, duplicates: [] }),
+  useDuplicateCheck: () => null,
 }));
 jest.mock("@/hooks/useCreditCardDuplicateCheck", () => ({
-  useCreditCardDuplicateCheck: () => ({ isDuplicate: false, duplicates: [] }),
+  useCreditCardDuplicateCheck: () => null,
+}));
+jest.mock("@/hooks/useCrossEntityDuplicateCheck", () => ({
+  useCrossEntityDuplicateCheck: () => null,
 }));
 
 const people = [

@@ -1,7 +1,7 @@
 import { createInstallmentPurchase } from "../../domain/services/InstallmentPurchase";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
-import { isDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
+import { findDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
 
 type Input = {
   id: string;
@@ -64,11 +64,21 @@ export async function createInstallmentPurchaseUseCase(
     }
   }
 
-  const year = input.purchaseDate.getUTCFullYear();
-  const month = input.purchaseDate.getUTCMonth() + 1;
-  const existing = await repo.findPurchasesByPersonAndMonth(input.personId, year, month);
+  const baseYear = input.purchaseDate.getUTCFullYear();
+  const baseMonth = input.purchaseDate.getUTCMonth() + 1;
   const dateStr = input.purchaseDate.toISOString().slice(0, 10);
-  const isDuplicate = isDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId);
+
+  const adjacentMonths = [-1, 0, 1].map((offset) => {
+    const d = new Date(Date.UTC(baseYear, baseMonth - 1 + offset, 1));
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+  });
+  const existingArrays = await Promise.all(
+    adjacentMonths.map(({ year, month }) =>
+      repo.findPurchasesByPersonAndMonth(input.personId, year, month),
+    ),
+  );
+  const existing = existingArrays.flat();
+  const isDuplicate = findDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId) !== null;
 
   const { purchase, installments } = createInstallmentPurchase({
     ...input,

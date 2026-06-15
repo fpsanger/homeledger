@@ -21,10 +21,10 @@ const MONTH_NAMES = [
 
 // income shades (greens), expense shades (oranges/reds)
 const INCOME_COLORS = [
-  "hsl(152 55% 38%)",
-  "hsl(107, 55%, 25%)",
-  "hsl(120, 67%, 43%)",
-  "hsl(165 50% 55%)",
+  "hsl(210, 70%, 50%)",  // blue
+  "hsl(270, 60%, 55%)",  // purple
+  "hsl(160, 60%, 40%)",  // teal-green (distinct from orange reds)
+  "hsl(50, 75%, 45%)",   // yellow-gold (hsl(50) far enough from expense hsl(15-35))
 ];
 const EXPENSE_COLORS = [
   "hsl(15 70% 50%)",

@@ -15,18 +15,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 
 const MONTH_NAMES = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+// income shades (greens), expense shades (oranges/reds)
+const INCOME_COLORS = [
+  "hsl(210, 70%, 50%)",  // blue
+  "hsl(270, 60%, 55%)",  // purple
+  "hsl(160, 60%, 40%)",  // teal-green (distinct from orange reds)
+  "hsl(50, 75%, 45%)",   // yellow-gold (hsl(50) far enough from expense hsl(15-35))
+];
+const EXPENSE_COLORS = [
+  "hsl(15 70% 50%)",
+  "hsl(35 70% 50%)",
+  "hsl(340 55% 50%)",
+  "hsl(25 65% 55%)",
 ];
 
 function fmtFull(v: number) {
@@ -41,7 +45,9 @@ function fmtCompact(v: number) {
   return `${sign}R$${abs.toFixed(0)}`;
 }
 
-type TooltipEntry = { name: string; value: number; color: string };
+type Person = { id: string; name: string };
+
+type TooltipPayloadEntry = { name: string; value: number; color: string };
 
 function CustomTooltip({
   active,
@@ -49,7 +55,7 @@ function CustomTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: TooltipEntry[];
+  payload?: TooltipPayloadEntry[];
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
@@ -58,9 +64,7 @@ function CustomTooltip({
       <p className="text-muted-foreground mb-2 font-medium">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
-          <span style={{ color: entry.color }} className="font-medium">
-            {entry.name}
-          </span>
+          <span style={{ color: entry.color }} className="font-medium">{entry.name}</span>
           <span className="text-foreground tabular-nums">{fmtFull(entry.value)}</span>
         </div>
       ))}
@@ -71,13 +75,10 @@ function CustomTooltip({
 function CustomLegend({ payload }: { payload?: { value: string; color: string }[] }) {
   if (!payload) return null;
   return (
-    <div className="flex items-center justify-center gap-4 pt-2">
+    <div className="flex items-center justify-center gap-4 pt-2 flex-wrap">
       {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-1.5">
-          <span
-            className="inline-block w-2 h-2 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
+          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
           <span className="text-[11px] text-muted-foreground">{entry.value}</span>
         </div>
       ))}
@@ -85,23 +86,36 @@ function CustomLegend({ payload }: { payload?: { value: string; color: string }[
   );
 }
 
-type Props = { months: MonthSummary[] };
+type Props = {
+  months: MonthSummary[];
+  people?: Person[];
+  globalPersonId?: string;
+};
 
-export function IncomeExpenseBalanceCard({ months }: Props) {
+export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId = "" }: Props) {
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
+  const showPersonBreakdown = !globalPersonId && people.length > 1;
 
   const last6 = months
     .filter((m) => m.month <= currentMonth || months[0]?.month > currentMonth)
     .slice(-6);
 
-  const data = last6.map((m) => ({
-    name: MONTH_NAMES[m.month - 1],
-    Receita: m.income,
-    Despesa: m.expenses,
-    Balanço: m.balance,
-  }));
+  const data = last6.map((m) => {
+    const base = {
+      name: MONTH_NAMES[m.month - 1],
+      Balanço: m.balance,
+    };
+    if (showPersonBreakdown) {
+      const row: Record<string, number | string> = { ...base };
+      for (const p of people) {
+        row[`R:${p.name}`] = m.incomeByPerson[p.id] ?? 0;
+        row[`D:${p.name}`] = m.expensesByPerson[p.id] ?? 0;
+      }
+      return row;
+    }
+    return { ...base, Receita: m.income, Despesa: m.expenses };
+  });
 
   return (
     <Card className="flex flex-col gap-0">
@@ -114,11 +128,7 @@ export function IncomeExpenseBalanceCard({ months }: Props) {
       </CardHeader>
       <CardContent className="pt-0 pb-4">
         <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart
-            data={data}
-            margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-            barCategoryGap="30%"
-          >
+          <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
             <XAxis
               dataKey="name"
@@ -133,25 +143,54 @@ export function IncomeExpenseBalanceCard({ months }: Props) {
               tickLine={false}
               width={52}
             />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
             <Legend content={<CustomLegend />} />
-            <Bar
-              dataKey="Receita"
-              fill="hsl(152 50% 40%)"
-              fillOpacity={0.85}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={22}
-            />
-            <Bar
-              dataKey="Despesa"
-              fill="hsl(15 70% 50%)"
-              fillOpacity={0.85}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={22}
-            />
+
+            {showPersonBreakdown ? (
+              <>
+                {people.map((p, i) => (
+                  <Bar
+                    key={`income-${p.id}`}
+                    dataKey={`R:${p.name}`}
+                    name={`Receita ${p.name}`}
+                    stackId="income"
+                    fill={INCOME_COLORS[i % INCOME_COLORS.length]}
+                    fillOpacity={0.85}
+                    radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                    maxBarSize={22}
+                  />
+                ))}
+                {people.map((p, i) => (
+                  <Bar
+                    key={`expense-${p.id}`}
+                    dataKey={`D:${p.name}`}
+                    name={`Despesa ${p.name}`}
+                    stackId="expense"
+                    fill={EXPENSE_COLORS[i % EXPENSE_COLORS.length]}
+                    fillOpacity={0.85}
+                    radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                    maxBarSize={22}
+                  />
+                ))}
+              </>
+            ) : (
+              <>
+                <Bar
+                  dataKey="Receita"
+                  fill="hsl(152 50% 40%)"
+                  fillOpacity={0.85}
+                  radius={[3, 3, 0, 0]}
+                  maxBarSize={22}
+                />
+                <Bar
+                  dataKey="Despesa"
+                  fill="hsl(15 70% 50%)"
+                  fillOpacity={0.85}
+                  radius={[3, 3, 0, 0]}
+                  maxBarSize={22}
+                />
+              </>
+            )}
             <Line
               type="monotone"
               dataKey="Balanço"

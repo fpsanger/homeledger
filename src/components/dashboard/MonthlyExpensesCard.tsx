@@ -7,6 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   Cell,
 } from "recharts";
@@ -14,18 +15,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 
 const MONTH_NAMES = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+const PERSON_COLORS = [
+  "hsl(15 75% 52%)",
+  "hsl(35 70% 50%)",
+  "hsl(340 55% 50%)",
+  "hsl(260 50% 55%)",
 ];
 
 function fmtFull(v: number) {
@@ -39,33 +37,75 @@ function fmtCompact(v: number) {
   return `R$${abs.toFixed(0)}`;
 }
 
+type Person = { id: string; name: string };
+
+type TooltipPayloadEntry = { name: string; value: number; color: string };
+
 function CustomTooltip({
   active,
   payload,
   label,
+  showPersonBreakdown,
 }: {
   active?: boolean;
-  payload?: { value: number }[];
+  payload?: TooltipPayloadEntry[];
   label?: string;
+  showPersonBreakdown?: boolean;
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs">
+    <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs min-w-[140px]">
       <p className="text-muted-foreground mb-1 font-medium">{label}</p>
-      <p className="font-semibold text-foreground tabular-nums">{fmtFull(payload[0].value)}</p>
+      {showPersonBreakdown ? (
+        payload.map((entry) => (
+          <div key={entry.name} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
+            <span style={{ color: entry.color }} className="font-medium">{entry.name}</span>
+            <span className="text-foreground tabular-nums">{fmtFull(entry.value)}</span>
+          </div>
+        ))
+      ) : (
+        <p className="font-semibold text-foreground tabular-nums">{fmtFull(payload[0].value)}</p>
+      )}
     </div>
   );
 }
 
-type Props = { months: MonthSummary[]; totalExpenses: number };
+function CustomLegend({ payload }: { payload?: { value: string; color: string }[] }) {
+  if (!payload?.length) return null;
+  return (
+    <div className="flex items-center justify-center gap-4 pt-2">
+      {payload.map((entry) => (
+        <div key={entry.value} className="flex items-center gap-1.5">
+          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span className="text-[11px] text-muted-foreground">{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-export function MonthlyExpensesCard({ months, totalExpenses }: Props) {
-  const data = months.map((m) => ({
-    name: MONTH_NAMES[m.month - 1],
-    value: m.expenses,
-  }));
+type Props = {
+  months: MonthSummary[];
+  totalExpenses: number;
+  people?: Person[];
+  globalPersonId?: string;
+};
 
-  const maxVal = Math.max(...data.map((d) => d.value), 1);
+export function MonthlyExpensesCard({ months, totalExpenses, people = [], globalPersonId = "" }: Props) {
+  const showPersonBreakdown = !globalPersonId && people.length > 1;
+
+  const data = months.map((m) => {
+    if (showPersonBreakdown) {
+      const row: Record<string, number | string> = { name: MONTH_NAMES[m.month - 1] };
+      for (const p of people) {
+        row[p.name] = m.expensesByPerson[p.id] ?? 0;
+      }
+      return row;
+    }
+    return { name: MONTH_NAMES[m.month - 1], value: m.expenses };
+  });
+
+  const maxVal = showPersonBreakdown ? 1 : Math.max(...months.map((m) => m.expenses), 1);
 
   return (
     <Card className="flex flex-col gap-0">
@@ -80,11 +120,7 @@ export function MonthlyExpensesCard({ months, totalExpenses }: Props) {
       </CardHeader>
       <CardContent className="pt-0 pb-4">
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart
-            data={data}
-            margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-            barCategoryGap="35%"
-          >
+          <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="35%">
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
             <XAxis
               dataKey="name"
@@ -100,16 +136,33 @@ export function MonthlyExpensesCard({ months, totalExpenses }: Props) {
               width={52}
             />
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltip showPersonBreakdown={showPersonBreakdown} />}
               cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
             />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
-              {data.map((entry, i) => {
-                const intensity = maxVal > 0 ? entry.value / maxVal : 0;
-                const opacity = 0.45 + intensity * 0.55;
-                return <Cell key={i} fill={`hsl(15 75% 52%)`} fillOpacity={opacity} />;
-              })}
-            </Bar>
+            {showPersonBreakdown ? (
+              <>
+                <Legend content={<CustomLegend />} />
+                {people.map((p, i) => (
+                  <Bar
+                    key={p.id}
+                    dataKey={p.name}
+                    stackId="a"
+                    fill={PERSON_COLORS[i % PERSON_COLORS.length]}
+                    fillOpacity={0.85}
+                    radius={i === people.length - 1 ? [4, 4, 0, 0] : undefined}
+                    maxBarSize={28}
+                  />
+                ))}
+              </>
+            ) : (
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
+                {months.map((m, i) => {
+                  const intensity = maxVal > 0 ? m.expenses / maxVal : 0;
+                  const opacity = 0.45 + intensity * 0.55;
+                  return <Cell key={i} fill="hsl(15 75% 52%)" fillOpacity={opacity} />;
+                })}
+              </Bar>
+            )}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

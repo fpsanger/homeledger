@@ -1,4 +1,5 @@
 import { AnnualReportSection } from "@/components/dashboard/AnnualReportSection";
+import { InvestmentOverviewCard } from "@/components/dashboard/InvestmentOverviewCard";
 import { MonthlySummaryCard } from "@/components/dashboard/MonthlySummaryCard";
 import { YearNav } from "@/components/dashboard/YearNav";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
@@ -12,8 +13,16 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 
 type Category = { id: string; name: string; parentId: string | null };
+type Person = { id: string; name: string };
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
+async function getPeople(): Promise<Person[]> {
+  const res = await fetch(`${BASE_URL}/api/people`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.people ?? [];
+}
 
 async function getCategories(): Promise<Category[]> {
   const res = await fetch(`${BASE_URL}/api/categories`, { cache: "no-store" });
@@ -67,10 +76,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
     ? parseInt(searchParams.monthMonth, 10)
     : now.getMonth() + 1;
 
-  const [categories, { transactions, installments }, annualReport] = await Promise.all([
+  const [categories, { transactions, installments }, annualReport, people] = await Promise.all([
     getCategories(),
     getMonthlyView(monthYear, monthMonth, globalPersonId || undefined),
     getAnnualReport(annualYear, globalPersonId || undefined),
+    getPeople(),
   ]);
 
   return (
@@ -96,8 +106,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           <MonthlyExpensesCard
             months={annualReport.months}
             totalExpenses={annualReport.totalExpenses}
+            people={people}
+            globalPersonId={globalPersonId}
           />
-          <IncomeExpenseBalanceCard months={annualReport.months} />
+          <IncomeExpenseBalanceCard
+            months={annualReport.months}
+            people={people}
+            globalPersonId={globalPersonId}
+          />
+          <InvestmentOverviewCard
+            months={annualReport.months}
+            totalInvestments={annualReport.totalInvestments}
+            people={people}
+            globalPersonId={globalPersonId}
+          />
         </div>
       )}
       <Card>

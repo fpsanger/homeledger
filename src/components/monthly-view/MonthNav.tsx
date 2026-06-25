@@ -40,7 +40,7 @@ export function MonthNav({
     const params = new URLSearchParams(window.location.search);
     params.set(yearKey, String(newYear));
     params.set(monthKey, String(newMonth));
-    router.push(`${basePath}?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`, { scroll: false });
   }
 
   function prev() {

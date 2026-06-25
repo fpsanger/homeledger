@@ -1,12 +1,18 @@
-# Graph Report - .  (2026-06-11)
+# Graph Report - homeledger  (2026-06-15)
 
 ## Corpus Check
-- Large corpus: 246 files · ~55,989 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder, or use --no-semantic to run AST-only.
+- 247 files · ~56,198 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 879 nodes · 1835 edges · 37 communities (33 shown, 4 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.8)
+- 1094 nodes · 2492 edges · 50 communities (46 shown, 4 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `7188b57b`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_API Route Handlers|API Route Handlers]]
@@ -42,173 +48,238 @@
 - [[_COMMUNITY_Category Create Dialog|Category Create Dialog]]
 - [[_COMMUNITY_Loyalty Program List|Loyalty Program List]]
 - [[_COMMUNITY_Category Edit Dialog|Category Edit Dialog]]
+- [[_COMMUNITY_Home Page|Home Page]]
+- [[_COMMUNITY_Monthly View Route|Monthly View Route]]
+- [[_COMMUNITY_Description Normalizer|Description Normalizer]]
 - [[_COMMUNITY_Monthly View API Endpoint|Monthly View API Endpoint]]
+- [[_COMMUNITY_Community 37|Community 37]]
+- [[_COMMUNITY_Community 38|Community 38]]
+- [[_COMMUNITY_Community 39|Community 39]]
+- [[_COMMUNITY_Community 40|Community 40]]
+- [[_COMMUNITY_Community 41|Community 41]]
+- [[_COMMUNITY_Community 42|Community 42]]
+- [[_COMMUNITY_Community 43|Community 43]]
+- [[_COMMUNITY_Community 44|Community 44]]
+- [[_COMMUNITY_Community 45|Community 45]]
+- [[_COMMUNITY_Community 49|Community 49]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `createRepositories()` - 41 edges
-2. `errorResponse()` - 41 edges
-3. `PrismaCreditCardPurchaseRepository` - 26 edges
-4. `Button` - 17 edges
-5. `DELETE()` - 15 edges
-6. `TransactionRecord` - 15 edges
-7. `cn()` - 13 edges
-8. `PrismaCreditCardRepository` - 13 edges
-9. `parseDateUTC()` - 13 edges
-10. `formatDatePtBR()` - 13 edges
+1. `createRepositories()` - 65 edges
+2. `errorResponse()` - 63 edges
+3. `cn()` - 32 edges
+4. `PrismaCreditCardPurchaseRepository` - 26 edges
+5. `Button` - 24 edges
+6. `DELETE()` - 20 edges
+7. `Input` - 18 edges
+8. `Select` - 17 edges
+9. `TransactionRecord` - 16 edges
+10. `PUT()` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `PUT()` --calls--> `updateCreditCardUseCase()`  [INFERRED]
   app/api/incomes/[id]/route.ts → application/use-cases/UpdateCreditCardUseCase.ts
+- `PUT()` --calls--> `updateLoyaltyProgramUseCase()`  [INFERRED]
+  app/api/incomes/[id]/route.ts → application/use-cases/loyalty/UpdateLoyaltyProgramUseCase.ts
+- `DELETE()` --calls--> `deleteLoyaltyProgramUseCase()`  [INFERRED]
+  app/api/recurring-transactions/[id]/route.ts → application/use-cases/loyalty/DeleteLoyaltyProgramUseCase.ts
 - `POST()` --calls--> `createCreditCardUseCase()`  [EXTRACTED]
   app/api/credit-cards/route.ts → application/use-cases/CreateCreditCardUseCase.ts
 - `PUT()` --calls--> `updateExpenseUseCase()`  [INFERRED]
   app/api/incomes/[id]/route.ts → application/use-cases/UpdateExpenseUseCase.ts
-- `PUT()` --calls--> `updateIncomeUseCase()`  [EXTRACTED]
-  app/api/incomes/[id]/route.ts → application/use-cases/UpdateIncomeUseCase.ts
-- `DELETE()` --calls--> `deleteCreditCardUseCase()`  [INFERRED]
-  app/api/credit-card-purchases/[id]/route.ts → application/use-cases/DeleteCreditCardUseCase.ts
 
-## Communities (37 total, 4 thin omitted)
+## Communities (50 total, 4 thin omitted)
 
 ### Community 0 - "API Route Handlers"
-Cohesion: 0.06
-Nodes (48): GET(), GET(), GET(), POST(), GET(), POST(), GET(), GET() (+40 more)
+Cohesion: 0.05
+Nodes (46): createCategory(), CreateCategoryInput, createExpense(), CreateExpenseInput, createIncome(), CreateIncomeInput, createInvestment(), CreateInvestmentInput (+38 more)
 
 ### Community 1 - "UI Pages & Components"
-Cohesion: 0.05
-Nodes (59): CategoryList(), CategoriesPage(), CategoryRecord, getCategories(), AnnualBalanceCard(), ChartProps, CustomTooltip(), fmtFull() (+51 more)
-
-### Community 2 - "Application Use Cases"
-Cohesion: 0.05
-Nodes (42): POST(), POST(), VALID_SOURCES, CreditCardPurchaseRecord, CreditCardPurchaseWithInstallments, ICreditCardPurchaseRepository, InstallmentRecord, IncomeSource (+34 more)
-
-### Community 3 - "Billing Import Pipeline"
 Cohesion: 0.07
 Nodes (52): InvalidBillingItemError, BillingItem, createInstallmentBillingItem(), CreateInstallmentInput, createTransactionBillingItem(), CreateTransactionInput, TransactionBillingItem, isCSVFile() (+44 more)
 
+### Community 2 - "Application Use Cases"
+Cohesion: 0.05
+Nodes (23): useCreditCardDuplicateCheck(), CreditCardPurchaseRecord, CreditCardPurchaseWithInstallments, ICreditCardPurchaseRepository, InstallmentRecord, PrismaCreditCardPurchaseRepository, purchaseToRecord(), cancelInstallmentPurchase() (+15 more)
+
+### Community 3 - "Billing Import Pipeline"
+Cohesion: 0.06
+Nodes (35): LoyaltyPageClient(), Program, Props, Transfer, LoyaltyProgramCreateDialog(), Props, LoyaltyProgramForm(), PRESET_COLORS (+27 more)
+
 ### Community 4 - "Category & Transaction Domain"
-Cohesion: 0.07
-Nodes (31): DuplicateCategoryError, NotFoundError, createCategory(), CreateCategoryInput, createExpense(), CreateExpenseInput, createIncome(), CreateIncomeInput (+23 more)
+Cohesion: 0.09
+Nodes (22): DELETE(), POST(), ClosureType, createCreditCard(), CreateCreditCardInput, CreditCardClosureRecord, CreditCardRecord, ICreditCardRepository (+14 more)
 
 ### Community 5 - "Credit Card Management"
-Cohesion: 0.09
-Nodes (20): DELETE(), ClosureType, createCreditCard(), CreateCreditCardInput, CreditCardClosureRecord, CreditCardRecord, ICreditCardRepository, closureToRecord() (+12 more)
+Cohesion: 0.07
+Nodes (28): BillingImportWizard(), ImportSummary, Step1Data, STEPS, WizardStep, BANK_LABELS, BANK_OPTIONS, CreditCard (+20 more)
 
 ### Community 6 - "Billing Import Wizard"
 Cohesion: 0.08
-Nodes (28): BillingImportWizard(), ImportSummary, Step1Data, STEPS, WizardStep, BANK_LABELS, BANK_OPTIONS, CreditCard (+20 more)
+Nodes (25): IRecurringTransactionRepository, RecurringTransactionRecord, UpdateableFields, PrismaRecurringTransactionRepository, toRecord(), buildMonthlyView(), MonthlyViewInput, MonthlyViewResult (+17 more)
 
 ### Community 7 - "Recurring Transactions"
-Cohesion: 0.09
-Nodes (23): POST(), VALID_PAYMENT_METHODS, VALID_TYPES, IRecurringTransactionRepository, RecurringTransactionRecord, UpdateableFields, PrismaRecurringTransactionRepository, toRecord() (+15 more)
+Cohesion: 0.12
+Nodes (26): GET(), GET(), POST(), POST(), GET(), POST(), GET(), GET() (+18 more)
 
 ### Community 8 - "Transaction Form UI"
-Cohesion: 0.09
-Nodes (25): CategoryLike, getFullPath(), Category, InvestmentForm(), Person, Category, PAYMENT_METHODS, Person (+17 more)
+Cohesion: 0.1
+Nodes (18): CategorizationPipeline, MerchantHistoryCategorizer, upsertMerchantHistory(), findCategoryByKeywords(), MerchantRule, MerchantRuleCategorizer, normalizeText(), RULES (+10 more)
 
 ### Community 9 - "AI Categorization Pipeline"
-Cohesion: 0.12
-Nodes (17): CategorizationPipeline, MerchantHistoryCategorizer, upsertMerchantHistory(), findCategoryByKeywords(), MerchantRule, MerchantRuleCategorizer, normalizeText(), RULES (+9 more)
+Cohesion: 0.14
+Nodes (16): DuplicateCategoryError, NotFoundError, DELETE(), PATCH(), PaymentMethod, PUT(), VALID_PAYMENT_METHODS, deleteLoyaltyTransactionUseCase() (+8 more)
 
 ### Community 10 - "Annual Report Charts"
+Cohesion: 0.12
+Nodes (19): Category, Props, Closure, ClosureManagerDialog(), MONTH_NAMES, CreditCard, CreditCardForm(), Props (+11 more)
+
+### Community 11 - "Credit Card Purchase Repository"
 Cohesion: 0.11
-Nodes (17): AnnualBalanceChart(), AnnualBarChart(), MONTH_NAMES, Props, TooltipEntry, AnnualCard(), FIELD_CONFIG, formatAmount() (+9 more)
+Nodes (22): useCrossEntityDuplicateCheck(), useDuplicateCheck(), parseCurrencyBR(), Category, ExpenseForm(), PAYMENT_METHODS, Person, IncomeForm() (+14 more)
 
 ### Community 12 - "Credit Card UI"
-Cohesion: 0.15
-Nodes (14): Closure, ClosureManagerDialog(), MONTH_NAMES, CreditCard, CreditCardList(), Props, CreditCardsPage(), getCards() (+6 more)
+Cohesion: 0.1
+Nodes (16): EXPENSE_COLORS, INCOME_COLORS, IncomeExpenseBalanceCard(), MONTH_NAMES, Person, Props, TooltipEntry, TooltipPayloadEntry (+8 more)
 
 ### Community 13 - "Shared Form Components"
-Cohesion: 0.17
-Nodes (14): Category, Props, CreditCard, CreditCardForm(), Props, Category, CreditCard, Person (+6 more)
+Cohesion: 0.11
+Nodes (20): formatAmount(), Installment, MonthlySummaryCard(), Props, Transaction, Category, DashboardPage(), getAnnualReport() (+12 more)
 
 ### Community 14 - "Expense & Income Forms"
-Cohesion: 0.14
-Nodes (15): useDuplicateCheck(), Category, ExpenseForm(), PAYMENT_METHODS, Person, Category, INCOME_SOURCES, IncomeForm() (+7 more)
+Cohesion: 0.11
+Nodes (19): formatAmountBR(), CreditCard, EditInstallmentForm(), fmtCurrency(), fmtDate(), Installment, MONTH_ABBR, Person (+11 more)
 
 ### Community 15 - "Loyalty Program Detail"
 Cohesion: 0.12
-Nodes (14): EDITABLE_TYPES, FifoData, formatBrl(), formatPts(), LoyaltyProgramDetail(), Program, Props, SortDir (+6 more)
+Nodes (18): Category, Props, Category, INCOME_SOURCES, Person, Category, InvestmentForm(), Person (+10 more)
 
 ### Community 16 - "Monthly Transaction Table"
-Cohesion: 0.12
-Nodes (12): Category, fmtCurrency(), MONTH_ABBR, PAYMENT_LABELS, Person, SortDir, SortKey, Transaction (+4 more)
+Cohesion: 0.14
+Nodes (17): AnnualBalanceCard(), AnnualBalanceChart(), ChartProps, CustomTooltip(), fmtFull(), fmtSigned(), MONTH_NAMES, Props (+9 more)
 
 ### Community 17 - "Bill View Component"
-Cohesion: 0.13
-Nodes (12): BillEntry, BillInstallmentItem, BillSortDir, BillSortKey, BillView(), BillViewProps, Category, CreditCardFull (+4 more)
+Cohesion: 0.17
+Nodes (14): createLoyaltyProgram(), CreateLoyaltyProgramInput, LoyaltyProgramRecord, LoyaltyProgramType, createLoyaltyProgramUseCase(), Input, deleteLoyaltyProgramUseCase(), listLoyaltyProgramsUseCase() (+6 more)
 
 ### Community 18 - "App Layout & Navigation"
 Cohesion: 0.15
-Nodes (11): dmSerifDisplay, geistMono, geistSans, metadata, Theme, ThemeContext, ThemeProvider(), useTheme() (+3 more)
+Nodes (11): createLoyaltyTransfer(), CreateLoyaltyTransferInput, LoyaltyTransferRecord, createLoyaltyTransferUseCase(), Input, listLoyaltyTransfersUseCase(), ILoyaltyTransferRepository, PrismaLoyaltyTransferRepository (+3 more)
 
 ### Community 19 - "Category & Person Lists"
-Cohesion: 0.25
-Nodes (12): Category, ViewMode, Person, DropdownItem, DropdownMenu(), DropdownMenuProps, Table, TableBody (+4 more)
+Cohesion: 0.12
+Nodes (15): BillEntry, BillInstallmentItem, BillSortDir, BillSortKey, BillView(), BillViewProps, Category, CreditCardFull (+7 more)
 
 ### Community 20 - "Monthly View Summary"
-Cohesion: 0.15
-Nodes (9): CreditCardItem, fmt(), Installment, InstallmentFilters, InstallmentTable(), Person, SortDir, SortKey (+1 more)
+Cohesion: 0.18
+Nodes (14): createLoyaltyTransaction(), CreateLoyaltyTransactionInput, LoyaltyTransactionRecord, LoyaltyTransactionType, TRANSFER_TYPES, createLoyaltyTransactionUseCase(), Input, TRANSFER_TYPES (+6 more)
 
 ### Community 21 - "Installments List"
-Cohesion: 0.15
-Nodes (8): Category, CreditCard, EditState, Installment, MONTH_NAMES, Person, Props, Purchase
+Cohesion: 0.17
+Nodes (16): Category, CategoryCreateDialog(), Props, CategoryEditDialog(), CategoryForm(), Category, CategoryList(), ViewMode (+8 more)
 
 ### Community 22 - "Installments Page"
+Cohesion: 0.18
+Nodes (9): createPerson(), GET(), POST(), IPersonRepository, PersonRecord, PrismaPersonRepository, createPersonUseCase(), Input (+1 more)
+
+### Community 23 - "Loyalty Transfer Table"
+Cohesion: 0.15
+Nodes (12): dmSerifDisplay, geistMono, geistSans, metadata, Theme, ThemeContext, ThemeProvider(), useTheme() (+4 more)
+
+### Community 24 - "Unified Transaction Form"
+Cohesion: 0.12
+Nodes (13): Category, fmtCurrency(), MONTH_ABBR, PAYMENT_LABELS, Person, SortDir, SortKey, Transaction (+5 more)
+
+### Community 25 - "Category Breakdown Chart"
+Cohesion: 0.12
+Nodes (14): EDITABLE_TYPES, FifoData, formatBrl(), formatPts(), LoyaltyProgramDetail(), Program, Props, SortDir (+6 more)
+
+### Community 26 - "Transaction Repository"
+Cohesion: 0.13
+Nodes (11): CreditCardItem, fmt(), Installment, InstallmentFilters, InstallmentTable(), Person, SortDir, SortKey (+3 more)
+
+### Community 27 - "Loading Skeletons"
+Cohesion: 0.18
+Nodes (13): CategoriesPage(), CategoryRecord, getCategories(), getPeople(), PeoplePage(), PersonRecord, PersonForm(), CardContent (+5 more)
+
+### Community 28 - "Monthly View Page"
+Cohesion: 0.26
+Nodes (12): cn(), ButtonProps, buttonVariants, Calendar(), CalendarDayButton(), DatePickerProps, Popover(), PopoverContent() (+4 more)
+
+### Community 29 - "Edit Installment Form"
+Cohesion: 0.13
+Nodes (11): Category, CreditCard, EditState, Installment, MONTH_NAMES, Person, Props, Purchase (+3 more)
+
+### Community 30 - "Category Create Dialog"
+Cohesion: 0.13
+Nodes (10): AnnualBarChart(), MONTH_NAMES, Props, TooltipEntry, AnnualCard(), FIELD_CONFIG, formatAmount(), MONTH_NAMES (+2 more)
+
+### Community 31 - "Loyalty Program List"
+Cohesion: 0.21
+Nodes (12): CategoryLike, getFullPath(), Category, CategoryCombobox(), CategoryComboboxProps, Command, CommandEmpty, CommandGroup (+4 more)
+
+### Community 32 - "Category Edit Dialog"
 Cohesion: 0.22
 Nodes (11): InstallmentsList(), InstallmentsTabs(), Props, Tab, getCategories(), getCreditCards(), getPeople(), getPurchases() (+3 more)
 
-### Community 23 - "Loyalty Transfer Table"
-Cohesion: 0.2
+### Community 33 - "Home Page"
+Cohesion: 0.21
+Nodes (9): CustomTooltip(), fmtFull(), fmtPct(), InvestmentOverviewCard(), MONTH_NAMES, Person, PERSON_COLORS, Props (+1 more)
+
+### Community 34 - "Monthly View Route"
+Cohesion: 0.26
+Nodes (9): getLoyaltyProgramReportUseCase(), GET(), computeLoyaltyFifo(), consumeLots(), CostLot, EnrichedTransaction, FifoData, LoyaltyFifoResult (+1 more)
+
+### Community 35 - "Description Normalizer"
+Cohesion: 0.27
+Nodes (7): POST(), VALID_PAYMENT_METHODS, VALID_SOURCES, POST(), VALID_SOURCES, POST(), parseDateUTC()
+
+### Community 37 - "Community 37"
+Cohesion: 0.22
+Nodes (8): CustomTooltip(), fmtFull(), MONTH_NAMES, MonthlyExpensesCard(), Person, PERSON_COLORS, Props, TooltipPayloadEntry
+
+### Community 38 - "Community 38"
+Cohesion: 0.22
 Nodes (7): formatDatePtBR(), formatDate(), formatDate(), Program, Props, Transfer, fmtDate()
 
-### Community 24 - "Unified Transaction Form"
-Cohesion: 0.17
-Nodes (10): Category, CreditCard, EditMode, FormType, INCOME_SOURCES, InitialValues, MONTH_NAMES_PT, PAYMENT_METHODS (+2 more)
+### Community 39 - "Community 39"
+Cohesion: 0.24
+Nodes (9): BackButton(), EnrichedTransaction, FifoData, getProgram(), getReport(), LoyaltyProgramPage(), Program, Report (+1 more)
 
-### Community 25 - "Category Breakdown Chart"
+### Community 40 - "Community 40"
 Cohesion: 0.2
 Nodes (10): BAR_COLORS, Category, CategoryBreakdownChart(), COLORS, CustomTooltip(), fmt(), Installment, Props (+2 more)
 
-### Community 28 - "Monthly View Page"
+### Community 41 - "Community 41"
 Cohesion: 0.29
 Nodes (9): Category, CreditCard, getCategories(), getCreditCards(), getMonthlyView(), getPeople(), Person, SearchParams (+1 more)
 
-### Community 29 - "Edit Installment Form"
-Cohesion: 0.28
-Nodes (8): CreditCard, EditInstallmentForm(), fmtCurrency(), fmtDate(), Installment, MONTH_ABBR, Person, Props
+### Community 44 - "Community 44"
+Cohesion: 0.67
+Nodes (3): CreditCardList(), CreditCardsPage(), getCards()
 
-### Community 30 - "Category Create Dialog"
-Cohesion: 0.4
-Nodes (4): Category, CategoryCreateDialog(), Props, CategoryForm()
-
-### Community 31 - "Loyalty Program List"
-Cohesion: 0.4
-Nodes (3): Program, Props, TYPE_LABELS
-
-### Community 32 - "Category Edit Dialog"
+### Community 45 - "Community 45"
 Cohesion: 0.5
-Nodes (3): Category, CategoryEditDialog(), Props
+Nodes (3): DropdownItem, DropdownMenu(), DropdownMenuProps
 
 ## Knowledge Gaps
-- **263 isolated node(s):** `geistSans`, `geistMono`, `metadata`, `Person`, `SearchParams` (+258 more)
+- **319 isolated node(s):** `geistSans`, `geistMono`, `dmSerifDisplay`, `metadata`, `LoyaltyProgramRecord` (+314 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `TransactionRecord` connect `Application Use Cases` to `API Route Handlers`, `Annual Report Charts`, `Category & Transaction Domain`, `Recurring Transactions`?**
-  _High betweenness centrality (0.118) - this node is a cross-community bridge._
-- **Why does `CategoryCombobox()` connect `Transaction Form UI` to `Billing Import Wizard`, `Shared Form Components`, `Expense & Income Forms`, `Installments List`, `Unified Transaction Form`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
-- **Why does `PrismaCreditCardPurchaseRepository` connect `Credit Card Purchase Repository` to `API Route Handlers`, `Application Use Cases`?**
-  _High betweenness centrality (0.050) - this node is a cross-community bridge._
-- **Are the 4 inferred relationships involving `DELETE()` (e.g. with `deleteCreditCardUseCase()` and `deleteTransactionUseCase()`) actually correct?**
-  _`DELETE()` has 4 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `geistSans`, `geistMono`, `metadata` to the rest of the system?**
-  _263 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `TransactionRecord` connect `API Route Handlers` to `Monthly Transaction Table`, `Description Normalizer`, `Billing Import Wizard`, `Recurring Transactions`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
+- **Why does `PrismaCreditCardPurchaseRepository` connect `Application Use Cases` to `AI Categorization Pipeline`?**
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `cn()` connect `Monthly View Page` to `Monthly View API Endpoint`, `Annual Report Charts`, `Credit Card UI`, `Community 45`, `Loyalty Program Detail`, `Installments List`, `Loading Skeletons`, `Edit Installment Form`, `Loyalty Program List`?**
+  _High betweenness centrality (0.047) - this node is a cross-community bridge._
+- **What connects `geistSans`, `geistMono`, `dmSerifDisplay` to the rest of the system?**
+  _319 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `API Route Handlers` be split into smaller, more focused modules?**
-  _Cohesion score 0.06 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `UI Pages & Components` be split into smaller, more focused modules?**
+  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
+- **Should `Application Use Cases` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._

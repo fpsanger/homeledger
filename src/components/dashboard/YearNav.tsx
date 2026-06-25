@@ -13,7 +13,7 @@ export function YearNav({ year }: Props) {
   function navigate(newYear: number) {
     const params = new URLSearchParams(window.location.search);
     params.set("annualYear", String(newYear));
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/dashboard?${params.toString()}`, { scroll: false });
   }
 
   return (

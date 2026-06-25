@@ -11,6 +11,7 @@ import {
   Package,
   Plus,
   Receipt,
+  Tag,
   Users,
   ArrowUp,
   ArrowDown,
@@ -224,7 +225,7 @@ function CardInstallmentTable({
       </div>
 
       {/* Desktop table */}
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted-foreground border-b">
@@ -239,7 +240,7 @@ function CardInstallmentTable({
               </th>
               <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
               <th
-                className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell cursor-pointer select-none hover:text-foreground"
+                className="px-5 py-2.5 font-medium text-xs hidden md:table-cell cursor-pointer select-none hover:text-foreground"
                 onClick={() => toggleSort("date")}
               >
                 <span className="inline-flex items-center">
@@ -247,8 +248,8 @@ function CardInstallmentTable({
                   <BillSortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
                 </span>
               </th>
-              <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Pessoa</th>
-              <th className="px-5 py-2.5 font-medium text-xs hidden sm:table-cell">Categoria</th>
+              <th className="px-5 py-2.5 font-medium text-xs hidden md:table-cell">Pessoa</th>
+              <th className="px-5 py-2.5 font-medium text-xs hidden md:table-cell">Categoria</th>
               <th
                 className="px-5 py-2.5 font-medium text-xs text-right cursor-pointer select-none hover:text-foreground"
                 onClick={() => toggleSort("amount")}
@@ -277,13 +278,13 @@ function CardInstallmentTable({
                       {inst.installmentNumber}/{inst.numberOfInstallments}
                     </Badge>
                   </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
                     {formatDatePtBR(inst.purchaseDate)}
                   </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
                     {personMap.get(inst.personId) ?? "—"}
                   </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                  <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
                     {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
                   </td>
                   <td className="px-5 py-3 text-right font-medium text-sm">
@@ -324,17 +325,43 @@ function CardInstallmentTable({
       </div>
 
       {/* Mobile cards */}
-      <div className="sm:hidden flex flex-col divide-y">
+      <div className="md:hidden flex flex-col gap-2 p-4">
+        <div className="flex items-center gap-2">
+          <Select
+            value={sortKey ?? ""}
+            onChange={(e) => { setSortKey((e.target.value as BillSortKey) || null); setSortDir("asc"); }}
+            className="h-8 text-xs flex-1"
+          >
+            <option value="">Ordenar por...</option>
+            <option value="description">Compra</option>
+            <option value="date">Data</option>
+            <option value="amount">Valor</option>
+          </Select>
+          {sortKey && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 shrink-0"
+              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              aria-label="Direção"
+            >
+              {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+            </Button>
+          )}
+        </div>
         {sorted.map((inst) => {
           const isDeleting = deletingId === inst.creditCardPurchaseId;
+          const personName = personMap.get(inst.personId);
+          const categoryName = inst.categoryId ? categoryMap.get(inst.categoryId) : null;
           return (
-            <div key={inst.id} className={`px-4 py-3 flex flex-col gap-1${isDeleting ? " opacity-50" : ""}`}>
+            <div key={inst.id} className={`rounded-xl border bg-card p-4 flex flex-col gap-2${isDeleting ? " opacity-50" : ""}`}>
+              {/* Row 1: description + amount + actions */}
               <div className="flex items-start justify-between gap-2">
-                <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
+                <span className="font-semibold text-sm truncate">{inst.purchaseDescription || "Sem descrição"}</span>
                 <div className="flex items-center gap-1 shrink-0">
-                  <p className="font-semibold text-sm">
+                  <span className="font-semibold text-sm">
                     {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </p>
+                  </span>
                   <DropdownMenu
                     align="right"
                     trigger={
@@ -362,14 +389,21 @@ function CardInstallmentTable({
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Row 2: date • person */}
+              <p className="text-xs text-muted-foreground">
+                {formatDatePtBR(inst.purchaseDate)}
+                {personName && <> &bull; {personName}</>}
+              </p>
+              {/* Row 3: badges */}
+              <div className="flex flex-wrap gap-1.5">
                 <Badge variant="outline" className="font-mono text-xs">
                   {inst.installmentNumber}/{inst.numberOfInstallments}
                 </Badge>
-                <span className="text-xs text-muted-foreground">{formatDatePtBR(inst.purchaseDate)}</span>
-                <span className="text-xs text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</span>
-                {inst.categoryId && (
-                  <span className="text-xs text-muted-foreground">{categoryMap.get(inst.categoryId)}</span>
+                {categoryName && (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                    <Tag className="w-3 h-3" />
+                    {categoryName}
+                  </span>
                 )}
               </div>
             </div>

@@ -50,28 +50,24 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
 
       {/* Supporting stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card rounded-xl border border-l-4 border-l-emerald-600 p-4 flex items-start justify-between card-hover">
+        <div className="bg-card rounded-xl border border-l-4 border-l-emerald-600 p-4 flex items-center justify-between card-hover">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Receita
             </p>
             <p className="text-xl font-bold mt-1 amount-display">{formatAmount(income)}</p>
           </div>
-          <span className="p-2 rounded-lg text-emerald-600 bg-emerald-500/10">
-            <TrendingUp className="w-4 h-4" />
-          </span>
+          <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
         </div>
 
-        <div className="bg-card rounded-xl border border-l-4 border-l-red-500 p-4 flex items-start justify-between card-hover">
+        <div className="bg-card rounded-xl border border-l-4 border-l-red-500 p-4 flex items-center justify-between card-hover">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Despesas
             </p>
             <p className="text-xl font-bold mt-1 amount-display">{formatAmount(expenses)}</p>
           </div>
-          <span className="p-2 rounded-lg text-red-500 bg-red-500/10">
-            <TrendingDown className="w-4 h-4" />
-          </span>
+          <TrendingDown className="w-4 h-4 text-red-500 shrink-0" />
         </div>
       </div>
     </div>

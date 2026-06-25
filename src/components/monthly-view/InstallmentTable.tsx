@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageSizeSelector } from "@/components/ui/page-size-selector";
+import { Select } from "@/components/ui/select";
 import { formatDatePtBR } from "@/lib/format-date";
 import { SummaryCard } from "./SummaryCard";
 
@@ -219,8 +220,113 @@ export function InstallmentTable({
         </div>
       )}
 
-      {/* Table */}
-      <div className="rounded-lg border overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="md:hidden flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Select
+            value={sortKey ?? ""}
+            onChange={(e) => { setSortKey((e.target.value as SortKey) || null); setSortDir("asc"); }}
+            className="h-8 text-xs flex-1"
+          >
+            <option value="">Ordenar por...</option>
+            <option value="description">Compra</option>
+            <option value="date">Data</option>
+            <option value="amount">Valor</option>
+          </Select>
+          {sortKey && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0 shrink-0"
+              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              aria-label="Direção"
+            >
+              {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+            </Button>
+          )}
+        </div>
+        {paginated.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-8">Nenhuma parcela encontrada</p>
+        ) : (
+          paginated.map((inst) => {
+            const description = inst.purchaseDescription || "Sem descrição";
+            const installmentLabel = inst.numberOfInstallments
+              ? `${inst.installmentNumber}/${inst.numberOfInstallments}`
+              : `${inst.installmentNumber}`;
+            const personName = inst.personId ? (byPersonId[inst.personId] ?? null) : null;
+            const cardName = inst.creditCardId ? (byCardId[inst.creditCardId] ?? null) : null;
+            const dateStr = inst.purchaseDate
+              ? formatDatePtBR(
+                  typeof inst.purchaseDate === "string"
+                    ? inst.purchaseDate
+                    : inst.purchaseDate.toISOString(),
+                )
+              : "—";
+
+            const actions = [];
+            if (onEditInstallment) {
+              actions.push({ label: "Editar parcela", onClick: () => onEditInstallment(inst) });
+            }
+            if (onEditPurchase) {
+              actions.push({ label: "Editar compra", onClick: () => onEditPurchase(inst) });
+            }
+            if (!inst.isPaid) {
+              actions.push({
+                label: loadingId === inst.id ? "Salvando…" : "Marcar pago",
+                onClick: () => handleMarkPaid(inst.id),
+              });
+            }
+            actions.push({
+              label: loadingId === inst.id ? "Excluindo…" : "Excluir",
+              onClick: () => handleDelete(inst.id),
+              variant: "destructive" as const,
+            });
+
+            return (
+              <div key={inst.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
+                {/* Row 1: description + amount + actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-semibold text-sm truncate">{description}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="font-semibold text-sm tabular-nums">{fmt(inst.amount)}</span>
+                    <DropdownMenu
+                      align="right"
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground"
+                          aria-label="Ações"
+                          disabled={loadingId === inst.id}
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      }
+                      items={actions}
+                    />
+                  </div>
+                </div>
+                {/* Row 2: date • person • card */}
+                <p className="text-xs text-muted-foreground">
+                  {dateStr}
+                  {personName && <> &bull; {personName}</>}
+                  {cardName && <> &bull; {cardName}</>}
+                </p>
+                {/* Row 3: badges */}
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                    Parcela {installmentLabel}
+                  </span>
+                  <StatusBadge inst={inst} />
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40">

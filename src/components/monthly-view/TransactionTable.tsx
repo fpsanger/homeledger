@@ -69,13 +69,246 @@ function toMs(date: Date | string) {
   return new Date(date).getTime();
 }
 
-
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
   if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
   return sortDir === "asc"
     ? <ArrowUp className="w-3 h-3 ml-1" />
     : <ArrowDown className="w-3 h-3 ml-1" />;
 }
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+type SharedProps = {
+  paginated: Transaction[];
+  byPersonId: Record<string, string>;
+  byCategoryId: Record<string, string>;
+  showCategoryCol: boolean;
+  deletingId: string | null;
+  handleDelete: (id: string, isRecurring?: boolean) => void;
+  onEdit?: (t: Transaction) => void;
+};
+
+type DesktopProps = SharedProps & {
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+  toggleSort: (key: SortKey) => void;
+};
+
+function TransactionTableDesktop({
+  paginated, byPersonId, byCategoryId, showCategoryCol,
+  deletingId, handleDelete, onEdit,
+  sortKey, sortDir, toggleSort,
+}: DesktopProps) {
+  return (
+    <div className="rounded-lg border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40">
+            <TableHead
+              className="w-20 cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("date")}
+            >
+              <span className="inline-flex items-center">
+                Data
+                <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+              </span>
+            </TableHead>
+            <TableHead>Pessoa</TableHead>
+            <TableHead>Descrição</TableHead>
+            {showCategoryCol && <TableHead>Categoria</TableHead>}
+            <TableHead>Método</TableHead>
+            <TableHead
+              className="text-right cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("amount")}
+            >
+              <span className="inline-flex items-center justify-end w-full">
+                Valor
+                <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+              </span>
+            </TableHead>
+            <TableHead className="w-8" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginated.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={showCategoryCol ? 7 : 6}
+                className="text-center text-sm text-muted-foreground py-8"
+              >
+                Nenhum resultado encontrado
+              </TableCell>
+            </TableRow>
+          ) : (
+            paginated.map((t) => (
+              <TableRow key={t.id} className="group">
+                <TableCell className="text-sm text-muted-foreground tabular-nums">
+                  {fmtDate(t.date)}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {byPersonId[t.personId] ?? t.personId}
+                </TableCell>
+                <TableCell className="text-sm">
+                  <span className="inline-flex items-center gap-2">
+                    {t.description || "—"}
+                    {t.isRecurring && (
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        Recorrente
+                      </span>
+                    )}
+                  </span>
+                </TableCell>
+                {showCategoryCol && (
+                  <TableCell className="text-sm text-muted-foreground">
+                    {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
+                  </TableCell>
+                )}
+                <TableCell className="text-sm text-muted-foreground">
+                  {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
+                </TableCell>
+                <TableCell className="text-right font-medium tabular-nums text-sm">
+                  <TransactionAmount type={t.type} amount={t.amount} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu
+                    align="right"
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground"
+                        aria-label="Ações"
+                        disabled={deletingId === t.id}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    }
+                    items={[
+                      ...(!t.isRecurring && onEdit
+                        ? [{ label: "Editar", onClick: () => onEdit(t) }]
+                        : []),
+                      {
+                        label: deletingId === t.id ? "Excluindo..." : "Excluir",
+                        onClick: () => handleDelete(t.id, t.isRecurring),
+                        variant: "destructive" as const,
+                      },
+                    ]}
+                  />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+type MobileProps = SharedProps & {
+  sortKey: SortKey | null;
+  setSortKey: (key: SortKey | null) => void;
+  sortDir: SortDir;
+  setSortDir: (dir: SortDir | ((d: SortDir) => SortDir)) => void;
+};
+
+function TransactionTableMobile({
+  paginated, byPersonId, byCategoryId,
+  deletingId, handleDelete, onEdit,
+  sortKey, setSortKey, sortDir, setSortDir,
+}: MobileProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <Select
+          value={sortKey ?? ""}
+          onChange={(e) => { setSortKey((e.target.value as SortKey) || null); setSortDir("asc"); }}
+          className="h-8 text-xs flex-1"
+        >
+          <option value="">Ordenar por...</option>
+          <option value="date">Data</option>
+          <option value="amount">Valor</option>
+        </Select>
+        {sortKey && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 shrink-0"
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+            aria-label="Direção"
+          >
+            {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+          </Button>
+        )}
+      </div>
+
+      {paginated.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-8">Nenhum resultado encontrado</p>
+      ) : (
+        paginated.map((t) => (
+          <div key={t.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-semibold text-sm truncate">{t.description || "—"}</span>
+                {t.isRecurring && (
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                    Recorrente
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <TransactionAmount type={t.type} amount={t.amount} />
+                <DropdownMenu
+                  align="right"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground"
+                      aria-label="Ações"
+                      disabled={deletingId === t.id}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  }
+                  items={[
+                    ...(!t.isRecurring && onEdit
+                      ? [{ label: "Editar", onClick: () => onEdit(t) }]
+                      : []),
+                    {
+                      label: deletingId === t.id ? "Excluindo..." : "Excluir",
+                      onClick: () => handleDelete(t.id, t.isRecurring),
+                      variant: "destructive" as const,
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {fmtDate(t.date)}
+              {byPersonId[t.personId] && <> &bull; {byPersonId[t.personId]}</>}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {PAYMENT_LABELS[t.paymentMethod] && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                  <CreditCard className="w-3 h-3" />
+                  {PAYMENT_LABELS[t.paymentMethod]}
+                </span>
+              )}
+              {t.categoryId && byCategoryId[t.categoryId] && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                  <Tag className="w-3 h-3" />
+                  {byCategoryId[t.categoryId]}
+                </span>
+              )}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
 
 export function TransactionTable({
   transactions,
@@ -100,6 +333,7 @@ export function TransactionTable({
       return [c.id, displayName];
     }),
   );
+
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
@@ -130,11 +364,8 @@ export function TransactionTable({
     toast.success(isRecurring ? "Recorrente removido." : "Transação excluída.");
   }
 
-  const totalIncome = transactions
-    .filter((t) => t.type === "INCOME")
-    .reduce((s, t) => s + t.amount, 0);
-  const totalExpenses =
-    transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
+  const totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpenses;
 
   const usedParentCategoryIds = useMemo(() => {
@@ -153,11 +384,9 @@ export function TransactionTable({
   const filtered = useMemo(() => {
     setPage(0);
     if (!filters) return transactions;
-
     const { search, categoryFilter, paymentFilter, dateFrom, amountMin } = filters;
     const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
     const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
-
     return transactions.filter((t) => {
       if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
       if (categoryFilter) {
@@ -176,15 +405,9 @@ export function TransactionTable({
   const sorted = useMemo(() => {
     const arr = [...filtered];
     if (sortKey === "date") {
-      arr.sort((a, b) => {
-        const diff = toMs(a.date) - toMs(b.date);
-        return sortDir === "asc" ? diff : -diff;
-      });
+      arr.sort((a, b) => { const d = toMs(a.date) - toMs(b.date); return sortDir === "asc" ? d : -d; });
     } else if (sortKey === "amount") {
-      arr.sort((a, b) => {
-        const diff = a.amount - b.amount;
-        return sortDir === "asc" ? diff : -diff;
-      });
+      arr.sort((a, b) => { const d = a.amount - b.amount; return sortDir === "asc" ? d : -d; });
     } else {
       arr.sort((a, b) => toMs(a.date) - toMs(b.date));
     }
@@ -203,6 +426,8 @@ export function TransactionTable({
     );
   }
 
+  const sharedProps = { paginated, byPersonId, byCategoryId, showCategoryCol, deletingId, handleDelete, onEdit };
+
   return (
     <div className="flex flex-col gap-4">
       <button
@@ -210,261 +435,33 @@ export function TransactionTable({
         onClick={() => setSummaryOpen((o) => !o)}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
-        <ChevronDown
-          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
-        />
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`} />
         {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
       </button>
+
       {summaryOpen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard
-            icon={TrendingDown}
-            label="Despesas"
-            value={`-${fmtCurrency(totalExpenses)}`}
-            colorClass="text-red-600"
-          />
-          <SummaryCard
-            icon={TrendingUp}
-            label="Receitas"
-            value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)}
-            colorClass="text-green-600"
-          />
-          <SummaryCard
-            icon={Wallet}
-            label="Saldo"
-            value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`}
-            colorClass={balance >= 0 ? "text-green-700" : "text-red-700"}
-          />
-          <SummaryCard
-            icon={Hash}
-            label="Lançamentos"
-            value={String(transactions.length)}
-            colorClass="text-muted-foreground"
-          />
+          <SummaryCard icon={TrendingDown} label="Despesas" value={`-${fmtCurrency(totalExpenses)}`} colorClass="text-red-600" />
+          <SummaryCard icon={TrendingUp} label="Receitas" value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)} colorClass="text-green-600" />
+          <SummaryCard icon={Wallet} label="Saldo" value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`} colorClass={balance >= 0 ? "text-green-700" : "text-red-700"} />
+          <SummaryCard icon={Hash} label="Lançamentos" value={String(transactions.length)} colorClass="text-muted-foreground" />
         </div>
       )}
 
-      {/* Mobile cards */}
-      <div className="md:hidden flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Select
-            value={sortKey ?? ""}
-            onChange={(e) => { setSortKey((e.target.value as SortKey) || null); setSortDir("asc"); }}
-            className="h-8 text-xs flex-1"
-          >
-            <option value="">Ordenar por...</option>
-            <option value="date">Data</option>
-            <option value="amount">Valor</option>
-          </Select>
-          {sortKey && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 shrink-0"
-              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-              aria-label="Direção"
-            >
-              {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
-            </Button>
-          )}
-        </div>
-        {paginated.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-8">Nenhum resultado encontrado</p>
-        ) : (
-          paginated.map((t) => (
-            <div key={t.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
-              {/* Row 1: description + amount + actions */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold text-sm truncate">{t.description || "—"}</span>
-                  {t.isRecurring && (
-                    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                      Recorrente
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <TransactionAmount type={t.type} amount={t.amount} />
-                  <DropdownMenu
-                    align="right"
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground"
-                        aria-label="Ações"
-                        disabled={deletingId === t.id}
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    }
-                    items={[
-                      ...(!t.isRecurring && onEdit
-                        ? [{ label: "Editar", onClick: () => onEdit(t) }]
-                        : []),
-                      {
-                        label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                        onClick: () => handleDelete(t.id, t.isRecurring),
-                        variant: "destructive" as const,
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-              {/* Row 2: date • person */}
-              <p className="text-xs text-muted-foreground">
-                {fmtDate(t.date)}
-                {byPersonId[t.personId] && <> &bull; {byPersonId[t.personId]}</>}
-              </p>
-              {/* Row 3: badges */}
-              <div className="flex flex-wrap gap-1.5">
-                {PAYMENT_LABELS[t.paymentMethod] && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
-                    <CreditCard className="w-3 h-3" />
-                    {PAYMENT_LABELS[t.paymentMethod]}
-                  </span>
-                )}
-                {t.categoryId && byCategoryId[t.categoryId] && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
-                    <Tag className="w-3 h-3" />
-                    {byCategoryId[t.categoryId]}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))
-        )}
+      <div className="hidden md:block">
+        <TransactionTableDesktop {...sharedProps} sortKey={sortKey} sortDir={sortDir} toggleSort={toggleSort} />
       </div>
-
-      {/* Desktop table */}
-      <div className="hidden md:block rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead
-                className="w-20 cursor-pointer select-none hover:text-foreground"
-                onClick={() => toggleSort("date")}
-              >
-                <span className="inline-flex items-center">
-                  Data
-                  <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
-                </span>
-              </TableHead>
-              <TableHead>Pessoa</TableHead>
-              <TableHead>Descrição</TableHead>
-              {showCategoryCol && <TableHead>Categoria</TableHead>}
-              <TableHead>Método</TableHead>
-              <TableHead
-                className="text-right cursor-pointer select-none hover:text-foreground"
-                onClick={() => toggleSort("amount")}
-              >
-                <span className="inline-flex items-center justify-end w-full">
-                  Valor
-                  <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
-                </span>
-              </TableHead>
-              <TableHead className="w-8" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginated.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={showCategoryCol ? 7 : 6}
-                  className="text-center text-sm text-muted-foreground py-8"
-                >
-                  Nenhum resultado encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginated.map((t) => (
-                <TableRow key={t.id} className="group">
-                  <TableCell className="text-sm text-muted-foreground tabular-nums">
-                    {fmtDate(t.date)}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {byPersonId[t.personId] ?? t.personId}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    <span className="inline-flex items-center gap-2">
-                      {t.description || "—"}
-                      {t.isRecurring && (
-                        <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          Recorrente
-                        </span>
-                      )}
-                    </span>
-                  </TableCell>
-                  {showCategoryCol && (
-                    <TableCell className="text-sm text-muted-foreground">
-                      {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
-                    </TableCell>
-                  )}
-                  <TableCell className="text-sm text-muted-foreground">
-                    {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
-                  </TableCell>
-                  <TableCell className="text-right font-medium tabular-nums text-sm">
-                    <TransactionAmount type={t.type} amount={t.amount} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu
-                      align="right"
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground"
-                          aria-label="Ações"
-                          disabled={deletingId === t.id}
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      }
-                      items={[
-                        ...(!t.isRecurring && onEdit
-                          ? [{ label: "Editar", onClick: () => onEdit(t) }]
-                          : []),
-                        {
-                          label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                          onClick: () => handleDelete(t.id, t.isRecurring),
-                          variant: "destructive" as const,
-                        },
-                      ]}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="md:hidden">
+        <TransactionTableMobile {...sharedProps} sortKey={sortKey} setSortKey={setSortKey} sortDir={sortDir} setSortDir={setSortDir} />
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <PageSizeSelector
-          value={pageSize}
-          onChange={(size) => { setPageSize(size); setPage(0); }}
-        />
+        <PageSizeSelector value={pageSize} onChange={(size) => { setPageSize(size); setPage(0); }} />
         {totalPages > 1 && (
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              ← Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {page + 1} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page + 1 >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Próximo →
-            </Button>
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>← Anterior</Button>
+            <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Próximo →</Button>
           </div>
         )}
       </div>

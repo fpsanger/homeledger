@@ -113,6 +113,144 @@ function SummaryCard({
   );
 }
 
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+type CardInstallmentSharedProps = {
+  sorted: BillInstallmentItem[];
+  personMap: Map<string, string>;
+  categoryMap: Map<string, string>;
+  onEdit: (purchaseId: string) => void;
+  onDelete: (purchaseId: string) => void;
+  deletingId: string | null;
+};
+
+type CardInstallmentDesktopProps = CardInstallmentSharedProps & {
+  sortKey: BillSortKey | null;
+  sortDir: BillSortDir;
+  toggleSort: (key: BillSortKey) => void;
+};
+
+function CardInstallmentTableDesktop({ sorted, personMap, categoryMap, onEdit, onDelete, deletingId, sortKey, sortDir, toggleSort }: CardInstallmentDesktopProps) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-muted-foreground border-b">
+            <th className="px-5 py-2.5 font-medium text-xs cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("description")}>
+              <span className="inline-flex items-center">Compra<BillSortIcon col="description" sortKey={sortKey} sortDir={sortDir} /></span>
+            </th>
+            <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
+            <th className="px-5 py-2.5 font-medium text-xs cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("date")}>
+              <span className="inline-flex items-center">Data<BillSortIcon col="date" sortKey={sortKey} sortDir={sortDir} /></span>
+            </th>
+            <th className="px-5 py-2.5 font-medium text-xs">Pessoa</th>
+            <th className="px-5 py-2.5 font-medium text-xs">Categoria</th>
+            <th className="px-5 py-2.5 font-medium text-xs text-right cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("amount")}>
+              <span className="inline-flex items-center justify-end w-full">Valor<BillSortIcon col="amount" sortKey={sortKey} sortDir={sortDir} /></span>
+            </th>
+            <th className="px-5 py-2.5 font-medium text-xs w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((inst) => {
+            const isDeleting = deletingId === inst.creditCardPurchaseId;
+            return (
+              <tr key={inst.id} className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}${isDeleting ? " opacity-50" : ""}`}>
+                <td className="px-5 py-3"><p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p></td>
+                <td className="px-5 py-3">
+                  <Badge variant="outline" className="font-mono text-xs">{inst.installmentNumber}/{inst.numberOfInstallments}</Badge>
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground">{formatDatePtBR(inst.purchaseDate)}</td>
+                <td className="px-5 py-3 text-sm text-muted-foreground">{personMap.get(inst.personId) ?? "—"}</td>
+                <td className="px-5 py-3 text-sm text-muted-foreground">{inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}</td>
+                <td className="px-5 py-3 text-right font-medium text-sm">{inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+                <td className="px-5 py-3 text-right">
+                  <DropdownMenu
+                    align="right"
+                    trigger={<Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground" aria-label="Ações" disabled={isDeleting}><MoreHorizontal className="w-4 h-4" /></Button>}
+                    items={[
+                      { label: "Editar compra", onClick: () => onEdit(inst.creditCardPurchaseId) },
+                      { label: isDeleting ? "Excluindo…" : "Excluir compra", onClick: () => onDelete(inst.creditCardPurchaseId), variant: "destructive" },
+                    ]}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type CardInstallmentMobileProps = CardInstallmentSharedProps & {
+  sortKey: BillSortKey | null;
+  setSortKey: (key: BillSortKey | null) => void;
+  sortDir: BillSortDir;
+  setSortDir: (dir: BillSortDir | ((d: BillSortDir) => BillSortDir)) => void;
+};
+
+function CardInstallmentTableMobile({ sorted, personMap, categoryMap, onEdit, onDelete, deletingId, sortKey, setSortKey, sortDir, setSortDir }: CardInstallmentMobileProps) {
+  return (
+    <div className="flex flex-col gap-2 p-4">
+      <div className="flex items-center gap-2">
+        <Select
+          value={sortKey ?? ""}
+          onChange={(e) => { setSortKey((e.target.value as BillSortKey) || null); setSortDir("asc"); }}
+          className="h-8 text-xs flex-1"
+        >
+          <option value="">Ordenar por...</option>
+          <option value="description">Compra</option>
+          <option value="date">Data</option>
+          <option value="amount">Valor</option>
+        </Select>
+        {sortKey && (
+          <Button variant="outline" size="sm" className="h-8 w-8 p-0 shrink-0" onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))} aria-label="Direção">
+            {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+          </Button>
+        )}
+      </div>
+      {sorted.map((inst) => {
+        const isDeleting = deletingId === inst.creditCardPurchaseId;
+        const personName = personMap.get(inst.personId);
+        const categoryName = inst.categoryId ? categoryMap.get(inst.categoryId) : null;
+        return (
+          <div key={inst.id} className={`rounded-xl border bg-card p-4 flex flex-col gap-2${isDeleting ? " opacity-50" : ""}`}>
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-semibold text-sm truncate">{inst.purchaseDescription || "Sem descrição"}</span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="font-semibold text-sm">{inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                <DropdownMenu
+                  align="right"
+                  trigger={<Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground" aria-label="Ações" disabled={isDeleting}><MoreHorizontal className="w-4 h-4" /></Button>}
+                  items={[
+                    { label: "Editar compra", onClick: () => onEdit(inst.creditCardPurchaseId) },
+                    { label: isDeleting ? "Excluindo…" : "Excluir compra", onClick: () => onDelete(inst.creditCardPurchaseId), variant: "destructive" },
+                  ]}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatDatePtBR(inst.purchaseDate)}
+              {personName && <> &bull; {personName}</>}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="outline" className="font-mono text-xs">{inst.installmentNumber}/{inst.numberOfInstallments}</Badge>
+              {categoryName && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                  <Tag className="w-3 h-3" />{categoryName}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── CardInstallmentTable ──────────────────────────────────────────────────────
+
 function CardInstallmentTable({
   installments,
   personMap,
@@ -162,253 +300,39 @@ function CardInstallmentTable({
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
-    if (sortKey === "description") {
-      arr.sort((a, b) => {
-        const diff = a.purchaseDescription.localeCompare(b.purchaseDescription);
-        return sortDir === "asc" ? diff : -diff;
-      });
-    } else if (sortKey === "amount") {
-      arr.sort((a, b) => {
-        const diff = a.amount - b.amount;
-        return sortDir === "asc" ? diff : -diff;
-      });
-    } else if (sortKey === "date") {
-      arr.sort((a, b) => {
-        const diff = new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime();
-        return sortDir === "asc" ? diff : -diff;
-      });
-    }
+    if (sortKey === "description") arr.sort((a, b) => { const d = a.purchaseDescription.localeCompare(b.purchaseDescription); return sortDir === "asc" ? d : -d; });
+    else if (sortKey === "amount") arr.sort((a, b) => { const d = a.amount - b.amount; return sortDir === "asc" ? d : -d; });
+    else if (sortKey === "date") arr.sort((a, b) => { const d = new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime(); return sortDir === "asc" ? d : -d; });
     return arr;
   }, [filtered, sortKey, sortDir]);
+
+  const sharedProps = { sorted, personMap, categoryMap, onEdit, onDelete, deletingId };
 
   return (
     <>
       {/* Filters */}
       <div className="px-5 py-2 border-b flex gap-2 flex-wrap">
-        <Input
-          placeholder="Buscar descrição..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-7 w-44 text-xs"
-        />
+        <Input placeholder="Buscar descrição..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-7 w-44 text-xs" />
         {usedCategories.length > 1 && (
-          <Select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-7 w-40 text-xs"
-          >
+          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="h-7 w-40 text-xs">
             <option value="">Todas categorias</option>
-            {usedCategories.map(([id, name]) => (
-              <option key={id} value={id}>{name}</option>
-            ))}
+            {usedCategories.map(([id, name]) => (<option key={id} value={id}>{name}</option>))}
           </Select>
         )}
         <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-7 w-36 text-xs" />
-        <Input
-          type="number"
-          placeholder="Valor mín"
-          value={amountMin}
-          onChange={(e) => setAmountMin(e.target.value)}
-          className="h-7 w-28 text-xs"
-          min={0}
-        />
+        <Input type="number" placeholder="Valor mín" value={amountMin} onChange={(e) => setAmountMin(e.target.value)} className="h-7 w-28 text-xs" min={0} />
         {(search || categoryFilter || dateFrom || amountMin) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={() => { setSearch(""); setCategoryFilter(""); setDateFrom(""); setAmountMin(""); }}
-          >
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground" onClick={() => { setSearch(""); setCategoryFilter(""); setDateFrom(""); setAmountMin(""); }}>
             Limpar ×
           </Button>
         )}
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-muted-foreground border-b">
-              <th
-                className="px-5 py-2.5 font-medium text-xs cursor-pointer select-none hover:text-foreground"
-                onClick={() => toggleSort("description")}
-              >
-                <span className="inline-flex items-center">
-                  Compra
-                  <BillSortIcon col="description" sortKey={sortKey} sortDir={sortDir} />
-                </span>
-              </th>
-              <th className="px-5 py-2.5 font-medium text-xs">Parcela</th>
-              <th
-                className="px-5 py-2.5 font-medium text-xs hidden md:table-cell cursor-pointer select-none hover:text-foreground"
-                onClick={() => toggleSort("date")}
-              >
-                <span className="inline-flex items-center">
-                  Data
-                  <BillSortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
-                </span>
-              </th>
-              <th className="px-5 py-2.5 font-medium text-xs hidden md:table-cell">Pessoa</th>
-              <th className="px-5 py-2.5 font-medium text-xs hidden md:table-cell">Categoria</th>
-              <th
-                className="px-5 py-2.5 font-medium text-xs text-right cursor-pointer select-none hover:text-foreground"
-                onClick={() => toggleSort("amount")}
-              >
-                <span className="inline-flex items-center justify-end w-full">
-                  Valor
-                  <BillSortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
-                </span>
-              </th>
-              <th className="px-5 py-2.5 font-medium text-xs w-10" />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((inst) => {
-              const isDeleting = deletingId === inst.creditCardPurchaseId;
-              return (
-                <tr
-                  key={inst.id}
-                  className={`border-b last:border-0 transition-colors${inst.isPaid ? " bg-green-50 dark:bg-green-900/10 hover:bg-green-100" : " hover:bg-muted/20"}${isDeleting ? " opacity-50" : ""}`}
-                >
-                  <td className="px-5 py-3">
-                    <p className="font-medium text-sm">{inst.purchaseDescription || "Sem descrição"}</p>
-                  </td>
-                  <td className="px-5 py-3">
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {inst.installmentNumber}/{inst.numberOfInstallments}
-                    </Badge>
-                  </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
-                    {formatDatePtBR(inst.purchaseDate)}
-                  </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
-                    {personMap.get(inst.personId) ?? "—"}
-                  </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground hidden md:table-cell">
-                    {inst.categoryId ? (categoryMap.get(inst.categoryId) ?? "—") : "—"}
-                  </td>
-                  <td className="px-5 py-3 text-right font-medium text-sm">
-                    {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <DropdownMenu
-                      align="right"
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-muted-foreground"
-                          aria-label="Ações"
-                          disabled={isDeleting}
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      }
-                      items={[
-                        {
-                          label: "Editar compra",
-                          onClick: () => onEdit(inst.creditCardPurchaseId),
-                        },
-                        {
-                          label: isDeleting ? "Excluindo…" : "Excluir compra",
-                          onClick: () => onDelete(inst.creditCardPurchaseId),
-                          variant: "destructive",
-                        },
-                      ]}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="hidden md:block">
+        <CardInstallmentTableDesktop {...sharedProps} sortKey={sortKey} sortDir={sortDir} toggleSort={toggleSort} />
       </div>
-
-      {/* Mobile cards */}
-      <div className="md:hidden flex flex-col gap-2 p-4">
-        <div className="flex items-center gap-2">
-          <Select
-            value={sortKey ?? ""}
-            onChange={(e) => { setSortKey((e.target.value as BillSortKey) || null); setSortDir("asc"); }}
-            className="h-8 text-xs flex-1"
-          >
-            <option value="">Ordenar por...</option>
-            <option value="description">Compra</option>
-            <option value="date">Data</option>
-            <option value="amount">Valor</option>
-          </Select>
-          {sortKey && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 shrink-0"
-              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-              aria-label="Direção"
-            >
-              {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
-            </Button>
-          )}
-        </div>
-        {sorted.map((inst) => {
-          const isDeleting = deletingId === inst.creditCardPurchaseId;
-          const personName = personMap.get(inst.personId);
-          const categoryName = inst.categoryId ? categoryMap.get(inst.categoryId) : null;
-          return (
-            <div key={inst.id} className={`rounded-xl border bg-card p-4 flex flex-col gap-2${isDeleting ? " opacity-50" : ""}`}>
-              {/* Row 1: description + amount + actions */}
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-semibold text-sm truncate">{inst.purchaseDescription || "Sem descrição"}</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="font-semibold text-sm">
-                    {inst.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </span>
-                  <DropdownMenu
-                    align="right"
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground"
-                        aria-label="Ações"
-                        disabled={isDeleting}
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    }
-                    items={[
-                      {
-                        label: "Editar compra",
-                        onClick: () => onEdit(inst.creditCardPurchaseId),
-                      },
-                      {
-                        label: isDeleting ? "Excluindo…" : "Excluir compra",
-                        onClick: () => onDelete(inst.creditCardPurchaseId),
-                        variant: "destructive",
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-              {/* Row 2: date • person */}
-              <p className="text-xs text-muted-foreground">
-                {formatDatePtBR(inst.purchaseDate)}
-                {personName && <> &bull; {personName}</>}
-              </p>
-              {/* Row 3: badges */}
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline" className="font-mono text-xs">
-                  {inst.installmentNumber}/{inst.numberOfInstallments}
-                </Badge>
-                {categoryName && (
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
-                    <Tag className="w-3 h-3" />
-                    {categoryName}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="md:hidden">
+        <CardInstallmentTableMobile {...sharedProps} sortKey={sortKey} setSortKey={setSortKey} sortDir={sortDir} setSortDir={setSortDir} />
       </div>
     </>
   );

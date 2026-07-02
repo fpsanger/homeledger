@@ -82,14 +82,6 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-  .font-display {
-    font-family: var(--font-display), Georgia, serif;
-  }
-}
-
-.amount-display {
-  font-family: var(--font-display), Georgia, serif;
-  letter-spacing: -0.02em;
 }
 
 /* Micro-interactions */

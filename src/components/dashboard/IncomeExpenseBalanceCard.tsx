@@ -13,24 +13,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { BALANCE_LINE_COLOR, EXPENSE_PERSON_SHADES, INCOME_PERSON_SHADES } from "@/lib/dashboardColors";
 
 const MONTH_NAMES = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
   "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-];
-
-// income shades (greens), expense shades (oranges/reds)
-const INCOME_COLORS = [
-  "hsl(210, 70%, 50%)",  // blue
-  "hsl(270, 60%, 55%)",  // purple
-  "hsl(160, 60%, 40%)",  // teal-green (distinct from orange reds)
-  "hsl(50, 75%, 45%)",   // yellow-gold (hsl(50) far enough from expense hsl(15-35))
-];
-const EXPENSE_COLORS = [
-  "hsl(15 70% 50%)",
-  "hsl(35 70% 50%)",
-  "hsl(340 55% 50%)",
-  "hsl(25 65% 55%)",
 ];
 
 function fmtFull(v: number) {
@@ -154,7 +141,7 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                     dataKey={`R:${p.name}`}
                     name={`Receita ${p.name}`}
                     stackId="income"
-                    fill={INCOME_COLORS[i % INCOME_COLORS.length]}
+                    fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
                     fillOpacity={0.85}
                     radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
                     maxBarSize={22}
@@ -166,7 +153,7 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                     dataKey={`D:${p.name}`}
                     name={`Despesa ${p.name}`}
                     stackId="expense"
-                    fill={EXPENSE_COLORS[i % EXPENSE_COLORS.length]}
+                    fill={EXPENSE_PERSON_SHADES[i % EXPENSE_PERSON_SHADES.length]}
                     fillOpacity={0.85}
                     radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
                     maxBarSize={22}
@@ -177,14 +164,14 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
               <>
                 <Bar
                   dataKey="Receita"
-                  fill="hsl(152 50% 40%)"
+                  fill="hsl(var(--income))"
                   fillOpacity={0.85}
                   radius={[3, 3, 0, 0]}
                   maxBarSize={22}
                 />
                 <Bar
                   dataKey="Despesa"
-                  fill="hsl(15 70% 50%)"
+                  fill="hsl(var(--expense))"
                   fillOpacity={0.85}
                   radius={[3, 3, 0, 0]}
                   maxBarSize={22}
@@ -194,10 +181,11 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
             <Line
               type="monotone"
               dataKey="Balanço"
-              stroke="hsl(215 60% 60%)"
+              stroke={BALANCE_LINE_COLOR}
               strokeWidth={2}
-              dot={{ r: 3, fill: "hsl(215 60% 60%)", strokeWidth: 0 }}
-              activeDot={{ r: 4, fill: "hsl(215 70% 70%)", strokeWidth: 0 }}
+              strokeDasharray="4 3"
+              dot={{ r: 3, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+              activeDot={{ r: 4, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
             />
           </ComposedChart>
         </ResponsiveContainer>

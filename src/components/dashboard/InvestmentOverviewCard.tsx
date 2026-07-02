@@ -12,17 +12,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { INCOME_PERSON_SHADES } from "@/lib/dashboardColors";
 
 const MONTH_NAMES = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
   "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-];
-
-const PERSON_COLORS = [
-  "hsl(185 50% 40%)",
-  "hsl(260 50% 55%)",
-  "hsl(35 70% 50%)",
-  "hsl(340 55% 50%)",
 ];
 
 function fmtFull(v: number) {
@@ -166,7 +160,7 @@ export function InvestmentOverviewCard({ months, totalInvestments, people, globa
                     key={p.id}
                     dataKey={p.name}
                     stackId="a"
-                    fill={PERSON_COLORS[i % PERSON_COLORS.length]}
+                    fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
                     fillOpacity={0.85}
                     radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
                     maxBarSize={22}
@@ -176,7 +170,7 @@ export function InvestmentOverviewCard({ months, totalInvestments, people, globa
             ) : (
               <Bar
                 dataKey="Investido"
-                fill="hsl(185 50% 40%)"
+                fill="hsl(var(--income))"
                 fillOpacity={0.85}
                 radius={[3, 3, 0, 0]}
                 maxBarSize={22}

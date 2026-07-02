@@ -85,7 +85,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader eyebrow="Visão Geral" title="Dashboard" description="Resumo financeiro geral" />
+      <PageHeader eyebrow="Visão Geral" title="Dashboard" description="Resumo financeiro geral">
+      </PageHeader>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -139,7 +140,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           <Separator />
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Despesas por Categoria</h3>
+              <h3 className="text-sm font-semibold tracking-tight">Despesas por Categoria</h3>
               <Link
                 href="/transactions"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { BALANCE_LINE_COLOR } from "@/lib/dashboardColors";
 
 const MONTH_NAMES = [
   "Jan",
@@ -57,14 +58,14 @@ function CustomTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2.5 shadow-xl text-xs min-w-[160px]">
-      <p className="text-zinc-500 font-medium mb-2 uppercase tracking-wide">{label}</p>
+    <div className="rounded-lg border border-border bg-card px-3 py-2.5 shadow-lg text-xs min-w-[160px]">
+      <p className="text-muted-foreground font-medium mb-2 uppercase tracking-wide">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-6 mb-1 last:mb-0">
           <span className="font-medium" style={{ color: entry.color }}>
             {entry.name}
           </span>
-          <span className="text-zinc-200 tabular-nums">{formatBRLFull(entry.value)}</span>
+          <span className="text-foreground tabular-nums">{formatBRLFull(entry.value)}</span>
         </div>
       ))}
     </div>
@@ -86,7 +87,7 @@ export function AnnualBarChart({ months }: Props) {
         margin={{ top: 8, right: 24, left: 4, bottom: 0 }}
         barCategoryGap="38%"
       >
-        <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.08)" />
+        <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
         <XAxis
           dataKey="name"
           tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
@@ -100,7 +101,7 @@ export function AnnualBarChart({ months }: Props) {
           axisLine={false}
           tickLine={false}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148,163,184,0.04)" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
         <Legend
           iconType="circle"
           iconSize={7}
@@ -110,15 +111,16 @@ export function AnnualBarChart({ months }: Props) {
             color: "hsl(var(--muted-foreground))",
           }}
         />
-        <Bar dataKey="Receita" fill="hsl(160 35% 38%)" radius={[3, 3, 0, 0]} maxBarSize={26} />
-        <Bar dataKey="Despesas" fill="hsl(0 40% 42%)" radius={[3, 3, 0, 0]} maxBarSize={26} />
+        <Bar dataKey="Receita" fill="hsl(var(--income))" radius={[3, 3, 0, 0]} maxBarSize={26} />
+        <Bar dataKey="Despesas" fill="hsl(var(--expense))" radius={[3, 3, 0, 0]} maxBarSize={26} />
         <Line
           type="monotone"
           dataKey="Saldo"
-          stroke="hsl(215 55% 62%)"
+          stroke={BALANCE_LINE_COLOR}
           strokeWidth={2}
-          dot={{ r: 3, fill: "hsl(215 55% 62%)", strokeWidth: 0 }}
-          activeDot={{ r: 4.5, fill: "hsl(215 65% 72%)", strokeWidth: 0 }}
+          strokeDasharray="4 3"
+          dot={{ r: 3, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+          activeDot={{ r: 4.5, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
         />
       </ComposedChart>
     </ResponsiveContainer>

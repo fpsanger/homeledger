@@ -56,7 +56,7 @@ function CustomTooltip({
     <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs">
       <p className="text-muted-foreground mb-1 font-medium">{label}</p>
       <p
-        className={`font-semibold tabular-nums ${val >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+        className={`font-semibold tabular-nums ${val >= 0 ? "amount-positive" : "amount-negative"}`}
       >
         {fmtSigned(val)}
       </p>
@@ -104,7 +104,7 @@ export function AnnualBalanceChart({ months }: ChartProps) {
           {data.map((entry, i) => (
             <Cell
               key={i}
-              fill={entry.value >= 0 ? "hsl(152 55% 42%)" : "hsl(0 65% 55%)"}
+              fill={entry.value >= 0 ? "hsl(var(--income))" : "hsl(var(--expense))"}
               fillOpacity={0.85}
             />
           ))}
@@ -124,7 +124,7 @@ export function AnnualBalanceCard({ months, totalBalance }: Props) {
           Balanço Anual
         </CardDescription>
         <CardTitle
-          className={`text-2xl font-bold tabular-nums ${totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+          className={`text-2xl font-semibold tracking-tight tabular-nums ${totalBalance >= 0 ? "amount-positive" : "amount-negative"}`}
         >
           {fmtSigned(totalBalance)}
         </CardTitle>

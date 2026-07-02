@@ -13,17 +13,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { EXPENSE_PERSON_SHADES } from "@/lib/dashboardColors";
 
 const MONTH_NAMES = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
   "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-];
-
-const PERSON_COLORS = [
-  "hsl(15 75% 52%)",
-  "hsl(35 70% 50%)",
-  "hsl(340 55% 50%)",
-  "hsl(260 50% 55%)",
 ];
 
 function fmtFull(v: number) {
@@ -113,7 +107,9 @@ export function MonthlyExpensesCard({ months, totalExpenses, people = [], global
         <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Despesas Mensais no Ano
         </CardDescription>
-        <CardTitle className="text-2xl font-bold tabular-nums">{fmtFull(totalExpenses)}</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight tabular-nums">
+          {fmtFull(totalExpenses)}
+        </CardTitle>
         <p className="text-xs text-muted-foreground">
           Total de despesas por mês no ano selecionado
         </p>
@@ -147,7 +143,7 @@ export function MonthlyExpensesCard({ months, totalExpenses, people = [], global
                     key={p.id}
                     dataKey={p.name}
                     stackId="a"
-                    fill={PERSON_COLORS[i % PERSON_COLORS.length]}
+                    fill={EXPENSE_PERSON_SHADES[i % EXPENSE_PERSON_SHADES.length]}
                     fillOpacity={0.85}
                     radius={i === people.length - 1 ? [4, 4, 0, 0] : undefined}
                     maxBarSize={28}
@@ -159,7 +155,7 @@ export function MonthlyExpensesCard({ months, totalExpenses, people = [], global
                 {months.map((m, i) => {
                   const intensity = maxVal > 0 ? m.expenses / maxVal : 0;
                   const opacity = 0.45 + intensity * 0.55;
-                  return <Cell key={i} fill="hsl(15 75% 52%)" fillOpacity={opacity} />;
+                  return <Cell key={i} fill="hsl(var(--expense))" fillOpacity={opacity} />;
                 })}
               </Bar>
             )}

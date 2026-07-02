@@ -30,9 +30,10 @@ type Props = {
   programs: Program[];
   transfers: Transfer[];
   balances: Record<string, number>;
+  personId?: string;
 };
 
-export function LoyaltyPageClient({ programs, transfers, balances }: Props) {
+export function LoyaltyPageClient({ programs, transfers, balances, personId }: Props) {
   const router = useRouter();
   const [openProgram, setOpenProgram] = useState(false);
   const [openTransfer, setOpenTransfer] = useState(false);
@@ -104,6 +105,7 @@ export function LoyaltyPageClient({ programs, transfers, balances }: Props) {
           onClose={() => setOpenTransfer(false)}
           onSuccess={handleTransferSuccess}
           programs={programs}
+          personId={personId}
         />
         <LoyaltyTransferTable transfers={transfers} programs={programs} />
       </div>

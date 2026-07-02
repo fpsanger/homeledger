@@ -8,9 +8,10 @@ type Program = { id: string; name: string; type: string };
 type Props = {
   programs: Program[];
   onSuccess: () => void;
+  personId?: string;
 };
 
-export function LoyaltyTransferForm({ programs, onSuccess }: Props) {
+export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
   const today = new Date().toISOString().slice(0, 10);
   const [fromProgramId, setFromProgramId] = useState(programs[0]?.id ?? "");
   const [toProgramId, setToProgramId] = useState(programs[1]?.id ?? "");
@@ -48,6 +49,7 @@ export function LoyaltyTransferForm({ programs, onSuccess }: Props) {
           pointsReceived,
           transferDate: date,
           description: description || null,
+          personId: personId ?? null,
         }),
       });
       if (!res.ok) {

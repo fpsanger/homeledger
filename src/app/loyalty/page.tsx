@@ -65,6 +65,7 @@ export default async function LoyaltyPage() {
       programs={programs}
       transfers={transfers}
       balances={balances}
+      personId={globalPersonId || undefined}
     />
   );
 }

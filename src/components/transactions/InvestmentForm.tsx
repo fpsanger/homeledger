@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { parseCurrencyBR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,13 @@ export function InvestmentForm({
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const isDuplicate = useDuplicateCheck(
+    "INVESTMENT",
+    amount ? parseCurrencyBR(amount) : null,
+    date,
+    refreshKey,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +72,7 @@ export function InvestmentForm({
     setDate(today);
     setCategoryId("");
     setDescription("");
+    setRefreshKey((k) => k + 1);
     router.refresh();
     toast.success("Investimento salvo com sucesso.");
     onSuccess?.();
@@ -108,6 +117,12 @@ export function InvestmentForm({
           placeholder="Opcional"
         />
       </div>
+      {isDuplicate && (
+        <p className="text-sm text-amber-600">
+          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
+          mesmo assim.
+        </p>
+      )}
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Investimento"}
       </Button>

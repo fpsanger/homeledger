@@ -17,7 +17,14 @@ export type TransactionBillingItem = {
   transactionType: "EXPENSE" | "INCOME" | "INVESTMENT";
 };
 
-export type BillingItem = InstallmentBillingItem | TransactionBillingItem;
+export type RefundBillingItem = {
+  kind: "refund";
+  description: string;
+  amount: number;
+  date: Date;
+};
+
+export type BillingItem = InstallmentBillingItem | TransactionBillingItem | RefundBillingItem;
 
 type CreateInstallmentInput = {
   description: string;
@@ -34,8 +41,14 @@ type CreateTransactionInput = {
   transactionType: "EXPENSE" | "INCOME" | "INVESTMENT";
 };
 
+type CreateRefundInput = {
+  description: string;
+  amount: number;
+  date: Date;
+};
+
 export function createInstallmentBillingItem(
-  input: CreateInstallmentInput
+  input: CreateInstallmentInput,
 ): InstallmentBillingItem {
   if (input.amount <= 0) {
     throw new InvalidBillingItemError("Amount must be positive");
@@ -72,7 +85,7 @@ export function createInstallmentBillingItem(
 }
 
 export function createTransactionBillingItem(
-  input: CreateTransactionInput
+  input: CreateTransactionInput,
 ): TransactionBillingItem {
   if (input.amount <= 0) {
     throw new InvalidBillingItemError("Amount must be positive");
@@ -95,8 +108,31 @@ export function createTransactionBillingItem(
   };
 }
 
-export function isInstallmentBillingItem(
-  item: BillingItem
-): item is InstallmentBillingItem {
+export function createRefundBillingItem(input: CreateRefundInput): RefundBillingItem {
+  if (input.amount <= 0) {
+    throw new InvalidBillingItemError("Amount must be positive");
+  }
+
+  if (!input.description || input.description.trim() === "") {
+    throw new InvalidBillingItemError("Description cannot be empty");
+  }
+
+  if (!input.date) {
+    throw new InvalidBillingItemError("Date is required");
+  }
+
+  return {
+    kind: "refund",
+    description: input.description,
+    amount: input.amount,
+    date: input.date,
+  };
+}
+
+export function isInstallmentBillingItem(item: BillingItem): item is InstallmentBillingItem {
   return item.kind === "installment";
+}
+
+export function isRefundBillingItem(item: BillingItem): item is RefundBillingItem {
+  return item.kind === "refund";
 }

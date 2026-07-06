@@ -1,63 +1,67 @@
-import type { BillingItem } from "../../domain/entities/BillingItem"
+import type { BillingItem } from "../../domain/entities/BillingItem";
 import {
   createInstallmentBillingItem,
   createTransactionBillingItem,
-} from "../../domain/entities/BillingItem"
+  createRefundBillingItem,
+} from "../../domain/entities/BillingItem";
 
 function parseCsvLine(line: string): string[] {
-  const result: string[] = []
-  let current = ""
-  let inQuotes = false
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
 
   for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
+    const ch = line[i];
     if (ch === '"') {
-      inQuotes = !inQuotes
+      inQuotes = !inQuotes;
     } else if (ch === ";" && !inQuotes) {
-      result.push(current.trim())
-      current = ""
+      result.push(current.trim());
+      current = "";
     } else {
-      current += ch
+      current += ch;
     }
   }
-  result.push(current.trim())
-  return result
+  result.push(current.trim());
+  return result;
 }
 
 export function parseC6Csv(csvText: string): BillingItem[] {
-  const lines = csvText.split("\n").map((l) => l.trim()).filter(Boolean)
+  const lines = csvText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   // need at least header + 1 data row
-  if (lines.length < 2) return []
+  if (lines.length < 2) return [];
 
-  const items: BillingItem[] = []
+  const items: BillingItem[] = [];
 
   for (const line of lines.slice(1)) {
-    const cols = parseCsvLine(line)
-    if (cols.length < 9) continue
+    const cols = parseCsvLine(line);
+    if (cols.length < 9) continue;
 
-    const dateStr = cols[0]     // DD/MM/YYYY
-    const description = cols[4] // Descrição
-    const parcelaStr = cols[5]  // "X/Y" or "Única"
-    const rawAmount = cols[8]   // Valor (em R$)
+    const dateStr = cols[0]; // DD/MM/YYYY
+    const description = cols[4]; // Descrição
+    const parcelaStr = cols[5]; // "X/Y" or "Única"
+    const rawAmount = cols[8]; // Valor (em R$)
 
-    const [day, month, year] = dateStr.split("/")
-    if (!day || !month || !year) continue
+    const [day, month, year] = dateStr.split("/");
+    if (!day || !month || !year) continue;
 
-    const date = new Date(Date.UTC(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10)))
+    const date = new Date(Date.UTC(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10)));
 
-    const amount = parseFloat(rawAmount)
-    if (!Number.isFinite(amount) || amount === 0) continue
+    const amount = parseFloat(rawAmount);
+    if (!Number.isFinite(amount) || amount === 0) continue;
 
-    const absAmount = Math.abs(amount)
-    const isCredit = amount < 0
+    const absAmount = Math.abs(amount);
+    const isCredit = amount < 0;
 
-    const installmentMatch = parcelaStr.match(/^(\d+)\/(\d+)$/)
-    const isSingleInstallment = parcelaStr === "Única"
+    const installmentMatch = parcelaStr.match(/^(\d+)\/(\d+)$/);
+    const isSingleInstallment = parcelaStr === "Única";
 
     try {
       if (installmentMatch || isSingleInstallment) {
-        const installmentNumber = installmentMatch ? parseInt(installmentMatch[1], 10) : 1
-        const totalInstallments = installmentMatch ? parseInt(installmentMatch[2], 10) : 1
+        const installmentNumber = installmentMatch ? parseInt(installmentMatch[1], 10) : 1;
+        const totalInstallments = installmentMatch ? parseInt(installmentMatch[2], 10) : 1;
         items.push(
           createInstallmentBillingItem({
             description,
@@ -66,21 +70,23 @@ export function parseC6Csv(csvText: string): BillingItem[] {
             installmentNumber,
             totalInstallments,
           }),
-        )
+        );
+      } else if (isCredit) {
+        items.push(createRefundBillingItem({ description, amount: absAmount, date }));
       } else {
         items.push(
           createTransactionBillingItem({
             description,
             amount: absAmount,
             date,
-            transactionType: isCredit ? "INCOME" : "EXPENSE",
+            transactionType: "EXPENSE",
           }),
-        )
+        );
       }
     } catch {
       // skip invalid rows silently
     }
   }
 
-  return items
+  return items;
 }

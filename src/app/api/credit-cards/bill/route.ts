@@ -12,11 +12,12 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "year and month are required" }, { status: 400 });
 
     const personId = searchParams.get("personId") ?? undefined;
-    const { creditCard, creditCardPurchase } = createRepositories();
+    const { creditCard, creditCardPurchase, creditCardRefund } = createRepositories();
     const bill = await getCreditCardBillUseCase(
       { year, month, personId },
       creditCard,
       creditCardPurchase,
+      creditCardRefund,
     );
     return Response.json({ bill });
   } catch (error) {

@@ -62,13 +62,29 @@ describe("HybridStatementParser", () => {
     })
   })
 
-  it("maps single income row to TransactionBillingItem with INCOME", async () => {
+  it("maps a credit row on a credit-card statement to RefundBillingItem", async () => {
     const row = makeRow({ isCredit: true, description: "Estorno compra" })
     parseBillingTextSpy.mockReturnValue({ rows: [row], bank: "itau" })
     classifyRowsSpy.mockResolvedValue([makeClassificationResult(row, "INCOME")])
 
     const parser = createHybridStatementParser()
     const result = await parser.parse("some text", "credit-card")
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      kind: "refund",
+      description: row.description,
+      amount: row.amount,
+    })
+  })
+
+  it("maps a credit row on a debit statement to TransactionBillingItem with INCOME", async () => {
+    const row = makeRow({ isCredit: true, description: "Pagamento recebido" })
+    parseBillingTextSpy.mockReturnValue({ rows: [row], bank: "itau" })
+    classifyRowsSpy.mockResolvedValue([makeClassificationResult(row, "INCOME")])
+
+    const parser = createHybridStatementParser()
+    const result = await parser.parse("some text", "debit")
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({ kind: "transaction", transactionType: "INCOME" })
@@ -90,19 +106,19 @@ describe("HybridStatementParser", () => {
     })
   })
 
-  it("handles mixed rows (expense + installment + income) in order", async () => {
+  it("handles mixed rows (expense + installment + refund) in order", async () => {
     const expenseRow = makeRow({ description: "Supermercado" })
     const installmentRow = makeRow({ description: "Notebook", installmentNumber: 1, totalInstallments: 12 })
-    const incomeRow = makeRow({ description: "Reembolso", isCredit: true })
+    const refundRow = makeRow({ description: "Reembolso", isCredit: true })
 
     parseBillingTextSpy.mockReturnValue({
-      rows: [expenseRow, installmentRow, incomeRow],
+      rows: [expenseRow, installmentRow, refundRow],
       bank: "itau",
     })
     classifyRowsSpy.mockResolvedValue([
       makeClassificationResult(expenseRow, "EXPENSE"),
       makeClassificationResult(installmentRow, "EXPENSE"),
-      makeClassificationResult(incomeRow, "INCOME"),
+      makeClassificationResult(refundRow, "INCOME"),
     ])
 
     const parser = createHybridStatementParser()
@@ -111,7 +127,7 @@ describe("HybridStatementParser", () => {
     expect(result).toHaveLength(3)
     expect(result[0]).toMatchObject({ kind: "transaction", transactionType: "EXPENSE" })
     expect(result[1]).toMatchObject({ kind: "installment", installmentNumber: 1, totalInstallments: 12 })
-    expect(result[2]).toMatchObject({ kind: "transaction", transactionType: "INCOME" })
+    expect(result[2]).toMatchObject({ kind: "refund" })
   })
 
   it("skips row with invalid data (factory throws) and returns the rest", async () => {

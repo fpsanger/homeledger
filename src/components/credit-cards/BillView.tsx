@@ -12,7 +12,6 @@ import {
   Plus,
   Receipt,
   Tag,
-  Trash2,
   Users,
   ArrowUp,
   ArrowDown,
@@ -142,11 +141,14 @@ function SummaryCard({
 
 type CardInstallmentSharedProps = {
   sorted: BillInstallmentItem[];
+  refunds: RefundItem[];
   personMap: Map<string, string>;
   categoryMap: Map<string, string>;
   onEdit: (purchaseId: string) => void;
   onDelete: (purchaseId: string) => void;
   deletingId: string | null;
+  onDeleteRefund: (refundId: string) => void;
+  deletingRefundId: string | null;
 };
 
 type CardInstallmentDesktopProps = CardInstallmentSharedProps & {
@@ -157,11 +159,14 @@ type CardInstallmentDesktopProps = CardInstallmentSharedProps & {
 
 function CardInstallmentTableDesktop({
   sorted,
+  refunds,
   personMap,
   categoryMap,
   onEdit,
   onDelete,
   deletingId,
+  onDeleteRefund,
+  deletingRefundId,
   sortKey,
   sortDir,
   toggleSort,
@@ -261,6 +266,63 @@ function CardInstallmentTableDesktop({
               </tr>
             );
           })}
+          {refunds.map((refund) => {
+            const isDeleting = deletingRefundId === refund.id;
+            return (
+              <tr
+                key={refund.id}
+                className={`border-b last:border-0 transition-colors hover:bg-muted/20${isDeleting ? " opacity-50" : ""}`}
+              >
+                <td className="px-5 py-3">
+                  <p className="font-medium text-sm">{refund.description || "Estorno"}</p>
+                </td>
+                <td className="px-5 py-3">
+                  <Badge
+                    variant="outline"
+                    className="font-mono text-xs border-green-300 text-green-700 dark:border-green-800 dark:text-green-400"
+                  >
+                    Estorno
+                  </Badge>
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground">
+                  {formatDatePtBR(refund.refundDate)}
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground">
+                  {personMap.get(refund.personId) ?? "—"}
+                </td>
+                <td className="px-5 py-3 text-sm text-muted-foreground">
+                  {refund.categoryId ? (categoryMap.get(refund.categoryId) ?? "—") : "—"}
+                </td>
+                <td className="px-5 py-3 text-right font-medium text-sm text-green-600 dark:text-green-400">
+                  −{" "}
+                  {refund.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </td>
+                <td className="px-5 py-3 text-right">
+                  <DropdownMenu
+                    align="right"
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground"
+                        aria-label="Ações"
+                        disabled={isDeleting}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    }
+                    items={[
+                      {
+                        label: isDeleting ? "Excluindo…" : "Excluir estorno",
+                        onClick: () => onDeleteRefund(refund.id),
+                        variant: "destructive",
+                      },
+                    ]}
+                  />
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -276,11 +338,14 @@ type CardInstallmentMobileProps = CardInstallmentSharedProps & {
 
 function CardInstallmentTableMobile({
   sorted,
+  refunds,
   personMap,
   categoryMap,
   onEdit,
   onDelete,
   deletingId,
+  onDeleteRefund,
+  deletingRefundId,
   sortKey,
   setSortKey,
   sortDir,
@@ -377,6 +442,68 @@ function CardInstallmentTableMobile({
           </div>
         );
       })}
+      {refunds.map((refund) => {
+        const isDeleting = deletingRefundId === refund.id;
+        const personName = personMap.get(refund.personId);
+        const categoryName = refund.categoryId ? categoryMap.get(refund.categoryId) : null;
+        return (
+          <div
+            key={refund.id}
+            className={`rounded-xl border bg-card p-4 flex flex-col gap-2${isDeleting ? " opacity-50" : ""}`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-semibold text-sm truncate">
+                {refund.description || "Estorno"}
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="font-semibold text-sm text-green-600 dark:text-green-400">
+                  −{" "}
+                  {refund.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+                <DropdownMenu
+                  align="right"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground"
+                      aria-label="Ações"
+                      disabled={isDeleting}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  }
+                  items={[
+                    {
+                      label: isDeleting ? "Excluindo…" : "Excluir estorno",
+                      onClick: () => onDeleteRefund(refund.id),
+                      variant: "destructive",
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatDatePtBR(refund.refundDate)}
+              {personName && <> &bull; {personName}</>}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge
+                variant="outline"
+                className="font-mono text-xs border-green-300 text-green-700 dark:border-green-800 dark:text-green-400"
+              >
+                Estorno
+              </Badge>
+              {categoryName && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                  <Tag className="w-3 h-3" />
+                  {categoryName}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -385,18 +512,24 @@ function CardInstallmentTableMobile({
 
 function CardInstallmentTable({
   installments,
+  refunds,
   personMap,
   categoryMap,
   onEdit,
   onDelete,
   deletingId,
+  onDeleteRefund,
+  deletingRefundId,
 }: {
   installments: BillInstallmentItem[];
+  refunds: RefundItem[];
   personMap: Map<string, string>;
   categoryMap: Map<string, string>;
   onEdit: (purchaseId: string) => void;
   onDelete: (purchaseId: string) => void;
   deletingId: string | null;
+  onDeleteRefund: (refundId: string) => void;
+  deletingRefundId: string | null;
 }) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -454,7 +587,17 @@ function CardInstallmentTable({
     return arr;
   }, [filtered, sortKey, sortDir]);
 
-  const sharedProps = { sorted, personMap, categoryMap, onEdit, onDelete, deletingId };
+  const sharedProps = {
+    sorted,
+    refunds,
+    personMap,
+    categoryMap,
+    onEdit,
+    onDelete,
+    deletingId,
+    onDeleteRefund,
+    deletingRefundId,
+  };
 
   return (
     <>
@@ -966,48 +1109,15 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                   <CollapsibleContent>
                     <CardInstallmentTable
                       installments={entry.installments}
+                      refunds={entry.refunds}
                       personMap={personMap}
                       categoryMap={categoryMap}
                       onEdit={setEditingPurchaseId}
                       onDelete={deletePurchase}
                       deletingId={deletingId}
+                      onDeleteRefund={deleteRefund}
+                      deletingRefundId={deletingRefundId}
                     />
-                    {entry.refunds.length > 0 && (
-                      <div className="border-t divide-y">
-                        {entry.refunds.map((refund) => (
-                          <div
-                            key={refund.id}
-                            className={`flex items-center justify-between gap-3 px-5 py-3${deletingRefundId === refund.id ? " opacity-50" : ""}`}
-                          >
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">
-                                {refund.description || "Estorno"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatDatePtBR(refund.refundDate)}
-                                {personMap.get(refund.personId) &&
-                                  ` · ${personMap.get(refund.personId)}`}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className="font-medium text-sm text-green-600 dark:text-green-400">
-                                − {formatCurrency(refund.amount)}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground"
-                                aria-label="Excluir estorno"
-                                disabled={deletingRefundId === refund.id}
-                                onClick={() => deleteRefund(refund.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </CollapsibleContent>
                 </Card>
               </Collapsible>

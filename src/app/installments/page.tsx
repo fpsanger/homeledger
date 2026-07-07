@@ -7,7 +7,7 @@ export default async function InstallmentsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader eyebrow="Crédito" title="Parcelas" />
+      <PageHeader eyebrow="Crédito" title="Fatura cartão" description="Visão da fatura do cartão de crédito" />
       <BillView initialPersonId={globalPersonId} />
     </div>
   );

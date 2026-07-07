@@ -10,12 +10,13 @@ type Props = {
   onClose: () => void;
   onSuccess: () => void;
   programs: Program[];
+  personId?: string;
 };
 
-export function LoyaltyTransferDialog({ open, onClose, onSuccess, programs }: Props) {
+export function LoyaltyTransferDialog({ open, onClose, onSuccess, programs, personId }: Props) {
   return (
     <Dialog open={open} onClose={onClose} title="Nova Transferência">
-      <LoyaltyTransferForm programs={programs} onSuccess={onSuccess} />
+      <LoyaltyTransferForm programs={programs} onSuccess={onSuccess} personId={personId} />
     </Dialog>
   );
 }

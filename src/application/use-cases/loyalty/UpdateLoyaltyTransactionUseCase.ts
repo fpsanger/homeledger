@@ -12,6 +12,7 @@ type Input = {
   expiresAt?: Date | null;
   costBrl?: number | null;
   valueBrl?: number | null;
+  personId?: string | null;
 };
 
 export async function updateLoyaltyTransactionUseCase(
@@ -33,6 +34,7 @@ export async function updateLoyaltyTransactionUseCase(
     expiresAt: input.expiresAt !== undefined ? input.expiresAt : existing.expiresAt,
     costBrl: input.costBrl !== undefined ? input.costBrl : existing.costBrl,
     valueBrl: input.valueBrl !== undefined ? input.valueBrl : existing.valueBrl,
+    personId: input.personId !== undefined ? input.personId : existing.personId,
     updatedAt: new Date(),
   };
 

@@ -52,6 +52,7 @@ function makeTransactionRepo(fromProgramTxs: LoyaltyTransactionRecord[] = []): I
     findById: jest.fn(),
     findByProgramId: jest.fn().mockResolvedValue(fromProgramTxs),
     findByProgramIdAndPersonId: jest.fn().mockResolvedValue([]),
+    findByTransferId: jest.fn().mockResolvedValue([]),
     delete: jest.fn(),
   };
 }

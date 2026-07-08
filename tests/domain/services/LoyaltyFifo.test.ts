@@ -205,6 +205,16 @@ describe("LoyaltyFifo service", () => {
       expect(result.summary.avgCostPer1kPoints).toBeCloseTo(10);
     });
 
+    it("computes totalPurchasedPoints from PURCHASE and TRANSFER_IN with costBrl", () => {
+      const transactions = [
+        tx({ type: "PURCHASE", points: 10000, costBrl: 100, date: "2024-01-01" }),
+        tx({ type: "TRANSFER_IN", points: 5000, costBrl: 50, date: "2024-02-01", transferId: "t-1" }),
+        tx({ type: "EARN", points: 2000, date: "2024-03-01" }),
+      ];
+      const result = computeLoyaltyFifo(transactions);
+      expect(result.summary.totalPurchasedPoints).toBe(15000);
+    });
+
     it("computes totalValueRedeemed", () => {
       const transactions = [
         tx({ type: "PURCHASE", points: 20000, costBrl: 200, date: "2024-01-01" }),

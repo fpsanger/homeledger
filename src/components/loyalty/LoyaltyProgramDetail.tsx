@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { formatDatePtBR } from "@/lib/format-date";
+import { findDuplicateLoyaltyTransaction } from "@/domain/services/isDuplicateLoyaltyTransaction";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 type FifoData = {
   costBrl: number;
   costPer1kPoints: number;
@@ -23,6 +26,7 @@ type Transaction = {
   costBrl: number | null;
   valueBrl: number | null;
   transferId: string | null;
+  personId: string | null;
   fifoData?: FifoData;
 };
 
@@ -108,7 +112,7 @@ const TRANSACTION_TYPES = [
   { value: "ADJUSTMENT", label: "Ajuste" },
 ];
 
-function AddTransactionModal({ programId, defaultPersonId = "", onClose, onSuccess }: { programId: string; defaultPersonId?: string; onClose: () => void; onSuccess: () => void }) {
+function AddTransactionModal({ programId, defaultPersonId = "", existingTransactions, onClose, onSuccess }: { programId: string; defaultPersonId?: string; existingTransactions: Transaction[]; onClose: () => void; onSuccess: () => void }) {
   const today = new Date().toISOString().slice(0, 10);
   const [type, setType] = useState("EARN");
   const [points, setPoints] = useState("");
@@ -121,6 +125,14 @@ function AddTransactionModal({ programId, defaultPersonId = "", onClose, onSucce
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const duplicateMatch = findDuplicateLoyaltyTransaction(
+    existingTransactions,
+    type,
+    points ? Number(points) : null,
+    personId || null,
+    date,
+  );
 
   useEffect(() => {
     fetch("/api/people")
@@ -162,9 +174,7 @@ function AddTransactionModal({ programId, defaultPersonId = "", onClose, onSucce
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-background rounded-xl border shadow-lg p-6 w-full max-w-md flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-sm font-semibold">Nova Transação</h2>
+    <Dialog open onClose={onClose} title="Nova Transação" className="max-w-md">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
@@ -209,29 +219,42 @@ function AddTransactionModal({ programId, defaultPersonId = "", onClose, onSucce
             <label className="text-xs font-medium text-muted-foreground">Descrição</label>
             <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
+          <DuplicateWarning match={duplicateMatch} />
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2 pt-1">
             <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
               {loading ? "Salvando..." : "Salvar"}
             </button>
-            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-muted transition-colors">
-              Cancelar
-            </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
-function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onClose: () => void; onSuccess: () => void }) {
+function EditTransactionModal({ tx, existingTransactions, onClose, onSuccess }: { tx: Transaction; existingTransactions: Transaction[]; onClose: () => void; onSuccess: () => void }) {
   const [points, setPoints] = useState(String(tx.points));
   const [date, setDate] = useState(tx.date.slice(0, 10));
   const [description, setDescription] = useState(tx.description ?? "");
   const [costBrl, setCostBrl] = useState(tx.costBrl != null ? String(tx.costBrl) : "");
   const [expiresAt, setExpiresAt] = useState(tx.expiresAt ? tx.expiresAt.slice(0, 10) : "");
+  const [personId, setPersonId] = useState(tx.personId ?? "");
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const duplicateMatch = findDuplicateLoyaltyTransaction(
+    existingTransactions.filter((t) => t.id !== tx.id),
+    tx.type,
+    points ? Number(points) : null,
+    personId || null,
+    date,
+  );
+
+  useEffect(() => {
+    fetch("/api/people")
+      .then((r) => (r.ok ? r.json() : { people: [] }))
+      .then((d) => setPeople(d.people ?? []));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -247,6 +270,7 @@ function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onC
           description: description || null,
           costBrl: costBrl ? Number(costBrl) : null,
           expiresAt: expiresAt || null,
+          personId: personId || null,
         }),
       });
       if (!res.ok) {
@@ -263,10 +287,8 @@ function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-background rounded-xl border shadow-lg p-6 w-full max-w-md flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-sm font-semibold">Editar Transação</h2>
-        <p className="text-xs text-muted-foreground -mt-2">
+    <Dialog open onClose={onClose} title="Editar Transação" className="max-w-md">
+        <p className="text-xs text-muted-foreground -mt-2 mb-3">
           Tipo: <span className="font-medium">{TYPE_LABELS[tx.type] ?? tx.type}</span>
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -292,22 +314,28 @@ function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onC
               <input type="number" step="0.01" value={costBrl} onChange={(e) => setCostBrl(e.target.value)} placeholder="0,00" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
           )}
+          {people.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Pessoa</label>
+              <select value={personId} onChange={(e) => setPersonId(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">Todos</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-muted-foreground">Descrição</label>
             <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
+          <DuplicateWarning match={duplicateMatch} />
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2 pt-1">
             <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
               {loading ? "Salvando..." : "Salvar"}
             </button>
-            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-muted transition-colors">
-              Cancelar
-            </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -369,7 +397,13 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
         <SummaryCard label="Expirados" value={formatPts(summary.totalExpired)} />
         <SummaryCard
           label="ROI Geral"
-          value={summary.overallRoi != null ? `${summary.overallRoi.toFixed(1)}%` : "—"}
+          value={
+            summary.totalValueRedeemed === 0
+              ? "Nenhum resgate"
+              : summary.overallRoi != null
+                ? `${summary.overallRoi.toFixed(1)}%`
+                : "—"
+          }
         />
       </div>
 
@@ -377,6 +411,7 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
         <AddTransactionModal
           programId={program.id}
           defaultPersonId={defaultPersonId}
+          existingTransactions={transactions}
           onClose={() => setShowModal(false)}
           onSuccess={() => { setShowModal(false); router.refresh(); }}
         />
@@ -384,6 +419,7 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
       {editingTx && (
         <EditTransactionModal
           tx={editingTx}
+          existingTransactions={transactions}
           onClose={() => setEditingTx(null)}
           onSuccess={() => { setEditingTx(null); router.refresh(); }}
         />

@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DatePicker } from "@/components/ui/date-picker";
+
+function formatBrl(value: number) {
+  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 type Program = { id: string; name: string; type: string };
 
@@ -21,10 +25,29 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sourceAvgCostPer1k, setSourceAvgCostPer1k] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!fromProgramId) return;
+    let cancelled = false;
+    fetch(`/api/loyalty/programs/${fromProgramId}/report`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled) setSourceAvgCostPer1k(d?.summary?.avgCostPer1kPoints ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fromProgramId]);
 
   const sentNum = Number(pointsSent) || 0;
   const bonusNum = Number(bonusPercent) || 0;
   const pointsReceived = sentNum > 0 ? Math.round(sentNum * (1 + bonusNum / 100)) : 0;
+
+  const estimatedCostBrl = sourceAvgCostPer1k ? (sourceAvgCostPer1k * sentNum) / 1000 : 0;
+  const destinationCostPer1k = sentNum > 0 && pointsReceived > 0 && sourceAvgCostPer1k
+    ? (estimatedCostBrl / pointsReceived) * 1000
+    : null;
 
   const fromProgram = programs.find((p) => p.id === fromProgramId);
   const isAirlineSource = fromProgram?.type === "AIRLINE";
@@ -131,9 +154,15 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
         </div>
       </div>
 
-      <div className="rounded-md bg-muted px-4 py-3 flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">Pontos recebidos</span>
-        <span className="font-semibold text-base">{pointsReceived > 0 ? pointsReceived.toLocaleString("pt-BR") : "—"}</span>
+      <div className="rounded-md bg-muted px-4 py-3 flex flex-col gap-2 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">Pontos recebidos</span>
+          <span className="font-semibold text-base">{pointsReceived > 0 ? pointsReceived.toLocaleString("pt-BR") : "—"}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">Custo/1k pts (destino, estimado)</span>
+          <span className="font-medium">{destinationCostPer1k != null ? formatBrl(destinationCostPer1k) : "—"}</span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">

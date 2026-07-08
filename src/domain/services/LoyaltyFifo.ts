@@ -18,6 +18,7 @@ export type EnrichedTransaction = LoyaltyTransactionRecord & {
 export type LoyaltyFifoSummary = {
   currentBalance: number;
   totalInvested: number;
+  totalPurchasedPoints: number;
   avgCostPer1kPoints: number;
   totalValueRedeemed: number;
   totalExpired: number;
@@ -80,6 +81,8 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
           totalInvested += tx.costBrl;
           totalPurchasedPoints += tx.points;
           lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl });
+          const costPer1kPoints = tx.points > 0 ? (tx.costBrl / tx.points) * 1000 : 0;
+          fifoData = { costBrl: tx.costBrl, costPer1kPoints, roi: null };
         }
         break;
 
@@ -134,6 +137,7 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     summary: {
       currentBalance: balance,
       totalInvested,
+      totalPurchasedPoints,
       avgCostPer1kPoints,
       totalValueRedeemed,
       totalExpired,

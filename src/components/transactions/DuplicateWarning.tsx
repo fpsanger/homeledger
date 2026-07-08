@@ -2,16 +2,18 @@
 
 import type { TransactionRecord } from "@/domain/repositories/ITransactionRepository";
 import type { CreditCardPurchaseRecord } from "@/domain/repositories/ICreditCardPurchaseRepository";
+import type { LoyaltyDuplicateCandidate } from "@/domain/services/isDuplicateLoyaltyTransaction";
 import { formatAmountBR } from "@/lib/utils";
 import { formatDatePtBR } from "@/lib/format-date";
 
-type Match = TransactionRecord | CreditCardPurchaseRecord;
+type Match = TransactionRecord | CreditCardPurchaseRecord | LoyaltyDuplicateCandidate;
 
 export function DuplicateWarning({ match, note }: { match: Match | null; note?: string }) {
   if (!match) return null;
 
-  const amount = "totalAmount" in match ? match.totalAmount : match.amount;
-  const date = "purchaseDate" in match ? match.purchaseDate : match.date;
+  const isLoyalty = "points" in match;
+  const value = isLoyalty ? `${match.points.toLocaleString("pt-BR")} pts` : formatAmountBR("totalAmount" in match ? match.totalAmount : match.amount);
+  const date = isLoyalty ? match.date : "purchaseDate" in match ? match.purchaseDate : match.date;
 
   return (
     <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
@@ -19,7 +21,7 @@ export function DuplicateWarning({ match, note }: { match: Match | null; note?: 
       <p className="mt-1 text-amber-400">
         {match.description || "Sem descrição"}
         {" · "}
-        {formatAmountBR(amount)}
+        {value}
         {" · "}
         {formatDatePtBR(String(date).slice(0, 10))}
       </p>

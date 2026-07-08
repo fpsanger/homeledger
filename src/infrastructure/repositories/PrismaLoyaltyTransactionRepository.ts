@@ -74,6 +74,13 @@ export class PrismaLoyaltyTransactionRepository implements ILoyaltyTransactionRe
     return rows.map(toRecord);
   }
 
+  async findByTransferId(transferId: string): Promise<LoyaltyTransactionRecord[]> {
+    const rows = await this.prisma.loyaltyTransaction.findMany({
+      where: { transferId },
+    });
+    return rows.map(toRecord);
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.loyaltyTransaction.delete({ where: { id } });
   }

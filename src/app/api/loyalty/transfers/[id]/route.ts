@@ -6,8 +6,8 @@ import { createRepositories } from "../../../_lib/repositories";
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { loyaltyTransfer } = createRepositories();
-    await deleteLoyaltyTransferUseCase(id, loyaltyTransfer);
+    const { loyaltyTransfer, loyaltyTransaction } = createRepositories();
+    await deleteLoyaltyTransferUseCase(id, loyaltyTransfer, loyaltyTransaction);
     return new Response(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

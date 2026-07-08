@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { parseCurrencyBR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,12 +118,7 @@ export function InvestmentForm({
           placeholder="Opcional"
         />
       </div>
-      {isDuplicate && (
-        <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
-          mesmo assim.
-        </p>
-      )}
+      <DuplicateWarning match={isDuplicate} />
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Investimento"}
       </Button>

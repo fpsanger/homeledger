@@ -1,7 +1,9 @@
 import {
   createInstallmentBillingItem,
   createTransactionBillingItem,
+  createRefundBillingItem,
   isInstallmentBillingItem,
+  isRefundBillingItem,
 } from "../../../src/domain/entities/BillingItem";
 import { InvalidBillingItemError } from "../../../src/domain/errors";
 
@@ -172,6 +174,52 @@ describe("BillingItem - Transaction", () => {
   });
 });
 
+const baseRefund = {
+  description: "Estorno loja X",
+  amount: 75.25,
+  date: new Date("2026-05-20"),
+};
+
+describe("BillingItem - Refund", () => {
+  describe("createRefundBillingItem", () => {
+    it("creates a refund billing item with valid data", () => {
+      const item = createRefundBillingItem(baseRefund);
+
+      expect(item.kind).toBe("refund");
+      expect(item.description).toBe("Estorno loja X");
+      expect(item.amount).toBe(75.25);
+      expect(item.date).toEqual(new Date("2026-05-20"));
+    });
+
+    it("throws when amount is zero", () => {
+      expect(() =>
+        createRefundBillingItem({ ...baseRefund, amount: 0 })
+      ).toThrow(InvalidBillingItemError);
+    });
+
+    it("throws when amount is negative", () => {
+      expect(() =>
+        createRefundBillingItem({ ...baseRefund, amount: -50 })
+      ).toThrow(InvalidBillingItemError);
+    });
+
+    it("throws when description is empty", () => {
+      expect(() =>
+        createRefundBillingItem({ ...baseRefund, description: "" })
+      ).toThrow(InvalidBillingItemError);
+    });
+
+    it("throws when date is missing", () => {
+      expect(() =>
+        createRefundBillingItem({
+          ...baseRefund,
+          date: null as unknown as Date,
+        })
+      ).toThrow(InvalidBillingItemError);
+    });
+  });
+});
+
 describe("BillingItem - Type Guard", () => {
   describe("isInstallmentBillingItem", () => {
     it("returns true for installment billing items", () => {
@@ -184,6 +232,20 @@ describe("BillingItem - Type Guard", () => {
       const item = createTransactionBillingItem(baseTransaction);
 
       expect(isInstallmentBillingItem(item)).toBe(false);
+    });
+  });
+
+  describe("isRefundBillingItem", () => {
+    it("returns true for refund billing items", () => {
+      const item = createRefundBillingItem(baseRefund);
+
+      expect(isRefundBillingItem(item)).toBe(true);
+    });
+
+    it("returns false for transaction billing items", () => {
+      const item = createTransactionBillingItem(baseTransaction);
+
+      expect(isRefundBillingItem(item)).toBe(false);
     });
   });
 });

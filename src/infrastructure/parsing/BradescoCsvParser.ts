@@ -2,6 +2,7 @@ import type { BillingItem } from "../../domain/entities/BillingItem";
 import {
   createInstallmentBillingItem,
   createTransactionBillingItem,
+  createRefundBillingItem,
 } from "../../domain/entities/BillingItem";
 
 const SKIP_DESCRIPTIONS = ["SALDO ANTERIOR", "PAGTO. POR DEB EM C/C"];
@@ -12,7 +13,7 @@ function parseAmount(intPart: string, decPart: string): number {
   const dec = parseInt(decPart.replace(/\D/g, ""), 10) || 0;
   if (!Number.isFinite(int)) return Number.NaN;
   const sign = int < 0 ? -1 : 1;
-  return int + sign * dec / 100;
+  return int + (sign * dec) / 100;
 }
 
 function extractHeaderYear(headerLine: string): { year: number; month: number } | null {
@@ -37,7 +38,9 @@ export function parseBradescoCsv(csvText: string): BillingItem[] {
   if (sectionStart === -1) return [];
 
   // Find column header after section start
-  const colHeaderIdx = lines.findIndex((l, i) => i > sectionStart && l.startsWith("Data;Histórico"));
+  const colHeaderIdx = lines.findIndex(
+    (l, i) => i > sectionStart && l.startsWith("Data;Histórico"),
+  );
   const dataStart = colHeaderIdx !== -1 ? colHeaderIdx + 1 : sectionStart + 2;
 
   const items: BillingItem[] = [];
@@ -66,7 +69,10 @@ export function parseBradescoCsv(csvText: string): BillingItem[] {
     if (!dateStr.match(/^\d{2}\/\d{2}$/)) continue;
     if (SKIP_DESCRIPTIONS.some((s) => description.startsWith(s))) continue;
 
-    if (!Number.isFinite(amount) || amount <= 0) continue;
+    if (!Number.isFinite(amount) || amount === 0) continue;
+
+    const isCredit = amount < 0;
+    const absAmount = Math.abs(amount);
 
     const [dd, mm] = dateStr.split("/").map(Number);
     let year = 2000;
@@ -81,9 +87,26 @@ export function parseBradescoCsv(csvText: string): BillingItem[] {
         const desc = installMatch[1].trim();
         const installmentNumber = parseInt(installMatch[2], 10);
         const totalInstallments = parseInt(installMatch[3], 10);
-        items.push(createInstallmentBillingItem({ description: desc, amount, date, installmentNumber, totalInstallments }));
+        items.push(
+          createInstallmentBillingItem({
+            description: desc,
+            amount: absAmount,
+            date,
+            installmentNumber,
+            totalInstallments,
+          }),
+        );
+      } else if (isCredit) {
+        items.push(createRefundBillingItem({ description, amount: absAmount, date }));
       } else {
-        items.push(createTransactionBillingItem({ description, amount, date, transactionType: "EXPENSE" }));
+        items.push(
+          createTransactionBillingItem({
+            description,
+            amount: absAmount,
+            date,
+            transactionType: "EXPENSE",
+          }),
+        );
       }
     } catch {
       // skip invalid rows

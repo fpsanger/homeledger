@@ -20,6 +20,10 @@ jest.mock("@/components/ui/date-picker", () => ({
   DatePicker: () => null,
 }));
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({ json: () => Promise.resolve({ transactions: [] }) }),
+) as jest.Mock;
+
 const people = [
   { id: "p1", name: "Alice" },
   { id: "p2", name: "Bob" },

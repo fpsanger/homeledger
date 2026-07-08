@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { useCreditCardDuplicateCheck } from "@/hooks/useCreditCardDuplicateCheck";
 import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -14,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { parseCurrencyBR, formatAmountBR } from "@/lib/utils";
-import { formatDatePtBR } from "@/lib/format-date";
 
 type FormType = "expense" | "income" | "credit";
 
@@ -527,23 +527,11 @@ export function UnifiedTransactionForm({
         />
       </div>
 
-      {!isEditMode && duplicateMatch && (
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-          <p className="font-medium text-amber-500">Possível duplicata encontrada</p>
-          <p className="mt-1 text-amber-400">
-            {duplicateMatch.description || "Sem descrição"}
-            {" · "}
-            {formatAmountBR("totalAmount" in duplicateMatch ? duplicateMatch.totalAmount : duplicateMatch.amount)}
-            {" · "}
-            {formatDatePtBR(
-              String("purchaseDate" in duplicateMatch ? duplicateMatch.purchaseDate : duplicateMatch.date).slice(0, 10),
-            )}
-          </p>
-          {isCrossType && (
-            <p className="mt-1 text-xs text-amber-400/70">Compra de cartão com mesmo valor</p>
-          )}
-          <p className="mt-1 text-xs text-amber-400/70">Você pode continuar mesmo assim.</p>
-        </div>
+      {!isEditMode && (
+        <DuplicateWarning
+          match={duplicateMatch}
+          note={isCrossType ? "Compra de cartão com mesmo valor" : undefined}
+        />
       )}
 
       <Button type="submit" disabled={loading}>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { parseCurrencyBR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
     paymentMethod,
     refreshKey,
   );
+  const duplicateMatch = isDuplicate ?? isCrossEntityDup;
+  const isCrossType = !isDuplicate && !!isCrossEntityDup;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -141,12 +144,10 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
           placeholder="Opcional"
         />
       </div>
-      {(isDuplicate || isCrossEntityDup) && (
-        <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
-          mesmo assim.
-        </p>
-      )}
+      <DuplicateWarning
+        match={duplicateMatch}
+        note={isCrossType ? "Compra de cartão com mesmo valor" : undefined}
+      />
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Despesa"}
       </Button>

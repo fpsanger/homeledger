@@ -2,11 +2,22 @@ import type { BillingItem } from "../../domain/entities/BillingItem";
 import {
   createInstallmentBillingItem,
   createTransactionBillingItem,
+  createRefundBillingItem,
 } from "../../domain/entities/BillingItem";
 
 const MONTH_MAP: Record<string, number> = {
-  janeiro: 1, fevereiro: 2, março: 3, abril: 4, maio: 5, junho: 6,
-  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+  janeiro: 1,
+  fevereiro: 2,
+  março: 3,
+  abril: 4,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  agosto: 8,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
 };
 
 const INSTALLMENT_RE = /^(.*?)\s*\((\d+)\/(\d+)\)\s*$/;
@@ -68,7 +79,10 @@ export function parseBtgCsv(csvText: string): BillingItem[] {
     if (!description || !rawAmount) continue;
 
     const amount = parseAmount(rawAmount);
-    if (!Number.isFinite(amount) || amount <= 0) continue;
+    if (!Number.isFinite(amount) || amount === 0) continue;
+
+    const isCredit = amount < 0;
+    const absAmount = Math.abs(amount);
 
     const [dd, mm] = dateStr.split("/").map(Number);
     let year = new Date().getFullYear();
@@ -86,11 +100,21 @@ export function parseBtgCsv(csvText: string): BillingItem[] {
         const installmentNumber = parseInt(installMatch[2], 10);
         const totalInstallments = parseInt(installMatch[3], 10);
         items.push(
-          createInstallmentBillingItem({ description: desc, amount, date, installmentNumber, totalInstallments }),
+          createInstallmentBillingItem({
+            description: desc,
+            amount: absAmount,
+            date,
+            installmentNumber,
+            totalInstallments,
+          }),
         );
+      } else if (isCredit) {
+        items.push(createRefundBillingItem({ description, amount: absAmount, date }));
       } else {
         const transactionType = purchaseType === "Compra internacional" ? "EXPENSE" : "EXPENSE";
-        items.push(createTransactionBillingItem({ description, amount, date, transactionType }));
+        items.push(
+          createTransactionBillingItem({ description, amount: absAmount, date, transactionType }),
+        );
       }
     } catch {
       // skip invalid rows

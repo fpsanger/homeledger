@@ -145,11 +145,12 @@ export async function POST(request: NextRequest) {
       return d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
     });
 
-    const { creditCardPurchase, transaction } = createRepositories();
+    const { creditCardPurchase, transaction, creditCardRefund } = createRepositories();
 
     const reconciledItems = await reconcileStatementUseCase(
       creditCardPurchase,
       transaction,
+      creditCardRefund,
       filteredItems,
       personId,
       year,

@@ -12,6 +12,7 @@ model Person {
   name                  String
   createdAt             DateTime               @default(now())
   creditCardPurchases   CreditCardPurchase[]
+  creditCardRefunds     CreditCardRefund[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
   loyaltyTransactions   LoyaltyTransaction[]
@@ -27,6 +28,7 @@ model Category {
   parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children              Category[]             @relation("CategoryHierarchy")
   creditCardPurchases   CreditCardPurchase[]
+  creditCardRefunds     CreditCardRefund[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
   merchantHistories     MerchantCategoryHistory[]
@@ -44,6 +46,7 @@ model CreditCard {
   closureNextMonth          Boolean              @default(false)
   closures         CreditCardClosure[]
   purchases        CreditCardPurchase[]
+  refunds          CreditCardRefund[]
 }
 
 model CreditCardClosure {
@@ -105,6 +108,25 @@ model Installment {
   @@unique([creditCardPurchaseId, installmentNumber])
 }
 
+model CreditCardRefund {
+  id           String       @id @default(uuid())
+  creditCardId String
+  personId     String
+  description  String
+  amount       Decimal      @db.Decimal(15, 2)
+  refundDate   DateTime
+  dueYear      Int
+  dueMonth     Int
+  categoryId   String?
+  source       RefundSource @default(MANUAL)
+  createdAt    DateTime     @default(now())
+  creditCard   CreditCard   @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  person       Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category     Category?    @relation(fields: [categoryId], references: [id])
+
+  @@index([creditCardId, dueYear, dueMonth])
+}
+
 model RecurringTransaction {
   id            String          @id @default(uuid())
   personId      String
@@ -153,6 +175,11 @@ enum FrequencyType {
 enum ClosureType {
   FIXED
   VARIABLE
+}
+
+enum RefundSource {
+  MANUAL
+  IMPORT
 }
 
 enum LoyaltyProgramType {

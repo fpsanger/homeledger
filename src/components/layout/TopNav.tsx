@@ -12,7 +12,7 @@ type Person = { id: string; name: string };
 const navLinks = [
   { href: "/dashboard",      label: "Dashboard",         primary: true },
   { href: "/transactions",   label: "Transações",         primary: true },
-  { href: "/installments",   label: "Parcelas",           primary: true },
+  { href: "/installments",   label: "Fatura cartão",      primary: true },
   { href: "/credit-cards",   label: "Cartões de Crédito", primary: true },
   { href: "/loyalty",        label: "Milhas",             primary: true },
   { href: "/billing-import", label: "Importar Extrato",   primary: false },

@@ -34,6 +34,14 @@ type ItemForm =
       date: string;
       transactionType: "EXPENSE" | "INCOME" | "INVESTMENT";
       personId: string;
+    }
+  | {
+      kind: "refund";
+      description: string;
+      amount: number;
+      date: string;
+      creditCardId: string;
+      personId: string;
     };
 
 function estimatePurchaseDate(billingDate: Date | string, installmentNumber: number): string {
@@ -56,6 +64,15 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
           totalAmount: item.amount * item.totalInstallments,
           numberOfInstallments: item.totalInstallments,
           purchaseDate: estimatePurchaseDate(item.date, item.installmentNumber),
+          creditCardId: step1Data.creditCardId ?? "",
+          personId: step1Data.personId,
+        };
+      } else if (item.kind === "refund") {
+        return {
+          kind: "refund",
+          description: item.description,
+          amount: item.amount,
+          date: new Date(item.date).toISOString().slice(0, 10),
           creditCardId: step1Data.creditCardId ?? "",
           personId: step1Data.personId,
         };
@@ -105,6 +122,24 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.error ?? "Erro ao importar parcela");
+        }
+      } else if (item.kind === "refund" && form.kind === "refund") {
+        const res = await fetch("/api/credit-card-refunds", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            personId: form.personId,
+            creditCardId: form.creditCardId,
+            description: form.description,
+            amount: form.amount,
+            refundDate: form.date,
+            categoryId: ri.categoryId ?? null,
+            source: "IMPORT",
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error ?? "Erro ao importar estorno");
         }
       } else if (item.kind === "transaction" && form.kind === "transaction") {
         const endpoint =
@@ -202,7 +237,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {item.kind === "installment" ? "Compra Parcelada" : "Transação"}
+                  {item.kind === "installment" ? "Compra Parcelada" : item.kind === "refund" ? "Estorno" : "Transação"}
                 </span>
                 <div className="flex items-center gap-1">
                   {status === "loading" && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
@@ -262,6 +297,40 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
                       value={`${(item as InstallmentBillingItem).installmentNumber}/${(item as InstallmentBillingItem).totalInstallments}`}
                       disabled
                       className="w-full border rounded px-2 py-1.5 text-sm bg-background opacity-60"
+                    />
+                  </div>
+                </div>
+              ) : form.kind === "refund" ? (
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="col-span-2">
+                    <label className="block text-xs text-muted-foreground mb-1">Descrição</label>
+                    <input
+                      type="text"
+                      value={form.description}
+                      onChange={(e) => updateForm(i, { description: e.target.value })}
+                      disabled={status !== "pending"}
+                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Valor (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.amount}
+                      onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
+                      disabled={status !== "pending"}
+                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Data</label>
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => updateForm(i, { date: e.target.value })}
+                      disabled={status !== "pending"}
+                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                     />
                   </div>
                 </div>

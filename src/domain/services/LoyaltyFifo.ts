@@ -18,6 +18,7 @@ export type EnrichedTransaction = LoyaltyTransactionRecord & {
 export type LoyaltyFifoSummary = {
   currentBalance: number;
   totalInvested: number;
+  totalPurchasedPoints: number;
   avgCostPer1kPoints: number;
   totalValueRedeemed: number;
   totalExpired: number;
@@ -136,6 +137,7 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     summary: {
       currentBalance: balance,
       totalInvested,
+      totalPurchasedPoints,
       avgCostPer1kPoints,
       totalValueRedeemed,
       totalExpired,

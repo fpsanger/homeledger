@@ -36,13 +36,33 @@ async function getTransfers(): Promise<Transfer[]> {
   return data.transfers ?? [];
 }
 
-async function getProgramBalance(id: string, personId?: string): Promise<number> {
+type Summary = {
+  currentBalance: number;
+  totalInvested: number;
+  totalPurchasedPoints: number;
+  avgCostPer1kPoints: number;
+  totalValueRedeemed: number;
+  totalExpired: number;
+  overallRoi: number | null;
+};
+
+const EMPTY_SUMMARY: Summary = {
+  currentBalance: 0,
+  totalInvested: 0,
+  totalPurchasedPoints: 0,
+  avgCostPer1kPoints: 0,
+  totalValueRedeemed: 0,
+  totalExpired: 0,
+  overallRoi: null,
+};
+
+async function getProgramSummary(id: string, personId?: string): Promise<Summary> {
   const url = new URL(`${BASE}/api/loyalty/programs/${id}/report`);
   if (personId) url.searchParams.set("personId", personId);
   const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) return 0;
+  if (!res.ok) return EMPTY_SUMMARY;
   const data = await res.json();
-  return data.summary?.currentBalance ?? 0;
+  return { ...EMPTY_SUMMARY, ...data.summary };
 }
 
 export default async function LoyaltyPage() {
@@ -54,9 +74,9 @@ export default async function LoyaltyPage() {
     getTransfers(),
   ]);
 
-  const balances = Object.fromEntries(
+  const summaries = Object.fromEntries(
     await Promise.all(
-      programs.map(async (p) => [p.id, await getProgramBalance(p.id, globalPersonId || undefined)] as [string, number]),
+      programs.map(async (p) => [p.id, await getProgramSummary(p.id, globalPersonId || undefined)] as [string, Summary]),
     ),
   );
 
@@ -64,7 +84,7 @@ export default async function LoyaltyPage() {
     <LoyaltyPageClient
       programs={programs}
       transfers={transfers}
-      balances={balances}
+      summaries={summaries}
       personId={globalPersonId || undefined}
     />
   );

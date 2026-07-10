@@ -161,11 +161,19 @@ export function MonthlyExpensesCard({ months, people = [], globalPersonId = "" }
                       fillOpacity={0.85}
                       radius={i === people.length - 1 ? [4, 4, 0, 0] : undefined}
                       maxBarSize={28}
+                      animationDuration={500}
+                      animationEasing="ease-out"
                     />
                   ))}
                 </>
               ) : (
-                <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
+                <Bar
+                  dataKey="value"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={28}
+                  animationDuration={500}
+                  animationEasing="ease-out"
+                >
                   {months.map((m, i) => {
                     const intensity = maxVal > 0 ? m.expenses / maxVal : 0;
                     const opacity = 0.45 + intensity * 0.55;

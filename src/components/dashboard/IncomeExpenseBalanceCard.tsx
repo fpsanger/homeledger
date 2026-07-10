@@ -154,6 +154,8 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                       fillOpacity={0.85}
                       radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
                       maxBarSize={22}
+                      animationDuration={500}
+                      animationEasing="ease-out"
                     />
                   ))}
                   {people.map((p, i) => (
@@ -166,6 +168,8 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                       fillOpacity={0.85}
                       radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
                       maxBarSize={22}
+                      animationDuration={500}
+                      animationEasing="ease-out"
                     />
                   ))}
                 </>
@@ -177,6 +181,8 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                     fillOpacity={0.85}
                     radius={[3, 3, 0, 0]}
                     maxBarSize={22}
+                    animationDuration={500}
+                    animationEasing="ease-out"
                   />
                   <Bar
                     dataKey="Despesa"
@@ -184,6 +190,8 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                     fillOpacity={0.85}
                     radius={[3, 3, 0, 0]}
                     maxBarSize={22}
+                    animationDuration={500}
+                    animationEasing="ease-out"
                   />
                 </>
               )}
@@ -195,6 +203,8 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                 strokeDasharray="4 3"
                 dot={{ r: 3, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
                 activeDot={{ r: 4, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+                animationDuration={500}
+                animationEasing="ease-out"
               />
             </ComposedChart>
           </ResponsiveContainer>

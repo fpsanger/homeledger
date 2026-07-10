@@ -47,9 +47,11 @@ export function AnnualReportSection({ report }: Props) {
       </div>
 
       {view === "table" ? (
-        <AnnualReportCards report={report} />
+        <div key="table" className="animate-fade-in">
+          <AnnualReportCards report={report} />
+        </div>
       ) : (
-        <div className="flex flex-col gap-1 pt-1">
+        <div key="chart" className="flex flex-col gap-1 pt-1 animate-fade-in">
           <p
             className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "amount-positive" : "amount-negative"}`}
           >

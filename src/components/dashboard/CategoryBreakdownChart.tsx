@@ -114,7 +114,12 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
             tickLine={false}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-          <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+          <Bar
+            dataKey="value"
+            radius={[0, 3, 3, 0]}
+            animationDuration={500}
+            animationEasing="ease-out"
+          >
             {data.map((_, index) => (
               <Cell key={`cell-${index}`} fill={CATEGORY_SHADES[index % CATEGORY_SHADES.length]} />
             ))}

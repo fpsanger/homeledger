@@ -183,6 +183,8 @@ export function InvestmentOverviewCard({ months, totalInvestments, people, globa
                       fillOpacity={0.85}
                       radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
                       maxBarSize={22}
+                      animationDuration={500}
+                      animationEasing="ease-out"
                     />
                   ))}
                 </>
@@ -193,6 +195,8 @@ export function InvestmentOverviewCard({ months, totalInvestments, people, globa
                   fillOpacity={0.85}
                   radius={[3, 3, 0, 0]}
                   maxBarSize={22}
+                  animationDuration={500}
+                  animationEasing="ease-out"
                 />
               )}
             </BarChart>

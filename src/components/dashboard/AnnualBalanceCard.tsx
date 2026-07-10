@@ -11,7 +11,6 @@ import {
   ReferenceLine,
   Cell,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 import { AccessibleChart } from "./AccessibleChart";
 
@@ -108,7 +107,13 @@ export function AnnualBalanceChart({ months }: ChartProps) {
           />
           <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
+          <Bar
+            dataKey="value"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={28}
+            animationDuration={500}
+            animationEasing="ease-out"
+          >
             {data.map((entry, i) => (
               <Cell
                 key={i}
@@ -120,28 +125,5 @@ export function AnnualBalanceChart({ months }: ChartProps) {
         </BarChart>
       </ResponsiveContainer>
     </AccessibleChart>
-  );
-}
-
-type Props = { months: MonthSummary[]; totalBalance: number };
-
-export function AnnualBalanceCard({ months, totalBalance }: Props) {
-  return (
-    <Card className="flex flex-col gap-0">
-      <CardHeader className="pb-2">
-        <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Balanço Anual
-        </CardDescription>
-        <CardTitle
-          className={`text-2xl font-semibold tracking-tight tabular-nums ${totalBalance >= 0 ? "amount-positive" : "amount-negative"}`}
-        >
-          {fmtSigned(totalBalance)}
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">Diferença entre receitas e despesas por mês</p>
-      </CardHeader>
-      <CardContent className="pt-0 pb-4">
-        <AnnualBalanceChart months={months} />
-      </CardContent>
-    </Card>
   );
 }

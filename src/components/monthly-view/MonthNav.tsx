@@ -58,7 +58,7 @@ export function MonthNav({
       <button
         type="button"
         onClick={prev}
-        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Mês anterior"
       >
         <ChevronLeft className="w-4 h-4" />
@@ -69,7 +69,7 @@ export function MonthNav({
       <button
         type="button"
         onClick={next}
-        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Próximo mês"
       >
         <ChevronRight className="w-4 h-4" />

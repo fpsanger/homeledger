@@ -21,16 +21,17 @@ export function YearNav({ year }: Props) {
       <button
         type="button"
         onClick={() => navigate(year - 1)}
-        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Ano anterior"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
-      <span className="font-semibold text-sm w-16 text-center select-none">{year}</span>
+      <span className="text-xs text-muted-foreground select-none">Ano</span>
+      <span className="font-semibold text-sm w-12 text-center select-none">{year}</span>
       <button
         type="button"
         onClick={() => navigate(year + 1)}
-        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Próximo ano"
       >
         <ChevronRight className="w-4 h-4" />

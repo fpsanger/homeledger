@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 import { BALANCE_LINE_COLOR, EXPENSE_PERSON_SHADES, INCOME_PERSON_SHADES } from "@/lib/dashboardColors";
+import { AccessibleChart } from "./AccessibleChart";
 
 const MONTH_NAMES = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -114,81 +115,90 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
         <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
       </CardHeader>
       <CardContent className="pt-0 pb-4">
-        <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tickFormatter={fmtCompact}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-              width={52}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-            <Legend content={<CustomLegend />} />
+        <AccessibleChart
+          summary={last6.map((m) => (
+            <li key={m.month}>
+              {MONTH_NAMES[m.month - 1]}: receita {fmtFull(m.income)}, despesa {fmtFull(m.expenses)},
+              balanço {fmtFull(m.balance)}
+            </li>
+          ))}
+        >
+          <ResponsiveContainer width="100%" height={260}>
+            <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tickFormatter={fmtCompact}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                axisLine={false}
+                tickLine={false}
+                width={52}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+              <Legend content={<CustomLegend />} />
 
-            {showPersonBreakdown ? (
-              <>
-                {people.map((p, i) => (
+              {showPersonBreakdown ? (
+                <>
+                  {people.map((p, i) => (
+                    <Bar
+                      key={`income-${p.id}`}
+                      dataKey={`R:${p.name}`}
+                      name={`Receita ${p.name}`}
+                      stackId="income"
+                      fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
+                      fillOpacity={0.85}
+                      radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                      maxBarSize={22}
+                    />
+                  ))}
+                  {people.map((p, i) => (
+                    <Bar
+                      key={`expense-${p.id}`}
+                      dataKey={`D:${p.name}`}
+                      name={`Despesa ${p.name}`}
+                      stackId="expense"
+                      fill={EXPENSE_PERSON_SHADES[i % EXPENSE_PERSON_SHADES.length]}
+                      fillOpacity={0.85}
+                      radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                      maxBarSize={22}
+                    />
+                  ))}
+                </>
+              ) : (
+                <>
                   <Bar
-                    key={`income-${p.id}`}
-                    dataKey={`R:${p.name}`}
-                    name={`Receita ${p.name}`}
-                    stackId="income"
-                    fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
+                    dataKey="Receita"
+                    fill="hsl(var(--income))"
                     fillOpacity={0.85}
-                    radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                    radius={[3, 3, 0, 0]}
                     maxBarSize={22}
                   />
-                ))}
-                {people.map((p, i) => (
                   <Bar
-                    key={`expense-${p.id}`}
-                    dataKey={`D:${p.name}`}
-                    name={`Despesa ${p.name}`}
-                    stackId="expense"
-                    fill={EXPENSE_PERSON_SHADES[i % EXPENSE_PERSON_SHADES.length]}
+                    dataKey="Despesa"
+                    fill="hsl(var(--expense))"
                     fillOpacity={0.85}
-                    radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                    radius={[3, 3, 0, 0]}
                     maxBarSize={22}
                   />
-                ))}
-              </>
-            ) : (
-              <>
-                <Bar
-                  dataKey="Receita"
-                  fill="hsl(var(--income))"
-                  fillOpacity={0.85}
-                  radius={[3, 3, 0, 0]}
-                  maxBarSize={22}
-                />
-                <Bar
-                  dataKey="Despesa"
-                  fill="hsl(var(--expense))"
-                  fillOpacity={0.85}
-                  radius={[3, 3, 0, 0]}
-                  maxBarSize={22}
-                />
-              </>
-            )}
-            <Line
-              type="monotone"
-              dataKey="Balanço"
-              stroke={BALANCE_LINE_COLOR}
-              strokeWidth={2}
-              strokeDasharray="4 3"
-              dot={{ r: 3, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
-              activeDot={{ r: 4, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+                </>
+              )}
+              <Line
+                type="monotone"
+                dataKey="Balanço"
+                stroke={BALANCE_LINE_COLOR}
+                strokeWidth={2}
+                strokeDasharray="4 3"
+                dot={{ r: 3, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </AccessibleChart>
       </CardContent>
     </Card>
   );

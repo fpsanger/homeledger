@@ -1,5 +1,4 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { Card } from "@/components/ui/card";
 
 type Transaction = { type: string; amount: number };
 type Installment = { amount: number };
@@ -25,13 +24,13 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {/* Balance row */}
-      <Card className="p-5 flex items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-border">
+        <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1.5">
             Saldo do Mês
           </p>
           <p
-            className={`text-3xl font-semibold tracking-tight tabular-nums ${
+            className={`text-3xl font-semibold tracking-tight tabular-nums whitespace-nowrap ${
               isPositive ? "amount-positive" : "amount-negative"
             }`}
           >
@@ -39,7 +38,7 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
           </p>
         </div>
         <span
-          className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+          className={`self-start sm:self-auto shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border ${
             isPositive
               ? "border-income/20 amount-positive bg-income/8"
               : "border-expense/20 amount-negative bg-expense/8"
@@ -47,11 +46,11 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
         >
           {isPositive ? "Positivo" : "Negativo"}
         </span>
-      </Card>
+      </div>
 
       {/* Supporting stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="card-hover p-4 flex items-center justify-between">
+      <div className="grid grid-cols-2 divide-x divide-border">
+        <div className="flex items-center justify-between gap-2 pr-4">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Receita
@@ -61,9 +60,9 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
             </p>
           </div>
           <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
-        </Card>
+        </div>
 
-        <Card className="card-hover p-4 flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 pl-4">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Despesas
@@ -73,7 +72,7 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
             </p>
           </div>
           <TrendingDown className="w-4 h-4 text-muted-foreground shrink-0" />
-        </Card>
+        </div>
       </div>
     </div>
   );

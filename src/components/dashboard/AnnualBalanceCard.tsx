@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { AccessibleChart } from "./AccessibleChart";
 
 const MONTH_NAMES = [
   "Jan",
@@ -78,39 +79,47 @@ export function AnnualBalanceChart({ months }: ChartProps) {
   }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart
-        data={data}
-        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-        barCategoryGap="35%"
-      >
-        <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
-        <XAxis
-          dataKey="name"
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tickFormatter={fmtCompact}
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-          axisLine={false}
-          tickLine={false}
-          width={52}
-        />
-        <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-        <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
-          {data.map((entry, i) => (
-            <Cell
-              key={i}
-              fill={entry.value >= 0 ? "hsl(var(--income))" : "hsl(var(--expense))"}
-              fillOpacity={0.85}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <AccessibleChart
+      summary={data.map((d) => (
+        <li key={d.name}>
+          {d.name}: {fmtSigned(d.value)}
+        </li>
+      ))}
+    >
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart
+          data={data}
+          margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+          barCategoryGap="35%"
+        >
+          <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tickFormatter={fmtCompact}
+            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+            width={52}
+          />
+          <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
+            {data.map((entry, i) => (
+              <Cell
+                key={i}
+                fill={entry.value >= 0 ? "hsl(var(--income))" : "hsl(var(--expense))"}
+                fillOpacity={0.85}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </AccessibleChart>
   );
 }
 

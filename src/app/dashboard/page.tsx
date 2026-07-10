@@ -106,7 +106,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MonthlyExpensesCard
             months={annualReport.months}
-            totalExpenses={annualReport.totalExpenses}
             people={people}
             globalPersonId={globalPersonId}
           />

@@ -20,7 +20,8 @@ export function AnnualReportSection({ report }: Props) {
           <button
             type="button"
             onClick={() => setView("table")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${
+            aria-pressed={view === "table"}
+            className={`flex items-center gap-1.5 px-3 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 ${
               view === "table"
                 ? "bg-muted text-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground"
@@ -32,7 +33,8 @@ export function AnnualReportSection({ report }: Props) {
           <button
             type="button"
             onClick={() => setView("chart")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 border-l transition-colors ${
+            aria-pressed={view === "chart"}
+            className={`flex items-center gap-1.5 px-3 py-3 border-l transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 ${
               view === "chart"
                 ? "bg-muted text-foreground font-medium"
                 : "text-muted-foreground hover:text-foreground"
@@ -49,7 +51,7 @@ export function AnnualReportSection({ report }: Props) {
       ) : (
         <div className="flex flex-col gap-1 pt-1">
           <p
-            className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+            className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "amount-positive" : "amount-negative"}`}
           >
             {fmtSigned(report.totalBalance)}
           </p>

@@ -3,6 +3,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { BarChart2 } from "lucide-react";
 import { CATEGORY_SHADES } from "@/lib/dashboardColors";
+import { AccessibleChart } from "./AccessibleChart";
 
 type Transaction = {
   id: string;
@@ -89,29 +90,37 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
   const chartHeight = data.length * barHeight + 16;
 
   return (
-    <ResponsiveContainer width="100%" height={chartHeight}>
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
-        barSize={14}
-      >
-        <XAxis type="number" hide />
-        <YAxis
-          type="category"
-          dataKey="name"
-          width={120}
-          tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-        <Bar dataKey="value" radius={[0, 3, 3, 0]}>
-          {data.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={CATEGORY_SHADES[index % CATEGORY_SHADES.length]} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <AccessibleChart
+      summary={data.map((d) => (
+        <li key={d.name}>
+          {d.name}: {fmt(d.value)} ({d.pct.toFixed(0)}% do total)
+        </li>
+      ))}
+    >
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
+          barSize={14}
+        >
+          <XAxis type="number" hide />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={120}
+            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+          <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+            {data.map((_, index) => (
+              <Cell key={`cell-${index}`} fill={CATEGORY_SHADES[index % CATEGORY_SHADES.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </AccessibleChart>
   );
 }

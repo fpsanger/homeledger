@@ -19,6 +19,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         expiresAt: body.expiresAt !== undefined ? (body.expiresAt ? parseDateUTC(body.expiresAt) : null) : undefined,
         costBrl: body.costBrl,
         valueBrl: body.valueBrl,
+        personId: body.personId,
       },
       loyaltyTransaction,
     );

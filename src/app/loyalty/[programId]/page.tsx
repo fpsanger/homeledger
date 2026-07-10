@@ -21,6 +21,7 @@ type EnrichedTransaction = {
   costBrl: number | null;
   valueBrl: number | null;
   transferId: string | null;
+  personId: string | null;
   fifoData?: FifoData;
 };
 

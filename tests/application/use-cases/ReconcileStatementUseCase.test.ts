@@ -1,6 +1,8 @@
 import { reconcileStatementUseCase } from "../../../src/application/use-cases/ReconcileStatementUseCase";
 import type { ICreditCardPurchaseRepository, InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
 import type { ITransactionRepository, TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
+import type { CreditCardRefundRecord } from "../../../src/domain/entities/CreditCardRefund";
 import type { BillingItem } from "../../../src/domain/entities/BillingItem";
 
 function makeCreditCardPurchaseRepo(
@@ -40,6 +42,33 @@ function makeTransactionRepo(
     update: jest.fn(),
     delete: jest.fn(),
   } as unknown as ITransactionRepository;
+}
+
+function makeRefundRepo(refunds: CreditCardRefundRecord[] = []): ICreditCardRefundRepository {
+  return {
+    findByPersonAndMonth: jest.fn().mockResolvedValue(refunds),
+    save: jest.fn(),
+    findByMonth: jest.fn(),
+    findById: jest.fn(),
+    deleteById: jest.fn(),
+  } as unknown as ICreditCardRefundRepository;
+}
+
+function makeRefundRecord(overrides: Partial<CreditCardRefundRecord> = {}): CreditCardRefundRecord {
+  return {
+    id: "refund-1",
+    creditCardId: "card-1",
+    personId: "person-1",
+    description: "Estorno",
+    amount: 30.0,
+    refundDate: new Date("2025-05-10"),
+    dueYear: 2025,
+    dueMonth: 5,
+    categoryId: null,
+    source: "MANUAL",
+    createdAt: new Date(),
+    ...overrides,
+  };
 }
 
 function makeInstallmentRecord(overrides: Partial<InstallmentRecord> = {}): InstallmentRecord {
@@ -88,6 +117,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),
       makeTransactionRepo(),
+      makeRefundRepo(),
       [],
       PERSON_ID,
       YEAR,
@@ -111,6 +141,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       repo,
       makeTransactionRepo(),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -133,6 +164,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([]),
       makeTransactionRepo(),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -156,6 +188,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -179,6 +212,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -202,6 +236,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -224,6 +259,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),
       makeTransactionRepo([existing]),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -244,6 +280,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),
       makeTransactionRepo([]),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -265,6 +302,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),
       makeTransactionRepo([existing]),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
@@ -297,6 +335,7 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([installment]),
       makeTransactionRepo([transaction]),
+      makeRefundRepo(),
       [installmentItem, transactionItem],
       PERSON_ID,
       YEAR,
@@ -324,11 +363,80 @@ describe("reconcileStatementUseCase", () => {
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
+      makeRefundRepo(),
       [item],
       PERSON_ID,
       YEAR,
       MONTH,
       CARD_ID, // looking for card-1, but existing is card-99
+    );
+
+    expect(result[0].status).toBe("missing");
+  });
+
+  test("12. refund item with matching existing refund → status matched", async () => {
+    const item: BillingItem = {
+      kind: "refund",
+      description: "Estorno loja X",
+      amount: 30.0,
+      date: new Date("2025-05-10"),
+    };
+    const existing = makeRefundRecord({ amount: 30.0, refundDate: new Date("2025-05-10") });
+
+    const result = await reconcileStatementUseCase(
+      makeCreditCardPurchaseRepo(),
+      makeTransactionRepo(),
+      makeRefundRepo([existing]),
+      [item],
+      PERSON_ID,
+      YEAR,
+      MONTH,
+      CARD_ID,
+    );
+
+    expect(result).toEqual([{ billingItem: item, status: "matched", matchedRecordId: "refund-1" }]);
+  });
+
+  test("13. refund item with no match → status missing", async () => {
+    const item: BillingItem = {
+      kind: "refund",
+      description: "Estorno loja X",
+      amount: 30.0,
+      date: new Date("2025-05-10"),
+    };
+
+    const result = await reconcileStatementUseCase(
+      makeCreditCardPurchaseRepo(),
+      makeTransactionRepo(),
+      makeRefundRepo([]),
+      [item],
+      PERSON_ID,
+      YEAR,
+      MONTH,
+      CARD_ID,
+    );
+
+    expect(result).toEqual([{ billingItem: item, status: "missing" }]);
+  });
+
+  test("14. refund filtered by creditCardId (other card not matched)", async () => {
+    const item: BillingItem = {
+      kind: "refund",
+      description: "Estorno loja X",
+      amount: 30.0,
+      date: new Date("2025-05-10"),
+    };
+    const existing = makeRefundRecord({ amount: 30.0, refundDate: new Date("2025-05-10"), creditCardId: "card-99" });
+
+    const result = await reconcileStatementUseCase(
+      makeCreditCardPurchaseRepo(),
+      makeTransactionRepo(),
+      makeRefundRepo([existing]),
+      [item],
+      PERSON_ID,
+      YEAR,
+      MONTH,
+      CARD_ID,
     );
 
     expect(result[0].status).toBe("missing");

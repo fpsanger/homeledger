@@ -68,8 +68,15 @@ export class PrismaLoyaltyTransactionRepository implements ILoyaltyTransactionRe
 
   async findByProgramIdAndPersonId(programId: string, personId: string): Promise<LoyaltyTransactionRecord[]> {
     const rows = await this.prisma.loyaltyTransaction.findMany({
-      where: { programId, personId },
+      where: { programId, OR: [{ personId }, { personId: null }] },
       orderBy: { date: "asc" },
+    });
+    return rows.map(toRecord);
+  }
+
+  async findByTransferId(transferId: string): Promise<LoyaltyTransactionRecord[]> {
+    const rows = await this.prisma.loyaltyTransaction.findMany({
+      where: { transferId },
     });
     return rows.map(toRecord);
   }

@@ -75,7 +75,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         eyebrow="Finanças"
         title="Transações"
         description={
-          transactions.length > 0 ? `${transactions.length} transações no mês` : undefined
+          transactions.length > 0
+            ? `${transactions.length} transações no mês. Compras feitas no mês, não é a visão da fatura do cartão.`
+            : "Compras feitas no mês, não é a visão da fatura do cartão."
         }
       />
       <TransactionPageClient

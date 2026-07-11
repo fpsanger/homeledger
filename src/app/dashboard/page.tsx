@@ -6,6 +6,7 @@ import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { CategoryBreakdownChart } from "@/components/dashboard/CategoryBreakdownChart";
 import { MonthlyExpensesCard } from "@/components/dashboard/MonthlyExpensesCard";
 import { IncomeExpenseBalanceCard } from "@/components/dashboard/IncomeExpenseBalanceCard";
+import { RetryButton } from "@/components/dashboard/RetryButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
@@ -97,7 +98,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           {annualReport ? (
             <AnnualReportSection report={annualReport} />
           ) : (
-            <p className="text-muted-foreground text-sm">Falha ao carregar relatório anual.</p>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-muted-foreground text-sm">Falha ao carregar relatório anual.</p>
+              <RetryButton />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -105,7 +109,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MonthlyExpensesCard
             months={annualReport.months}
-            totalExpenses={annualReport.totalExpenses}
             people={people}
             globalPersonId={globalPersonId}
           />
@@ -139,10 +142,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           <Separator />
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Despesas por Categoria</h3>
+              <h3 className="text-sm font-semibold tracking-tight">Despesas por Categoria</h3>
               <Link
                 href="/transactions"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Ver transações →
               </Link>

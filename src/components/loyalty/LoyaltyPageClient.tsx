@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeftRight } from "lucide-react";
 import { LoyaltyProgramList } from "./LoyaltyProgramList";
 import { LoyaltyProgramCreateDialog } from "./LoyaltyProgramCreateDialog";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
 import { LoyaltyTransferTable } from "./LoyaltyTransferTable";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 type Program = {
   id: string;
   name: string;
@@ -47,11 +49,11 @@ function formatBrl(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function GlobalStat({ label, value }: { label: string; value: string }) {
+function SecondaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border bg-card p-4 flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
-      <span className="text-lg font-semibold">{value}</span>
+    <div className="p-5 flex flex-col justify-center gap-1">
+      <span className="text-lg font-semibold tabular-nums tracking-tight">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -89,22 +91,32 @@ export function LoyaltyPageClient({ programs, transfers, summaries, personId }: 
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <PageHeader
-            eyebrow="Finanças"
-            title="Programas de Milhas"
-            description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
-          />
-        </div>
+        <PageHeader
+          eyebrow="Finanças"
+          title="Programas de Milhas"
+          description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
+        >
+          <Button onClick={() => setOpenTransfer(true)} className="shrink-0 gap-2">
+            <ArrowLeftRight className="w-4 h-4" />
+            Transferir entre parceiros
+          </Button>
+        </PageHeader>
 
         {programs.length > 0 && (
           <>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Resumo Geral</h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <GlobalStat label="Total de Pontos" value={totals.points.toLocaleString("pt-BR")} />
-              <GlobalStat label="Total Investido" value={formatBrl(totals.invested)} />
-              <GlobalStat label="Custo Médio/1k pts" value={blendedCostPer1k > 0 ? formatBrl(blendedCostPer1k) : "—"} />
-              <GlobalStat label="ROI Geral" value={totals.redeemed === 0 ? "Nenhum resgate" : blendedRoi != null ? `${blendedRoi.toFixed(1)}%` : "—"} />
+            <div className="rounded-xl border bg-card overflow-hidden grid sm:grid-cols-[1.3fr,1fr,1fr,1fr] divide-y sm:divide-y-0 sm:divide-x">
+              <div className="p-5 flex flex-col gap-1 justify-center">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total de Pontos</span>
+                <span className="text-4xl font-semibold tabular-nums tracking-tight text-primary leading-none">
+                  {totals.points.toLocaleString("pt-BR")}
+                </span>
+              </div>
+              <SecondaryStat label="Total Investido" value={formatBrl(totals.invested)} />
+              <SecondaryStat label="Custo Médio/1k pts" value={blendedCostPer1k > 0 ? formatBrl(blendedCostPer1k) : "—"} />
+              <SecondaryStat
+                label="ROI Geral"
+                value={totals.redeemed === 0 ? "Nenhum resgate" : blendedRoi != null ? `${blendedRoi.toFixed(1)}%` : "—"}
+              />
             </div>
 
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Resumo por Programa</h2>
@@ -112,24 +124,25 @@ export function LoyaltyPageClient({ programs, transfers, summaries, personId }: 
               {programs.map((p) => {
                 const s = summaries[p.id];
                 return (
-                  <div key={p.id} className="rounded-xl border bg-card overflow-hidden flex">
-                    <div className="w-1 shrink-0" style={{ backgroundColor: p.color }} />
-                    <div
-                      className="p-4 flex flex-col gap-1.5 flex-1 min-w-0"
-                      style={{ background: `linear-gradient(135deg, ${p.color}18 0%, transparent 70%)` }}
-                    >
+                  <div
+                    key={p.id}
+                    className="rounded-xl border bg-card p-4 flex flex-col gap-1.5 min-w-0"
+                    style={{ background: `linear-gradient(135deg, ${p.color}18 0%, transparent 70%)` }}
+                  >
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
                       <span className="text-xs font-medium text-muted-foreground truncate">{p.name}</span>
-                      <span className="text-2xl font-bold tabular-nums tracking-tight leading-none">
-                        {(s?.currentBalance ?? 0).toLocaleString("pt-BR")}
-                      </span>
-                      <span className="text-xs text-muted-foreground">pontos</span>
-                      <span className="text-xs text-muted-foreground pt-1 border-t mt-1">
-                        Custo/1k pts: {s && s.avgCostPer1kPoints > 0 ? formatBrl(s.avgCostPer1kPoints) : "—"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Investido: {formatBrl(s?.totalInvested ?? 0)}
-                      </span>
-                    </div>
+                    </span>
+                    <span className="text-2xl font-bold tabular-nums tracking-tight leading-none">
+                      {(s?.currentBalance ?? 0).toLocaleString("pt-BR")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">pontos</span>
+                    <span className="text-xs text-muted-foreground pt-1 border-t mt-1">
+                      Custo/1k pts: {s && s.avgCostPer1kPoints > 0 ? formatBrl(s.avgCostPer1kPoints) : "—"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Investido: {formatBrl(s?.totalInvested ?? 0)}
+                    </span>
                   </div>
                 );
               })}
@@ -142,18 +155,9 @@ export function LoyaltyPageClient({ programs, transfers, summaries, personId }: 
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Histórico de Transferências
-          </h2>
-          <button
-            type="button"
-            onClick={() => setOpenTransfer(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            + Transferências entre parceiros
-          </button>
-        </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Histórico de Transferências
+        </h2>
 
         <LoyaltyTransferDialog
           open={openTransfer}

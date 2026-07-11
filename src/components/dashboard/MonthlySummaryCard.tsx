@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 type Transaction = { type: string; amount: number };
 type Installment = { amount: number };
@@ -24,24 +24,24 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {/* Balance row */}
-      <div className="rounded-xl border bg-card p-5 flex items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-border">
+        <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1.5">
             Saldo do Mês
           </p>
           <p
-            className={`text-3xl font-bold tracking-tight amount-display ${
-              isPositive ? "text-emerald-500" : "text-red-400"
+            className={`text-3xl font-semibold tracking-tight tabular-nums whitespace-nowrap ${
+              isPositive ? "amount-positive" : "amount-negative"
             }`}
           >
             {formatAmount(balance)}
           </p>
         </div>
         <span
-          className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+          className={`self-start sm:self-auto shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full border ${
             isPositive
-              ? "border-emerald-500/20 text-emerald-500 bg-emerald-500/8"
-              : "border-red-400/20 text-red-400 bg-red-400/8"
+              ? "border-income/20 amount-positive bg-income/8"
+              : "border-expense/20 amount-negative bg-expense/8"
           }`}
         >
           {isPositive ? "Positivo" : "Negativo"}
@@ -49,25 +49,29 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
       </div>
 
       {/* Supporting stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card rounded-xl border border-l-4 border-l-emerald-600 p-4 flex items-center justify-between card-hover">
+      <div className="grid grid-cols-2 divide-x divide-border">
+        <div className="flex items-center justify-between gap-2 pr-4">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Receita
             </p>
-            <p className="text-xl font-bold mt-1 amount-display">{formatAmount(income)}</p>
+            <p className="text-xl font-semibold tracking-tight tabular-nums mt-1 amount-positive">
+              {formatAmount(income)}
+            </p>
           </div>
-          <TrendingUp className="w-4 h-4 text-emerald-600 shrink-0" />
+          <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
         </div>
 
-        <div className="bg-card rounded-xl border border-l-4 border-l-red-500 p-4 flex items-center justify-between card-hover">
+        <div className="flex items-center justify-between gap-2 pl-4">
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Despesas
             </p>
-            <p className="text-xl font-bold mt-1 amount-display">{formatAmount(expenses)}</p>
+            <p className="text-xl font-semibold tracking-tight tabular-nums mt-1 amount-negative">
+              {formatAmount(expenses)}
+            </p>
           </div>
-          <TrendingDown className="w-4 h-4 text-red-500 shrink-0" />
+          <TrendingDown className="w-4 h-4 text-muted-foreground shrink-0" />
         </div>
       </div>
     </div>

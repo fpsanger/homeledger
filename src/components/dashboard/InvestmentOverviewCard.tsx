@@ -12,17 +12,12 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { INCOME_PERSON_SHADES } from "@/lib/dashboardColors";
+import { AccessibleChart } from "./AccessibleChart";
 
 const MONTH_NAMES = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
   "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-];
-
-const PERSON_COLORS = [
-  "hsl(185 50% 40%)",
-  "hsl(260 50% 55%)",
-  "hsl(35 70% 50%)",
-  "hsl(340 55% 50%)",
 ];
 
 function fmtFull(v: number) {
@@ -138,52 +133,75 @@ export function InvestmentOverviewCard({ months, totalInvestments, people, globa
         <p className="text-xs text-muted-foreground">Investido por mês no ano</p>
       </CardHeader>
       <CardContent className="pt-0 pb-4 flex flex-col gap-6">
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tickFormatter={fmtCompact}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-              width={52}
-            />
-            <Tooltip
-              content={<CustomTooltip showRate />}
-              cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-            />
-            {showPersonBreakdown ? (
-              <>
-                <Legend content={<CustomLegend />} />
-                {people.map((p, i) => (
-                  <Bar
-                    key={p.id}
-                    dataKey={p.name}
-                    stackId="a"
-                    fill={PERSON_COLORS[i % PERSON_COLORS.length]}
-                    fillOpacity={0.85}
-                    radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
-                    maxBarSize={22}
-                  />
-                ))}
-              </>
-            ) : (
-              <Bar
-                dataKey="Investido"
-                fill="hsl(185 50% 40%)"
-                fillOpacity={0.85}
-                radius={[3, 3, 0, 0]}
-                maxBarSize={22}
+        <AccessibleChart
+          summary={
+            showPersonBreakdown
+              ? months.map((m) => (
+                  <li key={m.month}>
+                    {MONTH_NAMES[m.month - 1]}:{" "}
+                    {people
+                      .map((p) => `${p.name} ${fmtFull(m.investmentsByPerson[p.id] ?? 0)}`)
+                      .join(", ")}
+                  </li>
+                ))
+              : months.map((m) => (
+                  <li key={m.month}>
+                    {MONTH_NAMES[m.month - 1]}: {fmtFull(m.investments)}
+                  </li>
+                ))
+          }
+        >
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                axisLine={false}
+                tickLine={false}
               />
-            )}
-          </BarChart>
-        </ResponsiveContainer>
+              <YAxis
+                tickFormatter={fmtCompact}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                axisLine={false}
+                tickLine={false}
+                width={52}
+              />
+              <Tooltip
+                content={<CustomTooltip showRate />}
+                cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+              />
+              {showPersonBreakdown ? (
+                <>
+                  <Legend content={<CustomLegend />} />
+                  {people.map((p, i) => (
+                    <Bar
+                      key={p.id}
+                      dataKey={p.name}
+                      stackId="a"
+                      fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
+                      fillOpacity={0.85}
+                      radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                      maxBarSize={22}
+                      animationDuration={500}
+                      animationEasing="ease-out"
+                    />
+                  ))}
+                </>
+              ) : (
+                <Bar
+                  dataKey="Investido"
+                  fill="hsl(var(--income))"
+                  fillOpacity={0.85}
+                  radius={[3, 3, 0, 0]}
+                  maxBarSize={22}
+                  animationDuration={500}
+                  animationEasing="ease-out"
+                />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        </AccessibleChart>
 
         <div className="grid grid-cols-3 gap-4 pt-2 border-t border-border">
           <div className="flex flex-col gap-1">

@@ -167,6 +167,10 @@ Use conventional commits:
 - Do not over-engineer
 - Add relevant changes to `CHANGELOG.md`
 
+## Design Context
+
+Strategic + visual design specs: `PRODUCT.md` (register, users, brand personality, anti-references) and `DESIGN.md` (colors, typography, components — North Star: "The Ledger's Calm", single emerald hue, DM Serif Display for money only, flat-by-default cards). Read both before touching UI. Managed by the `impeccable` skill.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

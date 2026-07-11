@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -32,6 +33,7 @@ export function MonthNav({
   paramPrefix = "",
 }: Props) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const yearKey = paramPrefix ? `${paramPrefix}Year` : "year";
   const monthKey = paramPrefix ? `${paramPrefix}Month` : "month";
@@ -40,7 +42,9 @@ export function MonthNav({
     const params = new URLSearchParams(window.location.search);
     params.set(yearKey, String(newYear));
     params.set(monthKey, String(newMonth));
-    router.push(`${basePath}?${params.toString()}`, { scroll: false });
+    startTransition(() => {
+      router.push(`${basePath}?${params.toString()}`, { scroll: false });
+    });
   }
 
   function prev() {
@@ -54,11 +58,15 @@ export function MonthNav({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div
+      className={`flex items-center gap-1 transition-opacity duration-200 ${isPending ? "opacity-50" : ""}`}
+      aria-busy={isPending}
+    >
       <button
         type="button"
         onClick={prev}
-        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        disabled={isPending}
+        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
         aria-label="Mês anterior"
       >
         <ChevronLeft className="w-4 h-4" />
@@ -69,7 +77,8 @@ export function MonthNav({
       <button
         type="button"
         onClick={next}
-        className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+        disabled={isPending}
+        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
         aria-label="Próximo mês"
       >
         <ChevronRight className="w-4 h-4" />

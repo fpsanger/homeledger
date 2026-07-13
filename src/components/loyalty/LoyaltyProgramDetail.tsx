@@ -176,7 +176,7 @@ function AddTransactionModal({ programId, defaultPersonId = "", existingTransact
   return (
     <Dialog open onClose={onClose} title="Nova Transação" className="max-w-md">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground">Tipo</label>
               <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
@@ -188,7 +188,7 @@ function AddTransactionModal({ programId, defaultPersonId = "", existingTransact
               <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} required min="1" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
           </div>
-          <div className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground">Data</label>
               <DatePicker value={date} onChange={setDate} required />
@@ -222,7 +222,7 @@ function AddTransactionModal({ programId, defaultPersonId = "", existingTransact
           <DuplicateWarning match={duplicateMatch} />
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2 pt-1">
-            <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+            <button type="submit" disabled={loading} className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
               {loading ? "Salvando..." : "Salvar"}
             </button>
           </div>
@@ -296,7 +296,7 @@ function EditTransactionModal({ tx, existingTransactions, onClose, onSuccess }: 
             <label className="text-xs font-medium text-muted-foreground">Pontos</label>
             <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} required min="1" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
-          <div className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-muted-foreground">Data</label>
               <DatePicker value={date} onChange={setDate} required />
@@ -330,7 +330,7 @@ function EditTransactionModal({ tx, existingTransactions, onClose, onSuccess }: 
           <DuplicateWarning match={duplicateMatch} />
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2 pt-1">
-            <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+            <button type="submit" disabled={loading} className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
               {loading ? "Salvando..." : "Salvar"}
             </button>
           </div>
@@ -444,93 +444,179 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
         {sorted.length === 0 ? (
           <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma transação registrada.</p>
         ) : (
-          <div className="rounded-xl border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    <button type="button" onClick={() => handleSort("date")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                      Data {sortKey === "date" ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
-                    </button>
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pontos</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Valor do milheiro (Custo/1k PTS)</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">ROI</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    <button type="button" onClick={() => handleSort("expiresAt")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                      Expiração {sortKey === "expiresAt" ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
-                    </button>
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((tx) => (
-                  <tr key={tx.id} className="border-t hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {formatDate(tx.date)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
+          <>
+            <div className="hidden md:block rounded-xl border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                      <button type="button" onClick={() => handleSort("date")} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                        Data {sortKey === "date" ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                      </button>
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pontos</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Valor do milheiro (Custo/1k PTS)</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">ROI</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                      <button type="button" onClick={() => handleSort("expiresAt")} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                        Expiração {sortKey === "expiresAt" ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                      </button>
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
+                    <th className="w-8" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((tx) => (
+                    <tr key={tx.id} className="border-t hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                        {formatDate(tx.date)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
+                          {TYPE_LABELS[tx.type] ?? tx.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">
+                        {pointsSign(tx.type, tx.points)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-muted-foreground">
+                        {tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)
+                          ? formatBrl(tx.fifoData.costPer1kPoints)
+                          : tx.type === "PURCHASE" && tx.costBrl && tx.points > 0
+                            ? formatBrl((tx.costBrl / tx.points) * 1000)
+                            : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {tx.fifoData?.roi != null && Number.isFinite(tx.fifoData.roi) ? (
+                          <span className={tx.fifoData.roi >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}>
+                            {tx.fifoData.roi.toFixed(1)}%
+                          </span>
+                        ) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                        {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {tx.description ?? ""}
+                        {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <DropdownMenu
+                          align="right"
+                          trigger={
+                            <button
+                              type="button"
+                              disabled={deletingId === tx.id}
+                              className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                              aria-label="Ações"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                          }
+                          items={[
+                            ...(EDITABLE_TYPES.includes(tx.type)
+                              ? [{ label: "Editar", onClick: () => setEditingTx(tx) }]
+                              : []),
+                            {
+                              label: deletingId === tx.id ? "Excluindo..." : "Excluir",
+                              onClick: () => handleDelete(tx),
+                              variant: "destructive" as const,
+                            },
+                          ]}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="md:hidden flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <select
+                  value={sortKey}
+                  onChange={(e) => { setSortKey(e.target.value as SortKey); setSortDir("desc"); }}
+                  className="h-8 flex-1 rounded-md border bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="date">Ordenar por Data</option>
+                  <option value="expiresAt">Ordenar por Expiração</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+                  className="h-8 w-8 shrink-0 flex items-center justify-center rounded-md border text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Direção"
+                >
+                  {sortDir === "asc" ? "↑" : "↓"}
+                </button>
+              </div>
+
+              {sorted.map((tx) => {
+                const costPer1k = tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)
+                  ? formatBrl(tx.fifoData.costPer1kPoints)
+                  : tx.type === "PURCHASE" && tx.costBrl && tx.points > 0
+                    ? formatBrl((tx.costBrl / tx.points) * 1000)
+                    : null;
+                return (
+                  <div key={tx.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className={`font-medium text-sm ${TYPE_COLORS[tx.type] ?? ""}`}>
                         {TYPE_LABELS[tx.type] ?? tx.type}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono">
-                      {pointsSign(tx.type, tx.points)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">
-                      {tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)
-                        ? formatBrl(tx.fifoData.costPer1kPoints)
-                        : tx.type === "PURCHASE" && tx.costBrl && tx.points > 0
-                          ? formatBrl((tx.costBrl / tx.points) * 1000)
-                          : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {tx.fifoData?.roi != null && Number.isFinite(tx.fifoData.roi) ? (
-                        <span className={tx.fifoData.roi >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}>
-                          {tx.fifoData.roi.toFixed(1)}%
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                      {tx.description ?? ""}
-                      {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <DropdownMenu
-                        align="right"
-                        trigger={
-                          <button
-                            type="button"
-                            disabled={deletingId === tx.id}
-                            className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                            aria-label="Ações"
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        }
-                        items={[
-                          ...(EDITABLE_TYPES.includes(tx.type)
-                            ? [{ label: "Editar", onClick: () => setEditingTx(tx) }]
-                            : []),
-                          {
-                            label: deletingId === tx.id ? "Excluindo..." : "Excluir",
-                            onClick: () => handleDelete(tx),
-                            variant: "destructive" as const,
-                          },
-                        ]}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="font-mono font-semibold text-sm">{pointsSign(tx.type, tx.points)}</span>
+                        <DropdownMenu
+                          align="right"
+                          trigger={
+                            <button
+                              type="button"
+                              disabled={deletingId === tx.id}
+                              className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                              aria-label="Ações"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                          }
+                          items={[
+                            ...(EDITABLE_TYPES.includes(tx.type)
+                              ? [{ label: "Editar", onClick: () => setEditingTx(tx) }]
+                              : []),
+                            {
+                              label: deletingId === tx.id ? "Excluindo..." : "Excluir",
+                              onClick: () => handleDelete(tx),
+                              variant: "destructive" as const,
+                            },
+                          ]}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(tx.date)}
+                      {tx.expiresAt && <> &bull; expira {formatDate(tx.expiresAt)}</>}
+                    </p>
+                    {(costPer1k || tx.fifoData?.roi != null) && (
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground border-t pt-2">
+                        {costPer1k && <span>Custo/1k: {costPer1k}</span>}
+                        {tx.fifoData?.roi != null && Number.isFinite(tx.fifoData.roi) && (
+                          <span className={tx.fifoData.roi >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}>
+                            ROI {tx.fifoData.roi.toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {(tx.description || tx.costBrl) && (
+                      <p className="text-xs text-muted-foreground">
+                        {tx.description ?? ""}
+                        {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

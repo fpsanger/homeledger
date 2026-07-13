@@ -607,7 +607,7 @@ function CardInstallmentTable({
           placeholder="Buscar descrição..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-7 w-44 text-xs"
+          className="h-7 w-full sm:w-44 text-xs"
         />
         {usedCategories.length > 1 && (
           <Select
@@ -956,20 +956,27 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
       </Dialog>
 
       {/* Filters + Nova compra */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="outline" size="sm" onClick={prev}>
-          ←
-        </Button>
-        <span className="font-medium capitalize">{formatMonth(year, month)}</span>
-        <Button variant="outline" size="sm" onClick={next}>
-          →
-        </Button>
-        <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowAddRefund(true)}>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={prev}>
+            ←
+          </Button>
+          <span className="font-medium capitalize">{formatMonth(year, month)}</span>
+          <Button variant="outline" size="sm" onClick={next}>
+            →
+          </Button>
+        </div>
+        <div className="flex gap-2 sm:ml-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none"
+            onClick={() => setShowAddRefund(true)}
+          >
             <Plus className="w-4 h-4 mr-1" />
             Estorno
           </Button>
-          <Button size="sm" onClick={() => setShowAdd(true)}>
+          <Button size="sm" className="flex-1 sm:flex-none" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4 mr-1" />
             Nova compra
           </Button>
@@ -1040,24 +1047,24 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                 <Card className={`overflow-hidden${allPaid ? " ring-1 ring-green-500" : ""}`}>
                   {/* Card header */}
                   <CollapsibleTrigger
-                    className={`no-active-scale w-full rounded-none flex items-center justify-between px-5 py-4 border-b transition-colors text-left ${
+                    className={`no-active-scale w-full rounded-none flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-4 border-b transition-colors text-left ${
                       allPaid
                         ? "bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:hover:bg-green-900 dark:border-green-800"
                         : "bg-muted/30 hover:bg-muted/50"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       {isOpen ? (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                       ) : (
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
                       )}
-                      <CreditCard className="w-4 h-4 text-muted-foreground" />
-                      <div>
+                      <CreditCard className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-sm">{entry.card.name}</p>
+                          <p className="font-semibold text-sm truncate">{entry.card.name}</p>
                           {allPaid && (
-                            <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full">
+                            <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full shrink-0">
                               <CheckCircle2 className="w-3 h-3" /> Paga
                             </span>
                           )}
@@ -1067,7 +1074,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pl-7 sm:pl-0">
                       {entry.installments.some((i) => !i.isPaid) && (
                         <Button
                           variant="outline"
@@ -1094,9 +1101,9 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
                           {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
                         </Button>
                       )}
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground whitespace-nowrap">
                           {entry.installments.length}{" "}
                           {entry.installments.length === 1 ? "item" : "itens"}
                           {entry.refunds.length > 0 &&

@@ -2,7 +2,7 @@
 
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
-import type { ImportSummary } from "./BillingImportWizard";
+import type { ImportSummary } from "./types";
 
 type Props = {
   summary: ImportSummary;

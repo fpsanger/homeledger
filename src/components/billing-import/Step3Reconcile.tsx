@@ -3,7 +3,7 @@
 import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
-import type { Step1Data } from "./BillingImportWizard";
+import type { Step1Data } from "./types";
 
 type Props = {
   reconciledItems: ReconciledItem[];

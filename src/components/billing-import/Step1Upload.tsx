@@ -4,7 +4,7 @@ import { Loader2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
-import type { Step1Data } from "./BillingImportWizard";
+import type { Step1Data } from "./types";
 
 type CreditCard = { id: string; name: string };
 type Person = { id: string; name: string };

@@ -1,36 +1,21 @@
 {
   "coverage": {
-    "statements": 83.75,
+    "statements": 83.85,
     "branches": 74.84,
-    "functions": 79.91,
-    "lines": 84.56
+    "functions": 80.39,
+    "lines": 84.66
   },
   "violations": {
     "architecture": 0,
-    "circularDependencies": 1,
-    "complexity": 30,
+    "circularDependencies": 0,
+    "complexity": 27,
     "oversizedFiles": 6,
-    "oversizedFunctions": 26
+    "oversizedFunctions": 25
   },
   "details": {
     "architecture": [],
-    "circularDependencies": [
-      [
-        "src/components/billing-import/BillingImportWizard.tsx",
-        "src/components/billing-import/Step1Upload.tsx",
-        "src/components/billing-import/Step2Review.tsx",
-        "src/components/billing-import/Step3Reconcile.tsx",
-        "src/components/billing-import/Step4Import.tsx",
-        "src/components/billing-import/Step5Done.tsx"
-      ]
-    ],
+    "circularDependencies": [],
     "complexity": [
-      {
-        "file": "src/app/api/billing/parse/route.ts",
-        "name": "POST",
-        "line": 31,
-        "complexity": 36
-      },
       {
         "file": "src/app/api/loyalty/transactions/route.ts",
         "name": "POST",
@@ -152,22 +137,10 @@
         "complexity": 11
       },
       {
-        "file": "src/components/transactions/TransactionPageClient.tsx",
-        "name": "TransactionPageClient",
-        "line": 89,
-        "complexity": 29
-      },
-      {
         "file": "src/components/transactions/UnifiedTransactionForm.tsx",
         "name": "handleSubmit",
-        "line": 219,
+        "line": 387,
         "complexity": 16
-      },
-      {
-        "file": "src/components/transactions/UnifiedTransactionForm.tsx",
-        "name": "UnifiedTransactionForm",
-        "line": 140,
-        "complexity": 37
       },
       {
         "file": "src/domain/entities/CreditCard.ts",
@@ -277,7 +250,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (464). Maximum allowed is 400.",
+        "message": "This file has too many lines (551). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
@@ -286,7 +259,7 @@
             "column": 1
           },
           "end": {
-            "line": 569,
+            "line": 653,
             "column": 2
           }
         },
@@ -311,23 +284,6 @@
       }
     ],
     "oversizedFunctions": [
-      {
-        "severity": "warning",
-        "message": "This function has too many lines (113). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/app/api/billing/parse/route.ts",
-          "start": {
-            "line": 31,
-            "column": 8
-          },
-          "end": {
-            "line": 183,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
       {
         "severity": "warning",
         "message": "This function has too many lines (172). Maximum allowed is 80.",
@@ -670,16 +626,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (242). Maximum allowed is 80.",
+        "message": "This function has too many lines (194). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/TransactionPageClient.tsx",
           "start": {
-            "line": 89,
+            "line": 65,
             "column": 8
           },
           "end": {
-            "line": 452,
+            "line": 373,
             "column": 2
           }
         },
@@ -687,16 +643,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (281). Maximum allowed is 80.",
+        "message": "This function has too many lines (233). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 140,
+            "line": 305,
             "column": 8
           },
           "end": {
-            "line": 569,
+            "line": 653,
             "column": 2
           }
         },
@@ -709,11 +665,11 @@
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 219,
+            "line": 387,
             "column": 3
           },
           "end": {
-            "line": 321,
+            "line": 489,
             "column": 4
           }
         },

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { InstallmentBillingItem } from "@/domain/entities/BillingItem";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
-import type { ImportSummary, Step1Data } from "./BillingImportWizard";
+import type { ImportSummary, Step1Data } from "./types";
 
 type Props = {
   reconciledItems: ReconciledItem[];

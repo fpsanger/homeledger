@@ -13,52 +13,15 @@ import { Dialog } from "@/components/ui/dialog";
 import { FilterGroup } from "@/components/ui/filter-group";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { formatAmountBR } from "@/lib/utils";
-import { EditInstallmentForm } from "./EditInstallmentForm";
 import { InvestmentForm } from "./InvestmentForm";
 import { RecurringTransactionForm } from "./RecurringTransactionForm";
+import {
+  EditInstallmentDialog,
+  EditPurchaseDialog,
+  EditTransactionDialog,
+} from "./TransactionEditDialogs";
+import type { Category, CreditCard, Installment, Person, Transaction } from "./types";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
-
-type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null };
-type CreditCard = {
-  id: string;
-  name: string;
-  closureType: "FIXED" | "VARIABLE";
-  fixedClosureDay: number | null;
-  fixedClosurePreviousMonth: boolean;
-  alwaysNextMonth: boolean;
-  closureNextMonth: boolean;
-};
-
-type Transaction = {
-  id: string;
-  personId: string;
-  type: "INCOME" | "EXPENSE" | "INVESTMENT";
-  amount: number;
-  date: Date | string;
-  description: string;
-  paymentMethod: string;
-  categoryId?: string | null;
-  source?: string | null;
-};
-
-type Installment = {
-  id: string;
-  installmentNumber: number;
-  amount: number;
-  dueYear: number;
-  dueMonth: number;
-  isPaid: boolean;
-  creditCardPurchaseId?: string;
-  personId?: string;
-  categoryId?: string | null;
-  purchaseDescription?: string;
-  purchaseDate?: Date | string;
-  numberOfInstallments?: number;
-  creditCardId?: string | null;
-  purchaseTotalAmount?: number;
-};
 
 type Props = {
   year: number;
@@ -81,9 +44,22 @@ const PAYMENT_LABELS: Record<string, string> = {
   ACCOUNT_DEBIT: "Déb. Conta",
 };
 
-function toDateInput(date: Date | string): string {
-  const d = new Date(date);
-  return d.toISOString().split("T")[0];
+function computeHasActiveFilters(filters: {
+  search: string;
+  categoryFilter: string;
+  paymentFilter: string;
+  statusFilter: string;
+  dateFrom: string;
+  amountMin: string;
+}): boolean {
+  return (
+    filters.search !== "" ||
+    filters.categoryFilter !== "" ||
+    filters.paymentFilter !== "" ||
+    filters.statusFilter !== "" ||
+    filters.dateFrom !== "" ||
+    filters.amountMin !== ""
+  );
 }
 
 export function TransactionPageClient({
@@ -115,13 +91,14 @@ export function TransactionPageClient({
   // Installment-only filters
   const [statusFilter, setStatusFilter] = useState("");
 
-  const hasActiveFilters =
-    search !== "" ||
-    categoryFilter !== "" ||
-    paymentFilter !== "" ||
-    statusFilter !== "" ||
-    dateFrom !== "" ||
-    amountMin !== "";
+  const hasActiveFilters = computeHasActiveFilters({
+    search,
+    categoryFilter,
+    paymentFilter,
+    statusFilter,
+    dateFrom,
+    amountMin,
+  });
 
   function clearAllFilters() {
     setSearch("");
@@ -234,84 +211,28 @@ export function TransactionPageClient({
         />
       </Dialog>
 
-      <Dialog
-        open={editingTransaction !== null}
+      <EditTransactionDialog
+        transaction={editingTransaction}
+        people={people}
+        categories={categories}
+        creditCards={creditCards}
         onClose={() => setEditingTransaction(null)}
-        title="Editar Transação"
-      >
-        {editingTransaction && (
-          <UnifiedTransactionForm
-            people={people}
-            categories={categories}
-            creditCards={creditCards}
-            editMode={{ transactionId: editingTransaction.id }}
-            initialValues={{
-              type:
-                editingTransaction.type === "INCOME"
-                  ? "income"
-                  : editingTransaction.type === "INVESTMENT"
-                    ? "expense"
-                    : "expense",
-              personId: editingTransaction.personId,
-              amount: formatAmountBR(editingTransaction.amount),
-              date: toDateInput(editingTransaction.date),
-              paymentMethod: editingTransaction.paymentMethod ?? "CASH",
-              source: editingTransaction.source ?? "SALARY",
-              creditCardId: "",
-              categoryId: editingTransaction.categoryId ?? "",
-              description: editingTransaction.description,
-            }}
-            onSuccess={() => setEditingTransaction(null)}
-          />
-        )}
-      </Dialog>
+      />
 
-      <Dialog
-        open={editingInstallment !== null}
+      <EditInstallmentDialog
+        installment={editingInstallment}
+        people={people}
+        creditCards={creditCards}
         onClose={() => setEditingInstallment(null)}
-        title="Editar Parcela"
-      >
-        {editingInstallment && (
-          <EditInstallmentForm
-            installment={editingInstallment}
-            people={people}
-            creditCards={creditCards}
-            onSuccess={() => setEditingInstallment(null)}
-          />
-        )}
-      </Dialog>
+      />
 
-      <Dialog
-        open={editingPurchase !== null}
+      <EditPurchaseDialog
+        purchase={editingPurchase}
+        people={people}
+        categories={categories}
+        creditCards={creditCards}
         onClose={() => setEditingPurchase(null)}
-        title="Editar Compra"
-      >
-        {editingPurchase && (
-          <UnifiedTransactionForm
-            people={people}
-            categories={categories}
-            creditCards={creditCards}
-            editMode={{ purchaseId: editingPurchase.creditCardPurchaseId }}
-            initialValues={{
-              type: "credit",
-              personId: editingPurchase.personId ?? "",
-              amount: formatAmountBR(
-                editingPurchase.purchaseTotalAmount ??
-                  editingPurchase.amount * (editingPurchase.numberOfInstallments ?? 1),
-              ),
-              date: editingPurchase.purchaseDate
-                ? toDateInput(editingPurchase.purchaseDate)
-                : toDateInput(new Date(editingPurchase.dueYear, editingPurchase.dueMonth - 1, 1)),
-              paymentMethod: "CASH",
-              source: "SALARY",
-              creditCardId: editingPurchase.creditCardId ?? "",
-              categoryId: editingPurchase.categoryId ?? "",
-              description: editingPurchase.purchaseDescription ?? "",
-            }}
-            onSuccess={() => setEditingPurchase(null)}
-          />
-        )}
-      </Dialog>
+      />
 
       {/* Unified filters */}
       <FilterGroup hasActiveFilters={hasActiveFilters} onClear={clearAllFilters}>

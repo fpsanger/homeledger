@@ -1,0 +1,15 @@
+{
+  "coverage": {
+    "statements": 83.75,
+    "branches": 74.84,
+    "functions": 79.91,
+    "lines": 84.56
+  },
+  "violations": {
+    "architecture": 0,
+    "circularDependencies": 1,
+    "complexity": 30,
+    "oversizedFiles": 6,
+    "oversizedFunctions": 26
+  }
+}

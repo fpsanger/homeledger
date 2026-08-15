@@ -30,19 +30,19 @@ const people = [
 ];
 
 describe("InvestmentForm — defaultPersonId", () => {
-  it("pre-selects the person when defaultPersonId is provided", () => {
+  it("pre-selects the person when defaultPersonId is provided", async () => {
     render(<InvestmentForm people={people} categories={[]} defaultPersonId="p1" />);
-    expect(screen.getByLabelText("Pessoa")).toHaveValue("p1");
+    expect(await screen.findByLabelText("Pessoa")).toHaveValue("p1");
   });
 
-  it("has no person selected when defaultPersonId is omitted", () => {
+  it("has no person selected when defaultPersonId is omitted", async () => {
     render(<InvestmentForm people={people} categories={[]} />);
-    expect(screen.getByLabelText("Pessoa")).toHaveValue("");
+    expect(await screen.findByLabelText("Pessoa")).toHaveValue("");
   });
 
-  it("shows all people as options", () => {
+  it("shows all people as options", async () => {
     render(<InvestmentForm people={people} categories={[]} defaultPersonId="p1" />);
-    const select = screen.getByLabelText("Pessoa");
+    const select = await screen.findByLabelText("Pessoa");
     expect(select).toContainElement(screen.getByRole("option", { name: "Alice" }));
     expect(select).toContainElement(screen.getByRole("option", { name: "Bob" }));
   });

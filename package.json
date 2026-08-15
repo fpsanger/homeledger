@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "biome check src tests",
-    "format": "biome format --write src tests",
-    "test": "jest"
+  "build": "next build",
+  "start": "next start",
+  "lint": "biome check src tests",
+  "format": "biome format --write src tests",
+  "typecheck": "tsc --noEmit",
+  "test": "jest",
+  "test:coverage": "jest --coverage",
+  "quality": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build"
   },
   "jest": {
     "preset": "ts-jest",

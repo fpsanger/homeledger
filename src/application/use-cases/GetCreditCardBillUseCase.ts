@@ -1,11 +1,11 @@
 import type { CreditCardRecord } from "../../domain/entities/CreditCard";
 import type { CreditCardRefundRecord } from "../../domain/entities/CreditCardRefund";
-import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
-import type { ICreditCardRefundRepository } from "../../domain/repositories/ICreditCardRefundRepository";
 import type {
   ICreditCardPurchaseRepository,
   InstallmentRecord,
 } from "../../domain/repositories/ICreditCardPurchaseRepository";
+import type { ICreditCardRefundRepository } from "../../domain/repositories/ICreditCardRefundRepository";
+import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 
 export type BillInstallmentItem = InstallmentRecord & {
   purchaseDescription: string;

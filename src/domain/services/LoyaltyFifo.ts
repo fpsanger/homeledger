@@ -130,8 +130,10 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     enriched.push(fifoData !== undefined ? { ...tx, fifoData } : tx);
   }
 
-  const avgCostPer1kPoints = totalPurchasedPoints > 0 ? (totalInvested / totalPurchasedPoints) * 1000 : 0;
-  const overallRoi = totalInvested > 0 ? ((totalValueRedeemed - totalInvested) / totalInvested) * 100 : null;
+  const avgCostPer1kPoints =
+    totalPurchasedPoints > 0 ? (totalInvested / totalPurchasedPoints) * 1000 : 0;
+  const overallRoi =
+    totalInvested > 0 ? ((totalValueRedeemed - totalInvested) / totalInvested) * 100 : null;
 
   return {
     summary: {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { BarChart2, Table2 } from "lucide-react";
+import { useState } from "react";
 import type { AnnualReportResult } from "@/domain/services/AnnualReport";
-import { AnnualReportCards } from "./AnnualReportCards";
 import { AnnualBalanceChart, fmtSigned } from "./AnnualBalanceCard";
+import { AnnualReportCards } from "./AnnualReportCards";
 
 type Props = {
   report: AnnualReportResult;

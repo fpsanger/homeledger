@@ -1,11 +1,11 @@
 "use client";
 
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { InstallmentBillingItem } from "@/domain/entities/BillingItem";
-import type { Step1Data, ImportSummary } from "./BillingImportWizard";
+import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
+import type { ImportSummary, Step1Data } from "./BillingImportWizard";
 
 type Props = {
   reconciledItems: ReconciledItem[];
@@ -50,7 +50,13 @@ function estimatePurchaseDate(billingDate: Date | string, installmentNumber: num
   return d.toISOString().slice(0, 10);
 }
 
-export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDone, onBack }: Props) {
+export function Step4Import({
+  reconciledItems,
+  selectedIndices,
+  step1Data,
+  onDone,
+  onBack,
+}: Props) {
   const itemsToImport = selectedIndices.map((i) => reconciledItems[i]);
   const alreadyRegistered = reconciledItems.filter((ri) => ri.status === "matched").length;
 
@@ -97,7 +103,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
   }
 
   function updateForm(index: number, changes: Partial<ItemForm>) {
-    setForms((prev) => prev.map((f, i) => (i === index ? { ...f, ...changes } as ItemForm : f)));
+    setForms((prev) => prev.map((f, i) => (i === index ? ({ ...f, ...changes } as ItemForm) : f)));
   }
 
   async function importItem(index: number, ri: ReconciledItem): Promise<boolean> {
@@ -161,7 +167,8 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
         } else if (form.transactionType === "INVESTMENT") {
           body.categoryId = null;
         } else {
-          body.paymentMethod = step1Data.statementType === "credit-card" ? "CREDIT_CARD" : "DEBIT_CARD";
+          body.paymentMethod =
+            step1Data.statementType === "credit-card" ? "CREDIT_CARD" : "DEBIT_CARD";
           body.categoryId = ri.categoryId ?? null;
         }
 
@@ -226,7 +233,7 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
           const status = statuses[i];
           return (
             <div
-              key={i}
+              key={selectedIndices[i]}
               className={`rounded-lg border p-4 transition-colors ${
                 status === "success"
                   ? "border-green-300 bg-green-50 dark:bg-green-900/10"
@@ -237,10 +244,16 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  {item.kind === "installment" ? "Compra Parcelada" : item.kind === "refund" ? "Estorno" : "Transação"}
+                  {item.kind === "installment"
+                    ? "Compra Parcelada"
+                    : item.kind === "refund"
+                      ? "Estorno"
+                      : "Transação"}
                 </span>
                 <div className="flex items-center gap-1">
-                  {status === "loading" && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                  {status === "loading" && (
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
                   {status === "success" && <CheckCircle className="w-4 h-4 text-green-500" />}
                   {status === "error" && <XCircle className="w-4 h-4 text-destructive" />}
                 </div>
@@ -249,136 +262,168 @@ export function Step4Import({ reconciledItems, selectedIndices, step1Data, onDon
               {form.kind === "installment" ? (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs text-muted-foreground mb-1">Descrição</label>
-                    <input
-                      type="text"
-                      value={form.description}
-                      onChange={(e) => updateForm(i, { description: e.target.value })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Descrição
+                      <input
+                        type="text"
+                        value={form.description}
+                        onChange={(e) => updateForm(i, { description: e.target.value })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Valor Total (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.totalAmount}
-                      onChange={(e) => updateForm(i, { totalAmount: parseFloat(e.target.value) || 0 })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Valor Total (R$)
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.totalAmount}
+                        onChange={(e) =>
+                          updateForm(i, { totalAmount: parseFloat(e.target.value) || 0 })
+                        }
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Nº de Parcelas</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={form.numberOfInstallments}
-                      onChange={(e) => updateForm(i, { numberOfInstallments: parseInt(e.target.value) || 1 })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Nº de Parcelas
+                      <input
+                        type="number"
+                        min={1}
+                        value={form.numberOfInstallments}
+                        onChange={(e) =>
+                          updateForm(i, { numberOfInstallments: parseInt(e.target.value) || 1 })
+                        }
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Data da Compra</label>
-                    <input
-                      type="date"
-                      value={form.purchaseDate}
-                      onChange={(e) => updateForm(i, { purchaseDate: e.target.value })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Data da Compra
+                      <input
+                        type="date"
+                        value={form.purchaseDate}
+                        onChange={(e) => updateForm(i, { purchaseDate: e.target.value })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Parcela</label>
-                    <input
-                      type="text"
-                      value={`${(item as InstallmentBillingItem).installmentNumber}/${(item as InstallmentBillingItem).totalInstallments}`}
-                      disabled
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Parcela
+                      <input
+                        type="text"
+                        value={`${(item as InstallmentBillingItem).installmentNumber}/${(item as InstallmentBillingItem).totalInstallments}`}
+                        disabled
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background opacity-60"
+                      />
+                    </label>
                   </div>
                 </div>
               ) : form.kind === "refund" ? (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs text-muted-foreground mb-1">Descrição</label>
-                    <input
-                      type="text"
-                      value={form.description}
-                      onChange={(e) => updateForm(i, { description: e.target.value })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Descrição
+                      <input
+                        type="text"
+                        value={form.description}
+                        onChange={(e) => updateForm(i, { description: e.target.value })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Valor (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.amount}
-                      onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Valor (R$)
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.amount}
+                        onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Data</label>
-                    <input
-                      type="date"
-                      value={form.date}
-                      onChange={(e) => updateForm(i, { date: e.target.value })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Data
+                      <input
+                        type="date"
+                        value={form.date}
+                        onChange={(e) => updateForm(i, { date: e.target.value })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs text-muted-foreground mb-1">Descrição</label>
-                    <input
-                      type="text"
-                      value={form.description}
-                      onChange={(e) => updateForm(i, { description: e.target.value })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Descrição
+                      <input
+                        type="text"
+                        value={form.description}
+                        onChange={(e) => updateForm(i, { description: e.target.value })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Valor (R$)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.amount}
-                      onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Valor (R$)
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={form.amount}
+                        onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Data</label>
-                    <input
-                      type="date"
-                      value={form.date}
-                      onChange={(e) => updateForm(i, { date: e.target.value })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    />
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Data
+                      <input
+                        type="date"
+                        value={form.date}
+                        onChange={(e) => updateForm(i, { date: e.target.value })}
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      />
+                    </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Tipo</label>
-                    <select
-                      value={form.transactionType}
-                      onChange={(e) => updateForm(i, { transactionType: e.target.value as "EXPENSE" | "INCOME" | "INVESTMENT" })}
-                      disabled={status !== "pending"}
-                      className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                    >
-                      <option value="EXPENSE">Despesa</option>
-                      <option value="INCOME">Receita</option>
-                      <option value="INVESTMENT">Investimento</option>
-                    </select>
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      Tipo
+                      <select
+                        value={form.transactionType}
+                        onChange={(e) =>
+                          updateForm(i, {
+                            transactionType: e.target.value as "EXPENSE" | "INCOME" | "INVESTMENT",
+                          })
+                        }
+                        disabled={status !== "pending"}
+                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
+                      >
+                        <option value="EXPENSE">Despesa</option>
+                        <option value="INCOME">Receita</option>
+                        <option value="INVESTMENT">Investimento</option>
+                      </select>
+                    </label>
                   </div>
                 </div>
               )}

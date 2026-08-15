@@ -1,9 +1,26 @@
 "use client";
 
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  CreditCard,
+  Hash,
+  MoreHorizontal,
+  Receipt,
+  Tag,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash, ArrowUp, ArrowDown, ArrowUpDown, ChevronDown, CreditCard, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -12,12 +29,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { PageSizeSelector } from "@/components/ui/page-size-selector";
-import { Select } from "@/components/ui/select";
-import { TransactionAmount } from "../transactions/TransactionAmount";
 import { formatDatePtBR } from "@/lib/format-date";
+import { TransactionAmount } from "../transactions/TransactionAmount";
 import { SummaryCard } from "./SummaryCard";
 
 type Transaction = {
@@ -69,11 +82,21 @@ function toMs(date: Date | string) {
   return new Date(date).getTime();
 }
 
-function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
+function SortIcon({
+  col,
+  sortKey,
+  sortDir,
+}: {
+  col: SortKey;
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+}) {
   if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
-  return sortDir === "asc"
-    ? <ArrowUp className="w-3 h-3 ml-1" />
-    : <ArrowDown className="w-3 h-3 ml-1" />;
+  return sortDir === "asc" ? (
+    <ArrowUp className="w-3 h-3 ml-1" />
+  ) : (
+    <ArrowDown className="w-3 h-3 ml-1" />
+  );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -95,9 +118,16 @@ type DesktopProps = SharedProps & {
 };
 
 function TransactionTableDesktop({
-  paginated, byPersonId, byCategoryId, showCategoryCol,
-  deletingId, handleDelete, onEdit,
-  sortKey, sortDir, toggleSort,
+  paginated,
+  byPersonId,
+  byCategoryId,
+  showCategoryCol,
+  deletingId,
+  handleDelete,
+  onEdit,
+  sortKey,
+  sortDir,
+  toggleSort,
 }: DesktopProps) {
   return (
     <div className="rounded-lg border overflow-x-auto">
@@ -145,9 +175,7 @@ function TransactionTableDesktop({
                 <TableCell className="text-sm text-muted-foreground tabular-nums">
                   {fmtDate(t.date)}
                 </TableCell>
-                <TableCell className="text-sm">
-                  {byPersonId[t.personId] ?? t.personId}
-                </TableCell>
+                <TableCell className="text-sm">{byPersonId[t.personId] ?? t.personId}</TableCell>
                 <TableCell className="text-sm">
                   <span className="inline-flex items-center gap-2">
                     {t.description || "—"}
@@ -212,16 +240,26 @@ type MobileProps = SharedProps & {
 };
 
 function TransactionTableMobile({
-  paginated, byPersonId, byCategoryId,
-  deletingId, handleDelete, onEdit,
-  sortKey, setSortKey, sortDir, setSortDir,
+  paginated,
+  byPersonId,
+  byCategoryId,
+  deletingId,
+  handleDelete,
+  onEdit,
+  sortKey,
+  setSortKey,
+  sortDir,
+  setSortDir,
 }: MobileProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <Select
           value={sortKey ?? ""}
-          onChange={(e) => { setSortKey((e.target.value as SortKey) || null); setSortDir("asc"); }}
+          onChange={(e) => {
+            setSortKey((e.target.value as SortKey) || null);
+            setSortDir("asc");
+          }}
           className="h-8 text-xs flex-1"
         >
           <option value="">Ordenar por...</option>
@@ -236,13 +274,19 @@ function TransactionTableMobile({
             onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
             aria-label="Direção"
           >
-            {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+            {sortDir === "asc" ? (
+              <ArrowUp className="w-3.5 h-3.5" />
+            ) : (
+              <ArrowDown className="w-3.5 h-3.5" />
+            )}
           </Button>
         )}
       </div>
 
       {paginated.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-8">Nenhum resultado encontrado</p>
+        <p className="text-center text-sm text-muted-foreground py-8">
+          Nenhum resultado encontrado
+        </p>
       ) : (
         paginated.map((t) => (
           <div key={t.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
@@ -364,8 +408,12 @@ export function TransactionTable({
     toast.success(isRecurring ? "Recorrente removido." : "Transação excluída.");
   }
 
-  const totalIncome = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
-  const totalExpenses = transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
+  const totalIncome = transactions
+    .filter((t) => t.type === "INCOME")
+    .reduce((s, t) => s + t.amount, 0);
+  const totalExpenses = transactions
+    .filter((t) => t.type === "EXPENSE")
+    .reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpenses;
 
   const usedParentCategoryIds = useMemo(() => {
@@ -405,9 +453,15 @@ export function TransactionTable({
   const sorted = useMemo(() => {
     const arr = [...filtered];
     if (sortKey === "date") {
-      arr.sort((a, b) => { const d = toMs(a.date) - toMs(b.date); return sortDir === "asc" ? d : -d; });
+      arr.sort((a, b) => {
+        const d = toMs(a.date) - toMs(b.date);
+        return sortDir === "asc" ? d : -d;
+      });
     } else if (sortKey === "amount") {
-      arr.sort((a, b) => { const d = a.amount - b.amount; return sortDir === "asc" ? d : -d; });
+      arr.sort((a, b) => {
+        const d = a.amount - b.amount;
+        return sortDir === "asc" ? d : -d;
+      });
     } else {
       arr.sort((a, b) => toMs(a.date) - toMs(b.date));
     }
@@ -426,7 +480,15 @@ export function TransactionTable({
     );
   }
 
-  const sharedProps = { paginated, byPersonId, byCategoryId, showCategoryCol, deletingId, handleDelete, onEdit };
+  const sharedProps = {
+    paginated,
+    byPersonId,
+    byCategoryId,
+    showCategoryCol,
+    deletingId,
+    handleDelete,
+    onEdit,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -435,33 +497,88 @@ export function TransactionTable({
         onClick={() => setSummaryOpen((o) => !o)}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`} />
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
+        />
         {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
       </button>
 
       {summaryOpen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard icon={TrendingDown} label="Despesas" value={`-${fmtCurrency(totalExpenses)}`} colorClass="text-red-600" />
-          <SummaryCard icon={TrendingUp} label="Receitas" value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)} colorClass="text-green-600" />
-          <SummaryCard icon={Wallet} label="Saldo" value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`} colorClass={balance >= 0 ? "text-green-700" : "text-red-700"} />
-          <SummaryCard icon={Hash} label="Lançamentos" value={String(transactions.length)} colorClass="text-muted-foreground" />
+          <SummaryCard
+            icon={TrendingDown}
+            label="Despesas"
+            value={`-${fmtCurrency(totalExpenses)}`}
+            colorClass="text-red-600"
+          />
+          <SummaryCard
+            icon={TrendingUp}
+            label="Receitas"
+            value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)}
+            colorClass="text-green-600"
+          />
+          <SummaryCard
+            icon={Wallet}
+            label="Saldo"
+            value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`}
+            colorClass={balance >= 0 ? "text-green-700" : "text-red-700"}
+          />
+          <SummaryCard
+            icon={Hash}
+            label="Lançamentos"
+            value={String(transactions.length)}
+            colorClass="text-muted-foreground"
+          />
         </div>
       )}
 
       <div className="hidden md:block">
-        <TransactionTableDesktop {...sharedProps} sortKey={sortKey} sortDir={sortDir} toggleSort={toggleSort} />
+        <TransactionTableDesktop
+          {...sharedProps}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          toggleSort={toggleSort}
+        />
       </div>
       <div className="md:hidden">
-        <TransactionTableMobile {...sharedProps} sortKey={sortKey} setSortKey={setSortKey} sortDir={sortDir} setSortDir={setSortDir} />
+        <TransactionTableMobile
+          {...sharedProps}
+          sortKey={sortKey}
+          setSortKey={setSortKey}
+          sortDir={sortDir}
+          setSortDir={setSortDir}
+        />
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <PageSizeSelector value={pageSize} onChange={(size) => { setPageSize(size); setPage(0); }} />
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+        />
         {totalPages > 1 && (
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>← Anterior</Button>
-            <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Próximo →</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
           </div>
         )}
       </div>

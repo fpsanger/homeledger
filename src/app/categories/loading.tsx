@@ -1,5 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+const HEADER_COLS = ["a", "b", "c", "d"];
+const ROWS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const ROW_COLS = ["a", "b", "c", "d"];
+
 export default function CategoriesLoading() {
   return (
     <div className="flex flex-col gap-6">
@@ -22,14 +26,14 @@ export default function CategoriesLoading() {
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">
         <div className="bg-muted/40 px-4 py-2.5 flex gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-3 flex-1" />
+          {HEADER_COLS.map((col) => (
+            <Skeleton key={col} className="h-3 flex-1" />
           ))}
         </div>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b last:border-0">
-            {Array.from({ length: 4 }).map((_, j) => (
-              <Skeleton key={j} className="h-4 flex-1" />
+        {ROWS.map((row) => (
+          <div key={row} className="flex items-center gap-4 px-4 py-3 border-b last:border-0">
+            {ROW_COLS.map((col) => (
+              <Skeleton key={col} className="h-4 flex-1" />
             ))}
           </div>
         ))}

@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createInvestmentUseCase } from "../../../application/use-cases/CreateInvestmentUseCase";
 import { parseDateUTC } from "../_lib/date";
 import { errorResponse } from "../_lib/errorResponse";

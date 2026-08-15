@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { findDuplicateTransaction } from "../domain/services/isDuplicateTransaction";
 import type { TransactionRecord } from "../domain/repositories/ITransactionRepository";
+import { findDuplicateTransaction } from "../domain/services/isDuplicateTransaction";
 
 export function useDuplicateCheck(
   type: "EXPENSE" | "INCOME" | "INVESTMENT",
@@ -13,6 +13,7 @@ export function useDuplicateCheck(
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
 
   useEffect(() => {
+    void refreshKey;
     const d = date ? new Date(date) : new Date();
     const months = [-1, 0, 1].map((offset) => {
       const m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1));

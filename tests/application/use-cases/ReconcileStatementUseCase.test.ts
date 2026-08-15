@@ -1,9 +1,15 @@
 import { reconcileStatementUseCase } from "../../../src/application/use-cases/ReconcileStatementUseCase";
-import type { ICreditCardPurchaseRepository, InstallmentRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
-import type { ITransactionRepository, TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
-import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
-import type { CreditCardRefundRecord } from "../../../src/domain/entities/CreditCardRefund";
 import type { BillingItem } from "../../../src/domain/entities/BillingItem";
+import type { CreditCardRefundRecord } from "../../../src/domain/entities/CreditCardRefund";
+import type {
+  ICreditCardPurchaseRepository,
+  InstallmentRecord,
+} from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
+import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
+import type {
+  ITransactionRepository,
+  TransactionRecord,
+} from "../../../src/domain/repositories/ITransactionRepository";
 
 function makeCreditCardPurchaseRepo(
   installments: InstallmentRecord[] = [],
@@ -29,9 +35,7 @@ function makeCreditCardPurchaseRepo(
   } as unknown as ICreditCardPurchaseRepository;
 }
 
-function makeTransactionRepo(
-  transactions: TransactionRecord[] = [],
-): ITransactionRepository {
+function makeTransactionRepo(transactions: TransactionRecord[] = []): ITransactionRepository {
   return {
     findByPersonAndMonth: jest.fn().mockResolvedValue(transactions),
     findById: jest.fn(),
@@ -208,7 +212,11 @@ describe("reconcileStatementUseCase", () => {
       installmentNumber: 2,
       totalInstallments: 12,
     };
-    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0, installmentNumber: 2 });
+    const existing = makeInstallmentRecord({
+      purchaseDescription: "Notebook",
+      amount: 100.0,
+      installmentNumber: 2,
+    });
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
@@ -232,7 +240,11 @@ describe("reconcileStatementUseCase", () => {
       installmentNumber: 2,
       totalInstallments: 12,
     };
-    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0, installmentNumber: 2 });
+    const existing = makeInstallmentRecord({
+      purchaseDescription: "Notebook",
+      amount: 100.0,
+      installmentNumber: 2,
+    });
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
       makeTransactionRepo(),
@@ -255,7 +267,11 @@ describe("reconcileStatementUseCase", () => {
       date: new Date("2025-05-10"),
       transactionType: "EXPENSE",
     };
-    const existing = makeTransactionRecord({ type: "EXPENSE", amount: 50.0, date: new Date("2025-05-10") });
+    const existing = makeTransactionRecord({
+      type: "EXPENSE",
+      amount: 50.0,
+      date: new Date("2025-05-10"),
+    });
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),
       makeTransactionRepo([existing]),
@@ -298,7 +314,11 @@ describe("reconcileStatementUseCase", () => {
       date: new Date("2025-05-01"),
       transactionType: "INCOME",
     };
-    const existing = makeTransactionRecord({ type: "EXPENSE", amount: 5000.0, date: new Date("2025-05-01") });
+    const existing = makeTransactionRecord({
+      type: "EXPENSE",
+      amount: 5000.0,
+      date: new Date("2025-05-01"),
+    });
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),
       makeTransactionRepo([existing]),
@@ -330,7 +350,11 @@ describe("reconcileStatementUseCase", () => {
     };
 
     const installment = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0 });
-    const transaction = makeTransactionRecord({ type: "EXPENSE", amount: 50.0, date: new Date("2025-05-10") });
+    const transaction = makeTransactionRecord({
+      type: "EXPENSE",
+      amount: 50.0,
+      date: new Date("2025-05-10"),
+    });
 
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([installment]),
@@ -358,7 +382,11 @@ describe("reconcileStatementUseCase", () => {
       totalInstallments: 12,
     };
     // Existing installment belongs to a DIFFERENT card
-    const existing = makeInstallmentRecord({ purchaseDescription: "Notebook", amount: 100.0, creditCardId: "card-99" });
+    const existing = makeInstallmentRecord({
+      purchaseDescription: "Notebook",
+      amount: 100.0,
+      creditCardId: "card-99",
+    });
 
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo([existing]),
@@ -426,7 +454,11 @@ describe("reconcileStatementUseCase", () => {
       amount: 30.0,
       date: new Date("2025-05-10"),
     };
-    const existing = makeRefundRecord({ amount: 30.0, refundDate: new Date("2025-05-10"), creditCardId: "card-99" });
+    const existing = makeRefundRecord({
+      amount: 30.0,
+      refundDate: new Date("2025-05-10"),
+      creditCardId: "card-99",
+    });
 
     const result = await reconcileStatementUseCase(
       makeCreditCardPurchaseRepo(),

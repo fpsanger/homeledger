@@ -1,5 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
-import type { ILoyaltyProgramRepository, LoyaltyProgramRecord } from "../../domain/repositories/ILoyaltyProgramRepository";
+import type {
+  ILoyaltyProgramRepository,
+  LoyaltyProgramRecord,
+} from "../../domain/repositories/ILoyaltyProgramRepository";
 
 export class PrismaLoyaltyProgramRepository implements ILoyaltyProgramRepository {
   constructor(private readonly prisma: PrismaClient) {}

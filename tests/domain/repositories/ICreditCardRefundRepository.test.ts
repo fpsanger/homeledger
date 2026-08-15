@@ -4,9 +4,7 @@ import type {
 } from "../../../src/domain/repositories/ICreditCardRefundRepository";
 
 class MockCreditCardRefundRepository implements ICreditCardRefundRepository {
-  async save(
-    refund: Omit<CreditCardRefundRecord, "createdAt">,
-  ): Promise<CreditCardRefundRecord> {
+  async save(refund: Omit<CreditCardRefundRecord, "createdAt">): Promise<CreditCardRefundRecord> {
     return { ...refund, createdAt: new Date() };
   }
   async findByMonth(_year: number, _month: number): Promise<CreditCardRefundRecord[]> {

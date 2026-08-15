@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
@@ -77,9 +77,18 @@ export function DropdownMenu({ trigger, items, align = "right" }: DropdownMenuPr
     </div>
   ) : null;
 
+  const clickableTrigger = isValidElement<{ onClick?: (e: React.MouseEvent) => void }>(trigger)
+    ? cloneElement(trigger, {
+        onClick: (e: React.MouseEvent) => {
+          trigger.props.onClick?.(e);
+          handleTriggerClick();
+        },
+      })
+    : trigger;
+
   return (
     <div ref={triggerRef} className="inline-block">
-      <div onClick={handleTriggerClick}>{trigger}</div>
+      {clickableTrigger}
       {typeof document !== "undefined" && menu ? createPortal(menu, document.body) : null}
     </div>
   );

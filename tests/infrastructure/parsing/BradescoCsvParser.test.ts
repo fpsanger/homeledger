@@ -1,5 +1,8 @@
+import type {
+  InstallmentBillingItem,
+  TransactionBillingItem,
+} from "../../../src/domain/entities/BillingItem";
 import { parseBradescoCsv } from "../../../src/infrastructure/parsing/BradescoCsvParser";
-import type { InstallmentBillingItem, TransactionBillingItem } from "../../../src/domain/entities/BillingItem";
 
 // Bradesco CSV uses ';' as delimiter. Values are split: integer and decimal in separate cells.
 // e.g. R$ 44,30 → cols[4]="44", cols[5]="30"
@@ -33,7 +36,7 @@ describe("parseBradescoCsv", () => {
     const item = items[0] as TransactionBillingItem;
     expect(item.kind).toBe("transaction");
     expect(item.transactionType).toBe("EXPENSE");
-    expect(item.amount).toBeCloseTo(44.30);
+    expect(item.amount).toBeCloseTo(44.3);
     expect(item.description).toBe("GISELE VERAS ETHEL EPP");
     expect(item.date.getUTCMonth()).toBe(4); // May = 4
     expect(item.date.getUTCDate()).toBe(27);
@@ -48,7 +51,7 @@ describe("parseBradescoCsv", () => {
     expect(item.kind).toBe("installment");
     expect(item.installmentNumber).toBe(1);
     expect(item.totalInstallments).toBe(2);
-    expect(item.amount).toBeCloseTo(149.50);
+    expect(item.amount).toBeCloseTo(149.5);
     expect(item.description).toBe("MICLA");
   });
 
@@ -96,11 +99,12 @@ describe("parseBradescoCsv", () => {
   test("8. value with zero decimal", () => {
     const csv = buildCsv([makeRow("02/05", "MUSEU MISTERIOS", "50", "00")]);
     const items = parseBradescoCsv(csv);
-    expect(items[0].amount).toBeCloseTo(50.00);
+    expect(items[0].amount).toBeCloseTo(50.0);
   });
 
   test("9. multi-section file: only parses section with ;;; marker", () => {
-    const otherSection = "OUTRO TITULAR ;;; 9999\nData;Histórico;Valor(US$);;Valor(R$);;\n27/05;OTHER EXPENSE;0;00;100;00\nTotal da fatura em Real: ;;;100;00";
+    const otherSection =
+      "OUTRO TITULAR ;;; 9999\nData;Histórico;Valor(US$);;Valor(R$);;\n27/05;OTHER EXPENSE;0;00;100;00\nTotal da fatura em Real: ;;;100;00";
     const mainSection = buildCsv([makeRow("27/05", "MAIN EXPENSE", "44", "30")]);
     // Only main section (MARGARETE P SANGER) should be parsed
     // The parser targets the section after ";;; " header

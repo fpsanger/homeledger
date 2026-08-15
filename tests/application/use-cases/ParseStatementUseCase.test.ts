@@ -1,10 +1,8 @@
 import { parseStatementUseCase } from "../../../src/application/use-cases/ParseStatementUseCase";
-import type { IStatementParser } from "../../../src/domain/repositories/IStatementParser";
 import type { BillingItem } from "../../../src/domain/entities/BillingItem";
+import type { IStatementParser } from "../../../src/domain/repositories/IStatementParser";
 
-const makeMockParser = (
-  overrides: Partial<IStatementParser> = {},
-): IStatementParser => ({
+const makeMockParser = (overrides: Partial<IStatementParser> = {}): IStatementParser => ({
   parse: async () => [],
   ...overrides,
 });
@@ -12,16 +10,16 @@ const makeMockParser = (
 describe("parseStatementUseCase", () => {
   it("throws when pdfText is empty string", async () => {
     const parser = makeMockParser();
-    await expect(
-      parseStatementUseCase(parser, "", "credit-card"),
-    ).rejects.toThrow("PDF text is empty");
+    await expect(parseStatementUseCase(parser, "", "credit-card")).rejects.toThrow(
+      "PDF text is empty",
+    );
   });
 
   it("throws when pdfText is whitespace-only", async () => {
     const parser = makeMockParser();
-    await expect(
-      parseStatementUseCase(parser, "   \n\t  ", "credit-card"),
-    ).rejects.toThrow("PDF text is empty");
+    await expect(parseStatementUseCase(parser, "   \n\t  ", "credit-card")).rejects.toThrow(
+      "PDF text is empty",
+    );
   });
 
   it("throws when statementType is invalid", async () => {
@@ -45,11 +43,7 @@ describe("parseStatementUseCase", () => {
     const parseSpy = jest.fn().mockResolvedValue(mockItems);
     const parser = makeMockParser({ parse: parseSpy });
 
-    const result = await parseStatementUseCase(
-      parser,
-      "PDF text content",
-      "credit-card",
-    );
+    const result = await parseStatementUseCase(parser, "PDF text content", "credit-card");
 
     expect(parseSpy).toHaveBeenCalledWith("PDF text content", "credit-card");
     expect(result).toEqual(mockItems);
@@ -69,11 +63,7 @@ describe("parseStatementUseCase", () => {
     const parseSpy = jest.fn().mockResolvedValue(mockItems);
     const parser = makeMockParser({ parse: parseSpy });
 
-    const result = await parseStatementUseCase(
-      parser,
-      "PDF text content",
-      "debit",
-    );
+    const result = await parseStatementUseCase(parser, "PDF text content", "debit");
 
     expect(parseSpy).toHaveBeenCalledWith("PDF text content", "debit");
     expect(result).toEqual(mockItems);
@@ -84,8 +74,8 @@ describe("parseStatementUseCase", () => {
     const parseSpy = jest.fn().mockRejectedValue(parserError);
     const parser = makeMockParser({ parse: parseSpy });
 
-    await expect(
-      parseStatementUseCase(parser, "PDF text content", "credit-card"),
-    ).rejects.toThrow("Parser failed");
+    await expect(parseStatementUseCase(parser, "PDF text content", "credit-card")).rejects.toThrow(
+      "Parser failed",
+    );
   });
 });

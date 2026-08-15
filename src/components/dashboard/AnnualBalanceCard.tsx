@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Cell,
 } from "recharts";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 import { AccessibleChart } from "./AccessibleChart";
@@ -106,7 +106,10 @@ export function AnnualBalanceChart({ months }: ChartProps) {
             width={52}
           />
           <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+          />
           <Bar
             dataKey="value"
             radius={[4, 4, 0, 0]}
@@ -114,9 +117,9 @@ export function AnnualBalanceChart({ months }: ChartProps) {
             animationDuration={500}
             animationEasing="ease-out"
           >
-            {data.map((entry, i) => (
+            {data.map((entry) => (
               <Cell
-                key={i}
+                key={entry.name}
                 fill={entry.value >= 0 ? "hsl(var(--income))" : "hsl(var(--expense))"}
                 fillOpacity={0.85}
               />

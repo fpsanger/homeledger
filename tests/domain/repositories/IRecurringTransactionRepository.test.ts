@@ -7,6 +7,9 @@ class MockRecurringTransactionRepository implements IRecurringTransactionReposit
   async findById(_id: string): Promise<RecurringTransactionRecord | null> {
     return null;
   }
+  async findAll(_personId?: string): Promise<RecurringTransactionRecord[]> {
+    return [];
+  }
   async findActiveByPersonAndMonth(
     _personId: string,
     _year: number,

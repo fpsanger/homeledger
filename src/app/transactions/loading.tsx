@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+const COL_KEYS = ["a", "b", "c", "d", "e", "f"];
+
 function SummaryCardSkeleton() {
   return (
     <div className="rounded-lg border bg-card p-4 flex flex-col gap-1.5">
@@ -12,12 +14,16 @@ function SummaryCardSkeleton() {
 function TableRowSkeleton({ cols }: { cols: number }) {
   return (
     <div className="flex items-center gap-4 px-4 py-3 border-b last:border-0">
-      {Array.from({ length: cols }).map((_, i) => (
-        <Skeleton key={i} className="h-4 flex-1" />
+      {COL_KEYS.slice(0, cols).map((col) => (
+        <Skeleton key={col} className="h-4 flex-1" />
       ))}
     </div>
   );
 }
+
+const SUMMARY_CARDS = ["a", "b", "c", "d"];
+const ROWS_5 = ["a", "b", "c", "d", "e"];
+const ROWS_4 = ["a", "b", "c", "d"];
 
 export default function TransactionsLoading() {
   return (
@@ -75,20 +81,20 @@ export default function TransactionsLoading() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <SummaryCardSkeleton key={i} />
+          {SUMMARY_CARDS.map((card) => (
+            <SummaryCardSkeleton key={card} />
           ))}
         </div>
 
         {/* Table */}
         <div className="rounded-lg border overflow-hidden">
           <div className="bg-muted/40 px-4 py-2.5 flex gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-3 flex-1" />
+            {COL_KEYS.map((col) => (
+              <Skeleton key={col} className="h-3 flex-1" />
             ))}
           </div>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <TableRowSkeleton key={i} cols={6} />
+          {ROWS_5.map((row) => (
+            <TableRowSkeleton key={row} cols={6} />
           ))}
         </div>
       </div>
@@ -100,12 +106,12 @@ export default function TransactionsLoading() {
         {/* Table */}
         <div className="rounded-lg border overflow-hidden">
           <div className="bg-muted/40 px-4 py-2.5 flex gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-3 flex-1" />
+            {COL_KEYS.slice(0, 5).map((col) => (
+              <Skeleton key={col} className="h-3 flex-1" />
             ))}
           </div>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <TableRowSkeleton key={i} cols={5} />
+          {ROWS_4.map((row) => (
+            <TableRowSkeleton key={row} cols={5} />
           ))}
         </div>
       </div>

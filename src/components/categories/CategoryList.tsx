@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { LayoutGrid, List, MoreHorizontal, Plus, Tags } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
 import {
   Table,
   TableBody,
@@ -17,10 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageSizeSelector } from "@/components/ui/page-size-selector";
+import { getFullPath } from "@/lib/categoryUtils";
 import { CategoryCreateDialog } from "./CategoryCreateDialog";
 import { CategoryEditDialog } from "./CategoryEditDialog";
-import { getFullPath } from "@/lib/categoryUtils";
 
 type Category = {
   id: string;
@@ -56,12 +56,9 @@ export function CategoryList({ categories }: { categories: Category[] }) {
         childrenOf.set(c.parentId, arr);
       }
     }
-    childrenOf.forEach((v, k) =>
-      childrenOf.set(
-        k,
-        v.sort((a, b) => a.name.localeCompare(b.name)),
-      ),
-    );
+    childrenOf.forEach((v) => {
+      v.sort((a, b) => a.name.localeCompare(b.name));
+    });
     return { roots, childrenOf };
   }, [categories]);
 
@@ -366,7 +363,10 @@ export function CategoryList({ categories }: { categories: Category[] }) {
           <div className="flex items-center justify-between pt-1">
             <PageSizeSelector
               value={pageSize}
-              onChange={(size) => { setPageSize(size); setPage(0); }}
+              onChange={(size) => {
+                setPageSize(size);
+                setPage(0);
+              }}
             />
             {totalPages > 1 && (
               <div className="flex items-center gap-3">

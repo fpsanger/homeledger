@@ -1,7 +1,7 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { BarChart2 } from "lucide-react";
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CATEGORY_SHADES } from "@/lib/dashboardColors";
 import { AccessibleChart } from "./AccessibleChart";
 
@@ -113,15 +113,18 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+          />
           <Bar
             dataKey="value"
             radius={[0, 3, 3, 0]}
             animationDuration={500}
             animationEasing="ease-out"
           >
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={CATEGORY_SHADES[index % CATEGORY_SHADES.length]} />
+            {data.map((entry, index) => (
+              <Cell key={entry.name} fill={CATEGORY_SHADES[index % CATEGORY_SHADES.length]} />
             ))}
           </Bar>
         </BarChart>

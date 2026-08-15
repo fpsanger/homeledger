@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server";
-import { updateCreditCardUseCase } from "../../../../application/use-cases/UpdateCreditCardUseCase";
+import type { NextRequest } from "next/server";
 import { deleteCreditCardUseCase } from "../../../../application/use-cases/DeleteCreditCardUseCase";
+import { updateCreditCardUseCase } from "../../../../application/use-cases/UpdateCreditCardUseCase";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 

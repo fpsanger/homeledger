@@ -45,9 +45,10 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
   const pointsReceived = sentNum > 0 ? Math.round(sentNum * (1 + bonusNum / 100)) : 0;
 
   const estimatedCostBrl = sourceAvgCostPer1k ? (sourceAvgCostPer1k * sentNum) / 1000 : 0;
-  const destinationCostPer1k = sentNum > 0 && pointsReceived > 0 && sourceAvgCostPer1k
-    ? (estimatedCostBrl / pointsReceived) * 1000
-    : null;
+  const destinationCostPer1k =
+    sentNum > 0 && pointsReceived > 0 && sourceAvgCostPer1k
+      ? (estimatedCostBrl / pointsReceived) * 1000
+      : null;
 
   const fromProgram = programs.find((p) => p.id === fromProgramId);
   const isAirlineSource = fromProgram?.type === "AIRLINE";
@@ -92,7 +93,9 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-from">De</label>
+          <label className="text-sm font-medium" htmlFor="transfer-from">
+            De
+          </label>
           <select
             id="transfer-from"
             value={fromProgramId}
@@ -105,18 +108,28 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
             }}
             className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {programs.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-to">Para</label>
+          <label className="text-sm font-medium" htmlFor="transfer-to">
+            Para
+          </label>
           <select
             id="transfer-to"
             value={toProgramId}
             onChange={(e) => setToProgramId(e.target.value)}
             className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            {destinationPrograms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {destinationPrograms.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -129,7 +142,9 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-points">Pontos enviados</label>
+          <label className="text-sm font-medium" htmlFor="transfer-points">
+            Pontos enviados
+          </label>
           <input
             id="transfer-points"
             type="number"
@@ -141,7 +156,9 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-bonus">Bônus (%)</label>
+          <label className="text-sm font-medium" htmlFor="transfer-bonus">
+            Bônus (%)
+          </label>
           <input
             id="transfer-bonus"
             type="number"
@@ -157,21 +174,27 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
       <div className="rounded-md bg-muted px-4 py-3 flex flex-col gap-2 text-sm">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Pontos recebidos</span>
-          <span className="font-semibold text-base">{pointsReceived > 0 ? pointsReceived.toLocaleString("pt-BR") : "—"}</span>
+          <span className="font-semibold text-base">
+            {pointsReceived > 0 ? pointsReceived.toLocaleString("pt-BR") : "—"}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Custo/1k pts (destino, estimado)</span>
-          <span className="font-medium">{destinationCostPer1k != null ? formatBrl(destinationCostPer1k) : "—"}</span>
+          <span className="font-medium">
+            {destinationCostPer1k != null ? formatBrl(destinationCostPer1k) : "—"}
+          </span>
         </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Data</label>
-        <DatePicker value={date} onChange={setDate} required />
+        <span className="text-sm font-medium">Data</span>
+        <DatePicker value={date} onChange={setDate} required ariaLabel="Data" />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="transfer-desc">Descrição</label>
+        <label className="text-sm font-medium" htmlFor="transfer-desc">
+          Descrição
+        </label>
         <input
           id="transfer-desc"
           type="text"

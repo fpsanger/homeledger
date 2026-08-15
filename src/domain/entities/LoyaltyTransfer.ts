@@ -26,7 +26,8 @@ type CreateLoyaltyTransferInput = {
 
 export function createLoyaltyTransfer(input: CreateLoyaltyTransferInput): LoyaltyTransferRecord {
   if (input.pointsSent <= 0) throw new Error("pointsSent must be positive");
-  if (input.pointsReceived < input.pointsSent) throw new Error("pointsReceived cannot be less than pointsSent");
+  if (input.pointsReceived < input.pointsSent)
+    throw new Error("pointsReceived cannot be less than pointsSent");
   if (input.costBrl !== null && input.costBrl <= 0) throw new Error("costBrl must be positive");
 
   const now = new Date();

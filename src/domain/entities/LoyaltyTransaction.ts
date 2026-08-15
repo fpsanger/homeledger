@@ -40,7 +40,9 @@ type CreateLoyaltyTransactionInput = {
   valueBrl?: number | null;
 };
 
-export function createLoyaltyTransaction(input: CreateLoyaltyTransactionInput): LoyaltyTransactionRecord {
+export function createLoyaltyTransaction(
+  input: CreateLoyaltyTransactionInput,
+): LoyaltyTransactionRecord {
   const isTransferType = TRANSFER_TYPES.includes(input.type);
 
   if (!isTransferType && input.transferId != null) {
@@ -58,7 +60,6 @@ export function createLoyaltyTransaction(input: CreateLoyaltyTransactionInput): 
   if (input.type === "PURCHASE") {
     if (!input.costBrl || input.costBrl <= 0) throw new Error("PURCHASE requires costBrl > 0");
   }
-
 
   const now = new Date();
   return {

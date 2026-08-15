@@ -1,6 +1,6 @@
-import type { ILoyaltyTransferRepository } from "../../../domain/repositories/ILoyaltyTransferRepository";
-import type { ILoyaltyTransactionRepository } from "../../../domain/repositories/ILoyaltyTransactionRepository";
 import { NotFoundError } from "../../../domain/errors";
+import type { ILoyaltyTransactionRepository } from "../../../domain/repositories/ILoyaltyTransactionRepository";
+import type { ILoyaltyTransferRepository } from "../../../domain/repositories/ILoyaltyTransferRepository";
 
 export async function deleteLoyaltyTransferUseCase(
   id: string,

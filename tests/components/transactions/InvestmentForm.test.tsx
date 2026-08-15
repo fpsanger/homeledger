@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 
-import React from "react";
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import { InvestmentForm } from "@/components/transactions/InvestmentForm";
 
 jest.mock("next/navigation", () => ({

@@ -1,5 +1,5 @@
-import { findDuplicateRecurringTransaction } from "../../../src/domain/services/isDuplicateRecurringTransaction";
 import type { RecurringTransactionRecord } from "../../../src/domain/repositories/IRecurringTransactionRepository";
+import { findDuplicateRecurringTransaction } from "../../../src/domain/services/isDuplicateRecurringTransaction";
 
 function makeRule(overrides: Partial<RecurringTransactionRecord> = {}): RecurringTransactionRecord {
   return {

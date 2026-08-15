@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createCategoryUseCase } from "../../../application/use-cases/CreateCategoryUseCase";
 import { listCategoriesUseCase } from "../../../application/use-cases/ListCategoriesUseCase";
 import { errorResponse } from "../_lib/errorResponse";

@@ -1,7 +1,10 @@
-import { createLoyaltyTransfer } from "../../../domain/entities/LoyaltyTransfer";
 import { createLoyaltyTransaction } from "../../../domain/entities/LoyaltyTransaction";
-import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../../domain/repositories/ILoyaltyTransferRepository";
+import { createLoyaltyTransfer } from "../../../domain/entities/LoyaltyTransfer";
 import type { ILoyaltyTransactionRepository } from "../../../domain/repositories/ILoyaltyTransactionRepository";
+import type {
+  ILoyaltyTransferRepository,
+  LoyaltyTransferRecord,
+} from "../../../domain/repositories/ILoyaltyTransferRepository";
 import { computeLoyaltyFifo } from "../../../domain/services/LoyaltyFifo";
 
 type Input = {

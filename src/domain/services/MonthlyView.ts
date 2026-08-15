@@ -1,7 +1,7 @@
-import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
-import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
+import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
 
 type MonthlyViewInput = {
   transactions: TransactionRecord[];

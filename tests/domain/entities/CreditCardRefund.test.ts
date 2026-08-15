@@ -36,9 +36,7 @@ describe("createCreditCardRefund", () => {
   });
 
   it("throws when amount is zero", () => {
-    expect(() => createCreditCardRefund({ ...base, amount: 0 })).toThrow(
-      "Amount must be positive",
-    );
+    expect(() => createCreditCardRefund({ ...base, amount: 0 })).toThrow("Amount must be positive");
   });
 
   it("throws when amount is negative", () => {
@@ -66,9 +64,7 @@ describe("createCreditCardRefund", () => {
   });
 
   it("throws when personId is missing", () => {
-    expect(() => createCreditCardRefund({ ...base, personId: "" })).toThrow(
-      "Person is required",
-    );
+    expect(() => createCreditCardRefund({ ...base, personId: "" })).toThrow("Person is required");
   });
 
   it("throws when refundDate is missing", () => {

@@ -18,7 +18,10 @@ export function findDuplicateCreditCardPurchase(
   if (amount === null || date === null || creditCardId === null) return null;
 
   const matches = existing.filter(
-    (p) => p.totalAmount === amount && p.creditCardId === creditCardId && withinDays(p.purchaseDate, date),
+    (p) =>
+      p.totalAmount === amount &&
+      p.creditCardId === creditCardId &&
+      withinDays(p.purchaseDate, date),
   );
   if (matches.length === 0) return null;
 

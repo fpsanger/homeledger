@@ -67,12 +67,17 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
     _personId: string,
     _year: number,
     _month: number,
-  ): Promise<import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord[]> {
+  ): Promise<
+    import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord[]
+  > {
     return [];
   }
   async findPurchaseById(
     _id: string,
-  ): Promise<import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord | null> {
+  ): Promise<
+    | import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord
+    | null
+  > {
     return null;
   }
   async updatePurchase(
@@ -110,5 +115,4 @@ describe("ICreditCardPurchaseRepository interface", () => {
     const repo = new MockCreditCardPurchaseRepository();
     await expect(repo.findByPurchaseId("purchase-1")).resolves.toEqual([]);
   });
-
 });

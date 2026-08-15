@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { deleteCreditCardRefundUseCase } from "../../../../application/use-cases/DeleteCreditCardRefundUseCase";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";

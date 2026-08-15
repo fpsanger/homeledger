@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { findCrossEntityDuplicate } from "../domain/services/isCrossEntityDuplicate";
 import type { CreditCardPurchaseRecord } from "../domain/repositories/ICreditCardPurchaseRepository";
+import { findCrossEntityDuplicate } from "../domain/services/isCrossEntityDuplicate";
 
 export function useCrossEntityDuplicateCheck(
   amount: number | null,
@@ -13,6 +13,7 @@ export function useCrossEntityDuplicateCheck(
   const [purchases, setPurchases] = useState<CreditCardPurchaseRecord[]>([]);
 
   useEffect(() => {
+    void refreshKey;
     if (paymentMethod !== "CREDIT_CARD") {
       setPurchases([]);
       return;

@@ -1,7 +1,7 @@
 import { createExpenseUseCase } from "../../../src/application/use-cases/CreateExpenseUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
@@ -53,7 +53,6 @@ const leafCategory: CategoryRecord = {
   id: "cat-leaf",
   name: "Restaurants",
   parentId: "cat-parent",
-  path: "Food/Restaurants",
   level: 1,
   householdId: "default",
   createdAt: new Date(),
@@ -63,7 +62,6 @@ const parentCategory: CategoryRecord = {
   id: "cat-parent",
   name: "Food",
   parentId: null,
-  path: "Food",
   level: 0,
   householdId: "default",
   createdAt: new Date(),

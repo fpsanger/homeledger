@@ -1,8 +1,8 @@
 import { getCreditCardBillUseCase } from "../../../src/application/use-cases/GetCreditCardBillUseCase";
-import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
+import type { CreditCardRefundRecord } from "../../../src/domain/entities/CreditCardRefund";
 import type { ICreditCardPurchaseRepository } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
-import type { CreditCardRefundRecord } from "../../../src/domain/entities/CreditCardRefund";
+import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
 
 const card1 = {
   id: "card-1",

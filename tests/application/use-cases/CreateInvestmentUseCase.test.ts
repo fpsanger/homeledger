@@ -1,7 +1,7 @@
 import { createInvestmentUseCase } from "../../../src/application/use-cases/CreateInvestmentUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,

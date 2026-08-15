@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 
-import React from "react";
 import { render, screen } from "@testing-library/react";
+import React from "react";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 
 jest.mock("next/navigation", () => ({
@@ -56,18 +56,14 @@ describe("UnifiedTransactionForm — defaultPersonId", () => {
         categories={categories}
         creditCards={creditCards}
         defaultPersonId="p1"
-      />
+      />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("p1");
   });
 
   it("has no person selected when defaultPersonId is omitted", () => {
     render(
-      <UnifiedTransactionForm
-        people={people}
-        categories={categories}
-        creditCards={creditCards}
-      />
+      <UnifiedTransactionForm people={people} categories={categories} creditCards={creditCards} />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("");
   });
@@ -80,7 +76,7 @@ describe("UnifiedTransactionForm — defaultPersonId", () => {
         creditCards={creditCards}
         defaultPersonId="p1"
         initialValues={{ ...baseInitialValues, personId: "p2" }}
-      />
+      />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("p2");
   });

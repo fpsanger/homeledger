@@ -1,10 +1,10 @@
 "use client";
 
-import type { TransactionRecord } from "@/domain/repositories/ITransactionRepository";
 import type { CreditCardPurchaseRecord } from "@/domain/repositories/ICreditCardPurchaseRepository";
+import type { TransactionRecord } from "@/domain/repositories/ITransactionRepository";
 import type { LoyaltyDuplicateCandidate } from "@/domain/services/isDuplicateLoyaltyTransaction";
-import { formatAmountBR } from "@/lib/utils";
 import { formatDatePtBR } from "@/lib/format-date";
+import { formatAmountBR } from "@/lib/utils";
 
 type Match = TransactionRecord | CreditCardPurchaseRecord | LoyaltyDuplicateCandidate;
 
@@ -12,7 +12,9 @@ export function DuplicateWarning({ match, note }: { match: Match | null; note?: 
   if (!match) return null;
 
   const isLoyalty = "points" in match;
-  const value = isLoyalty ? `${match.points.toLocaleString("pt-BR")} pts` : formatAmountBR("totalAmount" in match ? match.totalAmount : match.amount);
+  const value = isLoyalty
+    ? `${match.points.toLocaleString("pt-BR")} pts`
+    : formatAmountBR("totalAmount" in match ? match.totalAmount : match.amount);
   const date = isLoyalty ? match.date : "purchaseDate" in match ? match.purchaseDate : match.date;
 
   return (

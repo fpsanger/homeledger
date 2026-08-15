@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { CheckCircle } from "lucide-react";
+import Link from "next/link";
 import type { ImportSummary } from "./BillingImportWizard";
 
 type Props = {
@@ -24,7 +24,10 @@ export function Step5Done({ summary, onReset }: Props) {
         {summary.alreadyRegistered > 0 && (
           <p>
             <span className="font-medium text-foreground">{summary.alreadyRegistered}</span>{" "}
-            {summary.alreadyRegistered === 1 ? "item já estava registrado" : "itens já estavam registrados"}.
+            {summary.alreadyRegistered === 1
+              ? "item já estava registrado"
+              : "itens já estavam registrados"}
+            .
           </p>
         )}
         {summary.imported === 0 && summary.alreadyRegistered === 0 && (

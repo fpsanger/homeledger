@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 const MONTH_NAMES = [
   "Janeiro",
@@ -26,12 +26,7 @@ type Props = {
   paramPrefix?: string;
 };
 
-export function MonthNav({
-  year,
-  month,
-  basePath = "/dashboard",
-  paramPrefix = "",
-}: Props) {
+export function MonthNav({ year, month, basePath = "/dashboard", paramPrefix = "" }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

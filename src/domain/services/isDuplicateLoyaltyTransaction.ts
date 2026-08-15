@@ -26,7 +26,8 @@ export function findDuplicateLoyaltyTransaction<T extends LoyaltyDuplicateCandid
   if (points === null || date === null) return null;
 
   const matches = existing.filter(
-    (t) => t.type === type && t.points === points && t.personId === personId && withinDays(t.date, date),
+    (t) =>
+      t.type === type && t.points === points && t.personId === personId && withinDays(t.date, date),
   );
   if (matches.length === 0) return null;
 

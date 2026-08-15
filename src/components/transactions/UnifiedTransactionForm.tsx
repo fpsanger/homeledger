@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
-import { useCreditCardDuplicateCheck } from "@/hooks/useCreditCardDuplicateCheck";
-import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { Button } from "@/components/ui/button";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { CategoryCombobox } from "@/components/ui/category-combobox";
-import { parseCurrencyBR, formatAmountBR } from "@/lib/utils";
+import { useCreditCardDuplicateCheck } from "@/hooks/useCreditCardDuplicateCheck";
+import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 
 type FormType = "expense" | "income" | "credit";
 
@@ -30,7 +30,20 @@ type CreditCard = {
   closureNextMonth: boolean;
 };
 
-const MONTH_NAMES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MONTH_NAMES_PT = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
 
 function computeBillingMonths(
   totalAmount: number,
@@ -473,17 +486,22 @@ export function UnifiedTransactionForm({
                   const months = computeBillingMonths(total, n, date, variableCard);
                   return (
                     <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
-                      {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
-                        <div
-                          key={installmentNumber}
-                          className="flex justify-between text-xs text-muted-foreground"
-                        >
-                          <span>Parcela {installmentNumber}/{n}</span>
-                          <span>
-                            {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
-                          </span>
-                        </div>
-                      ))}
+                      {months.map(
+                        ({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
+                          <div
+                            key={installmentNumber}
+                            className="flex justify-between text-xs text-muted-foreground"
+                          >
+                            <span>
+                              Parcela {installmentNumber}/{n}
+                            </span>
+                            <span>
+                              {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} —{" "}
+                              {formatAmountBR(installAmount)}
+                            </span>
+                          </div>
+                        ),
+                      )}
                     </div>
                   );
                 }
@@ -491,19 +509,22 @@ export function UnifiedTransactionForm({
                 const months = computeBillingMonths(total, n, date, selectedCard);
                 return (
                   <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
-                    {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
-                      <div
-                        key={installmentNumber}
-                        className="flex justify-between text-xs text-muted-foreground"
-                      >
-                        <span>
-                          Parcela {installmentNumber}/{n}
-                        </span>
-                        <span>
-                          {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
-                        </span>
-                      </div>
-                    ))}
+                    {months.map(
+                      ({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
+                        <div
+                          key={installmentNumber}
+                          className="flex justify-between text-xs text-muted-foreground"
+                        >
+                          <span>
+                            Parcela {installmentNumber}/{n}
+                          </span>
+                          <span>
+                            {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} —{" "}
+                            {formatAmountBR(installAmount)}
+                          </span>
+                        </div>
+                      ),
+                    )}
                   </div>
                 );
               })()}

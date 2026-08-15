@@ -36,7 +36,10 @@ export function BillingImportWizard() {
   const [step, setStep] = useState<WizardStep>(1);
   const [reconciledItems, setReconciledItems] = useState<ReconciledItem[]>([]);
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
-  const [importSummary, setImportSummary] = useState<ImportSummary>({ imported: 0, alreadyRegistered: 0 });
+  const [importSummary, setImportSummary] = useState<ImportSummary>({
+    imported: 0,
+    alreadyRegistered: 0,
+  });
   const [selectedForImport, setSelectedForImport] = useState<number[]>([]);
 
   function reset() {
@@ -70,12 +73,16 @@ export function BillingImportWizard() {
                   >
                     {isDone ? "✓" : stepNum}
                   </div>
-                  <span className={`text-xs mt-1 ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                  <span
+                    className={`text-xs mt-1 ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}
+                  >
                     {s.label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`w-6 sm:w-16 h-0.5 mx-1 mb-4 ${step > stepNum ? "bg-primary" : "bg-muted"}`} />
+                  <div
+                    className={`w-6 sm:w-16 h-0.5 mx-1 mb-4 ${step > stepNum ? "bg-primary" : "bg-muted"}`}
+                  />
                 )}
               </div>
             );
@@ -128,12 +135,7 @@ export function BillingImportWizard() {
           onBack={() => setStep(3)}
         />
       )}
-      {step === 5 && (
-        <Step5Done
-          summary={importSummary}
-          onReset={reset}
-        />
-      )}
+      {step === 5 && <Step5Done summary={importSummary} onReset={reset} />}
     </div>
   );
 }

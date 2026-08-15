@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import { Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { useMemo, useState } from "react";
+import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
+import { MonthNav } from "@/components/monthly-view/MonthNav";
+import { SummaryCard } from "@/components/monthly-view/SummaryCard";
+import { TransactionTable } from "@/components/monthly-view/TransactionTable";
 import { Button } from "@/components/ui/button";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
+import { FilterGroup } from "@/components/ui/filter-group";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { CategoryCombobox } from "@/components/ui/category-combobox";
-import { FilterGroup } from "@/components/ui/filter-group";
-import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
-import { EditInstallmentForm } from "./EditInstallmentForm";
-import { RecurringTransactionForm } from "./RecurringTransactionForm";
-import { InvestmentForm } from "./InvestmentForm";
 import { formatAmountBR } from "@/lib/utils";
-import { MonthNav } from "@/components/monthly-view/MonthNav";
-import { TransactionTable } from "@/components/monthly-view/TransactionTable";
-import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
-import { SummaryCard } from "@/components/monthly-view/SummaryCard";
+import { EditInstallmentForm } from "./EditInstallmentForm";
+import { InvestmentForm } from "./InvestmentForm";
+import { RecurringTransactionForm } from "./RecurringTransactionForm";
+import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null };
@@ -175,11 +175,19 @@ export function TransactionPageClient({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <MonthNav year={year} month={month} basePath="/transactions" />
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setRecurringDialogOpen(true)} className="gap-1.5">
+          <Button
+            variant="outline"
+            onClick={() => setRecurringDialogOpen(true)}
+            className="gap-1.5"
+          >
             <Plus className="w-4 h-4" />
             Recorrente
           </Button>
-          <Button variant="outline" onClick={() => setInvestmentDialogOpen(true)} className="gap-1.5">
+          <Button
+            variant="outline"
+            onClick={() => setInvestmentDialogOpen(true)}
+            className="gap-1.5"
+          >
             <Plus className="w-4 h-4" />
             Investimento
           </Button>
@@ -354,7 +362,12 @@ export function TransactionPageClient({
         )}
 
         <FilterGroup.Section label="Ambos">
-          <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="Data" className="h-8 w-36 text-sm" />
+          <DatePicker
+            value={dateFrom}
+            onChange={setDateFrom}
+            placeholder="Data"
+            className="h-8 w-36 text-sm"
+          />
           <Input
             type="number"
             placeholder="Valor mín"

@@ -10,8 +10,14 @@ const TYPES = [
 ];
 
 const PRESET_COLORS = [
-  "#3b82f6", "#ef4444", "#22c55e", "#f59e0b",
-  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316",
+  "#3b82f6",
+  "#ef4444",
+  "#22c55e",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
 ];
 
 type Props = {
@@ -51,7 +57,9 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="prog-name">Nome</label>
+        <label className="text-sm font-medium" htmlFor="prog-name">
+          Nome
+        </label>
         <input
           id="prog-name"
           type="text"
@@ -64,7 +72,9 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="prog-type">Tipo</label>
+        <label className="text-sm font-medium" htmlFor="prog-type">
+          Tipo
+        </label>
         <select
           id="prog-type"
           value={type}
@@ -72,24 +82,30 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
           className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
           ))}
         </select>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Cor</label>
+        <label className="text-sm font-medium" htmlFor="prog-color">
+          Cor
+        </label>
         <div className="flex items-center gap-2 flex-wrap">
           {PRESET_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setColor(c)}
+              aria-label={`Selecionar cor ${c}`}
               className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
               style={{ backgroundColor: c, borderColor: color === c ? "black" : "transparent" }}
             />
           ))}
           <input
+            id="prog-color"
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}

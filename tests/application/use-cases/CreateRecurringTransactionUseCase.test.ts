@@ -8,6 +8,7 @@ const makeRepo = (
   overrides: Partial<IRecurringTransactionRepository> = {},
 ): IRecurringTransactionRepository => ({
   findById: async () => null,
+  findAll: async () => [],
   findActiveByPersonAndMonth: async () => [],
   findAllActiveByMonth: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }),

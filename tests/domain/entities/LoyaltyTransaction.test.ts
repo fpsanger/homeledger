@@ -15,7 +15,12 @@ const base = {
 describe("LoyaltyTransaction entity", () => {
   describe("PURCHASE", () => {
     it("creates a valid PURCHASE transaction", () => {
-      const tx = createLoyaltyTransaction({ ...base, type: "PURCHASE", points: 10000, costBrl: 150 });
+      const tx = createLoyaltyTransaction({
+        ...base,
+        type: "PURCHASE",
+        points: 10000,
+        costBrl: 150,
+      });
       expect(tx.type).toBe("PURCHASE");
       expect(tx.points).toBe(10000);
       expect(tx.costBrl).toBe(150);
@@ -48,9 +53,9 @@ describe("LoyaltyTransaction entity", () => {
     });
 
     it("throws when EARN points <= 0", () => {
-      expect(() =>
-        createLoyaltyTransaction({ ...base, type: "EARN", points: 0 }),
-      ).toThrow("points must be positive");
+      expect(() => createLoyaltyTransaction({ ...base, type: "EARN", points: 0 })).toThrow(
+        "points must be positive",
+      );
     });
   });
 
@@ -61,9 +66,9 @@ describe("LoyaltyTransaction entity", () => {
     });
 
     it("throws when BONUS points <= 0", () => {
-      expect(() =>
-        createLoyaltyTransaction({ ...base, type: "BONUS", points: 0 }),
-      ).toThrow("points must be positive");
+      expect(() => createLoyaltyTransaction({ ...base, type: "BONUS", points: 0 })).toThrow(
+        "points must be positive",
+      );
     });
   });
 
@@ -75,15 +80,20 @@ describe("LoyaltyTransaction entity", () => {
     });
 
     it("throws when REDEEM points <= 0", () => {
-      expect(() =>
-        createLoyaltyTransaction({ ...base, type: "REDEEM", points: 0 }),
-      ).toThrow("points must be positive");
+      expect(() => createLoyaltyTransaction({ ...base, type: "REDEEM", points: 0 })).toThrow(
+        "points must be positive",
+      );
     });
   });
 
   describe("TRANSFER_OUT", () => {
     it("creates a valid TRANSFER_OUT transaction", () => {
-      const tx = createLoyaltyTransaction({ ...base, type: "TRANSFER_OUT", points: 5000, transferId: "transfer-1" });
+      const tx = createLoyaltyTransaction({
+        ...base,
+        type: "TRANSFER_OUT",
+        points: 5000,
+        transferId: "transfer-1",
+      });
       expect(tx.type).toBe("TRANSFER_OUT");
       expect(tx.transferId).toBe("transfer-1");
     });
@@ -96,20 +106,36 @@ describe("LoyaltyTransaction entity", () => {
 
     it("throws when TRANSFER_OUT points <= 0", () => {
       expect(() =>
-        createLoyaltyTransaction({ ...base, type: "TRANSFER_OUT", points: 0, transferId: "transfer-1" }),
+        createLoyaltyTransaction({
+          ...base,
+          type: "TRANSFER_OUT",
+          points: 0,
+          transferId: "transfer-1",
+        }),
       ).toThrow("points must be positive");
     });
   });
 
   describe("TRANSFER_IN", () => {
     it("creates a valid TRANSFER_IN transaction without costBrl", () => {
-      const tx = createLoyaltyTransaction({ ...base, type: "TRANSFER_IN", points: 6000, transferId: "transfer-1" });
+      const tx = createLoyaltyTransaction({
+        ...base,
+        type: "TRANSFER_IN",
+        points: 6000,
+        transferId: "transfer-1",
+      });
       expect(tx.type).toBe("TRANSFER_IN");
       expect(tx.costBrl).toBeNull();
     });
 
     it("creates a valid TRANSFER_IN transaction with costBrl", () => {
-      const tx = createLoyaltyTransaction({ ...base, type: "TRANSFER_IN", points: 6000, transferId: "transfer-1", costBrl: 100 });
+      const tx = createLoyaltyTransaction({
+        ...base,
+        type: "TRANSFER_IN",
+        points: 6000,
+        transferId: "transfer-1",
+        costBrl: 100,
+      });
       expect(tx.costBrl).toBe(100);
     });
 
@@ -121,7 +147,12 @@ describe("LoyaltyTransaction entity", () => {
 
     it("throws when TRANSFER_IN points <= 0", () => {
       expect(() =>
-        createLoyaltyTransaction({ ...base, type: "TRANSFER_IN", points: 0, transferId: "transfer-1" }),
+        createLoyaltyTransaction({
+          ...base,
+          type: "TRANSFER_IN",
+          points: 0,
+          transferId: "transfer-1",
+        }),
       ).toThrow("points must be positive");
     });
   });
@@ -133,9 +164,9 @@ describe("LoyaltyTransaction entity", () => {
     });
 
     it("throws when EXPIRE points <= 0", () => {
-      expect(() =>
-        createLoyaltyTransaction({ ...base, type: "EXPIRE", points: 0 }),
-      ).toThrow("points must be positive");
+      expect(() => createLoyaltyTransaction({ ...base, type: "EXPIRE", points: 0 })).toThrow(
+        "points must be positive",
+      );
     });
   });
 
@@ -166,7 +197,13 @@ describe("LoyaltyTransaction entity", () => {
 
     it("throws when PURCHASE has a transferId", () => {
       expect(() =>
-        createLoyaltyTransaction({ ...base, type: "PURCHASE", points: 1000, costBrl: 100, transferId: "transfer-1" }),
+        createLoyaltyTransaction({
+          ...base,
+          type: "PURCHASE",
+          points: 1000,
+          costBrl: 100,
+          transferId: "transfer-1",
+        }),
       ).toThrow("transferId must be null for non-transfer types");
     });
   });

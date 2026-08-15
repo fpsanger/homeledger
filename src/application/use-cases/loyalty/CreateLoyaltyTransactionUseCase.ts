@@ -1,6 +1,9 @@
-import { createLoyaltyTransaction } from "../../../domain/entities/LoyaltyTransaction";
 import type { LoyaltyTransactionType } from "../../../domain/entities/LoyaltyTransaction";
-import type { ILoyaltyTransactionRepository, LoyaltyTransactionRecord } from "../../../domain/repositories/ILoyaltyTransactionRepository";
+import { createLoyaltyTransaction } from "../../../domain/entities/LoyaltyTransaction";
+import type {
+  ILoyaltyTransactionRepository,
+  LoyaltyTransactionRecord,
+} from "../../../domain/repositories/ILoyaltyTransactionRepository";
 
 const TRANSFER_TYPES: LoyaltyTransactionType[] = ["TRANSFER_OUT", "TRANSFER_IN"];
 

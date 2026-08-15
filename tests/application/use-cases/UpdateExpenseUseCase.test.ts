@@ -1,7 +1,7 @@
 import { updateExpenseUseCase } from "../../../src/application/use-cases/UpdateExpenseUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,

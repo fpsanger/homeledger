@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 type DialogProps = {
@@ -33,14 +33,13 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
   if (!open) return null;
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
-      }}
-    >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Close dialog"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-default"
+      />
       <div
         className={cn(
           "relative z-10 bg-card border rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto",

@@ -1,5 +1,5 @@
-import { findDuplicateTransaction } from "../../../src/domain/services/isDuplicateTransaction";
 import type { TransactionRecord } from "../../../src/domain/repositories/ITransactionRepository";
+import { findDuplicateTransaction } from "../../../src/domain/services/isDuplicateTransaction";
 
 function makeTransaction(overrides: Partial<TransactionRecord> = {}): TransactionRecord {
   return {

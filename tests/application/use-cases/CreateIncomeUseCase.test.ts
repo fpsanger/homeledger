@@ -1,7 +1,7 @@
 import { createIncomeUseCase } from "../../../src/application/use-cases/CreateIncomeUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
@@ -53,7 +53,6 @@ const leafCategory: CategoryRecord = {
   id: "cat-leaf",
   name: "Wages",
   parentId: "cat-parent",
-  path: "Income/Wages",
   level: 1,
   householdId: "default",
   createdAt: new Date(),
@@ -63,7 +62,6 @@ const parentCategory: CategoryRecord = {
   id: "cat-parent",
   name: "Income",
   parentId: null,
-  path: "Income",
   level: 0,
   householdId: "default",
   createdAt: new Date(),

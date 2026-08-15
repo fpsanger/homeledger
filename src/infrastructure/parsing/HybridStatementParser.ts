@@ -1,12 +1,12 @@
 import type { BillingItem } from "../../domain/entities/BillingItem";
 import {
   createInstallmentBillingItem,
-  createTransactionBillingItem,
   createRefundBillingItem,
+  createTransactionBillingItem,
 } from "../../domain/entities/BillingItem";
 import type { IStatementParser } from "../../domain/repositories/IStatementParser";
 import { parseBillingText, type SupportedBank } from "./BillingRegexParser";
-import { classifyRows, type ClassificationResult } from "./OllamaClassifier";
+import { type ClassificationResult, classifyRows } from "./OllamaClassifier";
 
 export type HybridParserConfig = {
   ollamaBaseUrl?: string;

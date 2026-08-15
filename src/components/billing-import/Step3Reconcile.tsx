@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
+import { useState } from "react";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./BillingImportWizard";
 
@@ -27,6 +27,7 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
     .filter((i): i is number => i !== null);
 
   const [selected, setSelected] = useState<Set<number>>(new Set(missingIndices));
+  const [rowIds] = useState(() => reconciledItems.map(() => crypto.randomUUID()));
 
   function toggleItem(index: number) {
     setSelected((prev) => {
@@ -72,8 +73,8 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
     <div className="bg-card rounded-lg border p-6">
       <h2 className="text-lg font-semibold mb-2">Etapa 3 — Reconciliação</h2>
       <p className="text-sm text-muted-foreground mb-6">
-        {missingIndices.length} itens não encontrados de {reconciledItems.length} totais.
-        Selecione os que deseja importar.
+        {missingIndices.length} itens não encontrados de {reconciledItems.length} totais. Selecione
+        os que deseja importar.
       </p>
 
       <div className="space-y-2">
@@ -82,7 +83,7 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
           const isMissing = ri.status === "missing";
           return (
             <div
-              key={i}
+              key={rowIds[i]}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                 isMissing
                   ? selected.has(i)
@@ -106,7 +107,8 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
                 <p className="text-sm font-medium truncate">{item.description}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatDate(item.date)}
-                  {item.kind === "installment" && ` · Parcela ${item.installmentNumber}/${item.totalInstallments}`}
+                  {item.kind === "installment" &&
+                    ` · Parcela ${item.installmentNumber}/${item.totalInstallments}`}
                 </p>
               </div>
 

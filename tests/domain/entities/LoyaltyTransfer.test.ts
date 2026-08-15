@@ -21,21 +21,19 @@ describe("LoyaltyTransfer entity", () => {
   });
 
   it("allows pointsReceived equal to pointsSent (no bonus)", () => {
-    expect(() =>
-      createLoyaltyTransfer({ ...base, pointsReceived: 10000 }),
-    ).not.toThrow();
+    expect(() => createLoyaltyTransfer({ ...base, pointsReceived: 10000 })).not.toThrow();
   });
 
   it("throws when pointsSent <= 0", () => {
-    expect(() =>
-      createLoyaltyTransfer({ ...base, pointsSent: 0 }),
-    ).toThrow("pointsSent must be positive");
+    expect(() => createLoyaltyTransfer({ ...base, pointsSent: 0 })).toThrow(
+      "pointsSent must be positive",
+    );
   });
 
   it("throws when pointsReceived < pointsSent", () => {
-    expect(() =>
-      createLoyaltyTransfer({ ...base, pointsReceived: 9000 }),
-    ).toThrow("pointsReceived cannot be less than pointsSent");
+    expect(() => createLoyaltyTransfer({ ...base, pointsReceived: 9000 })).toThrow(
+      "pointsReceived cannot be less than pointsSent",
+    );
   });
 
   it("allows costBrl when provided and > 0", () => {
@@ -44,9 +42,9 @@ describe("LoyaltyTransfer entity", () => {
   });
 
   it("throws when costBrl is provided but <= 0", () => {
-    expect(() =>
-      createLoyaltyTransfer({ ...base, costBrl: 0 }),
-    ).toThrow("costBrl must be positive");
+    expect(() => createLoyaltyTransfer({ ...base, costBrl: 0 })).toThrow(
+      "costBrl must be positive",
+    );
   });
 
   it("allows costBrl to be null", () => {

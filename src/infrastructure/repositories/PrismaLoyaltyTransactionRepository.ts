@@ -1,5 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
-import type { ILoyaltyTransactionRepository, LoyaltyTransactionRecord } from "../../domain/repositories/ILoyaltyTransactionRepository";
+import type {
+  ILoyaltyTransactionRepository,
+  LoyaltyTransactionRecord,
+} from "../../domain/repositories/ILoyaltyTransactionRepository";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toRecord(row: any): LoyaltyTransactionRecord {
@@ -13,8 +16,18 @@ function toRecord(row: any): LoyaltyTransactionRecord {
     date: row.date,
     description: row.description,
     expiresAt: row.expiresAt,
-    costBrl: row.costBrl == null ? null : typeof row.costBrl === "number" ? row.costBrl : row.costBrl.toNumber(),
-    valueBrl: row.valueBrl == null ? null : typeof row.valueBrl === "number" ? row.valueBrl : row.valueBrl.toNumber(),
+    costBrl:
+      row.costBrl == null
+        ? null
+        : typeof row.costBrl === "number"
+          ? row.costBrl
+          : row.costBrl.toNumber(),
+    valueBrl:
+      row.valueBrl == null
+        ? null
+        : typeof row.valueBrl === "number"
+          ? row.valueBrl
+          : row.valueBrl.toNumber(),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -66,7 +79,10 @@ export class PrismaLoyaltyTransactionRepository implements ILoyaltyTransactionRe
     return rows.map(toRecord);
   }
 
-  async findByProgramIdAndPersonId(programId: string, personId: string): Promise<LoyaltyTransactionRecord[]> {
+  async findByProgramIdAndPersonId(
+    programId: string,
+    personId: string,
+  ): Promise<LoyaltyTransactionRecord[]> {
     const rows = await this.prisma.loyaltyTransaction.findMany({
       where: { programId, OR: [{ personId }, { personId: null }] },
       orderBy: { date: "asc" },

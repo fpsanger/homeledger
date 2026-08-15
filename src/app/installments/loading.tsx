@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+const PURCHASE_CARDS = ["a", "b", "c", "d", "e", "f"];
+
 function PurchaseCardSkeleton() {
   return (
     <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
@@ -39,8 +41,8 @@ export default function InstallmentsLoading() {
 
       {/* Purchase cards */}
       <div className="flex flex-col gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <PurchaseCardSkeleton key={i} />
+        {PURCHASE_CARDS.map((card) => (
+          <PurchaseCardSkeleton key={card} />
         ))}
       </div>
     </div>

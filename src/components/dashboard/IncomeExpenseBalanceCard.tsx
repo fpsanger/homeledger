@@ -1,24 +1,38 @@
 "use client";
 
 import {
-  ComposedChart,
   Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
-import { BALANCE_LINE_COLOR, EXPENSE_PERSON_SHADES, INCOME_PERSON_SHADES } from "@/lib/dashboardColors";
+import {
+  BALANCE_LINE_COLOR,
+  EXPENSE_PERSON_SHADES,
+  INCOME_PERSON_SHADES,
+} from "@/lib/dashboardColors";
 import { AccessibleChart } from "./AccessibleChart";
 
 const MONTH_NAMES = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
 ];
 
 function fmtFull(v: number) {
@@ -52,7 +66,9 @@ function CustomTooltip({
       <p className="text-muted-foreground mb-2 font-medium">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
-          <span style={{ color: entry.color }} className="font-medium">{entry.name}</span>
+          <span style={{ color: entry.color }} className="font-medium">
+            {entry.name}
+          </span>
           <span className="text-foreground tabular-nums">{fmtFull(entry.value)}</span>
         </div>
       ))}
@@ -66,7 +82,10 @@ function CustomLegend({ payload }: { payload?: { value: string; color: string }[
     <div className="flex items-center justify-center gap-4 pt-2 flex-wrap">
       {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span
+            className="inline-block w-2 h-2 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
           <span className="text-[11px] text-muted-foreground">{entry.value}</span>
         </div>
       ))}
@@ -118,13 +137,17 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
         <AccessibleChart
           summary={last6.map((m) => (
             <li key={m.month}>
-              {MONTH_NAMES[m.month - 1]}: receita {fmtFull(m.income)}, despesa {fmtFull(m.expenses)},
-              balanço {fmtFull(m.balance)}
+              {MONTH_NAMES[m.month - 1]}: receita {fmtFull(m.income)}, despesa {fmtFull(m.expenses)}
+              , balanço {fmtFull(m.balance)}
             </li>
           ))}
         >
           <ResponsiveContainer width="100%" height={260}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
+            <ComposedChart
+              data={data}
+              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+              barCategoryGap="30%"
+            >
               <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
               <XAxis
                 dataKey="name"
@@ -139,7 +162,10 @@ export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId =
                 tickLine={false}
                 width={52}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+              />
               <Legend content={<CustomLegend />} />
 
               {showPersonBreakdown ? (

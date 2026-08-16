@@ -55,7 +55,10 @@ function computeBillingMonths(
   const purchaseDay = d.getUTCDate();
   const purchaseYear = d.getUTCFullYear();
   const purchaseMonth = d.getUTCMonth() + 1;
-  const closureDay = card.fixedClosureDay!;
+  if (card.fixedClosureDay == null) {
+    throw new Error("Credit card closure day must be resolved before calculating billing months");
+  }
+  const closureDay = card.fixedClosureDay;
 
   const shiftNext =
     card.alwaysNextMonth ||

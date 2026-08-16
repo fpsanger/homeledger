@@ -141,7 +141,11 @@ describe("UpdateIncomeUseCase", () => {
   it("throws when source is invalid", async () => {
     const repo = makeRepoWithExisting();
     await expect(
-      updateIncomeUseCase({ ...baseInput, source: "INVALID" as any }, repo, makeCategoryRepo()),
+      updateIncomeUseCase(
+        { ...baseInput, source: "INVALID" as Exclude<TransactionRecord["source"], null> },
+        repo,
+        makeCategoryRepo(),
+      ),
     ).rejects.toThrow("Invalid income source");
   });
 

@@ -5,7 +5,6 @@ import { parseDateUTC } from "../../_lib/date";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
 
-const VALID_SOURCES: IncomeSource[] = ["SALARY", "FREELANCE", "RENTAL", "INVESTMENT", "OTHER"];
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {

@@ -40,7 +40,7 @@ export class PrismaCategoryRepository implements ICategoryRepository {
     return row ? toRecord(row) : null;
   }
 
-  async findRootByName(name: string, householdId: string): Promise<CategoryRecord | null> {
+  async findRootByName(name: string, _householdId: string): Promise<CategoryRecord | null> {
     const row = await this.prisma.category.findFirst({
       where: { name, parentId: null },
     });

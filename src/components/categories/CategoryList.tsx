@@ -186,116 +186,113 @@ export function CategoryList({ categories }: { categories: Category[] }) {
       {toolbar}
 
       {/* ── CARDS VIEW ── */}
-      {view === "cards" && (
-        <>
-          {filteredGroups.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Nenhuma categoria encontrada
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredGroups.map(({ root, children }) => (
-                <Card key={root.id} className="flex flex-col">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <span className="font-semibold text-sm leading-tight truncate">
-                          {root.name}
-                        </span>
-                        <Badge variant="secondary" className="w-fit text-xs font-normal">
-                          {(childrenOf.get(root.id) ?? []).length}{" "}
-                          {(childrenOf.get(root.id) ?? []).length === 1
-                            ? "subcategoria"
-                            : "subcategorias"}
-                        </Badge>
-                      </div>
-                      <DropdownMenu
-                        align="right"
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground h-7 w-7 p-0 shrink-0"
-                            aria-label="Ações"
-                            disabled={deleting === root.id}
-                          >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </Button>
-                        }
-                        items={[
-                          { label: "Editar", onClick: () => setEditing(root) },
-                          {
-                            label: "Adicionar subcategoria",
-                            onClick: () => openCreate(root.id),
-                          },
-                          {
-                            label: deleting === root.id ? "Excluindo…" : "Excluir",
-                            onClick: () => handleDelete(root.id),
-                            variant: "destructive",
-                          },
-                        ]}
-                      />
+      {view === "cards" &&
+        (filteredGroups.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">
+            Nenhuma categoria encontrada
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredGroups.map(({ root, children }) => (
+              <Card key={root.id} className="flex flex-col">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="font-semibold text-sm leading-tight truncate">
+                        {root.name}
+                      </span>
+                      <Badge variant="secondary" className="w-fit text-xs font-normal">
+                        {(childrenOf.get(root.id) ?? []).length}{" "}
+                        {(childrenOf.get(root.id) ?? []).length === 1
+                          ? "subcategoria"
+                          : "subcategorias"}
+                      </Badge>
                     </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0 flex-1">
-                    {children.length === 0 ? (
-                      <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
-                        <p className="text-xs">Nenhuma subcategoria</p>
+                    <DropdownMenu
+                      align="right"
+                      trigger={
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="text-xs h-7"
-                          onClick={() => openCreate(root.id)}
+                          className="text-muted-foreground h-7 w-7 p-0 shrink-0"
+                          aria-label="Ações"
+                          disabled={deleting === root.id}
                         >
-                          <Plus className="w-3 h-3 mr-1" /> Adicionar subcategoria
+                          <MoreHorizontal className="w-3.5 h-3.5" />
                         </Button>
-                      </div>
-                    ) : (
-                      <ul className="flex flex-col divide-y divide-border">
-                        {children.map((child) => (
-                          <li
-                            key={child.id}
-                            className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0"
-                          >
-                            <span className="text-sm text-muted-foreground truncate">
-                              {child.name}
-                            </span>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <DropdownMenu
-                                align="right"
-                                trigger={
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-muted-foreground h-6 w-6 p-0"
-                                    aria-label="Ações"
-                                    disabled={deleting === child.id}
-                                  >
-                                    <MoreHorizontal className="w-3 h-3" />
-                                  </Button>
-                                }
-                                items={[
-                                  { label: "Editar", onClick: () => setEditing(child) },
-                                  {
-                                    label: deleting === child.id ? "Excluindo…" : "Excluir",
-                                    onClick: () => handleDelete(child.id),
-                                    variant: "destructive",
-                                  },
-                                ]}
-                              />
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+                      }
+                      items={[
+                        { label: "Editar", onClick: () => setEditing(root) },
+                        {
+                          label: "Adicionar subcategoria",
+                          onClick: () => openCreate(root.id),
+                        },
+                        {
+                          label: deleting === root.id ? "Excluindo…" : "Excluir",
+                          onClick: () => handleDelete(root.id),
+                          variant: "destructive",
+                        },
+                      ]}
+                    />
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-0 flex-1">
+                  {children.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
+                      <p className="text-xs">Nenhuma subcategoria</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => openCreate(root.id)}
+                      >
+                        <Plus className="w-3 h-3 mr-1" /> Adicionar subcategoria
+                      </Button>
+                    </div>
+                  ) : (
+                    <ul className="flex flex-col divide-y divide-border">
+                      {children.map((child) => (
+                        <li
+                          key={child.id}
+                          className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0"
+                        >
+                          <span className="text-sm text-muted-foreground truncate">
+                            {child.name}
+                          </span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <DropdownMenu
+                              align="right"
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground h-6 w-6 p-0"
+                                  aria-label="Ações"
+                                  disabled={deleting === child.id}
+                                >
+                                  <MoreHorizontal className="w-3 h-3" />
+                                </Button>
+                              }
+                              items={[
+                                { label: "Editar", onClick: () => setEditing(child) },
+                                {
+                                  label: deleting === child.id ? "Excluindo…" : "Excluir",
+                                  onClick: () => handleDelete(child.id),
+                                  variant: "destructive",
+                                },
+                              ]}
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ))}
 
       {/* ── TABLE VIEW ── */}
       {view === "table" && (

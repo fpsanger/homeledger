@@ -142,7 +142,10 @@ describe("UpdateExpenseUseCase", () => {
     const repo = makeRepoWithExisting();
     await expect(
       updateExpenseUseCase(
-        { ...baseInput, paymentMethod: "INVALID" as any },
+        {
+          ...baseInput,
+          paymentMethod: "INVALID" as Exclude<TransactionRecord["paymentMethod"], null>,
+        },
         repo,
         makeCategoryRepo(),
       ),

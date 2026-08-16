@@ -1,16 +1,16 @@
 {
   "coverage": {
-    "statements": 83.85,
-    "branches": 74.84,
-    "functions": 80.39,
-    "lines": 84.66
+    "statements": 83.78,
+    "branches": 74.64,
+    "functions": 80.91,
+    "lines": 84.65
   },
   "violations": {
     "architecture": 0,
     "circularDependencies": 0,
-    "complexity": 27,
+    "complexity": 24,
     "oversizedFiles": 6,
-    "oversizedFunctions": 25
+    "oversizedFunctions": 24
   },
   "details": {
     "architecture": [],
@@ -48,21 +48,9 @@
       },
       {
         "file": "src/components/billing-import/Step1Upload.tsx",
-        "name": "handleSubmit",
-        "line": 79,
-        "complexity": 21
-      },
-      {
-        "file": "src/components/billing-import/Step1Upload.tsx",
         "name": "inferBankFromCardName",
         "line": 39,
         "complexity": 14
-      },
-      {
-        "file": "src/components/billing-import/Step4Import.tsx",
-        "name": "importItem",
-        "line": 109,
-        "complexity": 23
       },
       {
         "file": "src/components/categories/CategoryList.tsx",
@@ -139,7 +127,7 @@
       {
         "file": "src/components/transactions/UnifiedTransactionForm.tsx",
         "name": "handleSubmit",
-        "line": 387,
+        "line": 385,
         "complexity": 16
       },
       {
@@ -153,12 +141,6 @@
         "name": "createLoyaltyTransaction",
         "line": 43,
         "complexity": 15
-      },
-      {
-        "file": "src/domain/services/LoyaltyFifo.ts",
-        "name": "computeLoyaltyFifo",
-        "line": 50,
-        "complexity": 18
       },
       {
         "file": "src/infrastructure/parsing/BradescoCsvParser.ts",
@@ -250,7 +232,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (551). Maximum allowed is 400.",
+        "message": "This file has too many lines (549). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
@@ -259,7 +241,7 @@
             "column": 1
           },
           "end": {
-            "line": 653,
+            "line": 651,
             "column": 2
           }
         },
@@ -286,16 +268,16 @@
     "oversizedFunctions": [
       {
         "severity": "warning",
-        "message": "This function has too many lines (172). Maximum allowed is 80.",
+        "message": "This function has too many lines (164). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/billing-import/Step1Upload.tsx",
           "start": {
-            "line": 54,
+            "line": 101,
             "column": 8
           },
           "end": {
-            "line": 342,
+            "line": 380,
             "column": 2
           }
         },
@@ -320,16 +302,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (247). Maximum allowed is 80.",
+        "message": "This function has too many lines (196). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/billing-import/Step4Import.tsx",
           "start": {
-            "line": 53,
+            "line": 140,
             "column": 8
           },
           "end": {
-            "line": 456,
+            "line": 480,
             "column": 2
           }
         },
@@ -342,11 +324,11 @@
         "location": {
           "path": "src/components/billing-import/Step4Import.tsx",
           "start": {
-            "line": 230,
+            "line": 254,
             "column": 28
           },
           "end": {
-            "line": 432,
+            "line": 456,
             "column": 10
           }
         },
@@ -648,11 +630,11 @@
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 305,
+            "line": 303,
             "column": 8
           },
           "end": {
-            "line": 653,
+            "line": 651,
             "column": 2
           }
         },
@@ -665,11 +647,11 @@
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 387,
+            "line": 385,
             "column": 3
           },
           "end": {
-            "line": 489,
+            "line": 487,
             "column": 4
           }
         },
@@ -687,23 +669,6 @@
           },
           "end": {
             "line": 143,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This function has too many lines (89). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/domain/services/LoyaltyFifo.ts",
-          "start": {
-            "line": 50,
-            "column": 8
-          },
-          "end": {
-            "line": 150,
             "column": 2
           }
         },

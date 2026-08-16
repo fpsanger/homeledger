@@ -51,6 +51,53 @@ function inferBankFromCardName(name: string): string {
   return "unknown";
 }
 
+function validateStep1Fields(
+  personId: string,
+  statementType: "credit-card" | "debit",
+  creditCardId: string,
+): string | null {
+  if (!personId) return "Selecione uma pessoa.";
+  if (statementType === "credit-card" && !creditCardId) return "Selecione um cartão de crédito.";
+  return null;
+}
+
+function resolveEffectiveBank(selectedCard: CreditCard | undefined, bank: string): string {
+  const inferredBank = selectedCard ? inferBankFromCardName(selectedCard.name) : "unknown";
+  return bank !== "unknown" ? bank : inferredBank;
+}
+
+function resolveDetectedBank(detectedBank: string | undefined, effectiveBank: string): string {
+  return detectedBank && detectedBank !== "unknown" ? detectedBank : effectiveBank;
+}
+
+function formatBankSuccessMessage(resolvedBank: string): string {
+  const bankLabel =
+    resolvedBank && resolvedBank !== "unknown"
+      ? ` (${BANK_LABELS[resolvedBank] ?? resolvedBank})`
+      : "";
+  return `Extrato processado com sucesso!${bankLabel}`;
+}
+
+function buildParseFormData(
+  file: File,
+  statementType: "credit-card" | "debit",
+  personId: string,
+  year: number,
+  month: number,
+  creditCardId: string,
+  effectiveBank: string,
+): FormData {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("statementType", statementType);
+  formData.append("personId", personId);
+  formData.append("year", String(year));
+  formData.append("month", String(month));
+  if (statementType === "credit-card") formData.append("creditCardId", creditCardId);
+  if (effectiveBank && effectiveBank !== "unknown") formData.append("bank", effectiveBank);
+  return formData;
+}
+
 export function Step1Upload({ onSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [statementType, setStatementType] = useState<"credit-card" | "debit">("credit-card");
@@ -82,30 +129,27 @@ export function Step1Upload({ onSuccess }: Props) {
       setError("Selecione um arquivo PDF.");
       return;
     }
-    if (!personId) {
-      setError("Selecione uma pessoa.");
-      return;
-    }
-    if (statementType === "credit-card" && !creditCardId) {
-      setError("Selecione um cartão de crédito.");
+    const fieldsError = validateStep1Fields(personId, statementType, creditCardId);
+    if (fieldsError) {
+      setError(fieldsError);
       return;
     }
 
     const selectedCard = creditCards.find((c) => c.id === creditCardId);
-    const inferredBank = selectedCard ? inferBankFromCardName(selectedCard.name) : "unknown";
-    const effectiveBank = bank !== "unknown" ? bank : inferredBank;
+    const effectiveBank = resolveEffectiveBank(selectedCard, bank);
 
     setLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("statementType", statementType);
-    formData.append("personId", personId);
-    formData.append("year", String(year));
-    formData.append("month", String(month));
-    if (statementType === "credit-card") formData.append("creditCardId", creditCardId);
-    if (effectiveBank && effectiveBank !== "unknown") formData.append("bank", effectiveBank);
+    const formData = buildParseFormData(
+      file,
+      statementType,
+      personId,
+      year,
+      month,
+      creditCardId,
+      effectiveBank,
+    );
 
     try {
       const res = await fetch("/api/billing/parse", { method: "POST", body: formData });
@@ -114,14 +158,8 @@ export function Step1Upload({ onSuccess }: Props) {
         setError(data.error ?? "Erro ao processar extrato.");
         return;
       }
-      const resolvedBank = (
-        data.detectedBank && data.detectedBank !== "unknown" ? data.detectedBank : effectiveBank
-      ) as string;
-      const bankLabel =
-        resolvedBank && resolvedBank !== "unknown"
-          ? ` (${BANK_LABELS[resolvedBank] ?? resolvedBank})`
-          : "";
-      toast.success(`Extrato processado com sucesso!${bankLabel}`);
+      const resolvedBank = resolveDetectedBank(data.detectedBank, effectiveBank);
+      toast.success(formatBankSuccessMessage(resolvedBank));
       onSuccess(data.items ?? data, {
         statementType,
         creditCardId: creditCardId || undefined,

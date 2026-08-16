@@ -103,8 +103,6 @@ describe("parseBradescoCsv", () => {
   });
 
   test("9. multi-section file: only parses section with ;;; marker", () => {
-    const otherSection =
-      "OUTRO TITULAR ;;; 9999\nData;Histórico;Valor(US$);;Valor(R$);;\n27/05;OTHER EXPENSE;0;00;100;00\nTotal da fatura em Real: ;;;100;00";
     const mainSection = buildCsv([makeRow("27/05", "MAIN EXPENSE", "44", "30")]);
     // Only main section (MARGARETE P SANGER) should be parsed
     // The parser targets the section after ";;; " header

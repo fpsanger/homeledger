@@ -50,6 +50,93 @@ function estimatePurchaseDate(billingDate: Date | string, installmentNumber: num
   return d.toISOString().slice(0, 10);
 }
 
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : "Erro desconhecido";
+}
+
+type InstallmentForm = Extract<ItemForm, { kind: "installment" }>;
+type RefundForm = Extract<ItemForm, { kind: "refund" }>;
+type TransactionForm = Extract<ItemForm, { kind: "transaction" }>;
+
+async function importInstallment(form: InstallmentForm, categoryId: string | null): Promise<void> {
+  const res = await fetch("/api/installments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      personId: form.personId,
+      totalAmount: form.totalAmount,
+      numberOfInstallments: form.numberOfInstallments,
+      purchaseDate: form.purchaseDate,
+      description: form.description,
+      creditCardId: form.creditCardId,
+      categoryId,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error ?? "Erro ao importar parcela");
+  }
+}
+
+async function importRefund(form: RefundForm, categoryId: string | null): Promise<void> {
+  const res = await fetch("/api/credit-card-refunds", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      personId: form.personId,
+      creditCardId: form.creditCardId,
+      description: form.description,
+      amount: form.amount,
+      refundDate: form.date,
+      categoryId,
+      source: "IMPORT",
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error ?? "Erro ao importar estorno");
+  }
+}
+
+async function importTransaction(
+  form: TransactionForm,
+  categoryId: string | null,
+  statementType: Step1Data["statementType"],
+): Promise<void> {
+  const endpoint =
+    form.transactionType === "INCOME"
+      ? "/api/incomes"
+      : form.transactionType === "INVESTMENT"
+        ? "/api/investments"
+        : "/api/expenses";
+
+  const body: Record<string, unknown> = {
+    personId: form.personId,
+    amount: form.amount,
+    date: form.date,
+    description: form.description,
+  };
+
+  if (form.transactionType === "INCOME") {
+    body.source = "OTHER";
+  } else if (form.transactionType === "INVESTMENT") {
+    body.categoryId = null;
+  } else {
+    body.paymentMethod = statementType === "credit-card" ? "CREDIT_CARD" : "DEBIT_CARD";
+    body.categoryId = categoryId;
+  }
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error ?? "Erro ao importar transação");
+  }
+}
+
 export function Step4Import({
   reconciledItems,
   selectedIndices,
@@ -109,84 +196,21 @@ export function Step4Import({
   async function importItem(index: number, ri: ReconciledItem): Promise<boolean> {
     const item = ri.billingItem;
     const form = forms[index];
+    const categoryId = ri.categoryId ?? null;
     setStatus(index, "loading");
     try {
       if (item.kind === "installment" && form.kind === "installment") {
-        const res = await fetch("/api/installments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            personId: form.personId,
-            totalAmount: form.totalAmount,
-            numberOfInstallments: form.numberOfInstallments,
-            purchaseDate: form.purchaseDate,
-            description: form.description,
-            creditCardId: form.creditCardId,
-            categoryId: ri.categoryId ?? null,
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error ?? "Erro ao importar parcela");
-        }
+        await importInstallment(form, categoryId);
       } else if (item.kind === "refund" && form.kind === "refund") {
-        const res = await fetch("/api/credit-card-refunds", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            personId: form.personId,
-            creditCardId: form.creditCardId,
-            description: form.description,
-            amount: form.amount,
-            refundDate: form.date,
-            categoryId: ri.categoryId ?? null,
-            source: "IMPORT",
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error ?? "Erro ao importar estorno");
-        }
+        await importRefund(form, categoryId);
       } else if (item.kind === "transaction" && form.kind === "transaction") {
-        const endpoint =
-          form.transactionType === "INCOME"
-            ? "/api/incomes"
-            : form.transactionType === "INVESTMENT"
-              ? "/api/investments"
-              : "/api/expenses";
-
-        const body: Record<string, unknown> = {
-          personId: form.personId,
-          amount: form.amount,
-          date: form.date,
-          description: form.description,
-        };
-
-        if (form.transactionType === "INCOME") {
-          body.source = "OTHER";
-        } else if (form.transactionType === "INVESTMENT") {
-          body.categoryId = null;
-        } else {
-          body.paymentMethod =
-            step1Data.statementType === "credit-card" ? "CREDIT_CARD" : "DEBIT_CARD";
-          body.categoryId = ri.categoryId ?? null;
-        }
-
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error ?? "Erro ao importar transação");
-        }
+        await importTransaction(form, categoryId, step1Data.statementType);
       }
       setStatus(index, "success");
       return true;
     } catch (err) {
       setStatus(index, "error");
-      toast.error(`Erro ao importar: ${err instanceof Error ? err.message : "Erro desconhecido"}`);
+      toast.error(`Erro ao importar: ${getErrorMessage(err)}`);
       return false;
     }
   }

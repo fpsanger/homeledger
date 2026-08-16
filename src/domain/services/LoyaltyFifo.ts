@@ -1,3 +1,4 @@
+import type { LoyaltyTransactionType } from "../entities/LoyaltyTransaction";
 import type { LoyaltyTransactionRecord } from "../repositories/ILoyaltyTransactionRepository";
 
 type CostLot = {
@@ -47,102 +48,141 @@ function consumeLots(lots: CostLot[], points: number): number {
   return totalCost;
 }
 
+type FifoState = {
+  balance: number;
+  totalInvested: number;
+  totalPurchasedPoints: number;
+  totalValueRedeemed: number;
+  totalExpired: number;
+};
+
+type TransactionHandler = (
+  tx: LoyaltyTransactionRecord,
+  lots: CostLot[],
+  state: FifoState,
+) => FifoData | undefined;
+
+function applyPurchase(tx: LoyaltyTransactionRecord, lots: CostLot[], state: FifoState): undefined {
+  state.balance += tx.points;
+  state.totalInvested += tx.costBrl!;
+  state.totalPurchasedPoints += tx.points;
+  lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl! });
+  return undefined;
+}
+
+function applyEarnOrBonus(
+  tx: LoyaltyTransactionRecord,
+  _lots: CostLot[],
+  state: FifoState,
+): undefined {
+  state.balance += tx.points;
+  return undefined;
+}
+
+function applyTransferIn(
+  tx: LoyaltyTransactionRecord,
+  lots: CostLot[],
+  state: FifoState,
+): FifoData | undefined {
+  state.balance += tx.points;
+  if (tx.costBrl == null) return undefined;
+  state.totalInvested += tx.costBrl;
+  state.totalPurchasedPoints += tx.points;
+  lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl });
+  const costPer1kPoints = tx.points > 0 ? (tx.costBrl / tx.points) * 1000 : 0;
+  return { costBrl: tx.costBrl, costPer1kPoints, roi: null };
+}
+
+function applyAdjustment(
+  tx: LoyaltyTransactionRecord,
+  lots: CostLot[],
+  state: FifoState,
+): FifoData | undefined {
+  if (tx.points > 0) {
+    state.balance += tx.points;
+    lots.push({ remainingPoints: tx.points, costBrl: 0 });
+    return undefined;
+  }
+  const absPoints = Math.abs(tx.points);
+  state.balance -= absPoints;
+  const costBrl = consumeLots(lots, absPoints);
+  const costPer1kPoints = absPoints > 0 ? (costBrl / absPoints) * 1000 : 0;
+  return { costBrl, costPer1kPoints, roi: null };
+}
+
+function applyRedeem(tx: LoyaltyTransactionRecord, lots: CostLot[], state: FifoState): FifoData {
+  state.balance -= tx.points;
+  const costBrl = consumeLots(lots, tx.points);
+  const costPer1kPoints = (costBrl / tx.points) * 1000;
+  const roi = costBrl > 0 ? ((tx.valueBrl! - costBrl) / costBrl) * 100 : null;
+  state.totalValueRedeemed += tx.valueBrl!;
+  return { costBrl, costPer1kPoints, roi };
+}
+
+function applyTransferOut(
+  tx: LoyaltyTransactionRecord,
+  lots: CostLot[],
+  state: FifoState,
+): FifoData {
+  state.balance -= tx.points;
+  const costBrl = consumeLots(lots, tx.points);
+  const costPer1kPoints = (costBrl / tx.points) * 1000;
+  return { costBrl, costPer1kPoints, roi: null };
+}
+
+function applyExpire(tx: LoyaltyTransactionRecord, lots: CostLot[], state: FifoState): FifoData {
+  state.balance -= tx.points;
+  const costBrl = consumeLots(lots, tx.points);
+  const costPer1kPoints = (costBrl / tx.points) * 1000;
+  state.totalExpired += tx.points;
+  return { costBrl, costPer1kPoints, roi: null };
+}
+
+const TRANSACTION_HANDLERS: Record<LoyaltyTransactionType, TransactionHandler> = {
+  PURCHASE: applyPurchase,
+  EARN: applyEarnOrBonus,
+  BONUS: applyEarnOrBonus,
+  TRANSFER_IN: applyTransferIn,
+  ADJUSTMENT: applyAdjustment,
+  REDEEM: applyRedeem,
+  TRANSFER_OUT: applyTransferOut,
+  EXPIRE: applyExpire,
+};
+
 export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): LoyaltyFifoResult {
   const sorted = [...transactions].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const lots: CostLot[] = [];
-  let balance = 0;
-  let totalInvested = 0;
-  let totalPurchasedPoints = 0;
-  let totalValueRedeemed = 0;
-  let totalExpired = 0;
+  const state: FifoState = {
+    balance: 0,
+    totalInvested: 0,
+    totalPurchasedPoints: 0,
+    totalValueRedeemed: 0,
+    totalExpired: 0,
+  };
 
   const enriched: EnrichedTransaction[] = [];
 
   for (const tx of sorted) {
-    let fifoData: FifoData | undefined;
-
-    switch (tx.type) {
-      case "PURCHASE":
-        balance += tx.points;
-        totalInvested += tx.costBrl!;
-        totalPurchasedPoints += tx.points;
-        lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl! });
-        break;
-
-      case "EARN":
-      case "BONUS":
-        balance += tx.points;
-        break;
-
-      case "TRANSFER_IN":
-        balance += tx.points;
-        if (tx.costBrl != null) {
-          totalInvested += tx.costBrl;
-          totalPurchasedPoints += tx.points;
-          lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl });
-          const costPer1kPoints = tx.points > 0 ? (tx.costBrl / tx.points) * 1000 : 0;
-          fifoData = { costBrl: tx.costBrl, costPer1kPoints, roi: null };
-        }
-        break;
-
-      case "ADJUSTMENT":
-        if (tx.points > 0) {
-          balance += tx.points;
-          lots.push({ remainingPoints: tx.points, costBrl: 0 });
-        } else {
-          const absPoints = Math.abs(tx.points);
-          balance -= absPoints;
-          const costBrl = consumeLots(lots, absPoints);
-          const costPer1kPoints = absPoints > 0 ? (costBrl / absPoints) * 1000 : 0;
-          fifoData = { costBrl, costPer1kPoints, roi: null };
-        }
-        break;
-
-      case "REDEEM": {
-        balance -= tx.points;
-        const costBrl = consumeLots(lots, tx.points);
-        const costPer1kPoints = (costBrl / tx.points) * 1000;
-        const roi = costBrl > 0 ? ((tx.valueBrl! - costBrl) / costBrl) * 100 : null;
-        totalValueRedeemed += tx.valueBrl!;
-        fifoData = { costBrl, costPer1kPoints, roi };
-        break;
-      }
-
-      case "TRANSFER_OUT": {
-        balance -= tx.points;
-        const costBrl = consumeLots(lots, tx.points);
-        const costPer1kPoints = (costBrl / tx.points) * 1000;
-        fifoData = { costBrl, costPer1kPoints, roi: null };
-        break;
-      }
-
-      case "EXPIRE": {
-        balance -= tx.points;
-        const costBrl = consumeLots(lots, tx.points);
-        const costPer1kPoints = (costBrl / tx.points) * 1000;
-        totalExpired += tx.points;
-        fifoData = { costBrl, costPer1kPoints, roi: null };
-        break;
-      }
-    }
-
+    const fifoData = TRANSACTION_HANDLERS[tx.type](tx, lots, state);
     enriched.push(fifoData !== undefined ? { ...tx, fifoData } : tx);
   }
 
   const avgCostPer1kPoints =
-    totalPurchasedPoints > 0 ? (totalInvested / totalPurchasedPoints) * 1000 : 0;
+    state.totalPurchasedPoints > 0 ? (state.totalInvested / state.totalPurchasedPoints) * 1000 : 0;
   const overallRoi =
-    totalInvested > 0 ? ((totalValueRedeemed - totalInvested) / totalInvested) * 100 : null;
+    state.totalInvested > 0
+      ? ((state.totalValueRedeemed - state.totalInvested) / state.totalInvested) * 100
+      : null;
 
   return {
     summary: {
-      currentBalance: balance,
-      totalInvested,
-      totalPurchasedPoints,
+      currentBalance: state.balance,
+      totalInvested: state.totalInvested,
+      totalPurchasedPoints: state.totalPurchasedPoints,
       avgCostPer1kPoints,
-      totalValueRedeemed,
-      totalExpired,
+      totalValueRedeemed: state.totalValueRedeemed,
+      totalExpired: state.totalExpired,
       overallRoi,
     },
     transactions: enriched,

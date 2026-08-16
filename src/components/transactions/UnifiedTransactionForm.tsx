@@ -176,9 +176,7 @@ function InstallmentPreview({
     const d = new Date(`${date}T00:00:00Z`);
     const purchaseYear = d.getUTCFullYear();
     const purchaseMonth = d.getUTCMonth() + 1;
-    const closure = cardClosures.find(
-      (c) => c.year === purchaseYear && c.month === purchaseMonth,
-    );
+    const closure = cardClosures.find((c) => c.year === purchaseYear && c.month === purchaseMonth);
     if (!closure) {
       return (
         <p className="text-xs text-amber-600">

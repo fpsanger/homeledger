@@ -41,6 +41,68 @@ function fmtDate(date: Date | string) {
   return formatDatePtBR(String(date));
 }
 
+function PurchaseDetailsSummary({
+  installment,
+  byPersonId,
+  byCardId,
+  installmentLabel,
+}: {
+  installment: Installment;
+  byPersonId: Record<string, string>;
+  byCardId: Record<string, string>;
+  installmentLabel: string;
+}) {
+  return (
+    <div className="rounded-lg border bg-muted/30 p-4 flex flex-col gap-3">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Detalhes da Compra
+      </p>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+        {installment.purchaseDescription && (
+          <div className="col-span-2">
+            <span className="text-muted-foreground">Descrição</span>
+            <p className="font-medium">{installment.purchaseDescription}</p>
+          </div>
+        )}
+        {installment.purchaseDate && (
+          <div>
+            <span className="text-muted-foreground">Data da compra</span>
+            <p className="font-medium">{fmtDate(installment.purchaseDate)}</p>
+          </div>
+        )}
+        <div>
+          <span className="text-muted-foreground">Parcela</span>
+          <p className="font-medium">{installmentLabel}</p>
+        </div>
+        {installment.personId && byPersonId[installment.personId] && (
+          <div>
+            <span className="text-muted-foreground">Pessoa</span>
+            <p className="font-medium">{byPersonId[installment.personId]}</p>
+          </div>
+        )}
+        {installment.creditCardId && byCardId[installment.creditCardId] && (
+          <div>
+            <span className="text-muted-foreground">Cartão</span>
+            <p className="font-medium">{byCardId[installment.creditCardId]}</p>
+          </div>
+        )}
+        <div>
+          <span className="text-muted-foreground">Valor atual</span>
+          <p className="font-medium tabular-nums">{fmtCurrency(installment.amount)}</p>
+        </div>
+        {installment.purchaseTotalAmount != null && (
+          <div>
+            <span className="text-muted-foreground">Total da compra</span>
+            <p className="font-medium tabular-nums">
+              {fmtCurrency(installment.purchaseTotalAmount)}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function EditInstallmentForm({
   installment,
   people = [],
@@ -85,53 +147,12 @@ export function EditInstallmentForm({
   return (
     <div className="flex flex-col gap-5">
       {/* Purchase details */}
-      <div className="rounded-lg border bg-muted/30 p-4 flex flex-col gap-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Detalhes da Compra
-        </p>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-          {installment.purchaseDescription && (
-            <div className="col-span-2">
-              <span className="text-muted-foreground">Descrição</span>
-              <p className="font-medium">{installment.purchaseDescription}</p>
-            </div>
-          )}
-          {installment.purchaseDate && (
-            <div>
-              <span className="text-muted-foreground">Data da compra</span>
-              <p className="font-medium">{fmtDate(installment.purchaseDate)}</p>
-            </div>
-          )}
-          <div>
-            <span className="text-muted-foreground">Parcela</span>
-            <p className="font-medium">{installmentLabel}</p>
-          </div>
-          {installment.personId && byPersonId[installment.personId] && (
-            <div>
-              <span className="text-muted-foreground">Pessoa</span>
-              <p className="font-medium">{byPersonId[installment.personId]}</p>
-            </div>
-          )}
-          {installment.creditCardId && byCardId[installment.creditCardId] && (
-            <div>
-              <span className="text-muted-foreground">Cartão</span>
-              <p className="font-medium">{byCardId[installment.creditCardId]}</p>
-            </div>
-          )}
-          <div>
-            <span className="text-muted-foreground">Valor atual</span>
-            <p className="font-medium tabular-nums">{fmtCurrency(installment.amount)}</p>
-          </div>
-          {installment.purchaseTotalAmount != null && (
-            <div>
-              <span className="text-muted-foreground">Total da compra</span>
-              <p className="font-medium tabular-nums">
-                {fmtCurrency(installment.purchaseTotalAmount)}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+      <PurchaseDetailsSummary
+        installment={installment}
+        byPersonId={byPersonId}
+        byCardId={byCardId}
+        installmentLabel={installmentLabel}
+      />
 
       <div className="border-t" />
 

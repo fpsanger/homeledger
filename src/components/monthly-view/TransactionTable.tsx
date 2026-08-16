@@ -82,6 +82,43 @@ function toMs(date: Date | string) {
   return new Date(date).getTime();
 }
 
+function matchesCategoryFilter(
+  t: Transaction,
+  categories: Category[],
+  categoryFilter: string,
+): boolean {
+  if (!categoryFilter) return true;
+  const cat = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
+  const parentId = cat ? (cat.parentId ?? cat.id) : null;
+  return parentId === categoryFilter;
+}
+
+function matchesRangeFilters(
+  t: Transaction,
+  minAmt: number | null,
+  fromMs: number | null,
+): boolean {
+  const tMs = toMs(t.date);
+  if (fromMs !== null && tMs < fromMs) return false;
+  if (minAmt !== null && t.amount < minAmt) return false;
+  return true;
+}
+
+function matchesFilters(
+  t: Transaction,
+  categories: Category[],
+  search: string,
+  categoryFilter: string,
+  paymentFilter: string,
+  minAmt: number | null,
+  fromMs: number | null,
+): boolean {
+  if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
+  if (!matchesCategoryFilter(t, categories, categoryFilter)) return false;
+  if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
+  return matchesRangeFilters(t, minAmt, fromMs);
+}
+
 function SortIcon({
   col,
   sortKey,
@@ -100,6 +137,87 @@ function SortIcon({
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function buildRowActions(
+  t: Transaction,
+  deletingId: string | null,
+  handleDelete: (id: string, isRecurring?: boolean) => void,
+  onEdit?: (t: Transaction) => void,
+) {
+  return [
+    ...(!t.isRecurring && onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
+    {
+      label: deletingId === t.id ? "Excluindo..." : "Excluir",
+      onClick: () => handleDelete(t.id, t.isRecurring),
+      variant: "destructive" as const,
+    },
+  ];
+}
+
+function TransactionRow({
+  t,
+  byPersonId,
+  byCategoryId,
+  showCategoryCol,
+  deletingId,
+  handleDelete,
+  onEdit,
+}: {
+  t: Transaction;
+  byPersonId: Record<string, string>;
+  byCategoryId: Record<string, string>;
+  showCategoryCol: boolean;
+  deletingId: string | null;
+  handleDelete: (id: string, isRecurring?: boolean) => void;
+  onEdit?: (t: Transaction) => void;
+}) {
+  return (
+    <TableRow className="group">
+      <TableCell className="text-sm text-muted-foreground tabular-nums">
+        {fmtDate(t.date)}
+      </TableCell>
+      <TableCell className="text-sm">{byPersonId[t.personId] ?? t.personId}</TableCell>
+      <TableCell className="text-sm">
+        <span className="inline-flex items-center gap-2">
+          {t.description || "—"}
+          {t.isRecurring && (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+              Recorrente
+            </span>
+          )}
+        </span>
+      </TableCell>
+      {showCategoryCol && (
+        <TableCell className="text-sm text-muted-foreground">
+          {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
+        </TableCell>
+      )}
+      <TableCell className="text-sm text-muted-foreground">
+        {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
+      </TableCell>
+      <TableCell className="text-right font-medium tabular-nums text-sm">
+        <TransactionAmount type={t.type} amount={t.amount} />
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu
+          align="right"
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground"
+              aria-label="Ações"
+              disabled={deletingId === t.id}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
+          }
+          items={buildRowActions(t, deletingId, handleDelete, onEdit)}
+        />
+      </TableCell>
+    </TableRow>
+  );
+}
 
 type SharedProps = {
   paginated: Transaction[];
@@ -171,59 +289,16 @@ function TransactionTableDesktop({
             </TableRow>
           ) : (
             paginated.map((t) => (
-              <TableRow key={t.id} className="group">
-                <TableCell className="text-sm text-muted-foreground tabular-nums">
-                  {fmtDate(t.date)}
-                </TableCell>
-                <TableCell className="text-sm">{byPersonId[t.personId] ?? t.personId}</TableCell>
-                <TableCell className="text-sm">
-                  <span className="inline-flex items-center gap-2">
-                    {t.description || "—"}
-                    {t.isRecurring && (
-                      <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                        Recorrente
-                      </span>
-                    )}
-                  </span>
-                </TableCell>
-                {showCategoryCol && (
-                  <TableCell className="text-sm text-muted-foreground">
-                    {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
-                  </TableCell>
-                )}
-                <TableCell className="text-sm text-muted-foreground">
-                  {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
-                </TableCell>
-                <TableCell className="text-right font-medium tabular-nums text-sm">
-                  <TransactionAmount type={t.type} amount={t.amount} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu
-                    align="right"
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground"
-                        aria-label="Ações"
-                        disabled={deletingId === t.id}
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    }
-                    items={[
-                      ...(!t.isRecurring && onEdit
-                        ? [{ label: "Editar", onClick: () => onEdit(t) }]
-                        : []),
-                      {
-                        label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                        onClick: () => handleDelete(t.id, t.isRecurring),
-                        variant: "destructive" as const,
-                      },
-                    ]}
-                  />
-                </TableCell>
-              </TableRow>
+              <TransactionRow
+                key={t.id}
+                t={t}
+                byPersonId={byPersonId}
+                byCategoryId={byCategoryId}
+                showCategoryCol={showCategoryCol}
+                deletingId={deletingId}
+                handleDelete={handleDelete}
+                onEdit={onEdit}
+              />
             ))
           )}
         </TableBody>
@@ -435,19 +510,9 @@ export function TransactionTable({
     const { search, categoryFilter, paymentFilter, dateFrom, amountMin } = filters;
     const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
     const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
-    return transactions.filter((t) => {
-      if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
-      if (categoryFilter) {
-        const cat = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
-        const parentId = cat ? (cat.parentId ?? cat.id) : null;
-        if (parentId !== categoryFilter) return false;
-      }
-      if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
-      const tMs = toMs(t.date);
-      if (fromMs !== null && tMs < fromMs) return false;
-      if (minAmt !== null && t.amount < minAmt) return false;
-      return true;
-    });
+    return transactions.filter((t) =>
+      matchesFilters(t, categories, search, categoryFilter, paymentFilter, minAmt, fromMs),
+    );
   }, [transactions, filters, categories]);
 
   const sorted = useMemo(() => {

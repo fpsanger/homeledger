@@ -14,27 +14,33 @@ export async function GET() {
   }
 }
 
+function validateTransferRequestBody(body: Record<string, unknown>): Response | null {
+  if (!body.fromProgramId)
+    return Response.json({ error: "fromProgramId is required" }, { status: 400 });
+  if (!body.toProgramId)
+    return Response.json({ error: "toProgramId is required" }, { status: 400 });
+  if (body.fromProgramId === body.toProgramId) {
+    return Response.json(
+      { error: "fromProgramId and toProgramId must be different" },
+      { status: 400 },
+    );
+  }
+  if (typeof body.pointsSent !== "number" || body.pointsSent <= 0) {
+    return Response.json({ error: "pointsSent must be a positive number" }, { status: 400 });
+  }
+  if (typeof body.pointsReceived !== "number" || body.pointsReceived < body.pointsSent) {
+    return Response.json({ error: "pointsReceived must be >= pointsSent" }, { status: 400 });
+  }
+  if (!body.transferDate)
+    return Response.json({ error: "transferDate is required" }, { status: 400 });
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    if (!body.fromProgramId)
-      return Response.json({ error: "fromProgramId is required" }, { status: 400 });
-    if (!body.toProgramId)
-      return Response.json({ error: "toProgramId is required" }, { status: 400 });
-    if (body.fromProgramId === body.toProgramId) {
-      return Response.json(
-        { error: "fromProgramId and toProgramId must be different" },
-        { status: 400 },
-      );
-    }
-    if (typeof body.pointsSent !== "number" || body.pointsSent <= 0) {
-      return Response.json({ error: "pointsSent must be a positive number" }, { status: 400 });
-    }
-    if (typeof body.pointsReceived !== "number" || body.pointsReceived < body.pointsSent) {
-      return Response.json({ error: "pointsReceived must be >= pointsSent" }, { status: 400 });
-    }
-    if (!body.transferDate)
-      return Response.json({ error: "transferDate is required" }, { status: 400 });
+    const validationError = validateTransferRequestBody(body);
+    if (validationError) return validationError;
 
     const { loyaltyTransfer, loyaltyTransaction, loyaltyProgram } = createRepositories();
     const fromProgram = await loyaltyProgram.findById(body.fromProgramId);

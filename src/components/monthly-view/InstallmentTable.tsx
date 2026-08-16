@@ -137,6 +137,33 @@ function buildActions(
   return actions;
 }
 
+type InstallmentRowView = {
+  description: string;
+  installmentLabel: string;
+  personName: string | null;
+  cardName: string | null;
+  dateStr: string;
+};
+
+function buildInstallmentRowView(
+  inst: Installment,
+  byPersonId: Record<string, string>,
+  byCardId: Record<string, string>,
+): InstallmentRowView {
+  const description = inst.purchaseDescription || "Sem descrição";
+  const installmentLabel = inst.numberOfInstallments
+    ? `${inst.installmentNumber}/${inst.numberOfInstallments}`
+    : `${inst.installmentNumber}`;
+  const personName = inst.personId ? (byPersonId[inst.personId] ?? null) : null;
+  const cardName = inst.creditCardId ? (byCardId[inst.creditCardId] ?? null) : null;
+  const dateStr = inst.purchaseDate
+    ? formatDatePtBR(
+        typeof inst.purchaseDate === "string" ? inst.purchaseDate : inst.purchaseDate.toISOString(),
+      )
+    : "—";
+  return { description, installmentLabel, personName, cardName, dateStr };
+}
+
 type DesktopProps = SharedProps & {
   sortKey: SortKey | null;
   sortDir: SortDir;
@@ -322,19 +349,8 @@ function InstallmentTableMobile({
         <p className="text-center text-sm text-muted-foreground py-8">Nenhuma parcela encontrada</p>
       ) : (
         paginated.map((inst) => {
-          const description = inst.purchaseDescription || "Sem descrição";
-          const installmentLabel = inst.numberOfInstallments
-            ? `${inst.installmentNumber}/${inst.numberOfInstallments}`
-            : `${inst.installmentNumber}`;
-          const personName = inst.personId ? (byPersonId[inst.personId] ?? null) : null;
-          const cardName = inst.creditCardId ? (byCardId[inst.creditCardId] ?? null) : null;
-          const dateStr = inst.purchaseDate
-            ? formatDatePtBR(
-                typeof inst.purchaseDate === "string"
-                  ? inst.purchaseDate
-                  : inst.purchaseDate.toISOString(),
-              )
-            : "—";
+          const { description, installmentLabel, personName, cardName, dateStr } =
+            buildInstallmentRowView(inst, byPersonId, byCardId);
           const actions = buildActions(
             inst,
             loadingId,

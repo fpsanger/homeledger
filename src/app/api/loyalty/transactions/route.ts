@@ -14,24 +14,31 @@ const VALID_TYPES: LoyaltyTransactionType[] = [
   "ADJUSTMENT",
 ];
 
+function validateTransactionRequestBody(body: Record<string, unknown>): Response | null {
+  if (!body.programId) {
+    return Response.json({ error: "programId is required" }, { status: 400 });
+  }
+  if (!VALID_TYPES.includes(body.type as LoyaltyTransactionType)) {
+    return Response.json(
+      { error: `type must be one of ${VALID_TYPES.join(", ")}` },
+      { status: 400 },
+    );
+  }
+  if (typeof body.points !== "number") {
+    return Response.json({ error: "points is required" }, { status: 400 });
+  }
+  if (!body.date) {
+    return Response.json({ error: "date is required" }, { status: 400 });
+  }
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    if (!body.programId) {
-      return Response.json({ error: "programId is required" }, { status: 400 });
-    }
-    if (!VALID_TYPES.includes(body.type)) {
-      return Response.json(
-        { error: `type must be one of ${VALID_TYPES.join(", ")}` },
-        { status: 400 },
-      );
-    }
-    if (typeof body.points !== "number") {
-      return Response.json({ error: "points is required" }, { status: 400 });
-    }
-    if (!body.date) {
-      return Response.json({ error: "date is required" }, { status: 400 });
-    }
+    const validationError = validateTransactionRequestBody(body);
+    if (validationError) return validationError;
+
     const { loyaltyTransaction } = createRepositories();
     const result = await createLoyaltyTransactionUseCase(
       {

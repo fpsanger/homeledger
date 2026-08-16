@@ -50,7 +50,12 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   );
 }
 
-export function CategoryBreakdownChart({ transactions, installments = [], categories }: Props) {
+function buildCategoryBreakdown(
+  transactions: Transaction[],
+  installments: Installment[],
+  categories: Category[],
+  topN: number,
+): { name: string; value: number; pct: number }[] {
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
 
   const grouped: Record<string, number> = {};
@@ -67,7 +72,21 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  if (sorted.length === 0) {
+  const top = sorted.slice(0, topN);
+  const rest = sorted.slice(topN);
+  if (rest.length > 0) {
+    const outrosTotal = rest.reduce((s, e) => s + e.value, 0);
+    top.push({ name: "Outros", value: outrosTotal });
+  }
+
+  const total = top.reduce((s, e) => s + e.value, 0);
+  return top.map((e) => ({ ...e, pct: total > 0 ? (e.value / total) * 100 : 0 }));
+}
+
+export function CategoryBreakdownChart({ transactions, installments = [], categories }: Props) {
+  const data = buildCategoryBreakdown(transactions, installments, categories, TOP_N);
+
+  if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
         <BarChart2 className="w-8 h-8 opacity-30" />
@@ -75,16 +94,6 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
       </div>
     );
   }
-
-  const top = sorted.slice(0, TOP_N);
-  const rest = sorted.slice(TOP_N);
-  if (rest.length > 0) {
-    const outrosTotal = rest.reduce((s, e) => s + e.value, 0);
-    top.push({ name: "Outros", value: outrosTotal });
-  }
-
-  const total = top.reduce((s, e) => s + e.value, 0);
-  const data = top.map((e) => ({ ...e, pct: total > 0 ? (e.value / total) * 100 : 0 }));
 
   const barHeight = 32;
   const chartHeight = data.length * barHeight + 16;

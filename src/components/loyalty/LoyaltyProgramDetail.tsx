@@ -301,6 +301,27 @@ function AddTransactionModal({
   );
 }
 
+function computeEditFormInitialState(tx: Transaction) {
+  return {
+    points: String(tx.points),
+    date: tx.date.slice(0, 10),
+    description: tx.description ?? "",
+    costBrl: tx.costBrl != null ? String(tx.costBrl) : "",
+    expiresAt: tx.expiresAt ? tx.expiresAt.slice(0, 10) : "",
+    personId: tx.personId ?? "",
+  };
+}
+
+function resolveDuplicateCheckInputs(
+  points: string,
+  personId: string,
+): { points: number | null; personId: string | null } {
+  return {
+    points: points ? Number(points) : null,
+    personId: personId || null,
+  };
+}
+
 function EditTransactionModal({
   tx,
   existingTransactions,
@@ -312,21 +333,23 @@ function EditTransactionModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const [points, setPoints] = useState(String(tx.points));
-  const [date, setDate] = useState(tx.date.slice(0, 10));
-  const [description, setDescription] = useState(tx.description ?? "");
-  const [costBrl, setCostBrl] = useState(tx.costBrl != null ? String(tx.costBrl) : "");
-  const [expiresAt, setExpiresAt] = useState(tx.expiresAt ? tx.expiresAt.slice(0, 10) : "");
-  const [personId, setPersonId] = useState(tx.personId ?? "");
+  const initial = computeEditFormInitialState(tx);
+  const [points, setPoints] = useState(initial.points);
+  const [date, setDate] = useState(initial.date);
+  const [description, setDescription] = useState(initial.description);
+  const [costBrl, setCostBrl] = useState(initial.costBrl);
+  const [expiresAt, setExpiresAt] = useState(initial.expiresAt);
+  const [personId, setPersonId] = useState(initial.personId);
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const duplicateCheckInputs = resolveDuplicateCheckInputs(points, personId);
   const duplicateMatch = findDuplicateLoyaltyTransaction(
     existingTransactions.filter((t) => t.id !== tx.id),
     tx.type,
-    points ? Number(points) : null,
-    personId || null,
+    duplicateCheckInputs.points,
+    duplicateCheckInputs.personId,
     date,
   );
 
@@ -466,6 +489,100 @@ function EditTransactionModal({
 type SortKey = "date" | "expiresAt";
 type SortDir = "asc" | "desc";
 
+function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <span className="opacity-30">↕</span>;
+  return <>{dir === "asc" ? "↑" : "↓"}</>;
+}
+
+function formatCostPer1k(tx: Transaction): string {
+  if (tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)) {
+    return formatBrl(tx.fifoData.costPer1kPoints);
+  }
+  if (tx.type === "PURCHASE" && tx.costBrl && tx.points > 0) {
+    return formatBrl((tx.costBrl / tx.points) * 1000);
+  }
+  return "—";
+}
+
+function formatRoi(tx: Transaction): { text: string; positive: boolean } | null {
+  if (tx.fifoData?.roi == null || !Number.isFinite(tx.fifoData.roi)) return null;
+  return { text: `${tx.fifoData.roi.toFixed(1)}%`, positive: tx.fifoData.roi >= 0 };
+}
+
+function buildTransactionRowActions(
+  tx: Transaction,
+  deletingId: string | null,
+  onEdit: (tx: Transaction) => void,
+  onDelete: (tx: Transaction) => void,
+) {
+  return [
+    ...(EDITABLE_TYPES.includes(tx.type) ? [{ label: "Editar", onClick: () => onEdit(tx) }] : []),
+    {
+      label: deletingId === tx.id ? "Excluindo..." : "Excluir",
+      onClick: () => onDelete(tx),
+      variant: "destructive" as const,
+    },
+  ];
+}
+
+function TransactionRow({
+  tx,
+  deletingId,
+  onEdit,
+  onDelete,
+}: {
+  tx: Transaction;
+  deletingId: string | null;
+  onEdit: (tx: Transaction) => void;
+  onDelete: (tx: Transaction) => void;
+}) {
+  const roi = formatRoi(tx);
+  return (
+    <tr className="border-t hover:bg-muted/30 transition-colors">
+      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
+      <td className="px-4 py-3">
+        <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
+          {TYPE_LABELS[tx.type] ?? tx.type}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right font-mono">{pointsSign(tx.type, tx.points)}</td>
+      <td className="px-4 py-3 text-right text-muted-foreground">{formatCostPer1k(tx)}</td>
+      <td className="px-4 py-3 text-right">
+        {roi ? (
+          <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>
+            {roi.text}
+          </span>
+        ) : (
+          "—"
+        )}
+      </td>
+      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+        {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
+      </td>
+      <td className="px-4 py-3 text-muted-foreground text-xs">
+        {tx.description ?? ""}
+        {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
+      </td>
+      <td className="px-4 py-3 text-right">
+        <DropdownMenu
+          align="right"
+          trigger={
+            <button
+              type="button"
+              disabled={deletingId === tx.id}
+              className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              aria-label="Ações"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          }
+          items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
+        />
+      </td>
+    </tr>
+  );
+}
+
 const EDITABLE_TYPES = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUSTMENT"];
 
 export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: Props) {
@@ -589,16 +706,7 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
                       onClick={() => handleSort("date")}
                       className="flex items-center gap-1 hover:text-foreground transition-colors"
                     >
-                      Data{" "}
-                      {sortKey === "date" ? (
-                        sortDir === "asc" ? (
-                          "↑"
-                        ) : (
-                          "↓"
-                        )
-                      ) : (
-                        <span className="opacity-30">↕</span>
-                      )}
+                      Data <SortIndicator active={sortKey === "date"} dir={sortDir} />
                     </button>
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
@@ -613,16 +721,7 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
                       onClick={() => handleSort("expiresAt")}
                       className="flex items-center gap-1 hover:text-foreground transition-colors"
                     >
-                      Expiração{" "}
-                      {sortKey === "expiresAt" ? (
-                        sortDir === "asc" ? (
-                          "↑"
-                        ) : (
-                          "↓"
-                        )
-                      ) : (
-                        <span className="opacity-30">↕</span>
-                      )}
+                      Expiração <SortIndicator active={sortKey === "expiresAt"} dir={sortDir} />
                     </button>
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
@@ -633,73 +732,13 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
               </thead>
               <tbody>
                 {sorted.map((tx) => (
-                  <tr key={tx.id} className="border-t hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {formatDate(tx.date)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
-                        {TYPE_LABELS[tx.type] ?? tx.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono">
-                      {pointsSign(tx.type, tx.points)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">
-                      {tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)
-                        ? formatBrl(tx.fifoData.costPer1kPoints)
-                        : tx.type === "PURCHASE" && tx.costBrl && tx.points > 0
-                          ? formatBrl((tx.costBrl / tx.points) * 1000)
-                          : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {tx.fifoData?.roi != null && Number.isFinite(tx.fifoData.roi) ? (
-                        <span
-                          className={
-                            tx.fifoData.roi >= 0
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-red-500"
-                          }
-                        >
-                          {tx.fifoData.roi.toFixed(1)}%
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                      {tx.description ?? ""}
-                      {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <DropdownMenu
-                        align="right"
-                        trigger={
-                          <button
-                            type="button"
-                            disabled={deletingId === tx.id}
-                            className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                            aria-label="Ações"
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        }
-                        items={[
-                          ...(EDITABLE_TYPES.includes(tx.type)
-                            ? [{ label: "Editar", onClick: () => setEditingTx(tx) }]
-                            : []),
-                          {
-                            label: deletingId === tx.id ? "Excluindo..." : "Excluir",
-                            onClick: () => handleDelete(tx),
-                            variant: "destructive" as const,
-                          },
-                        ]}
-                      />
-                    </td>
-                  </tr>
+                  <TransactionRow
+                    key={tx.id}
+                    tx={tx}
+                    deletingId={deletingId}
+                    onEdit={setEditingTx}
+                    onDelete={handleDelete}
+                  />
                 ))}
               </tbody>
             </table>

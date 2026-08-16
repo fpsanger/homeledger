@@ -36,19 +36,25 @@ const BANK_LABELS: Record<string, string> = {
   bb: "Banco do Brasil",
 };
 
+const BANK_NAME_MATCHERS: [(lower: string) => boolean, string][] = [
+  [(lower) => lower.includes("bradesco"), "bradesco"],
+  [(lower) => lower.includes("itaú") || lower.includes("itau"), "itau"],
+  [(lower) => lower.includes("c6"), "c6"],
+  [(lower) => lower.includes("btg"), "btg"],
+  [(lower) => lower.includes("nubank") || lower.includes("nu "), "nubank"],
+  [(lower) => lower.includes("inter"), "inter"],
+  [(lower) => lower.includes("santander"), "santander"],
+  [(lower) => lower.includes("caixa"), "caixa"],
+  [
+    (lower) => lower.includes("banco do brasil") || lower.includes(" bb ") || lower.endsWith(" bb"),
+    "bb",
+  ],
+];
+
 function inferBankFromCardName(name: string): string {
   const lower = name.toLowerCase();
-  if (lower.includes("bradesco")) return "bradesco";
-  if (lower.includes("itaú") || lower.includes("itau")) return "itau";
-  if (lower.includes("c6")) return "c6";
-  if (lower.includes("btg")) return "btg";
-  if (lower.includes("nubank") || lower.includes("nu ")) return "nubank";
-  if (lower.includes("inter")) return "inter";
-  if (lower.includes("santander")) return "santander";
-  if (lower.includes("caixa")) return "caixa";
-  if (lower.includes("banco do brasil") || lower.includes(" bb ") || lower.endsWith(" bb"))
-    return "bb";
-  return "unknown";
+  const match = BANK_NAME_MATCHERS.find(([matches]) => matches(lower));
+  return match ? match[1] : "unknown";
 }
 
 function validateStep1Fields(

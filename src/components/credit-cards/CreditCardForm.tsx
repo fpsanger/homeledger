@@ -24,6 +24,38 @@ type Props = {
   onCancel: () => void;
 };
 
+function resolveCreditCardEndpoint(card: CreditCard | undefined): { url: string; method: string } {
+  return card
+    ? { url: `/api/credit-cards/${card.id}`, method: "PUT" }
+    : { url: "/api/credit-cards", method: "POST" };
+}
+
+function buildCreditCardPayload(fields: {
+  name: string;
+  closureType: "FIXED" | "VARIABLE";
+  fixedClosureDay: string;
+  fixedClosurePreviousMonth: boolean;
+  dueDayOfMonth: string;
+  alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
+}) {
+  return {
+    name: fields.name,
+    closureType: fields.closureType,
+    fixedClosureDay: fields.closureType === "FIXED" ? parseInt(fields.fixedClosureDay, 10) : null,
+    fixedClosurePreviousMonth:
+      fields.closureType === "FIXED" ? fields.fixedClosurePreviousMonth : false,
+    dueDayOfMonth: parseInt(fields.dueDayOfMonth, 10),
+    alwaysNextMonth: fields.closureType === "VARIABLE" ? fields.alwaysNextMonth : false,
+    closureNextMonth: fields.closureNextMonth,
+  };
+}
+
+function submitButtonLabel(loading: boolean, isEdit: boolean): string {
+  if (loading) return "Salvando…";
+  return isEdit ? "Atualizar" : "Adicionar Cartão";
+}
+
 export function CreditCardForm({ card, onSaved, onCancel }: Props) {
   const [name, setName] = useState(card?.name ?? "");
   const [closureType, setClosureType] = useState<"FIXED" | "VARIABLE">(
@@ -42,21 +74,21 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
     e.preventDefault();
     setLoading(true);
 
-    const url = card ? `/api/credit-cards/${card.id}` : "/api/credit-cards";
-    const method = card ? "PUT" : "POST";
+    const { url, method } = resolveCreditCardEndpoint(card);
+    const payload = buildCreditCardPayload({
+      name,
+      closureType,
+      fixedClosureDay,
+      fixedClosurePreviousMonth,
+      dueDayOfMonth,
+      alwaysNextMonth,
+      closureNextMonth,
+    });
 
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        closureType,
-        fixedClosureDay: closureType === "FIXED" ? parseInt(fixedClosureDay, 10) : null,
-        fixedClosurePreviousMonth: closureType === "FIXED" ? fixedClosurePreviousMonth : false,
-        dueDayOfMonth: parseInt(dueDayOfMonth, 10),
-        alwaysNextMonth: closureType === "VARIABLE" ? alwaysNextMonth : false,
-        closureNextMonth,
-      }),
+      body: JSON.stringify(payload),
     });
 
     setLoading(false);
@@ -156,7 +188,7 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={loading}>
-          {loading ? "Salvando…" : card ? "Atualizar" : "Adicionar Cartão"}
+          {submitButtonLabel(loading, !!card)}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar

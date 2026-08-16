@@ -227,6 +227,122 @@ function InstallmentPreview({
   );
 }
 
+type SubmitFields = {
+  personId: string;
+  amount: string;
+  date: string;
+  paymentMethod: string;
+  source: string;
+  creditCardId: string;
+  categoryId: string;
+  description: string;
+  numberOfInstallments: string;
+};
+
+type SubmitTarget = { url: string; method: string; body: Record<string, unknown> };
+
+function resolveEditTarget(
+  editMode: EditMode,
+  type: FormType,
+  fields: SubmitFields,
+): SubmitTarget | { error: string } {
+  if (editMode.transactionId) {
+    if (type === "expense") {
+      return {
+        url: `/api/expenses/${editMode.transactionId}`,
+        method: "PUT",
+        body: {
+          personId: fields.personId,
+          amount: parseCurrencyBR(fields.amount),
+          date: fields.date,
+          paymentMethod: fields.paymentMethod,
+          categoryId: fields.categoryId || null,
+          description: fields.description,
+        },
+      };
+    }
+    return {
+      url: `/api/incomes/${editMode.transactionId}`,
+      method: "PUT",
+      body: {
+        personId: fields.personId,
+        amount: parseCurrencyBR(fields.amount),
+        date: fields.date,
+        source: fields.source,
+        categoryId: fields.categoryId || null,
+        description: fields.description,
+      },
+    };
+  }
+  if (editMode.purchaseId) {
+    return {
+      url: `/api/credit-card-purchases/${editMode.purchaseId}`,
+      method: "PUT",
+      body: {
+        description: fields.description,
+        totalAmount: parseCurrencyBR(fields.amount),
+        purchaseDate: fields.date,
+        categoryId: fields.categoryId || null,
+        creditCardId: fields.creditCardId,
+      },
+    };
+  }
+  return { error: "ID da compra não encontrado." };
+}
+
+function resolveCreateTarget(type: FormType, fields: SubmitFields): SubmitTarget {
+  if (type === "expense") {
+    return {
+      url: "/api/expenses",
+      method: "POST",
+      body: {
+        personId: fields.personId,
+        amount: parseCurrencyBR(fields.amount),
+        date: fields.date,
+        paymentMethod: fields.paymentMethod,
+        categoryId: fields.categoryId || null,
+        description: fields.description,
+      },
+    };
+  }
+  if (type === "income") {
+    return {
+      url: "/api/incomes",
+      method: "POST",
+      body: {
+        personId: fields.personId,
+        amount: parseCurrencyBR(fields.amount),
+        date: fields.date,
+        source: fields.source,
+        categoryId: fields.categoryId || null,
+        description: fields.description,
+      },
+    };
+  }
+  return {
+    url: "/api/installments",
+    method: "POST",
+    body: {
+      personId: fields.personId,
+      creditCardId: fields.creditCardId,
+      totalAmount: parseCurrencyBR(fields.amount),
+      numberOfInstallments: parseInt(fields.numberOfInstallments, 10),
+      purchaseDate: fields.date,
+      categoryId: fields.categoryId || null,
+      description: fields.description,
+    },
+  };
+}
+
+function resolveSubmitTarget(
+  editMode: EditMode | undefined,
+  type: FormType,
+  fields: SubmitFields,
+): SubmitTarget | { error: string } {
+  if (editMode) return resolveEditTarget(editMode, type, fields);
+  return resolveCreateTarget(type, fields);
+}
+
 function computeDuplicateCheckValues(
   type: FormType,
   amount: string,
@@ -386,88 +502,28 @@ export function UnifiedTransactionForm({
     e.preventDefault();
     setLoading(true);
 
-    let url: string;
-    let body: Record<string, unknown>;
-    let method: string;
+    const target = resolveSubmitTarget(editMode, type, {
+      personId,
+      amount,
+      date,
+      paymentMethod,
+      source,
+      creditCardId,
+      categoryId,
+      description,
+      numberOfInstallments,
+    });
 
-    if (isEditMode) {
-      method = "PUT";
-      if (editMode.transactionId) {
-        if (type === "expense") {
-          url = `/api/expenses/${editMode.transactionId}`;
-          body = {
-            personId,
-            amount: parseCurrencyBR(amount),
-            date,
-            paymentMethod,
-            categoryId: categoryId || null,
-            description,
-          };
-        } else {
-          url = `/api/incomes/${editMode.transactionId}`;
-          body = {
-            personId,
-            amount: parseCurrencyBR(amount),
-            date,
-            source,
-            categoryId: categoryId || null,
-            description,
-          };
-        }
-      } else if (editMode.purchaseId) {
-        url = `/api/credit-card-purchases/${editMode.purchaseId}`;
-        body = {
-          description,
-          totalAmount: parseCurrencyBR(amount),
-          purchaseDate: date,
-          categoryId: categoryId || null,
-          creditCardId,
-        };
-      } else {
-        toast.error("ID da compra não encontrado.");
-        setLoading(false);
-        return;
-      }
-    } else {
-      method = "POST";
-      if (type === "expense") {
-        url = "/api/expenses";
-        body = {
-          personId,
-          amount: parseCurrencyBR(amount),
-          date,
-          paymentMethod,
-          categoryId: categoryId || null,
-          description,
-        };
-      } else if (type === "income") {
-        url = "/api/incomes";
-        body = {
-          personId,
-          amount: parseCurrencyBR(amount),
-          date,
-          source,
-          categoryId: categoryId || null,
-          description,
-        };
-      } else {
-        url = "/api/installments";
-        body = {
-          personId,
-          creditCardId,
-          totalAmount: parseCurrencyBR(amount),
-          numberOfInstallments: parseInt(numberOfInstallments, 10),
-          purchaseDate: date,
-          categoryId: categoryId || null,
-          description,
-        };
-      }
+    if ("error" in target) {
+      toast.error(target.error);
+      setLoading(false);
+      return;
     }
 
-    const res = await fetch(url, {
-      method,
+    const res = await fetch(target.url, {
+      method: target.method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(target.body),
     });
 
     setLoading(false);

@@ -1,9 +1,5 @@
 import type { BillingItem } from "../../domain/entities/BillingItem";
-import {
-  createInstallmentBillingItem,
-  createRefundBillingItem,
-  createTransactionBillingItem,
-} from "../../domain/entities/BillingItem";
+import { classifyBillingRow } from "./classifyBillingRow";
 
 const MONTH_MAP: Record<string, number> = {
   janeiro: 1,
@@ -47,6 +43,33 @@ function resolveYear(txMonth: number, billingMonth: number, billingYear: number)
   return billingYear;
 }
 
+type ParsedRow = {
+  description: string;
+  amount: number;
+  dd: number;
+  mm: number;
+  purchaseType: string | undefined;
+};
+
+function parseBtgRow(cols: string[]): ParsedRow | null {
+  // Expect at least 8 cols: empty, date, description, empty, amount, type, authCode, card
+  if (cols.length < 8) return null;
+
+  const dateStr = cols[1]?.trim();
+  const description = cols[2]?.trim();
+  const rawAmount = cols[4]?.trim();
+  const purchaseType = cols[5]?.trim();
+
+  if (!dateStr?.match(/^\d{2}\/\d{2}$/)) return null;
+  if (!description || !rawAmount) return null;
+
+  const amount = parseAmount(rawAmount);
+  if (!Number.isFinite(amount) || amount === 0) return null;
+
+  const [dd, mm] = dateStr.split("/").map(Number);
+  return { description, amount, dd, mm, purchaseType };
+}
+
 export function parseBtgCsv(csvText: string): BillingItem[] {
   if (!csvText.trim()) return [];
 
@@ -66,59 +89,33 @@ export function parseBtgCsv(csvText: string): BillingItem[] {
     const line = lines[i].trim();
     if (!line) continue;
 
-    const cols = line.split(",");
-    // Expect at least 8 cols: empty, date, description, empty, amount, type, authCode, card
-    if (cols.length < 8) continue;
+    const parsed = parseBtgRow(line.split(","));
+    if (!parsed) continue;
 
-    const dateStr = cols[1]?.trim();
-    const description = cols[2]?.trim();
-    const rawAmount = cols[4]?.trim();
-    const purchaseType = cols[5]?.trim();
+    const isCredit = parsed.amount < 0;
+    const absAmount = Math.abs(parsed.amount);
+    const year = billingDate
+      ? resolveYear(parsed.mm, billingDate.month, billingDate.year)
+      : new Date().getFullYear();
+    const date = new Date(Date.UTC(year, parsed.mm - 1, parsed.dd));
 
-    if (!dateStr?.match(/^\d{2}\/\d{2}$/)) continue;
-    if (!description || !rawAmount) continue;
-
-    const amount = parseAmount(rawAmount);
-    if (!Number.isFinite(amount) || amount === 0) continue;
-
-    const isCredit = amount < 0;
-    const absAmount = Math.abs(amount);
-
-    const [dd, mm] = dateStr.split("/").map(Number);
-    let year = new Date().getFullYear();
-    if (billingDate) {
-      year = resolveYear(mm, billingDate.month, billingDate.year);
-    }
-    const date = new Date(Date.UTC(year, mm - 1, dd));
-
-    try {
-      const installMatch = description.match(INSTALLMENT_RE);
-      const isInstallmentType = purchaseType === "Parcela sem juros";
-
-      if (installMatch && isInstallmentType) {
-        const desc = installMatch[1].trim();
-        const installmentNumber = parseInt(installMatch[2], 10);
-        const totalInstallments = parseInt(installMatch[3], 10);
-        items.push(
-          createInstallmentBillingItem({
-            description: desc,
-            amount: absAmount,
-            date,
-            installmentNumber,
-            totalInstallments,
-          }),
-        );
-      } else if (isCredit) {
-        items.push(createRefundBillingItem({ description, amount: absAmount, date }));
-      } else {
-        const transactionType = purchaseType === "Compra internacional" ? "EXPENSE" : "EXPENSE";
-        items.push(
-          createTransactionBillingItem({ description, amount: absAmount, date, transactionType }),
-        );
-      }
-    } catch {
-      // skip invalid rows
-    }
+    const installMatch = parsed.description.match(INSTALLMENT_RE);
+    const isInstallmentType = parsed.purchaseType === "Parcela sem juros";
+    const item = classifyBillingRow({
+      description: parsed.description,
+      absAmount,
+      date,
+      isCredit,
+      installment:
+        installMatch && isInstallmentType
+          ? {
+              description: installMatch[1].trim(),
+              installmentNumber: parseInt(installMatch[2], 10),
+              totalInstallments: parseInt(installMatch[3], 10),
+            }
+          : null,
+    });
+    if (item) items.push(item);
   }
 
   return items;

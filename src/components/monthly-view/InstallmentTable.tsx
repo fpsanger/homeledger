@@ -1,20 +1,7 @@
 "use client";
 
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  CheckCircle2,
-  ChevronDown,
-  Clock,
-  CreditCard,
-  MoreHorizontal,
-  Tag,
-  Wallet,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowDown, ArrowUp, ArrowUpDown, CreditCard, MoreHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageSizeSelector } from "@/components/ui/page-size-selector";
@@ -27,42 +14,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useFilteredSortedInstallments } from "@/hooks/useFilteredSortedInstallments";
+import { useInstallmentActions } from "@/hooks/useInstallmentActions";
 import { formatDatePtBR } from "@/lib/format-date";
-import { SummaryCard } from "./SummaryCard";
+import { InstallmentSummaryPanel } from "./InstallmentSummaryPanel";
+import type { Installment, InstallmentFilters, SortDir, SortKey } from "./InstallmentTable.types";
 
-type Installment = {
-  id: string;
-  installmentNumber: number;
-  amount: number;
-  dueYear: number;
-  dueMonth: number;
-  isPaid: boolean;
-  purchaseDescription?: string;
-  personId?: string;
-  creditCardId?: string | null;
-  numberOfInstallments?: number;
-  purchaseDate?: string | Date;
-};
+export type { Installment, InstallmentFilters, SortDir, SortKey } from "./InstallmentTable.types";
 
 type Person = { id: string; name: string };
 type CreditCardItem = { id: string; name: string };
 
-type SortKey = "description" | "date" | "amount";
-type SortDir = "asc" | "desc";
-
-export type InstallmentFilters = {
-  statusFilter: string;
-  dateFrom: string;
-  amountMin: string;
-};
-
 function fmt(amount: number) {
   return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-function toDateMs(date: string | Date | undefined): number {
-  if (!date) return 0;
-  return new Date(date).getTime();
 }
 
 function StatusBadge({ inst }: { inst: Installment }) {
@@ -419,13 +383,7 @@ export function InstallmentTable({
   onEditInstallment?: (inst: Installment) => void;
   onEditPurchase?: (inst: Installment) => void;
 }) {
-  const router = useRouter();
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(20);
 
   const byPersonId = useMemo(() => Object.fromEntries(people.map((p) => [p.id, p.name])), [people]);
   const byCardId = useMemo(
@@ -433,86 +391,20 @@ export function InstallmentTable({
     [creditCards],
   );
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
-  async function handleDelete(id: string) {
-    setLoadingId(id);
-    const res = await fetch(`/api/installments/${id}`, { method: "DELETE" });
-    setLoadingId(null);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast.error(data.error ?? "Falha ao excluir.");
-      return;
-    }
-    router.refresh();
-    toast.success("Parcelamento atualizado.");
-  }
-
-  async function handleMarkPaid(id: string) {
-    setLoadingId(id);
-    const res = await fetch(`/api/installments/${id}/paid`, { method: "PATCH" });
-    setLoadingId(null);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast.error(data.error ?? "Falha ao marcar como pago.");
-      return;
-    }
-    router.refresh();
-    toast.success("Parcelamento atualizado.");
-  }
-
-  const total = installments.reduce((s, i) => s + i.amount, 0);
-  const paid = installments.filter((i) => i.isPaid).reduce((s, i) => s + i.amount, 0);
-  const remaining = total - paid;
-  const pendingCount = installments.filter((i) => !i.isPaid).length;
-
-  const filtered = useMemo(() => {
-    setPage(0);
-    if (!filters) return installments;
-    const { statusFilter, dateFrom, amountMin } = filters;
-    const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
-    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
-    return installments.filter((i) => {
-      if (statusFilter === "paid" && !i.isPaid) return false;
-      if (statusFilter === "pending" && i.isPaid) return false;
-      const dMs = toDateMs(i.purchaseDate);
-      if (fromMs !== null && dMs < fromMs) return false;
-      if (minAmt !== null && i.amount < minAmt) return false;
-      return true;
-    });
-  }, [installments, filters]);
-
-  const sortedInstallments = useMemo(() => {
-    const arr = [...filtered];
-    if (sortKey === "description") {
-      arr.sort((a, b) => {
-        const d = (a.purchaseDescription ?? "").localeCompare(b.purchaseDescription ?? "");
-        return sortDir === "asc" ? d : -d;
-      });
-    } else if (sortKey === "date") {
-      arr.sort((a, b) => {
-        const d = toDateMs(a.purchaseDate) - toDateMs(b.purchaseDate);
-        return sortDir === "asc" ? d : -d;
-      });
-    } else if (sortKey === "amount") {
-      arr.sort((a, b) => {
-        const d = a.amount - b.amount;
-        return sortDir === "asc" ? d : -d;
-      });
-    } else {
-      arr.sort((a, b) => toDateMs(b.purchaseDate) - toDateMs(a.purchaseDate));
-    }
-    return arr;
-  }, [filtered, sortKey, sortDir]);
-
-  const totalPages = Math.ceil(sortedInstallments.length / pageSize);
-  const paginated = sortedInstallments.slice(page * pageSize, (page + 1) * pageSize);
+  const { loadingId, handleDelete, handleMarkPaid } = useInstallmentActions();
+  const {
+    sortKey,
+    setSortKey,
+    sortDir,
+    setSortDir,
+    toggleSort,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    paginated,
+  } = useFilteredSortedInstallments(installments, filters);
 
   if (installments.length === 0) {
     return (
@@ -536,45 +428,11 @@ export function InstallmentTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={() => setSummaryOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
-      >
-        <ChevronDown
-          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
-        />
-        {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
-      </button>
-
-      {summaryOpen && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard
-            icon={Wallet}
-            label="Total"
-            value={fmt(total)}
-            colorClass="text-foreground"
-          />
-          <SummaryCard
-            icon={CheckCircle2}
-            label="Pago"
-            value={fmt(paid)}
-            colorClass="text-green-600"
-          />
-          <SummaryCard
-            icon={CreditCard}
-            label="Restante"
-            value={fmt(remaining)}
-            colorClass="text-amber-600"
-          />
-          <SummaryCard
-            icon={Clock}
-            label="Pendentes"
-            value={String(pendingCount)}
-            colorClass="text-muted-foreground"
-          />
-        </div>
-      )}
+      <InstallmentSummaryPanel
+        installments={installments}
+        open={summaryOpen}
+        onToggle={() => setSummaryOpen((o) => !o)}
+      />
 
       <div className="hidden md:block">
         <InstallmentTableDesktop
@@ -595,13 +453,7 @@ export function InstallmentTable({
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <PageSizeSelector
-          value={pageSize}
-          onChange={(size) => {
-            setPageSize(size);
-            setPage(0);
-          }}
-        />
+        <PageSizeSelector value={pageSize} onChange={setPageSize} />
         {totalPages > 1 && (
           <div className="flex items-center gap-3">
             <Button

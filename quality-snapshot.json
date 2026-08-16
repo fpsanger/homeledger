@@ -9,8 +9,8 @@
     "architecture": 0,
     "circularDependencies": 0,
     "complexity": 0,
-    "oversizedFiles": 6,
-    "oversizedFunctions": 23
+    "oversizedFiles": 5,
+    "oversizedFunctions": 21
   },
   "details": {
     "architecture": [],
@@ -19,7 +19,7 @@
     "oversizedFiles": [
       {
         "severity": "warning",
-        "message": "This file has too many lines (885). Maximum allowed is 400.",
+        "message": "This file has too many lines (833). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/credit-cards/BillView.tsx",
@@ -28,7 +28,7 @@
             "column": 1
           },
           "end": {
-            "line": 1173,
+            "line": 1121,
             "column": 2
           }
         },
@@ -46,23 +46,6 @@
           },
           "end": {
             "line": 758,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This file has too many lines (504). Maximum allowed is 400.",
-        "category": "lint/nursery/noExcessiveLinesPerFile",
-        "location": {
-          "path": "src/components/monthly-view/InstallmentTable.tsx",
-          "start": {
-            "line": 1,
-            "column": 1
-          },
-          "end": {
-            "line": 631,
             "column": 2
           }
         },
@@ -123,16 +106,16 @@
     "oversizedFunctions": [
       {
         "severity": "warning",
-        "message": "This function has too many lines (164). Maximum allowed is 80.",
+        "message": "This function has too many lines (81). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/billing-import/Step1Upload.tsx",
           "start": {
-            "line": 107,
+            "line": 360,
             "column": 8
           },
           "end": {
-            "line": 386,
+            "line": 480,
             "column": 2
           }
         },
@@ -208,33 +191,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (105). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/components/credit-cards/BillView.tsx",
-          "start": {
-            "line": 514,
-            "column": 1
-          },
-          "end": {
-            "line": 677,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
         "message": "This function has too many lines (281). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/credit-cards/BillView.tsx",
           "start": {
-            "line": 776,
+            "line": 724,
             "column": 8
           },
           "end": {
-            "line": 1173,
+            "line": 1121,
             "column": 2
           }
         },
@@ -371,23 +337,6 @@
           },
           "end": {
             "line": 232,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This function has too many lines (151). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/components/monthly-view/InstallmentTable.tsx",
-          "start": {
-            "line": 407,
-            "column": 8
-          },
-          "end": {
-            "line": 631,
             "column": 2
           }
         },

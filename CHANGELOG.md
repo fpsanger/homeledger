@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Refined project documentation for local maintenance and release tracking.
 - Updated the GitHub Release workflow to create releases from merged `develop` to `master` pull requests using the version from `package.json`.
 - Extracted credit card closure-month resolution into a shared `resolveClosureForDate` helper, reused by both installment purchases and refunds.
+- Reduced oversized-function/file quality-gate violations: extracted filter/sort state out of `BillView`'s `CardInstallmentTable` into `useInstallmentFilters`, split `Step1Upload` into a data-fetch hook plus presentational sub-components, and split `InstallmentTable` into `useInstallmentActions`, `useFilteredSortedInstallments`, and an `InstallmentSummaryPanel` component. No behavior changes.
 
 ## [0.1.0] - 2026-05-14
 

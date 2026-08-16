@@ -1,9 +1,10 @@
 "use client";
 
 import { Loader2, Upload } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
+import { useCreditCardsAndPeople } from "@/hooks/useCreditCardsAndPeople";
 import type { Step1Data } from "./types";
 
 type CreditCard = { id: string; name: string };
@@ -104,6 +105,258 @@ function buildParseFormData(
   return formData;
 }
 
+function FileDropzone({
+  file,
+  onSelect,
+  inputRef,
+}: {
+  file: File | null;
+  onSelect: (file: File | null) => void;
+  inputRef: React.RefObject<HTMLInputElement>;
+}) {
+  return (
+    <div>
+      <label htmlFor="billing-file-input" className="block text-sm font-medium mb-1">
+        Arquivo (PDF ou CSV)
+      </label>
+      <button
+        type="button"
+        className="w-full border-2 border-dashed border-muted rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
+        onClick={() => inputRef.current?.click()}
+      >
+        <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+        {file ? (
+          <p className="text-sm font-medium">{file.name}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Clique para selecionar ou arraste um PDF ou CSV
+          </p>
+        )}
+        <input
+          id="billing-file-input"
+          ref={inputRef}
+          type="file"
+          accept=".pdf,.csv"
+          className="hidden"
+          onChange={(e) => onSelect(e.target.files?.[0] ?? null)}
+        />
+      </button>
+    </div>
+  );
+}
+
+function BankMismatchHint({
+  bank,
+  selectedCard,
+}: {
+  bank: string;
+  selectedCard: CreditCard | undefined;
+}) {
+  const inferredBank = selectedCard ? inferBankFromCardName(selectedCard.name) : "unknown";
+  if (bank === "unknown" || inferredBank === "unknown" || bank === inferredBank) return null;
+  return (
+    <p className="text-xs text-amber-500 mt-1">
+      Cartão sugere {BANK_LABELS[inferredBank] ?? inferredBank} — banco selecionado pode não
+      corresponder.
+    </p>
+  );
+}
+
+function StatementTypeFieldset({
+  statementType,
+  onChange,
+}: {
+  statementType: "credit-card" | "debit";
+  onChange: (type: "credit-card" | "debit") => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="block text-sm font-medium mb-2">Tipo de Extrato</legend>
+      <div className="flex gap-4">
+        {(["credit-card", "debit"] as const).map((type) => (
+          <label key={type} className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="statementType"
+              value={type}
+              checked={statementType === type}
+              onChange={() => onChange(type)}
+              className="accent-primary"
+            />
+            <span className="text-sm">
+              {type === "credit-card" ? "Cartão de Crédito" : "Débito"}
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function CreditCardSelect({
+  creditCardId,
+  creditCards,
+  onChange,
+}: {
+  creditCardId: string;
+  creditCards: CreditCard[];
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor="billing-credit-card" className="block text-sm font-medium mb-1">
+        Cartão de Crédito
+      </label>
+      <select
+        id="billing-credit-card"
+        value={creditCardId}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+      >
+        <option value="">Selecione um cartão</option>
+        {creditCards.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      {creditCards.length === 0 && (
+        <p className="text-xs text-amber-600 mt-1">Não foi possível carregar cartões.</p>
+      )}
+    </div>
+  );
+}
+
+function PersonSelect({
+  personId,
+  people,
+  onChange,
+}: {
+  personId: string;
+  people: Person[];
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor="billing-person" className="block text-sm font-medium mb-1">
+        Pessoa
+      </label>
+      <select
+        id="billing-person"
+        value={personId}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+      >
+        <option value="">Selecione uma pessoa</option>
+        {people.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
+      {people.length === 0 && (
+        <p className="text-xs text-amber-600 mt-1">Não foi possível carregar pessoas.</p>
+      )}
+    </div>
+  );
+}
+
+const MONTH_ABBREVIATIONS = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
+
+function MonthYearFields({
+  month,
+  year,
+  onMonthChange,
+  onYearChange,
+}: {
+  month: number;
+  year: number;
+  onMonthChange: (month: number) => void;
+  onYearChange: (year: number) => void;
+}) {
+  return (
+    <div className="flex gap-4">
+      <div className="flex-1">
+        <label htmlFor="billing-month" className="block text-sm font-medium mb-1">
+          Mês
+        </label>
+        <select
+          id="billing-month"
+          value={month}
+          onChange={(e) => onMonthChange(Number(e.target.value))}
+          className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+        >
+          {MONTH_ABBREVIATIONS.map((m, i) => (
+            <option key={m} value={i + 1}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex-1">
+        <label htmlFor="billing-year" className="block text-sm font-medium mb-1">
+          Ano
+        </label>
+        <input
+          id="billing-year"
+          type="number"
+          value={year}
+          onChange={(e) => onYearChange(Number(e.target.value))}
+          min={2000}
+          max={2100}
+          className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+        />
+      </div>
+    </div>
+  );
+}
+
+function BankSelectField({
+  bank,
+  creditCardId,
+  creditCards,
+  onChange,
+}: {
+  bank: string;
+  creditCardId: string;
+  creditCards: CreditCard[];
+  onChange: (bank: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor="billing-bank" className="block text-sm font-medium mb-1">
+        Banco (opcional)
+      </label>
+      <select
+        id="billing-bank"
+        value={bank}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+      >
+        {BANK_OPTIONS.map((b) => (
+          <option key={b.value} value={b.value}>
+            {b.label}
+          </option>
+        ))}
+      </select>
+      <BankMismatchHint bank={bank} selectedCard={creditCards.find((c) => c.id === creditCardId)} />
+    </div>
+  );
+}
+
 export function Step1Upload({ onSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [statementType, setStatementType] = useState<"credit-card" | "debit">("credit-card");
@@ -114,20 +367,8 @@ export function Step1Upload({ onSuccess }: Props) {
   const [bank, setBank] = useState("unknown");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
-  const [people, setPeople] = useState<Person[]>([]);
+  const { creditCards, people } = useCreditCardsAndPeople();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    fetch("/api/credit-cards")
-      .then((r) => r.json())
-      .then((d) => setCreditCards(d.cards ?? []))
-      .catch(() => setCreditCards([]));
-    fetch("/api/people")
-      .then((r) => r.json())
-      .then((d) => setPeople(d.people ?? []))
-      .catch(() => setPeople([]));
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -186,185 +427,38 @@ export function Step1Upload({ onSuccess }: Props) {
       <h2 className="text-lg font-semibold mb-6">Etapa 1 — Upload do Extrato</h2>
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* File upload */}
-        <div>
-          <label htmlFor="billing-file-input" className="block text-sm font-medium mb-1">
-            Arquivo (PDF ou CSV)
-          </label>
-          <button
-            type="button"
-            className="w-full border-2 border-dashed border-muted rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-            {file ? (
-              <p className="text-sm font-medium">{file.name}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Clique para selecionar ou arraste um PDF ou CSV
-              </p>
-            )}
-            <input
-              id="billing-file-input"
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.csv"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </button>
-        </div>
+        <FileDropzone file={file} onSelect={setFile} inputRef={fileInputRef} />
 
         {/* Statement type */}
-        <fieldset>
-          <legend className="block text-sm font-medium mb-2">Tipo de Extrato</legend>
-          <div className="flex gap-4">
-            {(["credit-card", "debit"] as const).map((type) => (
-              <label key={type} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="statementType"
-                  value={type}
-                  checked={statementType === type}
-                  onChange={() => setStatementType(type)}
-                  className="accent-primary"
-                />
-                <span className="text-sm">
-                  {type === "credit-card" ? "Cartão de Crédito" : "Débito"}
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <StatementTypeFieldset statementType={statementType} onChange={setStatementType} />
 
         {/* Credit card selector */}
         {statementType === "credit-card" && (
-          <div>
-            <label htmlFor="billing-credit-card" className="block text-sm font-medium mb-1">
-              Cartão de Crédito
-            </label>
-            <select
-              id="billing-credit-card"
-              value={creditCardId}
-              onChange={(e) => setCreditCardId(e.target.value)}
-              className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-            >
-              <option value="">Selecione um cartão</option>
-              {creditCards.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            {creditCards.length === 0 && (
-              <p className="text-xs text-amber-600 mt-1">Não foi possível carregar cartões.</p>
-            )}
-          </div>
+          <CreditCardSelect
+            creditCardId={creditCardId}
+            creditCards={creditCards}
+            onChange={setCreditCardId}
+          />
         )}
 
         {/* Person */}
-        <div>
-          <label htmlFor="billing-person" className="block text-sm font-medium mb-1">
-            Pessoa
-          </label>
-          <select
-            id="billing-person"
-            value={personId}
-            onChange={(e) => setPersonId(e.target.value)}
-            className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-          >
-            <option value="">Selecione uma pessoa</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          {people.length === 0 && (
-            <p className="text-xs text-amber-600 mt-1">Não foi possível carregar pessoas.</p>
-          )}
-        </div>
+        <PersonSelect personId={personId} people={people} onChange={setPersonId} />
 
         {/* Month / Year */}
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label htmlFor="billing-month" className="block text-sm font-medium mb-1">
-              Mês
-            </label>
-            <select
-              id="billing-month"
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-              className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-            >
-              {[
-                "Jan",
-                "Fev",
-                "Mar",
-                "Abr",
-                "Mai",
-                "Jun",
-                "Jul",
-                "Ago",
-                "Set",
-                "Out",
-                "Nov",
-                "Dez",
-              ].map((m, i) => (
-                <option key={m} value={i + 1}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label htmlFor="billing-year" className="block text-sm font-medium mb-1">
-              Ano
-            </label>
-            <input
-              id="billing-year"
-              type="number"
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-              min={2000}
-              max={2100}
-              className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-            />
-          </div>
-        </div>
+        <MonthYearFields
+          month={month}
+          year={year}
+          onMonthChange={setMonth}
+          onYearChange={setYear}
+        />
 
         {/* Bank hint */}
-        <div>
-          <label htmlFor="billing-bank" className="block text-sm font-medium mb-1">
-            Banco (opcional)
-          </label>
-          <select
-            id="billing-bank"
-            value={bank}
-            onChange={(e) => setBank(e.target.value)}
-            className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-          >
-            {BANK_OPTIONS.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
-          {(() => {
-            const selectedCard = creditCards.find((c) => c.id === creditCardId);
-            const inferredBank = selectedCard
-              ? inferBankFromCardName(selectedCard.name)
-              : "unknown";
-            if (bank !== "unknown" && inferredBank !== "unknown" && bank !== inferredBank) {
-              return (
-                <p className="text-xs text-amber-500 mt-1">
-                  Cartão sugere {BANK_LABELS[inferredBank] ?? inferredBank} — banco selecionado pode
-                  não corresponder.
-                </p>
-              );
-            }
-            return null;
-          })()}
-        </div>
+        <BankSelectField
+          bank={bank}
+          creditCardId={creditCardId}
+          creditCards={creditCards}
+          onChange={setBank}
+        />
 
         {error && (
           <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">

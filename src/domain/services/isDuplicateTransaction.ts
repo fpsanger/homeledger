@@ -17,7 +17,9 @@ export function findDuplicateTransaction(
 ): TransactionRecord | null {
   if (amount === null || date === null) return null;
 
-  const matches = existing.filter((t) => t.type === type && t.amount === amount && withinDays(t.date, date));
+  const matches = existing.filter(
+    (t) => t.type === type && t.amount === amount && withinDays(t.date, date),
+  );
   if (matches.length === 0) return null;
 
   const targetMs = new Date(date).getTime();

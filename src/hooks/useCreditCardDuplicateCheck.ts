@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { findDuplicateCreditCardPurchase } from "../domain/services/isDuplicateCreditCardPurchase";
 import type { CreditCardPurchaseRecord } from "../domain/repositories/ICreditCardPurchaseRepository";
+import { findDuplicateCreditCardPurchase } from "../domain/services/isDuplicateCreditCardPurchase";
 
 export function useCreditCardDuplicateCheck(
   amount: number | null,
@@ -13,6 +13,7 @@ export function useCreditCardDuplicateCheck(
   const [purchases, setPurchases] = useState<CreditCardPurchaseRecord[]>([]);
 
   useEffect(() => {
+    void refreshKey;
     const d = date ? new Date(date) : new Date();
     const months = [-1, 0, 1].map((offset) => {
       const m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1));

@@ -10,7 +10,12 @@ type Props = {
 
 export function PageHeader({ eyebrow, title, description, className, children }: Props) {
   return (
-    <div className={cn("flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8", className)}>
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8",
+        className,
+      )}
+    >
       <div className="flex flex-col gap-1">
         {eyebrow && (
           <p className="text-xs font-semibold tracking-widest uppercase text-primary/70">

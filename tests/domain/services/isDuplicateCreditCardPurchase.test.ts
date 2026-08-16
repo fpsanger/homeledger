@@ -1,5 +1,5 @@
-import { findDuplicateCreditCardPurchase } from "../../../src/domain/services/isDuplicateCreditCardPurchase";
 import type { CreditCardPurchaseRecord } from "../../../src/domain/repositories/ICreditCardPurchaseRepository";
+import { findDuplicateCreditCardPurchase } from "../../../src/domain/services/isDuplicateCreditCardPurchase";
 
 function makePurchase(overrides: Partial<CreditCardPurchaseRecord> = {}): CreditCardPurchaseRecord {
   return {

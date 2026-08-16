@@ -74,7 +74,13 @@ export interface ICreditCardPurchaseRepository {
   deleteInstallment(installmentId: string): Promise<void>;
   findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
   updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void>;
-  findAllPurchasesWithInstallments(personId?: string): Promise<CreditCardPurchaseWithInstallments[]>;
-  findPurchasesByPersonAndMonth(personId: string, year: number, month: number): Promise<CreditCardPurchaseRecord[]>;
+  findAllPurchasesWithInstallments(
+    personId?: string,
+  ): Promise<CreditCardPurchaseWithInstallments[]>;
+  findPurchasesByPersonAndMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<CreditCardPurchaseRecord[]>;
   findPurchaseById(id: string): Promise<CreditCardPurchaseRecord | null>;
 }

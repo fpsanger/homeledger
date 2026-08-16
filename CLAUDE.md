@@ -180,3 +180,87 @@ Rules:
 - IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
 - For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## 12. Agent Development Workflow
+
+For non-trivial features, domain changes, financial-rule changes, or database changes, use the agent workflow below.
+
+### Planning
+
+Before implementation, use the `architect` agent.
+
+The architect is read-only and must:
+
+- understand the requirement
+- inspect current behavior
+- identify affected layers
+- identify business-rule impact
+- identify database impact
+- identify required tests
+- identify risks
+- produce an implementation plan
+
+Do not implement until the plan has:
+
+`PLAN STATUS: READY`
+
+For meaningful architectural or business-rule decisions, human approval should happen before implementation.
+
+### Implementation
+
+Implementation may be performed by an external implementation agent such as Codex.
+
+The approved architect plan is the implementation contract.
+
+Implementation agents must not silently:
+
+- change architecture
+- introduce new business rules
+- expand scope
+- perform unrelated refactors
+
+If the plan is invalid or incomplete, report the conflict instead of improvising a new architecture.
+
+### Testing
+
+After domain or financial behavior changes, use the `test-writer` agent when additional behavioral coverage is required.
+
+The test writer must derive expected behavior from `SPEC.md`, not merely from production implementation.
+
+### Domain Review
+
+After domain or financial changes, use the `domain-reviewer`.
+
+The domain reviewer is read-only.
+
+It validates:
+
+- business-rule correctness
+- financial integrity
+- Clean Architecture
+- domain purity
+- relevant test coverage
+
+A domain review fails when a BLOCKER or HIGH finding exists.
+
+### Technical Review
+
+Technical review should preferably be performed in a context separate from the implementation context.
+
+Review for:
+
+- bugs
+- regressions
+- architecture violations
+- unnecessary complexity
+- missing validation
+- inefficient database access
+- security issues
+- missing tests
+
+### Quality Gate
+
+Before considering implementation complete run:
+
+```bash
+npm run quality

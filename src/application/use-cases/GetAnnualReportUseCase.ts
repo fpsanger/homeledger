@@ -1,7 +1,7 @@
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { IRecurringTransactionRepository } from "../../domain/repositories/IRecurringTransactionRepository";
 import type { ITransactionRepository } from "../../domain/repositories/ITransactionRepository";
-import { buildAnnualReport, type AnnualReportResult } from "../../domain/services/AnnualReport";
+import { type AnnualReportResult, buildAnnualReport } from "../../domain/services/AnnualReport";
 
 type Input = {
   year: number;

@@ -1,5 +1,9 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ANNUAL_CARDS = ["a", "b", "c"];
+const ANNUAL_CARD_ROWS = ["a", "b", "c", "d"];
+const CHART_CARDS = ["a", "b", "c"];
 
 function StatCardSkeleton() {
   return (
@@ -41,8 +45,8 @@ export default function DashboardLoading() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-border p-4 flex flex-col gap-3">
+            {ANNUAL_CARDS.map((card) => (
+              <div key={card} className="rounded-xl border border-border p-4 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-col gap-1.5">
                     <Skeleton className="h-3 w-16" />
@@ -51,8 +55,8 @@ export default function DashboardLoading() {
                   <Skeleton className="h-4 w-4 rounded-full" />
                 </div>
                 <div className="flex flex-col gap-1.5 pt-2 border-t border-border">
-                  {Array.from({ length: 4 }).map((_, j) => (
-                    <div key={j} className="flex items-center justify-between">
+                  {ANNUAL_CARD_ROWS.map((row) => (
+                    <div key={row} className="flex items-center justify-between">
                       <Skeleton className="h-3 w-8" />
                       <Skeleton className="h-3 w-16" />
                     </div>
@@ -66,8 +70,8 @@ export default function DashboardLoading() {
 
       {/* Chart cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} className="flex flex-col gap-0">
+        {CHART_CARDS.map((card) => (
+          <Card key={card} className="flex flex-col gap-0">
             <CardHeader className="pb-2">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-5 w-32 mt-1" />

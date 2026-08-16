@@ -1,5 +1,3 @@
-import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
-
 export type InstallmentDraft = {
   personId: string;
   installmentNumber: number;

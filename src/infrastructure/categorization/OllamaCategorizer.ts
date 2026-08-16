@@ -1,4 +1,4 @@
-import type { AvailableCategory, CategorySuggestion, ICategorizer } from "./types"
+import type { AvailableCategory, CategorySuggestion, ICategorizer } from "./types";
 
 const OLLAMA_FORMAT_SCHEMA = {
   type: "object",
@@ -6,7 +6,7 @@ const OLLAMA_FORMAT_SCHEMA = {
     categoryId: { type: ["string", "null"] },
   },
   required: ["categoryId"],
-}
+};
 
 const SYSTEM_PROMPT = `You are a Brazilian expense categorizer.
 
@@ -31,13 +31,18 @@ Common examples:
 - Academia, Decathlon => saúde, esporte or academia
 
 Output:
-{"categoryId":"one-category-id"}`
+{"categoryId":"one-category-id"}`;
 
 function normalizeCategoryId(categoryId: string | null): string | null {
-  if (categoryId === null) return null
-  const normalized = categoryId.trim()
-  if (!normalized || normalized.toLowerCase() === "null" || normalized.toLowerCase() === "undefined") return null
-  return normalized
+  if (categoryId === null) return null;
+  const normalized = categoryId.trim();
+  if (
+    !normalized ||
+    normalized.toLowerCase() === "null" ||
+    normalized.toLowerCase() === "undefined"
+  )
+    return null;
+  return normalized;
 }
 
 export class OllamaCategorizer implements ICategorizer {
@@ -53,8 +58,9 @@ export class OllamaCategorizer implements ICategorizer {
     const userContent = JSON.stringify({
       expense: { description },
       categories,
-      instruction: "Choose the closest category. Prefer a category over null. Return only categoryId.",
-    })
+      instruction:
+        "Choose the closest category. Prefer a category over null. Return only categoryId.",
+    });
 
     try {
       const response = await fetch(`${this.ollamaBaseUrl}/api/chat`, {
@@ -70,21 +76,21 @@ export class OllamaCategorizer implements ICategorizer {
             { role: "user", content: userContent },
           ],
         }),
-      })
+      });
 
-      if (!response.ok) return null
+      if (!response.ok) return null;
 
-      const data = await response.json()
-      const content = data?.message?.content
-      if (!content) return null
+      const data = await response.json();
+      const content = data?.message?.content;
+      if (!content) return null;
 
-      const parsed = JSON.parse(content.trim())
-      const categoryId = normalizeCategoryId(parsed?.categoryId ?? null)
-      if (!categoryId) return { categoryId: null, confidence: 0, source: "ai" }
+      const parsed = JSON.parse(content.trim());
+      const categoryId = normalizeCategoryId(parsed?.categoryId ?? null);
+      if (!categoryId) return { categoryId: null, confidence: 0, source: "ai" };
 
-      return { categoryId, confidence: 0.7, source: "ai" }
+      return { categoryId, confidence: 0.7, source: "ai" };
     } catch {
-      return null
+      return null;
     }
   }
 }

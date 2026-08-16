@@ -57,7 +57,9 @@ describe("buildAnnualReport", () => {
   });
 
   it("includes installment amounts in expenses", () => {
-    const installments = [makeInstallment({ id: "i1", amount: 200, transactionYear: 2025, transactionMonth: 2 })];
+    const installments = [
+      makeInstallment({ id: "i1", amount: 200, transactionYear: 2025, transactionMonth: 2 }),
+    ];
     const result = buildAnnualReport({ transactions: [], installments, year: 2025 });
     expect(result.months[1].expenses).toBe(200);
   });
@@ -76,7 +78,9 @@ describe("buildAnnualReport", () => {
       makeTransaction({ id: "t1", type: "INCOME", amount: 2000, date: new Date("2025-01-01") }),
       makeTransaction({ id: "t2", type: "EXPENSE", amount: 800, date: new Date("2025-01-15") }),
     ];
-    const installments = [makeInstallment({ id: "i1", amount: 200, transactionYear: 2025, transactionMonth: 1 })];
+    const installments = [
+      makeInstallment({ id: "i1", amount: 200, transactionYear: 2025, transactionMonth: 1 }),
+    ];
     const result = buildAnnualReport({ transactions, installments, year: 2025 });
     expect(result.totalIncome).toBe(2000);
     expect(result.totalExpenses).toBe(1000);
@@ -119,8 +123,18 @@ describe("buildAnnualReport", () => {
 
   it("sums INVESTMENT transactions per month in investments field", () => {
     const transactions = [
-      makeTransaction({ id: "t1", type: "INVESTMENT" as const, amount: 500, date: new Date("2025-03-01") }),
-      makeTransaction({ id: "t2", type: "INVESTMENT" as const, amount: 300, date: new Date("2025-03-15") }),
+      makeTransaction({
+        id: "t1",
+        type: "INVESTMENT" as const,
+        amount: 500,
+        date: new Date("2025-03-01"),
+      }),
+      makeTransaction({
+        id: "t2",
+        type: "INVESTMENT" as const,
+        amount: 300,
+        date: new Date("2025-03-15"),
+      }),
     ];
     const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
     expect(result.months[2].investments).toBe(800);
@@ -128,8 +142,20 @@ describe("buildAnnualReport", () => {
 
   it("groups incomeByPerson per month", () => {
     const transactions = [
-      makeTransaction({ id: "t1", personId: "p1", type: "INCOME", amount: 1000, date: new Date("2025-03-01") }),
-      makeTransaction({ id: "t2", personId: "p2", type: "INCOME", amount: 600, date: new Date("2025-03-15") }),
+      makeTransaction({
+        id: "t1",
+        personId: "p1",
+        type: "INCOME",
+        amount: 1000,
+        date: new Date("2025-03-01"),
+      }),
+      makeTransaction({
+        id: "t2",
+        personId: "p2",
+        type: "INCOME",
+        amount: 600,
+        date: new Date("2025-03-15"),
+      }),
     ];
     const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
     expect(result.months[2].incomeByPerson).toEqual({ p1: 1000, p2: 600 });
@@ -137,10 +163,22 @@ describe("buildAnnualReport", () => {
 
   it("groups expensesByPerson per month including installments", () => {
     const transactions = [
-      makeTransaction({ id: "t1", personId: "p1", type: "EXPENSE", amount: 300, date: new Date("2025-04-01") }),
+      makeTransaction({
+        id: "t1",
+        personId: "p1",
+        type: "EXPENSE",
+        amount: 300,
+        date: new Date("2025-04-01"),
+      }),
     ];
     const installments = [
-      makeInstallment({ id: "i1", amount: 150, transactionYear: 2025, transactionMonth: 4, personId: "p2" }),
+      makeInstallment({
+        id: "i1",
+        amount: 150,
+        transactionYear: 2025,
+        transactionMonth: 4,
+        personId: "p2",
+      }),
     ];
     const result = buildAnnualReport({ transactions, installments, year: 2025 });
     expect(result.months[3].expensesByPerson).toEqual({ p1: 300, p2: 150 });
@@ -148,9 +186,27 @@ describe("buildAnnualReport", () => {
 
   it("groups investmentsByPerson per month", () => {
     const transactions = [
-      makeTransaction({ id: "t1", personId: "p1", type: "INVESTMENT" as const, amount: 500, date: new Date("2025-03-01") }),
-      makeTransaction({ id: "t2", personId: "p2", type: "INVESTMENT" as const, amount: 300, date: new Date("2025-03-15") }),
-      makeTransaction({ id: "t3", personId: "p1", type: "INVESTMENT" as const, amount: 200, date: new Date("2025-03-20") }),
+      makeTransaction({
+        id: "t1",
+        personId: "p1",
+        type: "INVESTMENT" as const,
+        amount: 500,
+        date: new Date("2025-03-01"),
+      }),
+      makeTransaction({
+        id: "t2",
+        personId: "p2",
+        type: "INVESTMENT" as const,
+        amount: 300,
+        date: new Date("2025-03-15"),
+      }),
+      makeTransaction({
+        id: "t3",
+        personId: "p1",
+        type: "INVESTMENT" as const,
+        amount: 200,
+        date: new Date("2025-03-20"),
+      }),
     ];
     const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
     expect(result.months[2].investmentsByPerson).toEqual({ p1: 700, p2: 300 });
@@ -158,8 +214,18 @@ describe("buildAnnualReport", () => {
 
   it("computes totalInvestments across the year", () => {
     const transactions = [
-      makeTransaction({ id: "t1", type: "INVESTMENT" as const, amount: 1000, date: new Date("2025-01-01") }),
-      makeTransaction({ id: "t2", type: "INVESTMENT" as const, amount: 500, date: new Date("2025-06-01") }),
+      makeTransaction({
+        id: "t1",
+        type: "INVESTMENT" as const,
+        amount: 1000,
+        date: new Date("2025-01-01"),
+      }),
+      makeTransaction({
+        id: "t2",
+        type: "INVESTMENT" as const,
+        amount: 500,
+        date: new Date("2025-06-01"),
+      }),
     ];
     const result = buildAnnualReport({ transactions, installments: [], year: 2025 });
     expect(result.totalInvestments).toBe(1500);

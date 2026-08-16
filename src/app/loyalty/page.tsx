@@ -69,14 +69,14 @@ export default async function LoyaltyPage() {
   const cookieStore = await cookies();
   const globalPersonId = cookieStore.get("global-person-id")?.value ?? "";
 
-  const [programs, transfers] = await Promise.all([
-    getLoyaltyPrograms(),
-    getTransfers(),
-  ]);
+  const [programs, transfers] = await Promise.all([getLoyaltyPrograms(), getTransfers()]);
 
   const summaries = Object.fromEntries(
     await Promise.all(
-      programs.map(async (p) => [p.id, await getProgramSummary(p.id, globalPersonId || undefined)] as [string, Summary]),
+      programs.map(
+        async (p) =>
+          [p.id, await getProgramSummary(p.id, globalPersonId || undefined)] as [string, Summary],
+      ),
     ),
   );
 

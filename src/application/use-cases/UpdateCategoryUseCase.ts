@@ -1,8 +1,8 @@
 import { createCategory } from "../../domain/entities/Category";
 import { DuplicateCategoryError } from "../../domain/errors";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../domain/repositories/ICategoryRepository";
 
 type Input = {
@@ -33,7 +33,8 @@ export async function updateCategoryUseCase(
 
     let cur: CategoryRecord | null = parentRecord;
     while (cur) {
-      if (cur.id === input.id) throw new Error("Cannot move category under one of its own descendants");
+      if (cur.id === input.id)
+        throw new Error("Cannot move category under one of its own descendants");
       cur = cur.parentId ? await repo.findById(cur.parentId) : null;
     }
 

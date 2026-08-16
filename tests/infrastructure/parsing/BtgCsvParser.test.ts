@@ -1,5 +1,8 @@
+import type {
+  InstallmentBillingItem,
+  TransactionBillingItem,
+} from "../../../src/domain/entities/BillingItem";
 import { parseBtgCsv } from "../../../src/infrastructure/parsing/BtgCsvParser";
-import type { InstallmentBillingItem, TransactionBillingItem } from "../../../src/domain/entities/BillingItem";
 
 // BTG CSV uses ',' as delimiter.
 // Billing month/year extracted from header line "Junho/2026".
@@ -28,12 +31,7 @@ function makeRow(
 }
 
 function buildCsv(rows: string[], month = "Junho", year = "2026"): string {
-  return [
-    makeHeader(month, year),
-    makeSectionHeader(),
-    COLUMN_HEADER,
-    ...rows,
-  ].join("\n");
+  return [makeHeader(month, year), makeSectionHeader(), COLUMN_HEADER, ...rows].join("\n");
 }
 
 describe("parseBtgCsv", () => {
@@ -52,7 +50,9 @@ describe("parseBtgCsv", () => {
   });
 
   test("2. parses installment with (X/Y) → InstallmentBillingItem", () => {
-    const csv = buildCsv([makeRow("09/06", "Amazon Prime (12/12)", "R$ 13.90", "Parcela sem juros")]);
+    const csv = buildCsv([
+      makeRow("09/06", "Amazon Prime (12/12)", "R$ 13.90", "Parcela sem juros"),
+    ]);
     const items = parseBtgCsv(csv);
     expect(items).toHaveLength(1);
     const item = items[0] as InstallmentBillingItem;
@@ -60,7 +60,7 @@ describe("parseBtgCsv", () => {
     expect(item.description).toBe("Amazon Prime");
     expect(item.installmentNumber).toBe(12);
     expect(item.totalInstallments).toBe(12);
-    expect(item.amount).toBeCloseTo(13.90);
+    expect(item.amount).toBeCloseTo(13.9);
     expect(item.date.getUTCMonth()).toBe(5); // June = 5
   });
 
@@ -123,7 +123,7 @@ describe("parseBtgCsv", () => {
     const csv = buildCsv([makeRow("31/05", "Hubla Anajords", "R$ 898.50")]);
     const items = parseBtgCsv(csv);
     expect(items).toHaveLength(1);
-    expect(items[0].amount).toBeCloseTo(898.50);
+    expect(items[0].amount).toBeCloseTo(898.5);
     expect(items[0].description).toBe("Hubla Anajords");
   });
 });

@@ -29,7 +29,7 @@ function formatPts(n: number) {
 
 function bonusPercent(sent: number, received: number) {
   if (sent <= 0) return "0%";
-  const pct = Math.round(((received / sent) - 1) * 100);
+  const pct = Math.round((received / sent - 1) * 100);
   return `${pct}%`;
 }
 
@@ -65,13 +65,17 @@ export function LoyaltyTransferTable({ transfers, programs }: Props) {
                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                   {formatDate(t.transferDate)}
                 </td>
-                <td className="px-4 py-3 font-medium">{nameMap[t.fromProgramId] ?? t.fromProgramId}</td>
+                <td className="px-4 py-3 font-medium">
+                  {nameMap[t.fromProgramId] ?? t.fromProgramId}
+                </td>
                 <td className="px-4 py-3 font-medium">{nameMap[t.toProgramId] ?? t.toProgramId}</td>
                 <td className="px-4 py-3 text-right font-mono">{formatPts(t.pointsSent)}</td>
                 <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">
                   +{bonusPercent(t.pointsSent, t.pointsReceived)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono font-semibold">{formatPts(t.pointsReceived)}</td>
+                <td className="px-4 py-3 text-right font-mono font-semibold">
+                  {formatPts(t.pointsReceived)}
+                </td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">{t.description ?? ""}</td>
               </tr>
             ))}
@@ -84,7 +88,8 @@ export function LoyaltyTransferTable({ transfers, programs }: Props) {
           <div key={t.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium truncate">
-                {nameMap[t.fromProgramId] ?? t.fromProgramId} → {nameMap[t.toProgramId] ?? t.toProgramId}
+                {nameMap[t.fromProgramId] ?? t.fromProgramId} →{" "}
+                {nameMap[t.toProgramId] ?? t.toProgramId}
               </span>
               <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
                 {formatDate(t.transferDate)}

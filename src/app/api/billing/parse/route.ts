@@ -1,16 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { parseStatementUseCase } from "../../../../application/use-cases/ParseStatementUseCase";
 
 export const runtime = "nodejs";
+
 import { reconcileStatementUseCase } from "../../../../application/use-cases/ReconcileStatementUseCase";
-import { createHybridStatementParser } from "../../../../infrastructure/parsing/HybridStatementParser";
-import { parseC6Csv } from "../../../../infrastructure/parsing/C6CsvParser";
+import type { BillingItem } from "../../../../domain/entities/BillingItem";
+import { InvalidBillingItemError } from "../../../../domain/errors";
+import {
+  parseBillingText,
+  type SupportedBank,
+} from "../../../../infrastructure/parsing/BillingRegexParser";
 import { parseBradescoCsv } from "../../../../infrastructure/parsing/BradescoCsvParser";
 import { parseBtgCsv } from "../../../../infrastructure/parsing/BtgCsvParser";
-import { parseBillingText, type SupportedBank } from "../../../../infrastructure/parsing/BillingRegexParser";
-import type { BillingItem } from "../../../../domain/entities/BillingItem";
+import { parseC6Csv } from "../../../../infrastructure/parsing/C6CsvParser";
+import { createHybridStatementParser } from "../../../../infrastructure/parsing/HybridStatementParser";
 import { createRepositories } from "../../_lib/repositories";
-import { InvalidBillingItemError } from "../../../../domain/errors";
 
 function isCSVFile(file: File): boolean {
   return (
@@ -21,10 +25,7 @@ function isCSVFile(file: File): boolean {
 }
 
 function isPDFFile(file: File): boolean {
-  return (
-    file.name.toLowerCase().endsWith(".pdf") ||
-    file.type === "application/pdf"
-  );
+  return file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
 }
 
 export async function POST(request: NextRequest) {
@@ -61,12 +62,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required field: personId" }, { status: 400 });
     }
     if (!yearStr || !monthStr) {
-      return NextResponse.json({ error: "Missing required fields: year and month" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields: year and month" },
+        { status: 400 },
+      );
     }
     const year = parseInt(yearStr, 10);
     const month = parseInt(monthStr, 10);
     if (Number.isNaN(year) || Number.isNaN(month)) {
-      return NextResponse.json({ error: "Invalid year or month: must be numbers" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid year or month: must be numbers" },
+        { status: 400 },
+      );
     }
     if (month < 1 || month > 12) {
       return NextResponse.json({ error: "Month must be between 1 and 12" }, { status: 400 });
@@ -76,7 +83,10 @@ export async function POST(request: NextRequest) {
     }
     if (statementType === "credit-card" && !creditCardId) {
       return NextResponse.json(
-        { error: "Missing required field: creditCardId (required when statementType is 'credit-card')" },
+        {
+          error:
+            "Missing required field: creditCardId (required when statementType is 'credit-card')",
+        },
         { status: 400 },
       );
     }
@@ -100,7 +110,11 @@ export async function POST(request: NextRequest) {
       const isBradesco = detectedBank === "bradesco";
       const encoding = "utf-8";
       const csvText = new TextDecoder(encoding).decode(buffer);
-      items = isBtg ? parseBtgCsv(csvText) : isBradesco ? parseBradescoCsv(csvText) : parseC6Csv(csvText);
+      items = isBtg
+        ? parseBtgCsv(csvText)
+        : isBradesco
+          ? parseBradescoCsv(csvText)
+          : parseC6Csv(csvText);
     } else {
       let text: string;
       try {
@@ -161,10 +175,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ items: reconciledItems, detectedBank });
   } catch (err) {
     if (err instanceof InvalidBillingItemError) {
-      return NextResponse.json(
-        { error: "Invalid data in billing statement" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid data in billing statement" }, { status: 400 });
     }
     console.error("Billing parse error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

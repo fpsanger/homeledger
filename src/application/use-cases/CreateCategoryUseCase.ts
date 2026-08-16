@@ -1,8 +1,8 @@
 import { createCategory } from "../../domain/entities/Category";
 import { DuplicateCategoryError } from "../../domain/errors";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../domain/repositories/ICategoryRepository";
 
 type Input = {

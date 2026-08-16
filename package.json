@@ -8,9 +8,12 @@
     "start": "next start",
     "lint": "biome check src tests",
     "format": "biome format --write src tests",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:coverage": "jest --coverage",
+    "quality": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build"
   },
   "jest": {
     "preset": "ts-jest",

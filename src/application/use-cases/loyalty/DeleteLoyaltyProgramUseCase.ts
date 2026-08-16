@@ -1,6 +1,6 @@
+import { NotFoundError } from "../../../domain/errors";
 import type { ILoyaltyProgramRepository } from "../../../domain/repositories/ILoyaltyProgramRepository";
 import type { ILoyaltyTransactionRepository } from "../../../domain/repositories/ILoyaltyTransactionRepository";
-import { NotFoundError } from "../../../domain/errors";
 
 export async function deleteLoyaltyProgramUseCase(
   id: string,

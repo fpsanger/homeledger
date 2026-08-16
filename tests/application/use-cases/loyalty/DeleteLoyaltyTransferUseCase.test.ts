@@ -1,7 +1,13 @@
 import { deleteLoyaltyTransferUseCase } from "../../../../src/application/use-cases/loyalty/DeleteLoyaltyTransferUseCase";
-import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../../../src/domain/repositories/ILoyaltyTransferRepository";
-import type { ILoyaltyTransactionRepository, LoyaltyTransactionRecord } from "../../../../src/domain/repositories/ILoyaltyTransactionRepository";
 import { NotFoundError } from "../../../../src/domain/errors";
+import type {
+  ILoyaltyTransactionRepository,
+  LoyaltyTransactionRecord,
+} from "../../../../src/domain/repositories/ILoyaltyTransactionRepository";
+import type {
+  ILoyaltyTransferRepository,
+  LoyaltyTransferRecord,
+} from "../../../../src/domain/repositories/ILoyaltyTransferRepository";
 
 function makeTransferRecord(overrides: Partial<LoyaltyTransferRecord> = {}): LoyaltyTransferRecord {
   return {
@@ -20,7 +26,10 @@ function makeTransferRecord(overrides: Partial<LoyaltyTransferRecord> = {}): Loy
   };
 }
 
-function makeTx(overrides: Partial<LoyaltyTransactionRecord> & Pick<LoyaltyTransactionRecord, "type" | "id" | "programId">): LoyaltyTransactionRecord {
+function makeTx(
+  overrides: Partial<LoyaltyTransactionRecord> &
+    Pick<LoyaltyTransactionRecord, "type" | "id" | "programId">,
+): LoyaltyTransactionRecord {
   return {
     personId: null,
     transferId: "transfer-id",
@@ -45,7 +54,9 @@ function makeTransferRepo(existing: LoyaltyTransferRecord | null): ILoyaltyTrans
   };
 }
 
-function makeTransactionRepo(transferTxs: LoyaltyTransactionRecord[]): ILoyaltyTransactionRepository {
+function makeTransactionRepo(
+  transferTxs: LoyaltyTransactionRecord[],
+): ILoyaltyTransactionRepository {
   return {
     save: jest.fn(),
     findById: jest.fn(),
@@ -76,7 +87,9 @@ describe("deleteLoyaltyTransferUseCase", () => {
     const transferRepo = makeTransferRepo(null);
     const transactionRepo = makeTransactionRepo([]);
 
-    await expect(deleteLoyaltyTransferUseCase("missing-id", transferRepo, transactionRepo)).rejects.toThrow(NotFoundError);
+    await expect(
+      deleteLoyaltyTransferUseCase("missing-id", transferRepo, transactionRepo),
+    ).rejects.toThrow(NotFoundError);
     expect(transactionRepo.delete).not.toHaveBeenCalled();
     expect(transferRepo.delete).not.toHaveBeenCalled();
   });

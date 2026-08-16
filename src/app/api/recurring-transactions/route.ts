@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createRecurringTransactionUseCase } from "../../../application/use-cases/CreateRecurringTransactionUseCase";
 import type { RecurringTransactionRecord } from "../../../domain/repositories/IRecurringTransactionRepository";
 import type { TransactionRecord } from "../../../domain/repositories/ITransactionRepository";

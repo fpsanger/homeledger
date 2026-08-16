@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { getCreditCardBillUseCase } from "../../../../application/use-cases/GetCreditCardBillUseCase";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
@@ -6,8 +6,8 @@ import { createRepositories } from "../../_lib/repositories";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const year = parseInt(searchParams.get("year") ?? "");
-    const month = parseInt(searchParams.get("month") ?? "");
+    const year = parseInt(searchParams.get("year") ?? "", 10);
+    const month = parseInt(searchParams.get("month") ?? "", 10);
     if (!year || !month)
       return Response.json({ error: "year and month are required" }, { status: 400 });
 

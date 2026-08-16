@@ -1,6 +1,6 @@
 import { createCreditCardUseCase } from "../../../src/application/use-cases/CreateCreditCardUseCase";
-import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
 import type { CreditCardRecord } from "../../../src/domain/entities/CreditCard";
+import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
 
 function makeRepo(overrides: Partial<ICreditCardRepository> = {}): ICreditCardRepository {
   return {
@@ -35,6 +35,7 @@ describe("createCreditCardUseCase", () => {
         name: "Nubank",
         closureType: "FIXED",
         fixedClosureDay: 25,
+        fixedClosurePreviousMonth: false,
         dueDayOfMonth: 10,
         alwaysNextMonth: false,
         closureNextMonth: false,
@@ -53,6 +54,7 @@ describe("createCreditCardUseCase", () => {
           name: "",
           closureType: "FIXED",
           fixedClosureDay: 25,
+          fixedClosurePreviousMonth: false,
           dueDayOfMonth: 10,
           alwaysNextMonth: false,
           closureNextMonth: false,

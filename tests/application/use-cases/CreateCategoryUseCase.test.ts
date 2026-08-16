@@ -1,7 +1,7 @@
 import { createCategoryUseCase } from "../../../src/application/use-cases/CreateCategoryUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 
 const makeRepo = (

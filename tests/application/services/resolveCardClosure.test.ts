@@ -1,6 +1,9 @@
 import { resolveClosureForDate } from "../../../src/application/services/resolveCardClosure";
+import type {
+  CreditCardClosureRecord,
+  CreditCardRecord,
+} from "../../../src/domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
-import type { CreditCardClosureRecord, CreditCardRecord } from "../../../src/domain/entities/CreditCard";
 
 const FIXED_CARD: CreditCardRecord = {
   id: "card-1",
@@ -49,7 +52,11 @@ function makeCardRepo(
 
 describe("resolveClosureForDate", () => {
   it("resolves a FIXED card's closure directly from the card", async () => {
-    const result = await resolveClosureForDate(FIXED_CARD, new Date("2026-05-04"), makeCardRepo({}));
+    const result = await resolveClosureForDate(
+      FIXED_CARD,
+      new Date("2026-05-04"),
+      makeCardRepo({}),
+    );
     expect(result).toEqual({
       closureDay: 10,
       closureInPreviousMonth: false,
@@ -68,8 +75,21 @@ describe("resolveClosureForDate", () => {
   });
 
   it("resolves a VARIABLE card's closure from the current month's record", async () => {
-    const closures = { 5: { id: "c5", creditCardId: "card-1", year: 2026, month: 5, closureDay: 28, previousMonth: false } };
-    const result = await resolveClosureForDate(VARIABLE_CARD, new Date("2026-05-04"), makeCardRepo(closures));
+    const closures = {
+      5: {
+        id: "c5",
+        creditCardId: "card-1",
+        year: 2026,
+        month: 5,
+        closureDay: 28,
+        previousMonth: false,
+      },
+    };
+    const result = await resolveClosureForDate(
+      VARIABLE_CARD,
+      new Date("2026-05-04"),
+      makeCardRepo(closures),
+    );
     expect(result).toEqual({
       closureDay: 28,
       closureInPreviousMonth: false,
@@ -78,8 +98,21 @@ describe("resolveClosureForDate", () => {
   });
 
   it("resolves a VARIABLE card's closure from the next billing month's previousMonth record", async () => {
-    const closures = { 6: { id: "c6", creditCardId: "card-1", year: 2026, month: 6, closureDay: 28, previousMonth: true } };
-    const result = await resolveClosureForDate(VARIABLE_CARD, new Date("2026-05-04"), makeCardRepo(closures));
+    const closures = {
+      6: {
+        id: "c6",
+        creditCardId: "card-1",
+        year: 2026,
+        month: 6,
+        closureDay: 28,
+        previousMonth: true,
+      },
+    };
+    const result = await resolveClosureForDate(
+      VARIABLE_CARD,
+      new Date("2026-05-04"),
+      makeCardRepo(closures),
+    );
     expect(result).toEqual({
       closureDay: 28,
       closureInPreviousMonth: true,

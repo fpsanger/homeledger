@@ -1,7 +1,10 @@
 import { createCreditCardRefundUseCase } from "../../../src/application/use-cases/CreateCreditCardRefundUseCase";
-import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
+import type {
+  CreditCardClosureRecord,
+  CreditCardRecord,
+} from "../../../src/domain/entities/CreditCard";
 import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
-import type { CreditCardRecord, CreditCardClosureRecord } from "../../../src/domain/entities/CreditCard";
+import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
 
 const FIXED_CARD: CreditCardRecord = {
   id: "card-1",
@@ -49,7 +52,9 @@ function makeCardRepo(
 
 function makeRefundRepo(): ICreditCardRefundRepository {
   return {
-    save: jest.fn().mockImplementation((refund) => Promise.resolve({ ...refund, createdAt: new Date() })),
+    save: jest
+      .fn()
+      .mockImplementation((refund) => Promise.resolve({ ...refund, createdAt: new Date() })),
     findByMonth: jest.fn(),
     findByPersonAndMonth: jest.fn(),
     findById: jest.fn(),

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { toast } from "sonner";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -13,28 +14,30 @@ import {
   Receipt,
   Tag,
   Users,
-  ArrowUp,
-  ArrowDown,
-  ArrowUpDown,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { CreditCardRefundForm } from "@/components/credit-cards/CreditCardRefundForm";
+import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 import { Badge } from "@/components/ui/badge";
-import { Select } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
-import { CreditCardRefundForm } from "@/components/credit-cards/CreditCardRefundForm";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getFullPath } from "@/lib/categoryUtils";
 import { formatDatePtBR } from "@/lib/format-date";
 import { formatAmountBR } from "@/lib/utils";
-import { getFullPath } from "@/lib/categoryUtils";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type BillSortKey = "description" | "amount" | "date";
 type BillSortDir = "asc" | "desc";
+
+const SUMMARY_SKELETONS = ["a", "b", "c", "d"];
+const ROW_SKELETONS = ["a", "b", "c", "d", "e"];
 
 function BillSortIcon({
   col,
@@ -294,8 +297,7 @@ function CardInstallmentTableDesktop({
                   {refund.categoryId ? (categoryMap.get(refund.categoryId) ?? "—") : "—"}
                 </td>
                 <td className="px-5 py-3 text-right font-medium text-sm text-green-600 dark:text-green-400">
-                  −{" "}
-                  {refund.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  − {refund.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </td>
                 <td className="px-5 py-3 text-right">
                   <DropdownMenu
@@ -457,8 +459,7 @@ function CardInstallmentTableMobile({
               </span>
               <div className="flex items-center gap-1 shrink-0">
                 <span className="font-semibold text-sm text-green-600 dark:text-green-400">
-                  −{" "}
-                  {refund.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  − {refund.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
                 <DropdownMenu
                   align="right"
@@ -722,7 +723,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
       .then((d) => setEditingPurchase(d.purchase ?? null));
   }, [editingPurchaseId]);
 
-  async function load(y: number, m: number, pid: string) {
+  const load = useCallback(async (y: number, m: number, pid: string) => {
     setLoading(true);
     const params = new URLSearchParams({ year: String(y), month: String(m) });
     if (pid) params.set("personId", pid);
@@ -732,11 +733,11 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
       setBill(data.bill);
     }
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     load(year, month, initialPersonId);
-  }, [year, month, initialPersonId]);
+  }, [year, month, initialPersonId, load]);
 
   function prev() {
     if (month === 1) {
@@ -986,13 +987,13 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
       {loading && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
+            {SUMMARY_SKELETONS.map((s) => (
+              <Skeleton key={s} className="h-20 w-full" />
             ))}
           </div>
           <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+            {ROW_SKELETONS.map((s) => (
+              <Skeleton key={s} className="h-12 w-full" />
             ))}
           </div>
         </div>

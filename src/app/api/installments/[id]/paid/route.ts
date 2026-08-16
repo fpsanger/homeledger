@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { markInstallmentPaidUseCase } from "../../../../../application/use-cases/MarkInstallmentPaidUseCase";
 import { errorResponse } from "../../../_lib/errorResponse";
 import { createRepositories } from "../../../_lib/repositories";

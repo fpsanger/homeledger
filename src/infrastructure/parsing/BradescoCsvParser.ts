@@ -1,8 +1,8 @@
 import type { BillingItem } from "../../domain/entities/BillingItem";
 import {
   createInstallmentBillingItem,
-  createTransactionBillingItem,
   createRefundBillingItem,
+  createTransactionBillingItem,
 } from "../../domain/entities/BillingItem";
 
 const SKIP_DESCRIPTIONS = ["SALDO ANTERIOR", "PAGTO. POR DEB EM C/C"];

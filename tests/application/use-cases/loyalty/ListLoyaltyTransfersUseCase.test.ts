@@ -1,5 +1,8 @@
 import { listLoyaltyTransfersUseCase } from "../../../../src/application/use-cases/loyalty/ListLoyaltyTransfersUseCase";
-import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../../../src/domain/repositories/ILoyaltyTransferRepository";
+import type {
+  ILoyaltyTransferRepository,
+  LoyaltyTransferRecord,
+} from "../../../../src/domain/repositories/ILoyaltyTransferRepository";
 
 const makeRepo = (transfers: LoyaltyTransferRecord[]): ILoyaltyTransferRepository => ({
   save: jest.fn(),

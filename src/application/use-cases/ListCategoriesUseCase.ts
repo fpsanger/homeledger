@@ -1,6 +1,6 @@
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../domain/repositories/ICategoryRepository";
 
 export async function listCategoriesUseCase(repo: ICategoryRepository): Promise<CategoryRecord[]> {

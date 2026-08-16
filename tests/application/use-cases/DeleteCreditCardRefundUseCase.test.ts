@@ -1,6 +1,6 @@
 import { deleteCreditCardRefundUseCase } from "../../../src/application/use-cases/DeleteCreditCardRefundUseCase";
-import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
 import type { CreditCardRefundRecord } from "../../../src/domain/entities/CreditCardRefund";
+import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
 
 const EXISTING: CreditCardRefundRecord = {
   id: "refund-1",

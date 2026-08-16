@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server";
-import { updateLoyaltyTransactionUseCase } from "../../../../../application/use-cases/loyalty/UpdateLoyaltyTransactionUseCase";
+import type { NextRequest } from "next/server";
 import { deleteLoyaltyTransactionUseCase } from "../../../../../application/use-cases/loyalty/DeleteLoyaltyTransactionUseCase";
+import { updateLoyaltyTransactionUseCase } from "../../../../../application/use-cases/loyalty/UpdateLoyaltyTransactionUseCase";
 import { parseDateUTC } from "../../../_lib/date";
 import { errorResponse } from "../../../_lib/errorResponse";
 import { createRepositories } from "../../../_lib/repositories";
@@ -16,7 +16,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         points: body.points,
         date: body.date ? parseDateUTC(body.date) : undefined,
         description: body.description,
-        expiresAt: body.expiresAt !== undefined ? (body.expiresAt ? parseDateUTC(body.expiresAt) : null) : undefined,
+        expiresAt:
+          body.expiresAt !== undefined
+            ? body.expiresAt
+              ? parseDateUTC(body.expiresAt)
+              : null
+            : undefined,
         costBrl: body.costBrl,
         valueBrl: body.valueBrl,
         personId: body.personId,
@@ -29,7 +34,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const { id } = await params;
     const { loyaltyTransaction } = createRepositories();

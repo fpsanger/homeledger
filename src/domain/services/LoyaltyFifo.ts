@@ -65,9 +65,9 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     switch (tx.type) {
       case "PURCHASE":
         balance += tx.points;
-        totalInvested += tx.costBrl!;
+        totalInvested += tx.costBrl ?? 0;
         totalPurchasedPoints += tx.points;
-        lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl! });
+        lots.push({ remainingPoints: tx.points, costBrl: tx.costBrl ?? 0 });
         break;
 
       case "EARN":
@@ -103,8 +103,8 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
         balance -= tx.points;
         const costBrl = consumeLots(lots, tx.points);
         const costPer1kPoints = (costBrl / tx.points) * 1000;
-        const roi = costBrl > 0 ? ((tx.valueBrl! - costBrl) / costBrl) * 100 : null;
-        totalValueRedeemed += tx.valueBrl!;
+        const roi = costBrl > 0 ? (((tx.valueBrl ?? 0) - costBrl) / costBrl) * 100 : null;
+        totalValueRedeemed += tx.valueBrl ?? 0;
         fifoData = { costBrl, costPer1kPoints, roi };
         break;
       }
@@ -130,8 +130,10 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     enriched.push(fifoData !== undefined ? { ...tx, fifoData } : tx);
   }
 
-  const avgCostPer1kPoints = totalPurchasedPoints > 0 ? (totalInvested / totalPurchasedPoints) * 1000 : 0;
-  const overallRoi = totalInvested > 0 ? ((totalValueRedeemed - totalInvested) / totalInvested) * 100 : null;
+  const avgCostPer1kPoints =
+    totalPurchasedPoints > 0 ? (totalInvested / totalPurchasedPoints) * 1000 : 0;
+  const overallRoi =
+    totalInvested > 0 ? ((totalValueRedeemed - totalInvested) / totalInvested) * 100 : null;
 
   return {
     summary: {

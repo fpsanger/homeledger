@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 
@@ -56,18 +55,14 @@ describe("UnifiedTransactionForm — defaultPersonId", () => {
         categories={categories}
         creditCards={creditCards}
         defaultPersonId="p1"
-      />
+      />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("p1");
   });
 
   it("has no person selected when defaultPersonId is omitted", () => {
     render(
-      <UnifiedTransactionForm
-        people={people}
-        categories={categories}
-        creditCards={creditCards}
-      />
+      <UnifiedTransactionForm people={people} categories={categories} creditCards={creditCards} />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("");
   });
@@ -80,8 +75,45 @@ describe("UnifiedTransactionForm — defaultPersonId", () => {
         creditCards={creditCards}
         defaultPersonId="p1"
         initialValues={{ ...baseInitialValues, personId: "p2" }}
-      />
+      />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("p2");
+  });
+});
+
+describe("UnifiedTransactionForm — credit-card closure", () => {
+  it("rejects billing preview when the card closure day was not resolved", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const cardWithoutResolvedClosure = {
+      id: "card-1",
+      name: "Malformed fixed card",
+      closureType: "FIXED" as const,
+      fixedClosureDay: null,
+      fixedClosurePreviousMonth: false,
+      alwaysNextMonth: false,
+      closureNextMonth: false,
+    };
+
+    try {
+      expect(() =>
+        render(
+          <UnifiedTransactionForm
+            people={people}
+            categories={categories}
+            creditCards={[cardWithoutResolvedClosure]}
+            initialValues={{
+              ...baseInitialValues,
+              type: "credit",
+              personId: "p1",
+              amount: "100",
+              date: "2026-01-15",
+              creditCardId: cardWithoutResolvedClosure.id,
+            }}
+          />,
+        ),
+      ).toThrow("Credit card closure day must be resolved before calculating billing months");
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

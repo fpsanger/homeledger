@@ -33,9 +33,7 @@ export async function createExpenseUseCase(
     return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
   });
   const existingArrays = await Promise.all(
-    adjacentMonths.map(({ year, month }) =>
-      repo.findByPersonAndMonth(input.personId, year, month),
-    ),
+    adjacentMonths.map(({ year, month }) => repo.findByPersonAndMonth(input.personId, year, month)),
   );
   const existing = existingArrays.flat();
   const isDuplicate = findDuplicateTransaction(existing, "EXPENSE", input.amount, dateStr) !== null;

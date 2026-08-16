@@ -16,7 +16,9 @@ export function findCrossEntityDuplicate(
 ): CreditCardPurchaseRecord | null {
   if (amount === null || date === null) return null;
 
-  const matches = existing.filter((p) => p.totalAmount === amount && withinDays(p.purchaseDate, date));
+  const matches = existing.filter(
+    (p) => p.totalAmount === amount && withinDays(p.purchaseDate, date),
+  );
   if (matches.length === 0) return null;
 
   const targetMs = new Date(date).getTime();

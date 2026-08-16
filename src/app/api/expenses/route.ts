@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createExpenseUseCase } from "../../../application/use-cases/CreateExpenseUseCase";
 import type { TransactionRecord } from "../../../domain/repositories/ITransactionRepository";
 import { parseDateUTC } from "../_lib/date";

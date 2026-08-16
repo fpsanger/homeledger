@@ -1,11 +1,11 @@
 "use client";
 
+import { Loader2, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Trash2, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import type { CategorySource, ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./BillingImportWizard";
-import { CategoryCombobox } from "@/components/ui/category-combobox";
 
 type Category = { id: string; name: string; path: string; parentId: string | null };
 
@@ -18,14 +18,33 @@ type Props = {
 };
 
 const SOURCE_BADGE: Record<CategorySource, { label: string; className: string; title: string }> = {
-  rule:    { label: "Regra",    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",   title: "Categorizado por regra estática de merchant" },
-  history: { label: "Histórico", className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300", title: "Categorizado pelo histórico de importações anteriores" },
-  ai:      { label: "IA",       className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300", title: "Categorizado pelo Ollama (IA local)" },
+  rule: {
+    label: "Regra",
+    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    title: "Categorizado por regra estática de merchant",
+  },
+  history: {
+    label: "Histórico",
+    className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+    title: "Categorizado pelo histórico de importações anteriores",
+  },
+  ai: {
+    label: "IA",
+    className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    title: "Categorizado pelo Ollama (IA local)",
+  },
 };
 
 const BANK_LABELS: Record<string, string> = {
-  bradesco: "Bradesco", itau: "Itaú", c6: "C6 Bank", btg: "BTG",
-  nubank: "Nubank", inter: "Inter", santander: "Santander", caixa: "Caixa", bb: "Banco do Brasil",
+  bradesco: "Bradesco",
+  itau: "Itaú",
+  c6: "C6 Bank",
+  btg: "BTG",
+  nubank: "Nubank",
+  inter: "Inter",
+  santander: "Santander",
+  caixa: "Caixa",
+  bb: "Banco do Brasil",
 };
 
 function formatDate(date: Date | string) {
@@ -39,6 +58,7 @@ function formatDate(date: Date | string) {
 export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBack }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categorizing, setCategorizing] = useState(false);
+  const [rowIds] = useState(() => reconciledItems.map(() => crypto.randomUUID()));
 
   useEffect(() => {
     fetch("/api/categories")
@@ -49,15 +69,27 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
 
   function updateItem(
     index: number,
-    changes: Partial<{ description: string; amount: number; transactionType: "EXPENSE" | "INCOME" | "INVESTMENT" }>,
+    changes: Partial<{
+      description: string;
+      amount: number;
+      transactionType: "EXPENSE" | "INCOME" | "INVESTMENT";
+    }>,
   ) {
-    onUpdate(reconciledItems.map((ri, i) => (i !== index ? ri : { ...ri, billingItem: { ...ri.billingItem, ...changes } })));
+    onUpdate(
+      reconciledItems.map((ri, i) =>
+        i !== index ? ri : { ...ri, billingItem: { ...ri.billingItem, ...changes } },
+      ),
+    );
   }
 
   function updateCategory(index: number, categoryId: string) {
-    onUpdate(reconciledItems.map((ri, i) =>
-      i !== index ? ri : { ...ri, categoryId: categoryId || undefined, categorySource: undefined }
-    ));
+    onUpdate(
+      reconciledItems.map((ri, i) =>
+        i !== index
+          ? ri
+          : { ...ri, categoryId: categoryId || undefined, categorySource: undefined },
+      ),
+    );
   }
 
   function deleteItem(index: number) {
@@ -84,7 +116,8 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
         body: JSON.stringify({ items, categories }),
       });
       const data = await res.json();
-      const suggestions: { index: number; categoryId: string; source: CategorySource }[] = data.suggestions ?? [];
+      const suggestions: { index: number; categoryId: string; source: CategorySource }[] =
+        data.suggestions ?? [];
       if (suggestions.length === 0) {
         toast.error("IA não retornou sugestões. Verifique se o Ollama está rodando.");
         return;
@@ -135,7 +168,11 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
           disabled={categorizing || reconciledItems.length === 0}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border hover:bg-muted transition-colors disabled:opacity-50"
         >
-          {categorizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+          {categorizing ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <Sparkles className="w-3 h-3" />
+          )}
           Auto-categorizar
         </button>
       </div>
@@ -161,7 +198,7 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
               {reconciledItems.map((ri, i) => {
                 const item = ri.billingItem;
                 return (
-                  <tr key={i} className="hover:bg-muted/30">
+                  <tr key={rowIds[i]} className="hover:bg-muted/30">
                     <td className="py-2 pr-4">
                       <input
                         type="text"
@@ -200,7 +237,12 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                         <select
                           value={item.transactionType}
                           onChange={(e) =>
-                            updateItem(i, { transactionType: e.target.value as "EXPENSE" | "INCOME" | "INVESTMENT" })
+                            updateItem(i, {
+                              transactionType: e.target.value as
+                                | "EXPENSE"
+                                | "INCOME"
+                                | "INVESTMENT",
+                            })
                           }
                           className="border rounded px-2 py-1 text-xs bg-background"
                         >
@@ -218,17 +260,19 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                           onChange={(id) => updateCategory(i, id)}
                           placeholder="Sem categoria"
                         />
-                        {ri.categoryId && ri.categorySource && (() => {
-                          const badge = SOURCE_BADGE[ri.categorySource];
-                          return (
-                            <span
-                              title={badge.title}
-                              className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${badge.className}`}
-                            >
-                              {badge.label}
-                            </span>
-                          );
-                        })()}
+                        {ri.categoryId &&
+                          ri.categorySource &&
+                          (() => {
+                            const badge = SOURCE_BADGE[ri.categorySource];
+                            return (
+                              <span
+                                title={badge.title}
+                                className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${badge.className}`}
+                              >
+                                {badge.label}
+                              </span>
+                            );
+                          })()}
                       </div>
                     </td>
                     <td className="py-2">

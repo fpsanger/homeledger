@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createPersonUseCase } from "../../../application/use-cases/CreatePersonUseCase";
 import { listPeopleUseCase } from "../../../application/use-cases/ListPeopleUseCase";
 import { errorResponse } from "../_lib/errorResponse";

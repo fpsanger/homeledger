@@ -269,8 +269,20 @@ describe("MonthlyView service", () => {
     describe("filterBy transactionMonth", () => {
       it("returns installments whose transactionMonth matches the view month", () => {
         const installments = [
-          makeInstallment({ id: "i1", transactionYear: 2026, transactionMonth: 6, dueYear: 2026, dueMonth: 7 }),
-          makeInstallment({ id: "i2", transactionYear: 2026, transactionMonth: 7, dueYear: 2026, dueMonth: 8 }),
+          makeInstallment({
+            id: "i1",
+            transactionYear: 2026,
+            transactionMonth: 6,
+            dueYear: 2026,
+            dueMonth: 7,
+          }),
+          makeInstallment({
+            id: "i2",
+            transactionYear: 2026,
+            transactionMonth: 7,
+            dueYear: 2026,
+            dueMonth: 8,
+          }),
         ];
 
         const view = buildMonthlyView({

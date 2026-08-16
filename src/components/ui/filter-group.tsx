@@ -30,18 +30,10 @@ function FilterGroupRoot({
   );
 }
 
-function FilterGroupSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function FilterGroupSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        {label}
-      </p>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{label}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );

@@ -1,10 +1,10 @@
-import type { AvailableCategory, CategorySuggestion, ICategorizer } from "./types"
+import type { AvailableCategory, CategorySuggestion, ICategorizer } from "./types";
 
 export class CategorizationPipeline {
-  private readonly categorizers: ICategorizer[]
+  private readonly categorizers: ICategorizer[];
 
   constructor(categorizers: ICategorizer[]) {
-    this.categorizers = categorizers
+    this.categorizers = categorizers;
   }
 
   async categorize(
@@ -12,9 +12,9 @@ export class CategorizationPipeline {
     categories: AvailableCategory[],
   ): Promise<CategorySuggestion> {
     for (const categorizer of this.categorizers) {
-      const result = await categorizer.categorize(description, categories)
-      if (result && result.categoryId !== null) return result
+      const result = await categorizer.categorize(description, categories);
+      if (result && result.categoryId !== null) return result;
     }
-    return { categoryId: null, confidence: 0, source: "ai" }
+    return { categoryId: null, confidence: 0, source: "ai" };
   }
 }

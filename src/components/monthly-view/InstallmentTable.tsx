@@ -1,9 +1,23 @@
 "use client";
 
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  CreditCard,
+  MoreHorizontal,
+  Wallet,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, CreditCard, Wallet, CheckCircle2, Clock, ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -12,10 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { PageSizeSelector } from "@/components/ui/page-size-selector";
-import { Select } from "@/components/ui/select";
 import { formatDatePtBR } from "@/lib/format-date";
 import { SummaryCard } from "./SummaryCard";
 
@@ -69,11 +79,21 @@ function StatusBadge({ inst }: { inst: Installment }) {
   );
 }
 
-function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey | null; sortDir: SortDir }) {
+function SortIcon({
+  col,
+  sortKey,
+  sortDir,
+}: {
+  col: SortKey;
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+}) {
   if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
-  return sortDir === "asc"
-    ? <ArrowUp className="w-3 h-3 ml-1" />
-    : <ArrowDown className="w-3 h-3 ml-1" />;
+  return sortDir === "asc" ? (
+    <ArrowUp className="w-3 h-3 ml-1" />
+  ) : (
+    <ArrowDown className="w-3 h-3 ml-1" />
+  );
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -100,10 +120,19 @@ function buildActions(
   onEditPurchase?: (inst: Installment) => void,
 ): ActionItem[] {
   const actions: ActionItem[] = [];
-  if (onEditInstallment) actions.push({ label: "Editar parcela", onClick: () => onEditInstallment(inst) });
+  if (onEditInstallment)
+    actions.push({ label: "Editar parcela", onClick: () => onEditInstallment(inst) });
   if (onEditPurchase) actions.push({ label: "Editar compra", onClick: () => onEditPurchase(inst) });
-  if (!inst.isPaid) actions.push({ label: loadingId === inst.id ? "Salvando…" : "Marcar pago", onClick: () => handleMarkPaid(inst.id) });
-  actions.push({ label: loadingId === inst.id ? "Excluindo…" : "Excluir", onClick: () => handleDelete(inst.id), variant: "destructive" });
+  if (!inst.isPaid)
+    actions.push({
+      label: loadingId === inst.id ? "Salvando…" : "Marcar pago",
+      onClick: () => handleMarkPaid(inst.id),
+    });
+  actions.push({
+    label: loadingId === inst.id ? "Excluindo…" : "Excluir",
+    onClick: () => handleDelete(inst.id),
+    variant: "destructive",
+  });
   return actions;
 }
 
@@ -114,23 +143,49 @@ type DesktopProps = SharedProps & {
 };
 
 function InstallmentTableDesktop({
-  paginated, byPersonId, byCardId, loadingId,
-  handleDelete, handleMarkPaid, onEditInstallment, onEditPurchase,
-  sortKey, sortDir, toggleSort,
+  paginated,
+  byPersonId,
+  byCardId,
+  loadingId,
+  handleDelete,
+  handleMarkPaid,
+  onEditInstallment,
+  onEditPurchase,
+  sortKey,
+  sortDir,
+  toggleSort,
 }: DesktopProps) {
   return (
     <div className="rounded-lg border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
-            <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("description")}>
-              <span className="inline-flex items-center">Compra<SortIcon col="description" sortKey={sortKey} sortDir={sortDir} /></span>
+            <TableHead
+              className="cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("description")}
+            >
+              <span className="inline-flex items-center">
+                Compra
+                <SortIcon col="description" sortKey={sortKey} sortDir={sortDir} />
+              </span>
             </TableHead>
-            <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("date")}>
-              <span className="inline-flex items-center">Data<SortIcon col="date" sortKey={sortKey} sortDir={sortDir} /></span>
+            <TableHead
+              className="cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("date")}
+            >
+              <span className="inline-flex items-center">
+                Data
+                <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+              </span>
             </TableHead>
-            <TableHead className="text-right cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("amount")}>
-              <span className="inline-flex items-center justify-end w-full">Valor<SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} /></span>
+            <TableHead
+              className="text-right cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("amount")}
+            >
+              <span className="inline-flex items-center justify-end w-full">
+                Valor
+                <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+              </span>
             </TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-8" />
@@ -153,9 +208,20 @@ function InstallmentTableDesktop({
               const cardName = inst.creditCardId ? (byCardId[inst.creditCardId] ?? null) : null;
               const metaParts = [installmentLabel, personName, cardName].filter(Boolean);
               const dateStr = inst.purchaseDate
-                ? formatDatePtBR(typeof inst.purchaseDate === "string" ? inst.purchaseDate : inst.purchaseDate.toISOString())
+                ? formatDatePtBR(
+                    typeof inst.purchaseDate === "string"
+                      ? inst.purchaseDate
+                      : inst.purchaseDate.toISOString(),
+                  )
                 : "—";
-              const actions = buildActions(inst, loadingId, handleDelete, handleMarkPaid, onEditInstallment, onEditPurchase);
+              const actions = buildActions(
+                inst,
+                loadingId,
+                handleDelete,
+                handleMarkPaid,
+                onEditInstallment,
+                onEditPurchase,
+              );
 
               return (
                 <TableRow key={inst.id} className="group">
@@ -164,13 +230,23 @@ function InstallmentTableDesktop({
                     <p className="text-xs text-muted-foreground mt-0.5">{metaParts.join(" · ")}</p>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{dateStr}</TableCell>
-                  <TableCell className="text-right font-medium tabular-nums text-sm">{fmt(inst.amount)}</TableCell>
-                  <TableCell><StatusBadge inst={inst} /></TableCell>
+                  <TableCell className="text-right font-medium tabular-nums text-sm">
+                    {fmt(inst.amount)}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge inst={inst} />
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu
                       align="right"
                       trigger={
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground" aria-label="Ações" disabled={loadingId === inst.id}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground"
+                          aria-label="Ações"
+                          disabled={loadingId === inst.id}
+                        >
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       }
@@ -195,16 +271,28 @@ type MobileProps = SharedProps & {
 };
 
 function InstallmentTableMobile({
-  paginated, byPersonId, byCardId, loadingId,
-  handleDelete, handleMarkPaid, onEditInstallment, onEditPurchase,
-  sortKey, setSortKey, sortDir, setSortDir,
+  paginated,
+  byPersonId,
+  byCardId,
+  loadingId,
+  handleDelete,
+  handleMarkPaid,
+  onEditInstallment,
+  onEditPurchase,
+  sortKey,
+  setSortKey,
+  sortDir,
+  setSortDir,
 }: MobileProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <Select
           value={sortKey ?? ""}
-          onChange={(e) => { setSortKey((e.target.value as SortKey) || null); setSortDir("asc"); }}
+          onChange={(e) => {
+            setSortKey((e.target.value as SortKey) || null);
+            setSortDir("asc");
+          }}
           className="h-8 text-xs flex-1"
         >
           <option value="">Ordenar por...</option>
@@ -213,8 +301,18 @@ function InstallmentTableMobile({
           <option value="amount">Valor</option>
         </Select>
         {sortKey && (
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0 shrink-0" onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))} aria-label="Direção">
-            {sortDir === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 shrink-0"
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+            aria-label="Direção"
+          >
+            {sortDir === "asc" ? (
+              <ArrowUp className="w-3.5 h-3.5" />
+            ) : (
+              <ArrowDown className="w-3.5 h-3.5" />
+            )}
           </Button>
         )}
       </div>
@@ -230,9 +328,20 @@ function InstallmentTableMobile({
           const personName = inst.personId ? (byPersonId[inst.personId] ?? null) : null;
           const cardName = inst.creditCardId ? (byCardId[inst.creditCardId] ?? null) : null;
           const dateStr = inst.purchaseDate
-            ? formatDatePtBR(typeof inst.purchaseDate === "string" ? inst.purchaseDate : inst.purchaseDate.toISOString())
+            ? formatDatePtBR(
+                typeof inst.purchaseDate === "string"
+                  ? inst.purchaseDate
+                  : inst.purchaseDate.toISOString(),
+              )
             : "—";
-          const actions = buildActions(inst, loadingId, handleDelete, handleMarkPaid, onEditInstallment, onEditPurchase);
+          const actions = buildActions(
+            inst,
+            loadingId,
+            handleDelete,
+            handleMarkPaid,
+            onEditInstallment,
+            onEditPurchase,
+          );
 
           return (
             <div key={inst.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
@@ -243,7 +352,13 @@ function InstallmentTableMobile({
                   <DropdownMenu
                     align="right"
                     trigger={
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground" aria-label="Ações" disabled={loadingId === inst.id}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground"
+                        aria-label="Ações"
+                        disabled={loadingId === inst.id}
+                      >
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     }
@@ -296,18 +411,28 @@ export function InstallmentTable({
   const [pageSize, setPageSize] = useState(20);
 
   const byPersonId = useMemo(() => Object.fromEntries(people.map((p) => [p.id, p.name])), [people]);
-  const byCardId = useMemo(() => Object.fromEntries(creditCards.map((c) => [c.id, c.name])), [creditCards]);
+  const byCardId = useMemo(
+    () => Object.fromEntries(creditCards.map((c) => [c.id, c.name])),
+    [creditCards],
+  );
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
   }
 
   async function handleDelete(id: string) {
     setLoadingId(id);
     const res = await fetch(`/api/installments/${id}`, { method: "DELETE" });
     setLoadingId(null);
-    if (!res.ok) { const data = await res.json().catch(() => ({})); toast.error(data.error ?? "Falha ao excluir."); return; }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error ?? "Falha ao excluir.");
+      return;
+    }
     router.refresh();
     toast.success("Parcelamento atualizado.");
   }
@@ -316,7 +441,11 @@ export function InstallmentTable({
     setLoadingId(id);
     const res = await fetch(`/api/installments/${id}/paid`, { method: "PATCH" });
     setLoadingId(null);
-    if (!res.ok) { const data = await res.json().catch(() => ({})); toast.error(data.error ?? "Falha ao marcar como pago."); return; }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error ?? "Falha ao marcar como pago.");
+      return;
+    }
     router.refresh();
     toast.success("Parcelamento atualizado.");
   }
@@ -345,11 +474,20 @@ export function InstallmentTable({
   const sortedInstallments = useMemo(() => {
     const arr = [...filtered];
     if (sortKey === "description") {
-      arr.sort((a, b) => { const d = (a.purchaseDescription ?? "").localeCompare(b.purchaseDescription ?? ""); return sortDir === "asc" ? d : -d; });
+      arr.sort((a, b) => {
+        const d = (a.purchaseDescription ?? "").localeCompare(b.purchaseDescription ?? "");
+        return sortDir === "asc" ? d : -d;
+      });
     } else if (sortKey === "date") {
-      arr.sort((a, b) => { const d = toDateMs(a.purchaseDate) - toDateMs(b.purchaseDate); return sortDir === "asc" ? d : -d; });
+      arr.sort((a, b) => {
+        const d = toDateMs(a.purchaseDate) - toDateMs(b.purchaseDate);
+        return sortDir === "asc" ? d : -d;
+      });
     } else if (sortKey === "amount") {
-      arr.sort((a, b) => { const d = a.amount - b.amount; return sortDir === "asc" ? d : -d; });
+      arr.sort((a, b) => {
+        const d = a.amount - b.amount;
+        return sortDir === "asc" ? d : -d;
+      });
     } else {
       arr.sort((a, b) => toDateMs(b.purchaseDate) - toDateMs(a.purchaseDate));
     }
@@ -368,7 +506,16 @@ export function InstallmentTable({
     );
   }
 
-  const sharedProps = { paginated, byPersonId, byCardId, loadingId, handleDelete, handleMarkPaid, onEditInstallment, onEditPurchase };
+  const sharedProps = {
+    paginated,
+    byPersonId,
+    byCardId,
+    loadingId,
+    handleDelete,
+    handleMarkPaid,
+    onEditInstallment,
+    onEditPurchase,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -377,33 +524,88 @@ export function InstallmentTable({
         onClick={() => setSummaryOpen((o) => !o)}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
       >
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`} />
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
+        />
         {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
       </button>
 
       {summaryOpen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <SummaryCard icon={Wallet} label="Total" value={fmt(total)} colorClass="text-foreground" />
-          <SummaryCard icon={CheckCircle2} label="Pago" value={fmt(paid)} colorClass="text-green-600" />
-          <SummaryCard icon={CreditCard} label="Restante" value={fmt(remaining)} colorClass="text-amber-600" />
-          <SummaryCard icon={Clock} label="Pendentes" value={String(pendingCount)} colorClass="text-muted-foreground" />
+          <SummaryCard
+            icon={Wallet}
+            label="Total"
+            value={fmt(total)}
+            colorClass="text-foreground"
+          />
+          <SummaryCard
+            icon={CheckCircle2}
+            label="Pago"
+            value={fmt(paid)}
+            colorClass="text-green-600"
+          />
+          <SummaryCard
+            icon={CreditCard}
+            label="Restante"
+            value={fmt(remaining)}
+            colorClass="text-amber-600"
+          />
+          <SummaryCard
+            icon={Clock}
+            label="Pendentes"
+            value={String(pendingCount)}
+            colorClass="text-muted-foreground"
+          />
         </div>
       )}
 
       <div className="hidden md:block">
-        <InstallmentTableDesktop {...sharedProps} sortKey={sortKey} sortDir={sortDir} toggleSort={toggleSort} />
+        <InstallmentTableDesktop
+          {...sharedProps}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          toggleSort={toggleSort}
+        />
       </div>
       <div className="md:hidden">
-        <InstallmentTableMobile {...sharedProps} sortKey={sortKey} setSortKey={setSortKey} sortDir={sortDir} setSortDir={setSortDir} />
+        <InstallmentTableMobile
+          {...sharedProps}
+          sortKey={sortKey}
+          setSortKey={setSortKey}
+          sortDir={sortDir}
+          setSortDir={setSortDir}
+        />
       </div>
 
       <div className="flex items-center justify-between pt-1">
-        <PageSizeSelector value={pageSize} onChange={(size) => { setPageSize(size); setPage(0); }} />
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+        />
         {totalPages > 1 && (
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>← Anterior</Button>
-            <span className="text-sm text-muted-foreground">{page + 1} / {totalPages}</span>
-            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>Próximo →</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
           </div>
         )}
       </div>

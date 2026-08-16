@@ -1,11 +1,18 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createLoyaltyTransactionUseCase } from "../../../../application/use-cases/loyalty/CreateLoyaltyTransactionUseCase";
+import type { LoyaltyTransactionType } from "../../../../domain/entities/LoyaltyTransaction";
 import { parseDateUTC } from "../../_lib/date";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
-import type { LoyaltyTransactionType } from "../../../../domain/entities/LoyaltyTransaction";
 
-const VALID_TYPES: LoyaltyTransactionType[] = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUSTMENT"];
+const VALID_TYPES: LoyaltyTransactionType[] = [
+  "PURCHASE",
+  "EARN",
+  "BONUS",
+  "REDEEM",
+  "EXPIRE",
+  "ADJUSTMENT",
+];
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +21,10 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "programId is required" }, { status: 400 });
     }
     if (!VALID_TYPES.includes(body.type)) {
-      return Response.json({ error: `type must be one of ${VALID_TYPES.join(", ")}` }, { status: 400 });
+      return Response.json(
+        { error: `type must be one of ${VALID_TYPES.join(", ")}` },
+        { status: 400 },
+      );
     }
     if (typeof body.points !== "number") {
       return Response.json({ error: "points is required" }, { status: 400 });

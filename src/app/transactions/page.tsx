@@ -1,6 +1,6 @@
+import { cookies } from "next/headers";
 import { TransactionPageClient } from "@/components/transactions/TransactionPageClient";
 import { PageHeader } from "@/components/ui/page-header";
-import { cookies } from "next/headers";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null };

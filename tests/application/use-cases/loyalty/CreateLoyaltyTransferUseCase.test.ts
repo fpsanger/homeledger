@@ -1,6 +1,12 @@
 import { createLoyaltyTransferUseCase } from "../../../../src/application/use-cases/loyalty/CreateLoyaltyTransferUseCase";
-import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../../../src/domain/repositories/ILoyaltyTransferRepository";
-import type { ILoyaltyTransactionRepository, LoyaltyTransactionRecord } from "../../../../src/domain/repositories/ILoyaltyTransactionRepository";
+import type {
+  ILoyaltyTransactionRepository,
+  LoyaltyTransactionRecord,
+} from "../../../../src/domain/repositories/ILoyaltyTransactionRepository";
+import type {
+  ILoyaltyTransferRepository,
+  LoyaltyTransferRecord,
+} from "../../../../src/domain/repositories/ILoyaltyTransferRepository";
 
 function makeTransferRecord(overrides: Partial<LoyaltyTransferRecord> = {}): LoyaltyTransferRecord {
   return {
@@ -19,9 +25,11 @@ function makeTransferRecord(overrides: Partial<LoyaltyTransferRecord> = {}): Loy
   };
 }
 
-function makeTx(overrides: Partial<LoyaltyTransactionRecord> & Pick<LoyaltyTransactionRecord, "type" | "points">): LoyaltyTransactionRecord {
+function makeTx(
+  overrides: Partial<LoyaltyTransactionRecord> & Pick<LoyaltyTransactionRecord, "type" | "points">,
+): LoyaltyTransactionRecord {
   return {
-    id: "tx-" + Math.random(),
+    id: `tx-${Math.random()}`,
     programId: "livelo",
     personId: null,
     transferId: null,
@@ -46,7 +54,9 @@ function makeTransferRepo(): ILoyaltyTransferRepository {
   };
 }
 
-function makeTransactionRepo(fromProgramTxs: LoyaltyTransactionRecord[] = []): ILoyaltyTransactionRepository {
+function makeTransactionRepo(
+  fromProgramTxs: LoyaltyTransactionRecord[] = [],
+): ILoyaltyTransactionRepository {
   return {
     save: jest.fn().mockImplementation(async (tx) => tx),
     findById: jest.fn(),
@@ -76,7 +86,13 @@ describe("createLoyaltyTransferUseCase", () => {
     const transferRepo = makeTransferRepo();
     const transactionRepo = makeTransactionRepo([
       makeTx({ type: "PURCHASE", points: 80000, costBrl: 3592, date: new Date("2026-01-01") }),
-      makeTx({ id: "out-tx-id", type: "TRANSFER_OUT", points: 80000, transferId: "transfer-id", date: new Date("2026-07-01") }),
+      makeTx({
+        id: "out-tx-id",
+        type: "TRANSFER_OUT",
+        points: 80000,
+        transferId: "transfer-id",
+        date: new Date("2026-07-01"),
+      }),
     ]);
 
     await createLoyaltyTransferUseCase(BASE_INPUT, transferRepo, transactionRepo);
@@ -106,7 +122,13 @@ describe("createLoyaltyTransferUseCase", () => {
     const transferRepo = makeTransferRepo();
     const transactionRepo = makeTransactionRepo([
       makeTx({ type: "PURCHASE", points: 80000, costBrl: 3592, date: new Date("2026-01-01") }),
-      makeTx({ id: "out-tx-id", type: "TRANSFER_OUT", points: 80000, transferId: "transfer-id", date: new Date("2026-07-01") }),
+      makeTx({
+        id: "out-tx-id",
+        type: "TRANSFER_OUT",
+        points: 80000,
+        transferId: "transfer-id",
+        date: new Date("2026-07-01"),
+      }),
     ]);
 
     await createLoyaltyTransferUseCase(BASE_INPUT, transferRepo, transactionRepo);
@@ -124,7 +146,13 @@ describe("createLoyaltyTransferUseCase", () => {
     const transferRepo = makeTransferRepo();
     const transactionRepo = makeTransactionRepo([
       makeTx({ type: "EARN", points: 80000, date: new Date("2026-01-01") }),
-      makeTx({ id: "out-tx-id", type: "TRANSFER_OUT", points: 80000, transferId: "transfer-id", date: new Date("2026-07-01") }),
+      makeTx({
+        id: "out-tx-id",
+        type: "TRANSFER_OUT",
+        points: 80000,
+        transferId: "transfer-id",
+        date: new Date("2026-07-01"),
+      }),
     ]);
 
     await createLoyaltyTransferUseCase(BASE_INPUT, transferRepo, transactionRepo);
@@ -142,7 +170,13 @@ describe("createLoyaltyTransferUseCase", () => {
     const transactionRepo = makeTransactionRepo([
       makeTx({ type: "EARN", points: 40000, date: new Date("2026-01-01") }),
       makeTx({ type: "PURCHASE", points: 40000, costBrl: 1796, date: new Date("2026-02-01") }),
-      makeTx({ id: "out-tx-id", type: "TRANSFER_OUT", points: 80000, transferId: "transfer-id", date: new Date("2026-07-01") }),
+      makeTx({
+        id: "out-tx-id",
+        type: "TRANSFER_OUT",
+        points: 80000,
+        transferId: "transfer-id",
+        date: new Date("2026-07-01"),
+      }),
     ]);
 
     await createLoyaltyTransferUseCase(BASE_INPUT, transferRepo, transactionRepo);

@@ -1,8 +1,8 @@
 import type { BillingItem } from "../../domain/entities/BillingItem";
 import type { ReconciledItem } from "../../domain/entities/ReconciledItem";
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
-import type { ITransactionRepository } from "../../domain/repositories/ITransactionRepository";
 import type { ICreditCardRefundRepository } from "../../domain/repositories/ICreditCardRefundRepository";
+import type { ITransactionRepository } from "../../domain/repositories/ITransactionRepository";
 
 export async function reconcileStatementUseCase(
   creditCardPurchaseRepo: ICreditCardPurchaseRepository,

@@ -326,7 +326,6 @@ describe("InstallmentPurchase service", () => {
     });
   });
 
-
   describe("resolveFirstDueMonth", () => {
     it("purchase before closure day goes to current month", () => {
       const result = resolveFirstDueMonth({
@@ -484,6 +483,5 @@ describe("InstallmentPurchase service", () => {
       });
       expect(result).toEqual({ year: 2026, month: 11 });
     });
-
   });
 });

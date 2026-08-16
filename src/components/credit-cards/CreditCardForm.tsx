@@ -31,7 +31,9 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
   );
   const [fixedClosureDay, setFixedClosureDay] = useState(String(card?.fixedClosureDay ?? ""));
   const [dueDayOfMonth, setDueDayOfMonth] = useState(String(card?.dueDayOfMonth ?? ""));
-  const [fixedClosurePreviousMonth, setFixedClosurePreviousMonth] = useState(card?.fixedClosurePreviousMonth ?? false);
+  const [fixedClosurePreviousMonth, setFixedClosurePreviousMonth] = useState(
+    card?.fixedClosurePreviousMonth ?? false,
+  );
   const [alwaysNextMonth, setAlwaysNextMonth] = useState(card?.alwaysNextMonth ?? false);
   const [closureNextMonth, setClosureNextMonth] = useState(card?.closureNextMonth ?? false);
   const [loading, setLoading] = useState(false);
@@ -114,7 +116,9 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
               checked={fixedClosurePreviousMonth}
               onChange={(e) => setFixedClosurePreviousMonth(e.target.checked)}
             />
-            <Label htmlFor="cc-fixed-prev-month">Fechamento no mês anterior ao período de cobrança</Label>
+            <Label htmlFor="cc-fixed-prev-month">
+              Fechamento no mês anterior ao período de cobrança
+            </Label>
           </div>
         </>
       )}

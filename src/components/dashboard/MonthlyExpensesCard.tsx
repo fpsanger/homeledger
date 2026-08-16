@@ -1,24 +1,34 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
+  Cell,
   Legend,
   ResponsiveContainer,
-  Cell,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 import { EXPENSE_PERSON_SHADES } from "@/lib/dashboardColors";
 import { AccessibleChart } from "./AccessibleChart";
 
 const MONTH_NAMES = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
 ];
 
 function fmtFull(v: number) {
@@ -54,7 +64,9 @@ function CustomTooltip({
       {showPersonBreakdown ? (
         payload.map((entry) => (
           <div key={entry.name} className="flex items-center justify-between gap-4 mb-1 last:mb-0">
-            <span style={{ color: entry.color }} className="font-medium">{entry.name}</span>
+            <span style={{ color: entry.color }} className="font-medium">
+              {entry.name}
+            </span>
             <span className="text-foreground tabular-nums">{fmtFull(entry.value)}</span>
           </div>
         ))
@@ -71,7 +83,10 @@ function CustomLegend({ payload }: { payload?: { value: string; color: string }[
     <div className="flex items-center justify-center gap-4 pt-2">
       {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+          <span
+            className="inline-block w-2 h-2 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
           <span className="text-[11px] text-muted-foreground">{entry.value}</span>
         </div>
       ))}
@@ -119,7 +134,9 @@ export function MonthlyExpensesCard({ months, people = [], globalPersonId = "" }
               ? months.map((m) => (
                   <li key={m.month}>
                     {MONTH_NAMES[m.month - 1]}:{" "}
-                    {people.map((p) => `${p.name} ${fmtFull(m.expensesByPerson[p.id] ?? 0)}`).join(", ")}
+                    {people
+                      .map((p) => `${p.name} ${fmtFull(m.expensesByPerson[p.id] ?? 0)}`)
+                      .join(", ")}
                   </li>
                 ))
               : months.map((m) => (
@@ -130,7 +147,11 @@ export function MonthlyExpensesCard({ months, people = [], globalPersonId = "" }
           }
         >
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="35%">
+            <BarChart
+              data={data}
+              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+              barCategoryGap="35%"
+            >
               <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
               <XAxis
                 dataKey="name"
@@ -174,10 +195,10 @@ export function MonthlyExpensesCard({ months, people = [], globalPersonId = "" }
                   animationDuration={500}
                   animationEasing="ease-out"
                 >
-                  {months.map((m, i) => {
+                  {months.map((m) => {
                     const intensity = maxVal > 0 ? m.expenses / maxVal : 0;
                     const opacity = 0.45 + intensity * 0.55;
-                    return <Cell key={i} fill="hsl(var(--expense))" fillOpacity={opacity} />;
+                    return <Cell key={m.month} fill="hsl(var(--expense))" fillOpacity={opacity} />;
                   })}
                 </Bar>
               )}

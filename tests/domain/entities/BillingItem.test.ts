@@ -1,7 +1,7 @@
 import {
   createInstallmentBillingItem,
-  createTransactionBillingItem,
   createRefundBillingItem,
+  createTransactionBillingItem,
   isInstallmentBillingItem,
   isRefundBillingItem,
 } from "../../../src/domain/entities/BillingItem";
@@ -29,27 +29,27 @@ describe("BillingItem - Installment", () => {
     });
 
     it("throws when amount is zero", () => {
-      expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, amount: 0 })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createInstallmentBillingItem({ ...baseInstallment, amount: 0 })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when amount is negative", () => {
-      expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, amount: -50 })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createInstallmentBillingItem({ ...baseInstallment, amount: -50 })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when description is empty", () => {
-      expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, description: "" })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createInstallmentBillingItem({ ...baseInstallment, description: "" })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when description is missing", () => {
-      expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, description: "" })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createInstallmentBillingItem({ ...baseInstallment, description: "" })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when date is missing", () => {
@@ -57,31 +57,31 @@ describe("BillingItem - Installment", () => {
         createInstallmentBillingItem({
           ...baseInstallment,
           date: null as unknown as Date,
-        })
+        }),
       ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when installmentNumber is zero", () => {
       expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, installmentNumber: 0 })
+        createInstallmentBillingItem({ ...baseInstallment, installmentNumber: 0 }),
       ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when installmentNumber is negative", () => {
       expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, installmentNumber: -1 })
+        createInstallmentBillingItem({ ...baseInstallment, installmentNumber: -1 }),
       ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when totalInstallments is zero", () => {
       expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, totalInstallments: 0 })
+        createInstallmentBillingItem({ ...baseInstallment, totalInstallments: 0 }),
       ).toThrow(InvalidBillingItemError);
     });
 
     it("throws when totalInstallments is negative", () => {
       expect(() =>
-        createInstallmentBillingItem({ ...baseInstallment, totalInstallments: -1 })
+        createInstallmentBillingItem({ ...baseInstallment, totalInstallments: -1 }),
       ).toThrow(InvalidBillingItemError);
     });
 
@@ -91,7 +91,7 @@ describe("BillingItem - Installment", () => {
           ...baseInstallment,
           installmentNumber: 4,
           totalInstallments: 3,
-        })
+        }),
       ).toThrow(InvalidBillingItemError);
     });
 
@@ -146,21 +146,21 @@ describe("BillingItem - Transaction", () => {
     });
 
     it("throws when amount is zero", () => {
-      expect(() =>
-        createTransactionBillingItem({ ...baseTransaction, amount: 0 })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createTransactionBillingItem({ ...baseTransaction, amount: 0 })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when amount is negative", () => {
-      expect(() =>
-        createTransactionBillingItem({ ...baseTransaction, amount: -100 })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createTransactionBillingItem({ ...baseTransaction, amount: -100 })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when description is empty", () => {
-      expect(() =>
-        createTransactionBillingItem({ ...baseTransaction, description: "" })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createTransactionBillingItem({ ...baseTransaction, description: "" })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when date is missing", () => {
@@ -168,7 +168,7 @@ describe("BillingItem - Transaction", () => {
         createTransactionBillingItem({
           ...baseTransaction,
           date: null as unknown as Date,
-        })
+        }),
       ).toThrow(InvalidBillingItemError);
     });
   });
@@ -192,21 +192,21 @@ describe("BillingItem - Refund", () => {
     });
 
     it("throws when amount is zero", () => {
-      expect(() =>
-        createRefundBillingItem({ ...baseRefund, amount: 0 })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createRefundBillingItem({ ...baseRefund, amount: 0 })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when amount is negative", () => {
-      expect(() =>
-        createRefundBillingItem({ ...baseRefund, amount: -50 })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createRefundBillingItem({ ...baseRefund, amount: -50 })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when description is empty", () => {
-      expect(() =>
-        createRefundBillingItem({ ...baseRefund, description: "" })
-      ).toThrow(InvalidBillingItemError);
+      expect(() => createRefundBillingItem({ ...baseRefund, description: "" })).toThrow(
+        InvalidBillingItemError,
+      );
     });
 
     it("throws when date is missing", () => {
@@ -214,7 +214,7 @@ describe("BillingItem - Refund", () => {
         createRefundBillingItem({
           ...baseRefund,
           date: null as unknown as Date,
-        })
+        }),
       ).toThrow(InvalidBillingItemError);
     });
   });

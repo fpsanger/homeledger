@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { PageHeader } from "@/components/ui/page-header";
-import { LoyaltyProgramDetail } from "@/components/loyalty/LoyaltyProgramDetail";
+import { notFound } from "next/navigation";
 import { BackButton } from "@/components/loyalty/BackButton";
+import { LoyaltyProgramDetail } from "@/components/loyalty/LoyaltyProgramDetail";
+import { PageHeader } from "@/components/ui/page-header";
 
 type FifoData = {
   costBrl: number;
@@ -91,11 +91,7 @@ export default async function LoyaltyProgramPage({
         title={program.name}
         description={`${report.summary.currentBalance.toLocaleString("pt-BR")} pontos`}
       />
-      <LoyaltyProgramDetail
-        program={program}
-        report={report}
-        defaultPersonId={globalPersonId}
-      />
+      <LoyaltyProgramDetail program={program} report={report} defaultPersonId={globalPersonId} />
     </div>
   );
 }

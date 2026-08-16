@@ -7,8 +7,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const personId = searchParams.get("personId") ?? undefined;
-    const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : null;
-    const month = searchParams.get("month") ? parseInt(searchParams.get("month")!) : null;
+    const yearParam = searchParams.get("year");
+    const monthParam = searchParams.get("month");
+    const year = yearParam ? parseInt(yearParam, 10) : null;
+    const month = monthParam ? parseInt(monthParam, 10) : null;
     const { creditCardPurchase } = createRepositories();
     let purchases = await getCreditCardPurchasesUseCase(personId, creditCardPurchase);
     if (year !== null && month !== null) {

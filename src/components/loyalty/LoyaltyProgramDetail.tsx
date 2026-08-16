@@ -135,7 +135,7 @@ function AddTransactionModal({
   const [date, setDate] = useState(today);
   const [description, setDescription] = useState("");
   const [costBrl, setCostBrl] = useState("");
-  const [valueBrl, setValueBrl] = useState("");
+  const [valueBrl, _setValueBrl] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [personId, setPersonId] = useState(defaultPersonId);
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
@@ -192,38 +192,42 @@ function AddTransactionModal({
   return (
     <Dialog open onClose={onClose} title="Nova Transação" className="max-w-md">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="new-tx-type" className="text-xs font-medium text-muted-foreground">
               Tipo
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {TRANSACTION_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
             </label>
+            <select
+              id="new-tx-type"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {TRANSACTION_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="new-tx-points" className="text-xs font-medium text-muted-foreground">
               Pontos
-              <input
-                type="number"
-                value={points}
-                onChange={(e) => setPoints(e.target.value)}
-                required
-                min="1"
-                className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
             </label>
+            <input
+              id="new-tx-points"
+              type="number"
+              value={points}
+              onChange={(e) => setPoints(e.target.value)}
+              required
+              min="1"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
         </div>
-        <div className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
+        <div
+          className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
+        >
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground">Data</span>
             <DatePicker value={date} onChange={setDate} required ariaLabel="Data" />
@@ -242,48 +246,51 @@ function AddTransactionModal({
         </div>
         {type === "PURCHASE" && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="new-tx-cost" className="text-xs font-medium text-muted-foreground">
               Custo (R$)
-              <input
-                type="number"
-                step="0.01"
-                value={costBrl}
-                onChange={(e) => setCostBrl(e.target.value)}
-                placeholder="0,00"
-                className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
             </label>
+            <input
+              id="new-tx-cost"
+              type="number"
+              step="0.01"
+              value={costBrl}
+              onChange={(e) => setCostBrl(e.target.value)}
+              placeholder="0,00"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
         )}
         {people.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="new-tx-person" className="text-xs font-medium text-muted-foreground">
               Pessoa
-              <select
-                value={personId}
-                onChange={(e) => setPersonId(e.target.value)}
-                className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Todos</option>
-                {people.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
             </label>
+            <select
+              id="new-tx-person"
+              value={personId}
+              onChange={(e) => setPersonId(e.target.value)}
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Todos</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label htmlFor="new-tx-description" className="text-xs font-medium text-muted-foreground">
             Descrição
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
           </label>
+          <input
+            id="new-tx-description"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
         </div>
         <DuplicateWarning match={duplicateMatch} />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -291,7 +298,7 @@ function AddTransactionModal({
           <button
             type="submit"
             disabled={loading}
-            className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {loading ? "Salvando..." : "Salvar"}
           </button>
@@ -396,19 +403,22 @@ function EditTransactionModal({
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label htmlFor="edit-tx-points" className="text-xs font-medium text-muted-foreground">
             Pontos
-            <input
-              type="number"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
-              required
-              min="1"
-              className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
           </label>
+          <input
+            id="edit-tx-points"
+            type="number"
+            value={points}
+            onChange={(e) => setPoints(e.target.value)}
+            required
+            min="1"
+            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
         </div>
-        <div className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
+        <div
+          className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
+        >
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium text-muted-foreground">Data</span>
             <DatePicker value={date} onChange={setDate} required ariaLabel="Data" />
@@ -427,48 +437,54 @@ function EditTransactionModal({
         </div>
         {tx.type === "PURCHASE" && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="edit-tx-cost" className="text-xs font-medium text-muted-foreground">
               Custo (R$)
-              <input
-                type="number"
-                step="0.01"
-                value={costBrl}
-                onChange={(e) => setCostBrl(e.target.value)}
-                placeholder="0,00"
-                className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              />
             </label>
+            <input
+              id="edit-tx-cost"
+              type="number"
+              step="0.01"
+              value={costBrl}
+              onChange={(e) => setCostBrl(e.target.value)}
+              placeholder="0,00"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
         )}
         {people.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="edit-tx-person" className="text-xs font-medium text-muted-foreground">
               Pessoa
-              <select
-                value={personId}
-                onChange={(e) => setPersonId(e.target.value)}
-                className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Todos</option>
-                {people.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
             </label>
+            <select
+              id="edit-tx-person"
+              value={personId}
+              onChange={(e) => setPersonId(e.target.value)}
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Todos</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label
+            htmlFor="edit-tx-description"
+            className="text-xs font-medium text-muted-foreground"
+          >
             Descrição
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
           </label>
+          <input
+            id="edit-tx-description"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
         </div>
         <DuplicateWarning match={duplicateMatch} />
         {error && <p className="text-xs text-destructive">{error}</p>}
@@ -476,7 +492,7 @@ function EditTransactionModal({
           <button
             type="submit"
             disabled={loading}
-            className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {loading ? "Salvando..." : "Salvar"}
           </button>
@@ -696,7 +712,7 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
             Nenhuma transação registrada.
           </p>
         ) : (
-          <div className="rounded-xl border overflow-x-auto">
+          <div className="hidden md:block rounded-xl border overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>

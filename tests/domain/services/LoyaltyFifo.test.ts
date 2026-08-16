@@ -9,7 +9,7 @@ function tx(
   },
 ): LoyaltyTransactionRecord {
   return {
-    id: overrides.id ?? "tx-" + Math.random(),
+    id: overrides.id ?? `tx-${Math.random()}`,
     programId: "prog-1",
     personId: null,
     transferId: null,

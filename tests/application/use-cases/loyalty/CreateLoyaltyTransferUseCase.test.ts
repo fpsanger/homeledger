@@ -29,7 +29,7 @@ function makeTx(
   overrides: Partial<LoyaltyTransactionRecord> & Pick<LoyaltyTransactionRecord, "type" | "points">,
 ): LoyaltyTransactionRecord {
   return {
-    id: "tx-" + Math.random(),
+    id: `tx-${Math.random()}`,
     programId: "livelo",
     personId: null,
     transferId: null,

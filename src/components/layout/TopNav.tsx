@@ -27,6 +27,7 @@ function getCookie(name: string): string {
 }
 
 function setCookie(name: string, value: string) {
+  // biome-ignore lint/suspicious/noDocumentCookie: CookieStore API lacks Safari/Firefox support
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
 }
 
@@ -80,7 +81,7 @@ export function TopNav() {
             {navLinks
               .filter((l) => l.primary)
               .map((link) => {
-                const active = pathname === link.href || pathname.startsWith(link.href + "/");
+                const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
                 return (
                   <Link
                     key={link.href}
@@ -103,7 +104,7 @@ export function TopNav() {
               {(() => {
                 const secondaryLinks = navLinks.filter((l) => !l.primary);
                 const anySecondaryActive = secondaryLinks.some(
-                  (l) => pathname === l.href || pathname.startsWith(l.href + "/"),
+                  (l) => pathname === l.href || pathname.startsWith(`${l.href}/`),
                 );
                 return (
                   <>
@@ -127,7 +128,7 @@ export function TopNav() {
                       <div className="absolute top-full left-0 mt-1 w-48 rounded-md border bg-card shadow-md z-50 py-1">
                         {secondaryLinks.map((link) => {
                           const active =
-                            pathname === link.href || pathname.startsWith(link.href + "/");
+                            pathname === link.href || pathname.startsWith(`${link.href}/`);
                           return (
                             <Link
                               key={link.href}
@@ -237,7 +238,7 @@ export function TopNav() {
 
         <nav className="flex flex-col px-2 py-3 gap-1 flex-1 overflow-y-auto">
           {navLinks.map((link) => {
-            const active = pathname === link.href || pathname.startsWith(link.href + "/");
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}

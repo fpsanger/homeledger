@@ -25,7 +25,7 @@ describe("parseStatementUseCase", () => {
   it("throws when statementType is invalid", async () => {
     const parser = makeMockParser();
     await expect(
-      parseStatementUseCase(parser, "Valid PDF text", "invalid-type" as any),
+      parseStatementUseCase(parser, "Valid PDF text", "invalid-type" as "credit-card" | "debit"),
     ).rejects.toThrow("Invalid statement type");
   });
 

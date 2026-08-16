@@ -84,16 +84,16 @@ export function BillingImportWizard() {
           }}
         />
       )}
-      {step === 2 && (
+      {step === 2 && step1Data && (
         <Step2Review
           reconciledItems={reconciledItems}
-          step1Data={step1Data!}
+          step1Data={step1Data}
           onUpdate={setReconciledItems}
           onNext={() => setStep(3)}
           onBack={() => setStep(1)}
         />
       )}
-      {step === 3 && (
+      {step === 3 && step1Data && (
         <Step3Reconcile
           reconciledItems={reconciledItems}
           onNext={(selected) => {
@@ -105,14 +105,14 @@ export function BillingImportWizard() {
             setImportSummary({ imported: 0, alreadyRegistered: reconciledItems.length });
             setStep(5);
           }}
-          step1Data={step1Data!}
+          step1Data={step1Data}
         />
       )}
-      {step === 4 && (
+      {step === 4 && step1Data && (
         <Step4Import
           reconciledItems={reconciledItems}
           selectedIndices={selectedForImport}
-          step1Data={step1Data!}
+          step1Data={step1Data}
           onDone={(summary) => {
             setImportSummary(summary);
             setStep(5);

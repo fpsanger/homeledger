@@ -320,7 +320,7 @@ export function Step4Import({
                         min={1}
                         value={form.numberOfInstallments}
                         onChange={(e) =>
-                          updateForm(i, { numberOfInstallments: parseInt(e.target.value) || 1 })
+                          updateForm(i, { numberOfInstallments: parseInt(e.target.value, 10) || 1 })
                         }
                         disabled={status !== "pending"}
                         className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"

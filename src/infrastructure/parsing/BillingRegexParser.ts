@@ -75,7 +75,7 @@ function parseDateDDMM(day: string, month: string, year?: string): Date {
 
 function parseDateISO(dateStr: string): Date {
   const [y, m, d] = dateStr.split("-");
-  return new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d)));
+  return new Date(Date.UTC(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10)));
 }
 
 // DD/MM or DD/MM/YYYY  DESCRIPTION  R$ amount (credit card format)
@@ -266,7 +266,7 @@ const BANK_PARSERS: Record<SupportedBank, LineParser> = {
 };
 
 export function parseBillingText(pdfText: string, hintBank?: SupportedBank): ParsedStatement {
-  if (!pdfText || !pdfText.trim()) {
+  if (!pdfText?.trim()) {
     return { rows: [], bank: hintBank ?? "unknown" };
   }
 

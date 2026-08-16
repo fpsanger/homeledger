@@ -3,7 +3,6 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import { RecurringTransactionForm } from "@/components/transactions/RecurringTransactionForm";
 
 jest.mock("next/navigation", () => ({

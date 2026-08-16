@@ -1,11 +1,13 @@
-import type { PrismaClient } from "@prisma/client";
+import type {
+  PrismaClient,
+  LoyaltyTransaction as PrismaLoyaltyTransactionRow,
+} from "@prisma/client";
 import type {
   ILoyaltyTransactionRepository,
   LoyaltyTransactionRecord,
 } from "../../domain/repositories/ILoyaltyTransactionRepository";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toRecord(row: any): LoyaltyTransactionRecord {
+function toRecord(row: PrismaLoyaltyTransactionRow): LoyaltyTransactionRecord {
   return {
     id: row.id,
     programId: row.programId,

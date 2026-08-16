@@ -3,7 +3,6 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 
 jest.mock("next/navigation", () => ({
@@ -79,5 +78,42 @@ describe("UnifiedTransactionForm — defaultPersonId", () => {
       />,
     );
     expect(screen.getByLabelText("Pessoa")).toHaveValue("p2");
+  });
+});
+
+describe("UnifiedTransactionForm — credit-card closure", () => {
+  it("rejects billing preview when the card closure day was not resolved", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const cardWithoutResolvedClosure = {
+      id: "card-1",
+      name: "Malformed fixed card",
+      closureType: "FIXED" as const,
+      fixedClosureDay: null,
+      fixedClosurePreviousMonth: false,
+      alwaysNextMonth: false,
+      closureNextMonth: false,
+    };
+
+    try {
+      expect(() =>
+        render(
+          <UnifiedTransactionForm
+            people={people}
+            categories={categories}
+            creditCards={[cardWithoutResolvedClosure]}
+            initialValues={{
+              ...baseInitialValues,
+              type: "credit",
+              personId: "p1",
+              amount: "100",
+              date: "2026-01-15",
+              creditCardId: cardWithoutResolvedClosure.id,
+            }}
+          />,
+        ),
+      ).toThrow("Credit card closure day must be resolved before calculating billing months");
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

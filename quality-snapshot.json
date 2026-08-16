@@ -1,9 +1,9 @@
 {
   "coverage": {
-    "statements": 84.32,
-    "branches": 75,
-    "functions": 81,
-    "lines": 85.18
+    "statements": 85.6,
+    "branches": 77.16,
+    "functions": 83.87,
+    "lines": 86.56
   },
   "violations": {
     "architecture": 0,
@@ -36,7 +36,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (548). Maximum allowed is 400.",
+        "message": "This file has too many lines (564). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
@@ -45,7 +45,7 @@
             "column": 1
           },
           "end": {
-            "line": 758,
+            "line": 774,
             "column": 2
           }
         },
@@ -70,7 +70,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (605). Maximum allowed is 400.",
+        "message": "This file has too many lines (608). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
@@ -79,7 +79,7 @@
             "column": 1
           },
           "end": {
-            "line": 707,
+            "line": 710,
             "column": 2
           }
         },
@@ -264,11 +264,11 @@
         "location": {
           "path": "src/components/layout/TopNav.tsx",
           "start": {
-            "line": 33,
+            "line": 34,
             "column": 8
           },
           "end": {
-            "line": 276,
+            "line": 277,
             "column": 2
           }
         },
@@ -276,7 +276,7 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (101). Maximum allowed is 80.",
+        "message": "This function has too many lines (108). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
@@ -285,7 +285,7 @@
             "column": 1
           },
           "end": {
-            "line": 302,
+            "line": 309,
             "column": 2
           }
         },
@@ -293,16 +293,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (91). Maximum allowed is 80.",
+        "message": "This function has too many lines (100). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
           "start": {
-            "line": 325,
+            "line": 332,
             "column": 1
           },
           "end": {
-            "line": 487,
+            "line": 503,
             "column": 2
           }
         },
@@ -315,11 +315,11 @@
         "location": {
           "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
           "start": {
-            "line": 588,
+            "line": 604,
             "column": 8
           },
           "end": {
-            "line": 758,
+            "line": 774,
             "column": 2
           }
         },
@@ -434,11 +434,11 @@
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 419,
+            "line": 422,
             "column": 8
           },
           "end": {
-            "line": 707,
+            "line": 710,
             "column": 2
           }
         },

@@ -4,25 +4,26 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-      "build": "next build",
-      "start": "next start",
-      "lint": "biome check src tests",
-      "format": "biome format --write src tests",
-      "typecheck": "tsc --noEmit",
-      "test": "jest",
-      "test:e2e": "playwright test",
-      "test:e2e:ui": "playwright test --ui",
-      "test:coverage": "jest --coverage",
-      "test:quality": "node --test tests/quality/*.test.cjs",
-      "quality:snapshot": "node scripts/quality/snapshot.cjs",
-      "quality:ratchet": "npm run quality:snapshot && node scripts/quality/ratchet.cjs",
-      "quality": "npm run lint && npm run typecheck && npm run test:quality && npm run quality:ratchet && npm run build"
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome check src tests",
+    "format": "biome format --write src tests",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:coverage": "jest --coverage",
+    "test:quality": "node --test tests/quality/*.test.cjs",
+    "quality:snapshot": "node scripts/quality/snapshot.cjs",
+    "quality:ratchet": "npm run quality:snapshot && node scripts/quality/ratchet.cjs",
+    "quality": "npm run lint && npm run typecheck && npm run test:quality && npm run quality:ratchet && npm run build"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
     "testPathIgnorePatterns": [
-      "<rootDir>/node_modules/",
+      "/node_modules/",
+      "<rootDir>/tests/quality/",
       "<rootDir>/tests/e2e/"
     ],
     "moduleNameMapper": {
@@ -30,10 +31,6 @@
     },
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup.ts"
-    ],
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "<rootDir>/tests/quality/"
     ],
     "transform": {
       "^.+\\.(ts|tsx)$": [

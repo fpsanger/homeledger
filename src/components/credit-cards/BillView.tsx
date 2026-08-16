@@ -15,7 +15,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CreditCardRefundForm } from "@/components/credit-cards/CreditCardRefundForm";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
@@ -29,12 +29,13 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useInstallmentFilters } from "@/hooks/useInstallmentFilters";
 import { getFullPath } from "@/lib/categoryUtils";
 import { formatDatePtBR } from "@/lib/format-date";
 import { formatAmountBR } from "@/lib/utils";
+import type { BillInstallmentItem, BillSortDir, BillSortKey } from "./BillView.types";
 
-type BillSortKey = "description" | "amount" | "date";
-type BillSortDir = "asc" | "desc";
+export type { BillInstallmentItem, BillSortDir, BillSortKey } from "./BillView.types";
 
 const SUMMARY_SKELETONS = ["a", "b", "c", "d"];
 const ROW_SKELETONS = ["a", "b", "c", "d", "e"];
@@ -77,21 +78,6 @@ type PurchaseRecord = {
   numberOfInstallments: number;
   purchaseDate: string;
   categoryId: string | null;
-};
-
-type BillInstallmentItem = {
-  id: string;
-  creditCardPurchaseId: string;
-  installmentNumber: number;
-  amount: number;
-  dueYear: number;
-  dueMonth: number;
-  isPaid: boolean;
-  purchaseDescription: string;
-  personId: string;
-  categoryId: string | null;
-  numberOfInstallments: number;
-  purchaseDate: string;
 };
 
 type RefundItem = {
@@ -532,61 +518,23 @@ function CardInstallmentTable({
   onDeleteRefund: (refundId: string) => void;
   deletingRefundId: string | null;
 }) {
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [amountMin, setAmountMin] = useState("");
-  const [sortKey, setSortKey] = useState<BillSortKey | null>(null);
-  const [sortDir, setSortDir] = useState<BillSortDir>("asc");
-
-  function toggleSort(key: BillSortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
-  const usedCategories = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const i of installments) {
-      if (i.categoryId) seen.set(i.categoryId, categoryMap.get(i.categoryId) ?? i.categoryId);
-    }
-    return Array.from(seen.entries());
-  }, [installments, categoryMap]);
-
-  const filtered = useMemo(() => {
-    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
-    const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
-    return installments.filter((i) => {
-      if (search && !i.purchaseDescription.toLowerCase().includes(search.toLowerCase()))
-        return false;
-      if (categoryFilter && i.categoryId !== categoryFilter) return false;
-      if (fromMs !== null && new Date(i.purchaseDate).getTime() < fromMs) return false;
-      if (minAmt !== null && i.amount < minAmt) return false;
-      return true;
-    });
-  }, [installments, search, categoryFilter, dateFrom, amountMin]);
-
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    if (sortKey === "description")
-      arr.sort((a, b) => {
-        const d = a.purchaseDescription.localeCompare(b.purchaseDescription);
-        return sortDir === "asc" ? d : -d;
-      });
-    else if (sortKey === "amount")
-      arr.sort((a, b) => {
-        const d = a.amount - b.amount;
-        return sortDir === "asc" ? d : -d;
-      });
-    else if (sortKey === "date")
-      arr.sort((a, b) => {
-        const d = new Date(a.purchaseDate).getTime() - new Date(b.purchaseDate).getTime();
-        return sortDir === "asc" ? d : -d;
-      });
-    return arr;
-  }, [filtered, sortKey, sortDir]);
+  const {
+    search,
+    setSearch,
+    categoryFilter,
+    setCategoryFilter,
+    dateFrom,
+    setDateFrom,
+    amountMin,
+    setAmountMin,
+    sortKey,
+    setSortKey,
+    sortDir,
+    setSortDir,
+    toggleSort,
+    usedCategories,
+    sorted,
+  } = useInstallmentFilters(installments, categoryMap);
 
   const sharedProps = {
     sorted,
@@ -673,6 +621,99 @@ function CardInstallmentTable({
         />
       </div>
     </>
+  );
+}
+
+function isCardFullyPaid(installments: BillInstallmentItem[]): boolean {
+  return installments.length > 0 && installments.every((i) => i.isPaid);
+}
+
+function formatItemsSummary(entry: BillEntry): string {
+  const itemsLabel = `${entry.installments.length} ${entry.installments.length === 1 ? "item" : "itens"}`;
+  if (entry.refunds.length === 0) return itemsLabel;
+  const refundsLabel = entry.refunds.length === 1 ? "estorno" : "estornos";
+  return `${itemsLabel} · ${entry.refunds.length} ${refundsLabel}`;
+}
+
+function CardHeaderRow({
+  entry,
+  isOpen,
+  allPaid,
+  paying,
+  unpaying,
+  onPayFatura,
+  onUnpayFatura,
+}: {
+  entry: BillEntry;
+  isOpen: boolean;
+  allPaid: boolean;
+  paying: Set<string>;
+  unpaying: Set<string>;
+  onPayFatura: (cardId: string, installments: BillInstallmentItem[]) => void;
+  onUnpayFatura: (cardId: string, installments: BillInstallmentItem[]) => void;
+}) {
+  return (
+    <CollapsibleTrigger
+      className={`no-active-scale w-full rounded-none flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-4 border-b transition-colors text-left ${
+        allPaid
+          ? "bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:hover:bg-green-900 dark:border-green-800"
+          : "bg-muted/30 hover:bg-muted/50"
+      }`}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        {isOpen ? (
+          <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+        )}
+        <CreditCard className="w-4 h-4 text-muted-foreground shrink-0" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-sm truncate">{entry.card.name}</p>
+            {allPaid && (
+              <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full shrink-0">
+                <CheckCircle2 className="w-3 h-3" /> Paga
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">Vence: dia {entry.dueDayOfMonth}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between sm:justify-end gap-3 pl-7 sm:pl-0">
+        {entry.installments.some((i) => !i.isPaid) && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={paying.has(entry.card.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPayFatura(entry.card.id, entry.installments);
+            }}
+          >
+            {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
+          </Button>
+        )}
+        {entry.installments.some((i) => i.isPaid) && (
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={unpaying.has(entry.card.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUnpayFatura(entry.card.id, entry.installments);
+            }}
+          >
+            {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
+          </Button>
+        )}
+        <div className="text-right shrink-0">
+          <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
+            {formatItemsSummary(entry)}
+          </p>
+        </div>
+      </div>
+    </CollapsibleTrigger>
   );
 }
 
@@ -1037,8 +1078,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
           {/* Card groups */}
           {bill.map((entry) => {
             const isOpen = !collapsed.has(entry.card.id);
-            const allPaid =
-              entry.installments.length > 0 && entry.installments.every((i) => i.isPaid);
+            const allPaid = isCardFullyPaid(entry.installments);
             return (
               <Collapsible
                 key={entry.card.id}
@@ -1047,72 +1087,15 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
               >
                 <Card className={`overflow-hidden${allPaid ? " ring-1 ring-green-500" : ""}`}>
                   {/* Card header */}
-                  <CollapsibleTrigger
-                    className={`no-active-scale w-full rounded-none flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-4 border-b transition-colors text-left ${
-                      allPaid
-                        ? "bg-green-50 hover:bg-green-100 border-green-200 dark:bg-green-950 dark:hover:bg-green-900 dark:border-green-800"
-                        : "bg-muted/30 hover:bg-muted/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {isOpen ? (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                      )}
-                      <CreditCard className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-sm truncate">{entry.card.name}</p>
-                          {allPaid && (
-                            <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full shrink-0">
-                              <CheckCircle2 className="w-3 h-3" /> Paga
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Vence: dia {entry.dueDayOfMonth}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-3 pl-7 sm:pl-0">
-                      {entry.installments.some((i) => !i.isPaid) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={paying.has(entry.card.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            payFatura(entry.card.id, entry.installments);
-                          }}
-                        >
-                          {paying.has(entry.card.id) ? "Pagando…" : "Pagar fatura"}
-                        </Button>
-                      )}
-                      {entry.installments.some((i) => i.isPaid) && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          disabled={unpaying.has(entry.card.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            unpayFatura(entry.card.id, entry.installments);
-                          }}
-                        >
-                          {unpaying.has(entry.card.id) ? "Estornando…" : "Estornar fatura"}
-                        </Button>
-                      )}
-                      <div className="text-right shrink-0">
-                        <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
-                        <p className="text-xs text-muted-foreground whitespace-nowrap">
-                          {entry.installments.length}{" "}
-                          {entry.installments.length === 1 ? "item" : "itens"}
-                          {entry.refunds.length > 0 &&
-                            ` · ${entry.refunds.length} ${entry.refunds.length === 1 ? "estorno" : "estornos"}`}
-                        </p>
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
+                  <CardHeaderRow
+                    entry={entry}
+                    isOpen={isOpen}
+                    allPaid={allPaid}
+                    paying={paying}
+                    unpaying={unpaying}
+                    onPayFatura={payFatura}
+                    onUnpayFatura={unpayFatura}
+                  />
 
                   <CollapsibleContent>
                     <CardInstallmentTable

@@ -7,22 +7,7 @@ import { Step2Review } from "./Step2Review";
 import { Step3Reconcile } from "./Step3Reconcile";
 import { Step4Import } from "./Step4Import";
 import { Step5Done } from "./Step5Done";
-
-export type WizardStep = 1 | 2 | 3 | 4 | 5;
-
-export type Step1Data = {
-  statementType: "credit-card" | "debit";
-  creditCardId?: string;
-  personId: string;
-  year: number;
-  month: number;
-  detectedBank?: string;
-};
-
-export type ImportSummary = {
-  imported: number;
-  alreadyRegistered: number;
-};
+import type { ImportSummary, Step1Data, WizardStep } from "./types";
 
 const STEPS = [
   { label: "Upload" },

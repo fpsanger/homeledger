@@ -40,11 +40,10 @@ type CreateLoyaltyTransactionInput = {
   valueBrl?: number | null;
 };
 
-export function createLoyaltyTransaction(
+function validateTransferIdRules(
   input: CreateLoyaltyTransactionInput,
-): LoyaltyTransactionRecord {
-  const isTransferType = TRANSFER_TYPES.includes(input.type);
-
+  isTransferType: boolean,
+): void {
   if (!isTransferType && input.transferId != null) {
     throw new Error("transferId must be null for non-transfer types");
   }
@@ -52,7 +51,9 @@ export function createLoyaltyTransaction(
   if (input.type === "TRANSFER_OUT" || input.type === "TRANSFER_IN") {
     if (!input.transferId) throw new Error(`${input.type} requires transferId`);
   }
+}
 
+function validatePointsAndCostRules(input: CreateLoyaltyTransactionInput): void {
   if (input.type !== "ADJUSTMENT") {
     if (input.points <= 0) throw new Error("points must be positive");
   }
@@ -60,6 +61,21 @@ export function createLoyaltyTransaction(
   if (input.type === "PURCHASE") {
     if (!input.costBrl || input.costBrl <= 0) throw new Error("PURCHASE requires costBrl > 0");
   }
+}
+
+function validateLoyaltyTransactionInput(
+  input: CreateLoyaltyTransactionInput,
+  isTransferType: boolean,
+): void {
+  validateTransferIdRules(input, isTransferType);
+  validatePointsAndCostRules(input);
+}
+
+export function createLoyaltyTransaction(
+  input: CreateLoyaltyTransactionInput,
+): LoyaltyTransactionRecord {
+  const isTransferType = TRANSFER_TYPES.includes(input.type);
+  validateLoyaltyTransactionInput(input, isTransferType);
 
   const now = new Date();
   return {

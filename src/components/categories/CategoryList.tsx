@@ -32,6 +32,246 @@ type Category = {
 
 type ViewMode = "cards" | "table";
 
+function CategoryCardsView({
+  filteredGroups,
+  childrenOf,
+  deleting,
+  onEdit,
+  onDelete,
+  onAddChild,
+}: {
+  filteredGroups: { root: Category; children: Category[] }[];
+  childrenOf: Map<string, Category[]>;
+  deleting: string | null;
+  onEdit: (c: Category) => void;
+  onDelete: (id: string) => void;
+  onAddChild: (parentId: string) => void;
+}) {
+  if (filteredGroups.length === 0) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        Nenhuma categoria encontrada
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {filteredGroups.map(({ root, children }) => (
+        <Card key={root.id} className="flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col gap-1 min-w-0">
+                <span className="font-semibold text-sm leading-tight truncate">{root.name}</span>
+                <Badge variant="secondary" className="w-fit text-xs font-normal">
+                  {(childrenOf.get(root.id) ?? []).length}{" "}
+                  {(childrenOf.get(root.id) ?? []).length === 1 ? "subcategoria" : "subcategorias"}
+                </Badge>
+              </div>
+              <DropdownMenu
+                align="right"
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground h-7 w-7 p-0 shrink-0"
+                    aria-label="Ações"
+                    disabled={deleting === root.id}
+                  >
+                    <MoreHorizontal className="w-3.5 h-3.5" />
+                  </Button>
+                }
+                items={[
+                  { label: "Editar", onClick: () => onEdit(root) },
+                  {
+                    label: "Adicionar subcategoria",
+                    onClick: () => onAddChild(root.id),
+                  },
+                  {
+                    label: deleting === root.id ? "Excluindo…" : "Excluir",
+                    onClick: () => onDelete(root.id),
+                    variant: "destructive",
+                  },
+                ]}
+              />
+            </div>
+          </CardHeader>
+
+          <CardContent className="pt-0 flex-1">
+            {children.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
+                <p className="text-xs">Nenhuma subcategoria</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={() => onAddChild(root.id)}
+                >
+                  <Plus className="w-3 h-3 mr-1" /> Adicionar subcategoria
+                </Button>
+              </div>
+            ) : (
+              <ul className="flex flex-col divide-y divide-border">
+                {children.map((child) => (
+                  <li
+                    key={child.id}
+                    className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0"
+                  >
+                    <span className="text-sm text-muted-foreground truncate">{child.name}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <DropdownMenu
+                        align="right"
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground h-6 w-6 p-0"
+                            aria-label="Ações"
+                            disabled={deleting === child.id}
+                          >
+                            <MoreHorizontal className="w-3 h-3" />
+                          </Button>
+                        }
+                        items={[
+                          { label: "Editar", onClick: () => onEdit(child) },
+                          {
+                            label: deleting === child.id ? "Excluindo…" : "Excluir",
+                            onClick: () => onDelete(child.id),
+                            variant: "destructive",
+                          },
+                        ]}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function CategoryTableView({
+  paged,
+  categories,
+  deleting,
+  onEdit,
+  onDelete,
+  totalPages,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  paged: Category[];
+  categories: Category[];
+  deleting: string | null;
+  onEdit: (c: Category) => void;
+  onDelete: (id: string) => void;
+  totalPages: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number | ((p: number) => number)) => void;
+  onPageSizeChange: (size: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="rounded-lg border overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <TableHead>Nome</TableHead>
+              <TableHead>Caminho</TableHead>
+              <TableHead className="w-8" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paged.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-8">
+                  Nenhuma categoria encontrada
+                </TableCell>
+              </TableRow>
+            )}
+            {paged.map((cat) => (
+              <TableRow key={cat.id}>
+                <TableCell
+                  style={{ paddingLeft: `${cat.level * 20 + 12}px` }}
+                  className="font-medium text-sm"
+                >
+                  {cat.name}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {getFullPath(cat.id, categories)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu
+                    align="right"
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground h-7 w-7 p-0"
+                        aria-label="Ações"
+                        disabled={deleting === cat.id}
+                      >
+                        <MoreHorizontal className="w-3.5 h-3.5" />
+                      </Button>
+                    }
+                    items={[
+                      { label: "Editar", onClick: () => onEdit(cat) },
+                      {
+                        label: deleting === cat.id ? "Excluindo…" : "Excluir",
+                        onClick: () => onDelete(cat.id),
+                        variant: "destructive",
+                      },
+                    ]}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-between pt-1">
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => {
+            onPageSizeChange(size);
+            onPageChange(0);
+          }}
+        />
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => onPageChange((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages - 1}
+              onClick={() => onPageChange((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CategoryList({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -186,212 +426,31 @@ export function CategoryList({ categories }: { categories: Category[] }) {
       {toolbar}
 
       {/* ── CARDS VIEW ── */}
-      {view === "cards" &&
-        (filteredGroups.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            Nenhuma categoria encontrada
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredGroups.map(({ root, children }) => (
-              <Card key={root.id} className="flex flex-col">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="font-semibold text-sm leading-tight truncate">
-                        {root.name}
-                      </span>
-                      <Badge variant="secondary" className="w-fit text-xs font-normal">
-                        {(childrenOf.get(root.id) ?? []).length}{" "}
-                        {(childrenOf.get(root.id) ?? []).length === 1
-                          ? "subcategoria"
-                          : "subcategorias"}
-                      </Badge>
-                    </div>
-                    <DropdownMenu
-                      align="right"
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground h-7 w-7 p-0 shrink-0"
-                          aria-label="Ações"
-                          disabled={deleting === root.id}
-                        >
-                          <MoreHorizontal className="w-3.5 h-3.5" />
-                        </Button>
-                      }
-                      items={[
-                        { label: "Editar", onClick: () => setEditing(root) },
-                        {
-                          label: "Adicionar subcategoria",
-                          onClick: () => openCreate(root.id),
-                        },
-                        {
-                          label: deleting === root.id ? "Excluindo…" : "Excluir",
-                          onClick: () => handleDelete(root.id),
-                          variant: "destructive",
-                        },
-                      ]}
-                    />
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-0 flex-1">
-                  {children.length === 0 ? (
-                    <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground">
-                      <p className="text-xs">Nenhuma subcategoria</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-7"
-                        onClick={() => openCreate(root.id)}
-                      >
-                        <Plus className="w-3 h-3 mr-1" /> Adicionar subcategoria
-                      </Button>
-                    </div>
-                  ) : (
-                    <ul className="flex flex-col divide-y divide-border">
-                      {children.map((child) => (
-                        <li
-                          key={child.id}
-                          className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0"
-                        >
-                          <span className="text-sm text-muted-foreground truncate">
-                            {child.name}
-                          </span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <DropdownMenu
-                              align="right"
-                              trigger={
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-muted-foreground h-6 w-6 p-0"
-                                  aria-label="Ações"
-                                  disabled={deleting === child.id}
-                                >
-                                  <MoreHorizontal className="w-3 h-3" />
-                                </Button>
-                              }
-                              items={[
-                                { label: "Editar", onClick: () => setEditing(child) },
-                                {
-                                  label: deleting === child.id ? "Excluindo…" : "Excluir",
-                                  onClick: () => handleDelete(child.id),
-                                  variant: "destructive",
-                                },
-                              ]}
-                            />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ))}
+      {view === "cards" && (
+        <CategoryCardsView
+          filteredGroups={filteredGroups}
+          childrenOf={childrenOf}
+          deleting={deleting}
+          onEdit={setEditing}
+          onDelete={handleDelete}
+          onAddChild={openCreate}
+        />
+      )}
 
       {/* ── TABLE VIEW ── */}
       {view === "table" && (
-        <div className="flex flex-col gap-3">
-          <div className="rounded-lg border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40">
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Caminho</TableHead>
-                  <TableHead className="w-8" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paged.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      className="text-center text-sm text-muted-foreground py-8"
-                    >
-                      Nenhuma categoria encontrada
-                    </TableCell>
-                  </TableRow>
-                )}
-                {paged.map((cat) => (
-                  <TableRow key={cat.id}>
-                    <TableCell
-                      style={{ paddingLeft: `${cat.level * 20 + 12}px` }}
-                      className="font-medium text-sm"
-                    >
-                      {cat.name}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {getFullPath(cat.id, categories)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu
-                        align="right"
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground h-7 w-7 p-0"
-                            aria-label="Ações"
-                            disabled={deleting === cat.id}
-                          >
-                            <MoreHorizontal className="w-3.5 h-3.5" />
-                          </Button>
-                        }
-                        items={[
-                          { label: "Editar", onClick: () => setEditing(cat) },
-                          {
-                            label: deleting === cat.id ? "Excluindo…" : "Excluir",
-                            onClick: () => handleDelete(cat.id),
-                            variant: "destructive",
-                          },
-                        ]}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="flex items-center justify-between pt-1">
-            <PageSizeSelector
-              value={pageSize}
-              onChange={(size) => {
-                setPageSize(size);
-                setPage(0);
-              }}
-            />
-            {totalPages > 1 && (
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  ← Anterior
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {page + 1} / {totalPages}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages - 1}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Próximo →
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+        <CategoryTableView
+          paged={paged}
+          categories={categories}
+          deleting={deleting}
+          onEdit={setEditing}
+          onDelete={handleDelete}
+          totalPages={totalPages}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       )}
 
       {editing && (

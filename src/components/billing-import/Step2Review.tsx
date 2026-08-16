@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import type { CategorySource, ReconciledItem } from "@/domain/entities/ReconciledItem";
-import type { Step1Data } from "./BillingImportWizard";
+import type { Step1Data } from "./types";
 
 type Category = { id: string; name: string; path: string; parentId: string | null };
 

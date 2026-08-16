@@ -9,6 +9,24 @@ function formatBrl(value: number) {
 
 type Program = { id: string; name: string; type: string };
 
+type TransferPreview = { pointsReceived: number; destinationCostPer1k: number | null };
+
+function computeTransferPreview(
+  sourceAvgCostPer1k: number | null,
+  pointsSent: string,
+  bonusPercent: string,
+): TransferPreview {
+  const sentNum = Number(pointsSent) || 0;
+  const bonusNum = Number(bonusPercent) || 0;
+  const pointsReceived = sentNum > 0 ? Math.round(sentNum * (1 + bonusNum / 100)) : 0;
+  const estimatedCostBrl = sourceAvgCostPer1k ? (sourceAvgCostPer1k * sentNum) / 1000 : 0;
+  const destinationCostPer1k =
+    sentNum > 0 && pointsReceived > 0 && sourceAvgCostPer1k
+      ? (estimatedCostBrl / pointsReceived) * 1000
+      : null;
+  return { pointsReceived, destinationCostPer1k };
+}
+
 type Props = {
   programs: Program[];
   onSuccess: () => void;
@@ -40,15 +58,11 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
     };
   }, [fromProgramId]);
 
-  const sentNum = Number(pointsSent) || 0;
-  const bonusNum = Number(bonusPercent) || 0;
-  const pointsReceived = sentNum > 0 ? Math.round(sentNum * (1 + bonusNum / 100)) : 0;
-
-  const estimatedCostBrl = sourceAvgCostPer1k ? (sourceAvgCostPer1k * sentNum) / 1000 : 0;
-  const destinationCostPer1k =
-    sentNum > 0 && pointsReceived > 0 && sourceAvgCostPer1k
-      ? (estimatedCostBrl / pointsReceived) * 1000
-      : null;
+  const { pointsReceived, destinationCostPer1k } = computeTransferPreview(
+    sourceAvgCostPer1k,
+    pointsSent,
+    bonusPercent,
+  );
 
   const fromProgram = programs.find((p) => p.id === fromProgramId);
   const isAirlineSource = fromProgram?.type === "AIRLINE";

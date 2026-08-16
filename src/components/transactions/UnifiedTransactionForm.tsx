@@ -140,6 +140,285 @@ type Props = {
   allowedTypes?: FormType[];
 };
 
+type ClosureRecord = { year: number; month: number; closureDay: number; previousMonth: boolean };
+
+function InstallmentCountOptions({ amount }: { amount: string }) {
+  const total = parseCurrencyBR(amount);
+  if (!total || total <= 0) {
+    return <option value="">Informe o valor primeiro</option>;
+  }
+  return Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+    const perInstallment = (total / n).toFixed(2).replace(".", ",");
+    return (
+      <option key={n} value={String(n)}>
+        {n}x de R$ {perInstallment}
+      </option>
+    );
+  });
+}
+
+function InstallmentPreview({
+  amount,
+  date,
+  selectedCard,
+  numberOfInstallments,
+  cardClosures,
+}: {
+  amount: string;
+  date: string;
+  selectedCard: CreditCard | undefined;
+  numberOfInstallments: string;
+  cardClosures: ClosureRecord[];
+}) {
+  const total = parseCurrencyBR(amount);
+  if (!selectedCard || !total || total <= 0 || !date) return null;
+  const n = parseInt(numberOfInstallments, 10);
+  if (!n || n < 1) return null;
+
+  if (selectedCard.closureType === "VARIABLE") {
+    const d = new Date(`${date}T00:00:00Z`);
+    const purchaseYear = d.getUTCFullYear();
+    const purchaseMonth = d.getUTCMonth() + 1;
+    const closure = cardClosures.find((c) => c.year === purchaseYear && c.month === purchaseMonth);
+    if (!closure) {
+      return (
+        <p className="text-xs text-amber-600">
+          Fechamento do mês {MONTH_NAMES_PT[purchaseMonth - 1]}/{purchaseYear} não configurado.
+          Adicione um fechamento para este cartão antes de registrar a compra.
+        </p>
+      );
+    }
+    const variableCard = {
+      ...selectedCard,
+      fixedClosureDay: closure.closureDay,
+      fixedClosurePreviousMonth: closure.previousMonth,
+    };
+    const months = computeBillingMonths(total, n, date, variableCard);
+    return (
+      <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
+        {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
+          <div
+            key={installmentNumber}
+            className="flex justify-between text-xs text-muted-foreground"
+          >
+            <span>
+              Parcela {installmentNumber}/{n}
+            </span>
+            <span>
+              {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const months = computeBillingMonths(total, n, date, selectedCard);
+  return (
+    <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
+      {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
+        <div key={installmentNumber} className="flex justify-between text-xs text-muted-foreground">
+          <span>
+            Parcela {installmentNumber}/{n}
+          </span>
+          <span>
+            {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type SubmitFields = {
+  personId: string;
+  amount: string;
+  date: string;
+  paymentMethod: string;
+  source: string;
+  creditCardId: string;
+  categoryId: string;
+  description: string;
+  numberOfInstallments: string;
+};
+
+type SubmitTarget = { url: string; method: string; body: Record<string, unknown> };
+
+function resolveEditTarget(
+  editMode: EditMode,
+  type: FormType,
+  fields: SubmitFields,
+): SubmitTarget | { error: string } {
+  if (editMode.transactionId) {
+    if (type === "expense") {
+      return {
+        url: `/api/expenses/${editMode.transactionId}`,
+        method: "PUT",
+        body: {
+          personId: fields.personId,
+          amount: parseCurrencyBR(fields.amount),
+          date: fields.date,
+          paymentMethod: fields.paymentMethod,
+          categoryId: fields.categoryId || null,
+          description: fields.description,
+        },
+      };
+    }
+    return {
+      url: `/api/incomes/${editMode.transactionId}`,
+      method: "PUT",
+      body: {
+        personId: fields.personId,
+        amount: parseCurrencyBR(fields.amount),
+        date: fields.date,
+        source: fields.source,
+        categoryId: fields.categoryId || null,
+        description: fields.description,
+      },
+    };
+  }
+  if (editMode.purchaseId) {
+    return {
+      url: `/api/credit-card-purchases/${editMode.purchaseId}`,
+      method: "PUT",
+      body: {
+        description: fields.description,
+        totalAmount: parseCurrencyBR(fields.amount),
+        purchaseDate: fields.date,
+        categoryId: fields.categoryId || null,
+        creditCardId: fields.creditCardId,
+      },
+    };
+  }
+  return { error: "ID da compra não encontrado." };
+}
+
+function resolveCreateTarget(type: FormType, fields: SubmitFields): SubmitTarget {
+  if (type === "expense") {
+    return {
+      url: "/api/expenses",
+      method: "POST",
+      body: {
+        personId: fields.personId,
+        amount: parseCurrencyBR(fields.amount),
+        date: fields.date,
+        paymentMethod: fields.paymentMethod,
+        categoryId: fields.categoryId || null,
+        description: fields.description,
+      },
+    };
+  }
+  if (type === "income") {
+    return {
+      url: "/api/incomes",
+      method: "POST",
+      body: {
+        personId: fields.personId,
+        amount: parseCurrencyBR(fields.amount),
+        date: fields.date,
+        source: fields.source,
+        categoryId: fields.categoryId || null,
+        description: fields.description,
+      },
+    };
+  }
+  return {
+    url: "/api/installments",
+    method: "POST",
+    body: {
+      personId: fields.personId,
+      creditCardId: fields.creditCardId,
+      totalAmount: parseCurrencyBR(fields.amount),
+      numberOfInstallments: parseInt(fields.numberOfInstallments, 10),
+      purchaseDate: fields.date,
+      categoryId: fields.categoryId || null,
+      description: fields.description,
+    },
+  };
+}
+
+function resolveSubmitTarget(
+  editMode: EditMode | undefined,
+  type: FormType,
+  fields: SubmitFields,
+): SubmitTarget | { error: string } {
+  if (editMode) return resolveEditTarget(editMode, type, fields);
+  return resolveCreateTarget(type, fields);
+}
+
+function computeDuplicateCheckValues(
+  type: FormType,
+  amount: string,
+  date: string,
+  paymentMethod: string,
+  creditCardId: string,
+) {
+  const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
+  return {
+    dupType,
+    transactionAmount: type !== "credit" && amount ? parseCurrencyBR(amount) : null,
+    ...computeCreditCrossDuplicateValues(type, amount, date, paymentMethod, creditCardId),
+  };
+}
+
+function computeCreditCrossDuplicateValues(
+  type: FormType,
+  amount: string,
+  date: string,
+  paymentMethod: string,
+  creditCardId: string,
+) {
+  return {
+    creditAmount: type === "credit" && amount ? parseCurrencyBR(amount) : null,
+    creditDate: type === "credit" ? date : null,
+    creditCardIdArg: type === "credit" ? creditCardId : null,
+    crossAmount: type === "expense" && amount ? parseCurrencyBR(amount) : null,
+    crossDate: type === "expense" ? date : null,
+    crossPaymentMethod: type === "expense" ? paymentMethod : null,
+  };
+}
+
+function getInitialFormState(
+  initialValues: InitialValues | undefined,
+  defaultPersonId: string,
+  today: string,
+) {
+  return {
+    type: initialValues?.type ?? "expense",
+    personId: initialValues?.personId ?? defaultPersonId,
+    amount: initialValues?.amount ?? "",
+    date: initialValues?.date ?? today,
+    description: initialValues?.description ?? "",
+    categoryId: initialValues?.categoryId ?? "",
+    paymentMethod: initialValues?.paymentMethod ?? "CASH",
+    source: initialValues?.source ?? "SALARY",
+    creditCardId: initialValues?.creditCardId ?? "",
+  };
+}
+
+function deriveDuplicateMatch<A, B, C>(
+  duplicateTransaction: A | null,
+  duplicateCreditCard: B | null,
+  duplicateCrossEntity: C | null,
+) {
+  return {
+    duplicateMatch: duplicateTransaction ?? duplicateCreditCard ?? duplicateCrossEntity,
+    isCrossType: !duplicateTransaction && !!duplicateCrossEntity,
+  };
+}
+
+function getFieldLabels(type: FormType) {
+  return {
+    amountLabel: type === "credit" ? "Valor Total" : "Valor",
+    dateLabel: type === "credit" ? "Data da Compra" : "Data",
+  };
+}
+
+function getSubmitButtonLabel(loading: boolean, isEditMode: boolean, typeLabel: string) {
+  if (loading) return isEditMode ? "Salvando…" : "Adicionando…";
+  return isEditMode ? "Salvar alterações" : `Adicionar ${typeLabel}`;
+}
+
 export function UnifiedTransactionForm({
   people,
   categories,
@@ -154,21 +433,21 @@ export function UnifiedTransactionForm({
   const today = new Date().toISOString().split("T")[0];
   const isEditMode = editMode !== undefined;
 
-  const [type, setType] = useState<FormType>(initialValues?.type ?? "expense");
-  const [personId, setPersonId] = useState(initialValues?.personId ?? defaultPersonId);
-  const [amount, setAmount] = useState(initialValues?.amount ?? "");
-  const [date, setDate] = useState(initialValues?.date ?? today);
-  const [description, setDescription] = useState(initialValues?.description ?? "");
+  const initial = getInitialFormState(initialValues, defaultPersonId, today);
+  const [type, setType] = useState<FormType>(initial.type);
+  const [personId, setPersonId] = useState(initial.personId);
+  const [amount, setAmount] = useState(initial.amount);
+  const [date, setDate] = useState(initial.date);
+  const [description, setDescription] = useState(initial.description);
 
-  const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? "");
-  const [paymentMethod, setPaymentMethod] = useState(initialValues?.paymentMethod ?? "CASH");
-  const [source, setSource] = useState(initialValues?.source ?? "SALARY");
-  const [creditCardId, setCreditCardId] = useState(initialValues?.creditCardId ?? "");
+  const [categoryId, setCategoryId] = useState(initial.categoryId);
+  const [paymentMethod, setPaymentMethod] = useState(initial.paymentMethod);
+  const [source, setSource] = useState(initial.source);
+  const [creditCardId, setCreditCardId] = useState(initial.creditCardId);
   const [numberOfInstallments, setNumberOfInstallments] = useState("2");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  type ClosureRecord = { year: number; month: number; closureDay: number; previousMonth: boolean };
   const [cardClosures, setCardClosures] = useState<ClosureRecord[]>([]);
 
   useEffect(() => {
@@ -183,28 +462,31 @@ export function UnifiedTransactionForm({
       .catch(() => setCardClosures([]));
   }, [creditCardId, creditCards]);
 
-  const dupType: "EXPENSE" | "INCOME" = type === "income" ? "INCOME" : "EXPENSE";
+  const dup = computeDuplicateCheckValues(type, amount, date, paymentMethod, creditCardId);
   const duplicateTransaction = useDuplicateCheck(
-    dupType,
-    type !== "credit" && amount ? parseCurrencyBR(amount) : null,
+    dup.dupType,
+    dup.transactionAmount,
     date,
     refreshKey,
   );
   const duplicateCreditCard = useCreditCardDuplicateCheck(
-    type === "credit" && amount ? parseCurrencyBR(amount) : null,
-    type === "credit" ? date : null,
-    type === "credit" ? creditCardId : null,
+    dup.creditAmount,
+    dup.creditDate,
+    dup.creditCardIdArg,
     refreshKey,
   );
   const duplicateCrossEntity = useCrossEntityDuplicateCheck(
-    type === "expense" && amount ? parseCurrencyBR(amount) : null,
-    type === "expense" ? date : null,
-    type === "expense" ? paymentMethod : null,
+    dup.crossAmount,
+    dup.crossDate,
+    dup.crossPaymentMethod,
     refreshKey,
   );
 
-  const duplicateMatch = duplicateTransaction ?? duplicateCreditCard ?? duplicateCrossEntity;
-  const isCrossType = !duplicateTransaction && !!duplicateCrossEntity;
+  const { duplicateMatch, isCrossType } = deriveDuplicateMatch(
+    duplicateTransaction,
+    duplicateCreditCard,
+    duplicateCrossEntity,
+  );
 
   function reset() {
     setPersonId("");
@@ -223,88 +505,28 @@ export function UnifiedTransactionForm({
     e.preventDefault();
     setLoading(true);
 
-    let url: string;
-    let body: Record<string, unknown>;
-    let method: string;
+    const target = resolveSubmitTarget(editMode, type, {
+      personId,
+      amount,
+      date,
+      paymentMethod,
+      source,
+      creditCardId,
+      categoryId,
+      description,
+      numberOfInstallments,
+    });
 
-    if (isEditMode) {
-      method = "PUT";
-      if (editMode.transactionId) {
-        if (type === "expense") {
-          url = `/api/expenses/${editMode.transactionId}`;
-          body = {
-            personId,
-            amount: parseCurrencyBR(amount),
-            date,
-            paymentMethod,
-            categoryId: categoryId || null,
-            description,
-          };
-        } else {
-          url = `/api/incomes/${editMode.transactionId}`;
-          body = {
-            personId,
-            amount: parseCurrencyBR(amount),
-            date,
-            source,
-            categoryId: categoryId || null,
-            description,
-          };
-        }
-      } else if (editMode.purchaseId) {
-        url = `/api/credit-card-purchases/${editMode.purchaseId}`;
-        body = {
-          description,
-          totalAmount: parseCurrencyBR(amount),
-          purchaseDate: date,
-          categoryId: categoryId || null,
-          creditCardId,
-        };
-      } else {
-        toast.error("ID da compra não encontrado.");
-        setLoading(false);
-        return;
-      }
-    } else {
-      method = "POST";
-      if (type === "expense") {
-        url = "/api/expenses";
-        body = {
-          personId,
-          amount: parseCurrencyBR(amount),
-          date,
-          paymentMethod,
-          categoryId: categoryId || null,
-          description,
-        };
-      } else if (type === "income") {
-        url = "/api/incomes";
-        body = {
-          personId,
-          amount: parseCurrencyBR(amount),
-          date,
-          source,
-          categoryId: categoryId || null,
-          description,
-        };
-      } else {
-        url = "/api/installments";
-        body = {
-          personId,
-          creditCardId,
-          totalAmount: parseCurrencyBR(amount),
-          numberOfInstallments: parseInt(numberOfInstallments, 10),
-          purchaseDate: date,
-          categoryId: categoryId || null,
-          description,
-        };
-      }
+    if ("error" in target) {
+      toast.error(target.error);
+      setLoading(false);
+      return;
     }
 
-    const res = await fetch(url, {
-      method,
+    const res = await fetch(target.url, {
+      method: target.method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(target.body),
     });
 
     setLoading(false);
@@ -328,6 +550,7 @@ export function UnifiedTransactionForm({
     income: "Receita",
     credit: "Compra com Cartão",
   };
+  const { amountLabel, dateLabel } = getFieldLabels(type);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -368,7 +591,7 @@ export function UnifiedTransactionForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-amount">{type === "credit" ? "Valor Total" : "Valor"}</Label>
+        <Label htmlFor="u-amount">{amountLabel}</Label>
         <CurrencyInput
           id="u-amount"
           value={amount}
@@ -381,7 +604,7 @@ export function UnifiedTransactionForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>{type === "credit" ? "Data da Compra" : "Data"}</Label>
+        <Label>{dateLabel}</Label>
         <DatePicker value={date} onChange={setDate} required />
       </div>
 
@@ -443,94 +666,15 @@ export function UnifiedTransactionForm({
                 onChange={(e) => setNumberOfInstallments(e.target.value)}
                 required
               >
-                {(() => {
-                  const total = parseCurrencyBR(amount);
-                  if (!total || total <= 0) {
-                    return <option value="">Informe o valor primeiro</option>;
-                  }
-                  return Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
-                    const perInstallment = (total / n).toFixed(2).replace(".", ",");
-                    return (
-                      <option key={n} value={String(n)}>
-                        {n}x de R$ {perInstallment}
-                      </option>
-                    );
-                  });
-                })()}
+                <InstallmentCountOptions amount={amount} />
               </Select>
-              {(() => {
-                const selectedCard = creditCards.find((c) => c.id === creditCardId);
-                const total = parseCurrencyBR(amount);
-                if (!selectedCard || !total || total <= 0 || !date) return null;
-                const n = parseInt(numberOfInstallments, 10);
-                if (!n || n < 1) return null;
-
-                if (selectedCard.closureType === "VARIABLE") {
-                  const d = new Date(`${date}T00:00:00Z`);
-                  const purchaseYear = d.getUTCFullYear();
-                  const purchaseMonth = d.getUTCMonth() + 1;
-                  const closure = cardClosures.find(
-                    (c) => c.year === purchaseYear && c.month === purchaseMonth,
-                  );
-                  if (!closure) {
-                    return (
-                      <p className="text-xs text-amber-600">
-                        Fechamento do mês {MONTH_NAMES_PT[purchaseMonth - 1]}/{purchaseYear} não
-                        configurado. Adicione um fechamento para este cartão antes de registrar a
-                        compra.
-                      </p>
-                    );
-                  }
-                  const variableCard = {
-                    ...selectedCard,
-                    fixedClosureDay: closure.closureDay,
-                    fixedClosurePreviousMonth: closure.previousMonth,
-                  };
-                  const months = computeBillingMonths(total, n, date, variableCard);
-                  return (
-                    <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
-                      {months.map(
-                        ({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
-                          <div
-                            key={installmentNumber}
-                            className="flex justify-between text-xs text-muted-foreground"
-                          >
-                            <span>
-                              Parcela {installmentNumber}/{n}
-                            </span>
-                            <span>
-                              {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} —{" "}
-                              {formatAmountBR(installAmount)}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  );
-                }
-
-                const months = computeBillingMonths(total, n, date, selectedCard);
-                return (
-                  <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
-                    {months.map(
-                      ({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
-                        <div
-                          key={installmentNumber}
-                          className="flex justify-between text-xs text-muted-foreground"
-                        >
-                          <span>
-                            Parcela {installmentNumber}/{n}
-                          </span>
-                          <span>
-                            {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} —{" "}
-                            {formatAmountBR(installAmount)}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                );
-              })()}
+              <InstallmentPreview
+                amount={amount}
+                date={date}
+                selectedCard={creditCards.find((c) => c.id === creditCardId)}
+                numberOfInstallments={numberOfInstallments}
+                cardClosures={cardClosures}
+              />
             </div>
           )}
         </>
@@ -559,13 +703,7 @@ export function UnifiedTransactionForm({
       )}
 
       <Button type="submit" disabled={loading}>
-        {loading
-          ? isEditMode
-            ? "Salvando…"
-            : "Adicionando…"
-          : isEditMode
-            ? "Salvar alterações"
-            : `Adicionar ${typeLabels[type]}`}
+        {getSubmitButtonLabel(loading, isEditMode, typeLabels[type])}
       </Button>
     </form>
   );

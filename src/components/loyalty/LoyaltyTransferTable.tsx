@@ -45,41 +45,64 @@ export function LoyaltyTransferTable({ transfers, programs }: Props) {
   }
 
   return (
-    <div className="rounded-xl border overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50">
-          <tr>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Data</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">De</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Para</th>
-            <th className="text-right px-4 py-3 font-medium text-muted-foreground">Enviados</th>
-            <th className="text-right px-4 py-3 font-medium text-muted-foreground">Bônus</th>
-            <th className="text-right px-4 py-3 font-medium text-muted-foreground">Recebidos</th>
-            <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transfers.map((t) => (
-            <tr key={t.id} className="border-t hover:bg-muted/30 transition-colors">
-              <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                {formatDate(t.transferDate)}
-              </td>
-              <td className="px-4 py-3 font-medium">
-                {nameMap[t.fromProgramId] ?? t.fromProgramId}
-              </td>
-              <td className="px-4 py-3 font-medium">{nameMap[t.toProgramId] ?? t.toProgramId}</td>
-              <td className="px-4 py-3 text-right font-mono">{formatPts(t.pointsSent)}</td>
-              <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">
-                +{bonusPercent(t.pointsSent, t.pointsReceived)}
-              </td>
-              <td className="px-4 py-3 text-right font-mono font-semibold">
-                {formatPts(t.pointsReceived)}
-              </td>
-              <td className="px-4 py-3 text-muted-foreground text-xs">{t.description ?? ""}</td>
+    <>
+      <div className="hidden md:block rounded-xl border overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50">
+            <tr>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Data</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">De</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Para</th>
+              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Enviados</th>
+              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Bônus</th>
+              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Recebidos</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {transfers.map((t) => (
+              <tr key={t.id} className="border-t hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                  {formatDate(t.transferDate)}
+                </td>
+                <td className="px-4 py-3 font-medium">{nameMap[t.fromProgramId] ?? t.fromProgramId}</td>
+                <td className="px-4 py-3 font-medium">{nameMap[t.toProgramId] ?? t.toProgramId}</td>
+                <td className="px-4 py-3 text-right font-mono">{formatPts(t.pointsSent)}</td>
+                <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">
+                  +{bonusPercent(t.pointsSent, t.pointsReceived)}
+                </td>
+                <td className="px-4 py-3 text-right font-mono font-semibold">{formatPts(t.pointsReceived)}</td>
+                <td className="px-4 py-3 text-muted-foreground text-xs">{t.description ?? ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="md:hidden flex flex-col gap-2">
+        {transfers.map((t) => (
+          <div key={t.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium truncate">
+                {nameMap[t.fromProgramId] ?? t.fromProgramId} → {nameMap[t.toProgramId] ?? t.toProgramId}
+              </span>
+              <span className="text-xs text-muted-foreground shrink-0 whitespace-nowrap">
+                {formatDate(t.transferDate)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-mono text-muted-foreground">{formatPts(t.pointsSent)} pts</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs">
+                +{bonusPercent(t.pointsSent, t.pointsReceived)}
+              </span>
+              <span className="font-mono font-semibold">{formatPts(t.pointsReceived)} pts</span>
+            </div>
+            {t.description && (
+              <p className="text-xs text-muted-foreground border-t pt-2">{t.description}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

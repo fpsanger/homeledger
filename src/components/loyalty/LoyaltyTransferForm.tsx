@@ -91,7 +91,7 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium" htmlFor="transfer-from">
             De
@@ -140,7 +140,7 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium" htmlFor="transfer-points">
             Pontos enviados
@@ -209,7 +209,7 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
       <button
         type="submit"
         disabled={loading || isAirlineSource}
-        className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        className="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
       >
         {loading ? "Salvando..." : "Registrar Transferência"}
       </button>

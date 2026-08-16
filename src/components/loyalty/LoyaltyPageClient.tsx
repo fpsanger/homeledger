@@ -99,7 +99,7 @@ export function LoyaltyPageClient({ programs, transfers, summaries, personId }: 
           title="Programas de Milhas"
           description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
         >
-          <Button onClick={() => setOpenTransfer(true)} className="shrink-0 gap-2">
+          <Button onClick={() => setOpenTransfer(true)} className="w-full sm:w-auto shrink-0 gap-2">
             <ArrowLeftRight className="w-4 h-4" />
             Transferir entre parceiros
           </Button>

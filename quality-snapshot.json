@@ -412,16 +412,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (194). Maximum allowed is 80.",
+        "message": "This function has too many lines (199). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/TransactionPageClient.tsx",
           "start": {
-            "line": 65,
+            "line": 66,
             "column": 8
           },
           "end": {
-            "line": 373,
+            "line": 383,
             "column": 2
           }
         },

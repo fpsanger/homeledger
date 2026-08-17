@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Added a repository quality ratchet POC covering test coverage, architecture and circular
   dependency violations, cyclomatic complexity, and source/function size regressions.
+- Added a safe `quality:baseline:update` command that promotes reviewed quality improvements while
+  refusing snapshots containing regressions.
 - Added duplicate detection for investments: same amount/date within 30 days is flagged via `isDuplicate`, with a live warning in `InvestmentForm`, matching existing expense/income checks.
 - Added duplicate detection for recurring transactions: an active rule with the same type and amount in the same household is flagged via `isDuplicate` on creation.
 - Added `closureNextMonth` flag to credit cards. When enabled, the closure day is treated as falling in the month after the purchase, so all purchases in the current month go to the current month's bill. Fixes incorrect next-month assignment for cards with closure day 1 or other next-month closure configurations.

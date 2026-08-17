@@ -49,7 +49,10 @@ export function BulkAddRow({ row, people, categories, creditCards, onChange, onR
   const locked = row.status === "loading" || row.status === "success";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[130px_150px_130px_150px_170px_1fr_1fr_auto] gap-2 items-start rounded-md border border-border bg-card p-3">
+    <div
+      data-testid="bulk-add-row"
+      className="grid grid-cols-1 md:grid-cols-[130px_150px_130px_150px_170px_1fr_1fr_auto] gap-2 items-start rounded-md border border-border bg-card p-3"
+    >
       <Select
         aria-label="Tipo"
         value={row.type}

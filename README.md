@@ -108,6 +108,17 @@ npm run format   # Format src and tests with Biome
 npm test         # Run Jest tests
 ```
 
+### Quality ratchet
+
+Run `npm run quality:ratchet` to generate the current quality snapshot and compare it with the
+versioned baseline. Regressions fail the command, while improvements are reported without changing
+the baseline automatically.
+
+After reviewing an improvement, run `npm run quality:baseline:update` to generate a fresh snapshot
+and promote it. The command refuses snapshots containing regressions and copies only the protected
+coverage and violation metrics into `quality-baseline.json`. Review and commit the baseline diff
+with the change that produced the improvement.
+
 ## CI and Releases
 
 GitHub Actions validates pull requests targeting `develop` or `master`. The initial required

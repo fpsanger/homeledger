@@ -16,6 +16,7 @@
     "test:quality": "node --test tests/quality/*.test.cjs",
     "quality:snapshot": "node scripts/quality/snapshot.cjs",
     "quality:ratchet": "npm run quality:snapshot && node scripts/quality/ratchet.cjs",
+    "quality:baseline:update": "npm run quality:snapshot && node scripts/quality/update-baseline.cjs",
     "quality": "npm run lint && npm run typecheck && npm run test:quality && npm run quality:ratchet && npm run build"
   },
   "jest": {

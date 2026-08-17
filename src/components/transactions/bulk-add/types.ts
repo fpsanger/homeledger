@@ -44,10 +44,15 @@ function validateInstallmentRow(row: BulkRow): string | null {
   return null;
 }
 
+function hasInvalidAmount(value: string): boolean {
+  if (!value) return true;
+  const amount = parseCurrencyBR(value);
+  return !Number.isFinite(amount) || amount <= 0;
+}
+
 export function validateRow(row: BulkRow): string | null {
   if (!row.personId) return "Selecione a pessoa.";
-  const amount = row.amount ? parseCurrencyBR(row.amount) : NaN;
-  if (!amount || Number.isNaN(amount) || amount <= 0) return "Informe um valor válido.";
+  if (hasInvalidAmount(row.amount)) return "Informe um valor válido.";
   if (!row.date) return "Informe a data.";
   if (row.type === "installment") return validateInstallmentRow(row);
   return null;

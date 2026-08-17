@@ -8,6 +8,7 @@ type CurrencyInputProps = {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
   placeholder?: string;
 };
@@ -17,6 +18,7 @@ export function CurrencyInput({
   value,
   onChange,
   required,
+  disabled,
   className,
   placeholder = "R$ 0,00",
 }: CurrencyInputProps) {
@@ -32,6 +34,7 @@ export function CurrencyInput({
       value={value}
       onValueChange={(v) => onChange(v ?? "")}
       required={required}
+      disabled={disabled}
       className={cn(
         "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
         "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

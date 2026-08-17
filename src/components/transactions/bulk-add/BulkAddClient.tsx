@@ -30,11 +30,23 @@ export function BulkAddClient({ people, categories, creditCards, defaultPersonId
     setRows((prev) => prev.map((r) => (r.clientId === clientId ? { ...r, ...patch } : r)));
   }
 
+  function editRow(clientId: string, patch: Partial<BulkRow>) {
+    if (submitting) return;
+    updateRow(clientId, {
+      ...patch,
+      status: "pending",
+      error: undefined,
+      isDuplicate: undefined,
+    });
+  }
+
   function addRow() {
+    if (submitting) return;
     setRows((prev) => [...prev, createEmptyRow(defaultPersonId, today)]);
   }
 
   function removeRow(clientId: string) {
+    if (submitting) return;
     setRows((prev) => prev.filter((r) => r.clientId !== clientId));
   }
 
@@ -77,47 +89,92 @@ export function BulkAddClient({ people, categories, creditCards, defaultPersonId
     setProgress(null);
     setSubmitting(false);
 
-    if (succeeded > 0) {
-      toast.success(`${succeeded} lançamento(s) salvo(s).`);
-      router.refresh();
-    }
-    if (failed > 0) {
-      toast.error(`${failed} linha(s) com erro. Corrija e envie novamente.`);
-    }
+    reportSubmission(succeeded, failed, router.refresh);
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        {rows.map((row) => (
-          <BulkAddRow
-            key={row.clientId}
-            row={row}
-            people={people}
-            categories={categories}
-            creditCards={creditCards}
-            onChange={(patch) => updateRow(row.clientId, patch)}
-            onRemove={() => removeRow(row.clientId)}
-          />
-        ))}
-      </div>
+      <BulkAddRows
+        rows={rows}
+        people={people}
+        categories={categories}
+        creditCards={creditCards}
+        disabled={submitting}
+        onChange={editRow}
+        onRemove={removeRow}
+      />
+      <BulkAddActions
+        progress={progress}
+        submitting={submitting}
+        onAdd={addRow}
+        onSubmit={handleSubmitAll}
+      />
+    </div>
+  );
+}
 
-      <div className="flex items-center justify-between gap-3">
-        <Button type="button" variant="outline" onClick={addRow} className="gap-1.5">
-          <Plus className="w-4 h-4" />
-          Adicionar linha
+function reportSubmission(succeeded: number, failed: number, refresh: () => void) {
+  if (succeeded > 0) {
+    toast.success(`${succeeded} lançamento(s) salvo(s).`);
+    refresh();
+  }
+  if (failed > 0) toast.error(`${failed} linha(s) com erro. Corrija e envie novamente.`);
+}
+
+type BulkAddRowsProps = Pick<Props, "people" | "categories" | "creditCards"> & {
+  rows: BulkRow[];
+  disabled: boolean;
+  onChange: (clientId: string, patch: Partial<BulkRow>) => void;
+  onRemove: (clientId: string) => void;
+};
+
+function BulkAddRows({ rows, disabled, onChange, onRemove, ...options }: BulkAddRowsProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row) => (
+        <BulkAddRow
+          key={row.clientId}
+          row={row}
+          {...options}
+          onChange={(patch) => onChange(row.clientId, patch)}
+          onRemove={() => onRemove(row.clientId)}
+          disabled={disabled}
+        />
+      ))}
+    </div>
+  );
+}
+
+type BulkAddActionsProps = {
+  progress: { current: number; total: number } | null;
+  submitting: boolean;
+  onAdd: () => void;
+  onSubmit: () => void;
+};
+
+function BulkAddActions({ progress, submitting, onAdd, onSubmit }: BulkAddActionsProps) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onAdd}
+        className="gap-1.5"
+        disabled={submitting}
+      >
+        <Plus className="w-4 h-4" />
+        Adicionar linha
+      </Button>
+
+      <div className="flex items-center gap-3">
+        {progress && (
+          <span className="text-sm text-muted-foreground">
+            Enviando {progress.current} de {progress.total}…
+          </span>
+        )}
+        <Button type="button" onClick={onSubmit} disabled={submitting}>
+          {submitting ? "Enviando…" : "Enviar tudo"}
         </Button>
-
-        <div className="flex items-center gap-3">
-          {progress && (
-            <span className="text-sm text-muted-foreground">
-              Enviando {progress.current} de {progress.total}…
-            </span>
-          )}
-          <Button type="button" onClick={handleSubmitAll} disabled={submitting}>
-            {submitting ? "Enviando…" : "Enviar tudo"}
-          </Button>
-        </div>
       </div>
     </div>
   );

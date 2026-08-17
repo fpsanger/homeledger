@@ -43,15 +43,24 @@ type Props = {
   creditCards: CreditCard[];
   onChange: (patch: Partial<BulkRow>) => void;
   onRemove: () => void;
+  disabled?: boolean;
 };
 
-export function BulkAddRow({ row, people, categories, creditCards, onChange, onRemove }: Props) {
-  const locked = row.status === "loading" || row.status === "success";
+export function BulkAddRow({
+  row,
+  people,
+  categories,
+  creditCards,
+  onChange,
+  onRemove,
+  disabled = false,
+}: Props) {
+  const locked = disabled || row.status === "loading" || row.status === "success";
 
   return (
     <div
       data-testid="bulk-add-row"
-      className="grid grid-cols-1 md:grid-cols-[130px_150px_130px_150px_170px_1fr_1fr_auto] gap-2 items-start rounded-md border border-border bg-card p-3"
+      className="grid grid-cols-1 gap-2 rounded-md border border-border bg-card p-3 sm:grid-cols-2 xl:grid-cols-[130px_150px_130px_150px_170px_1fr_1fr_auto] xl:items-start"
     >
       <Select
         aria-label="Tipo"
@@ -85,9 +94,15 @@ export function BulkAddRow({ row, people, categories, creditCards, onChange, onR
         value={row.amount}
         onChange={(v) => onChange({ amount: v })}
         placeholder="Valor"
+        disabled={locked}
       />
 
-      <DatePicker value={row.date} onChange={(v) => onChange({ date: v })} ariaLabel="Data" />
+      <DatePicker
+        value={row.date}
+        onChange={(v) => onChange({ date: v })}
+        ariaLabel="Data"
+        disabled={locked}
+      />
 
       <CategoryCombobox
         categories={categories}
@@ -162,19 +177,33 @@ export function BulkAddRow({ row, people, categories, creditCards, onChange, onR
         disabled={locked}
       />
 
-      <div className="flex items-center gap-2 justify-end">
-        <RowStatus row={row} />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onRemove}
-          disabled={row.status === "loading"}
-          aria-label="Remover linha"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
+      <BulkAddRowActions row={row} locked={locked} onRemove={onRemove} />
+    </div>
+  );
+}
+
+function BulkAddRowActions({
+  row,
+  locked,
+  onRemove,
+}: {
+  row: BulkRow;
+  locked: boolean;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-2 sm:col-span-2 xl:col-span-1">
+      <RowStatus row={row} />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onRemove}
+        disabled={locked}
+        aria-label="Remover linha"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
     </div>
   );
 }
@@ -194,7 +223,12 @@ function RowStatus({ row }: { row: BulkRow }) {
     );
   }
   if (row.status === "error") {
-    return <XCircle className="w-4 h-4 text-destructive" aria-label={row.error} />;
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-destructive" role="alert">
+        <XCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+        <span>{row.error ?? "Não foi possível salvar esta linha."}</span>
+      </span>
+    );
   }
   return null;
 }

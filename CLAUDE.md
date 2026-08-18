@@ -68,16 +68,26 @@ Business logic MUST live in Domain or Application layers.
 
 ## 5. TDD Rules
 
-All **domain logic MUST follow TDD**.
-
-Other layers SHOULD use tests when appropriate.
+All new behavior and bug fixes MUST follow TDD, regardless of layer.
 
 ### Required flow:
 
-1. Write failing tests
-2. Implement the minimal code to pass
-3. Refactor if needed
-4. Validate behavior
+1. Write a test that describes the expected behavior
+2. Run it and confirm it fails for the expected reason
+3. Implement the minimum behavior necessary
+4. Run the focused test and confirm it passes
+5. Refactor while keeping the test green
+
+### Layer-specific requirements:
+
+- Domain/Application: unit tests for business rules and orchestration
+- UI: component tests for state changes, validation, submission, loading, errors, and
+  meaningful interactions
+- API routes: request/response contract tests when behavior changes
+- E2E tests complement component and unit tests; they do not replace them
+
+Existing tests are not sufficient evidence for a new feature unless they directly execute the new
+behavior.
 
 ### Test location:
 
@@ -223,7 +233,11 @@ If the plan is invalid or incomplete, report the conflict instead of improvising
 
 ### Testing
 
-After domain or financial behavior changes, use the `test-writer` agent when additional behavioral coverage is required.
+After any new feature or behavior change, use the `test-writer` agent when the implementation does
+not yet have direct automated coverage.
+
+This includes UI-only features, retry flows, partial failures, loading states, and API-client
+orchestration.
 
 The test writer must derive expected behavior from `SPEC.md`, not merely from production implementation.
 
@@ -264,3 +278,8 @@ Before considering implementation complete run:
 
 ```bash
 npm run quality
+```
+
+Do not report a feature as complete until `npm run quality` has finished successfully. Running
+lint, typecheck, selected tests, or a manual smoke test separately does not satisfy the quality
+gate.

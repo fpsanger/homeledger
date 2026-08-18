@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { ListPlus, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
@@ -72,6 +73,7 @@ export function TransactionPageClient({
   transactions,
   installments,
 }: Props) {
+  const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [investmentDialogOpen, setInvestmentDialogOpen] = useState(false);
@@ -167,6 +169,14 @@ export function TransactionPageClient({
           >
             <Plus className="w-4 h-4" />
             Investimento
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/transactions/bulk-add")}
+            className="gap-1.5"
+          >
+            <ListPlus className="w-4 h-4" />
+            Adicionar em Lote
           </Button>
           <Button onClick={() => setDialogOpen(true)} className="gap-1.5">
             <Plus className="w-4 h-4" />

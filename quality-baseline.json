@@ -1,9 +1,9 @@
 {
   "coverage": {
-    "statements": 85.6,
-    "branches": 77.16,
-    "functions": 83.87,
-    "lines": 86.56
+    "statements": 31.31,
+    "branches": 25.58,
+    "functions": 22.63,
+    "lines": 31.18
   },
   "violations": {
     "architecture": 0,

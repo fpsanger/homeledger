@@ -27,6 +27,20 @@
       "<rootDir>/tests/quality/",
       "<rootDir>/tests/e2e/"
     ],
+    "collectCoverageFrom": [
+      "src/domain/entities/**/*.{ts,tsx}",
+      "src/domain/services/**/*.{ts,tsx}",
+      "src/application/**/*.{ts,tsx}",
+      "src/infrastructure/categorization/**/*.{ts,tsx}",
+      "src/infrastructure/parsing/**/*.{ts,tsx}",
+      "src/app/api/_lib/**/*.{ts,tsx}",
+      "src/components/**/*.{ts,tsx}",
+      "src/hooks/**/*.{ts,tsx}",
+      "src/lib/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/**/types.ts",
+      "!src/components/ui/**/*.{ts,tsx}"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },

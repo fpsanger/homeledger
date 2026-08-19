@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CreditCard as CreditCardIcon } from "lucide-react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { BulkAddClient } from "@/components/transactions/bulk-add/BulkAddClient";
@@ -48,13 +48,22 @@ export default async function BulkAddPage() {
         title="Adicionar em Lote"
         description="Adicione várias despesas, receitas e parcelamentos de uma vez."
       >
-        <Link
-          href="/transactions"
-          className={buttonVariants({ variant: "outline", className: "gap-1.5" })}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/credit-cards/bulk-add"
+            className={buttonVariants({ variant: "outline", className: "gap-1.5" })}
+          >
+            <CreditCardIcon className="w-4 h-4" />
+            Comprar em vários cartões
+          </Link>
+          <Link
+            href="/transactions"
+            className={buttonVariants({ variant: "outline", className: "gap-1.5" })}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </Link>
+        </div>
       </PageHeader>
       <BulkAddClient
         people={people}

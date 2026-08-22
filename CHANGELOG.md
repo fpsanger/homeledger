@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added duplicate detection for recurring transactions: an active rule with the same type and amount in the same household is flagged via `isDuplicate` on creation.
 - Added `closureNextMonth` flag to credit cards. When enabled, the closure day is treated as falling in the month after the purchase, so all purchases in the current month go to the current month's bill. Fixes incorrect next-month assignment for cards with closure day 1 or other next-month closure configurations.
 - Added GitHub Actions CI for tests, Prisma validation, migration replay, Biome checks, TypeScript checks, and production builds.
+- The repository now documents and enforces the Claude-to-Draft-PR, CI, Codex-review, and human-approval workflow.
 - Added credit card refunds: a standalone credit against a card's bill, entered manually or recognized during statement import, that reduces the bill total for its billing month. Statement imports (PDF and Bradesco/BTG/C6 CSV) now correctly classify credit-card credit/estorno lines as refunds instead of miscategorizing them as personal income.
 
 ### Changed

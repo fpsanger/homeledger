@@ -3,11 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
@@ -33,10 +35,6 @@ type Props = {
   onSuccess: () => void;
 };
 
-function fmtCurrency(amount: number) {
-  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
 function fmtDate(date: Date | string) {
   return formatDatePtBR(String(date));
 }
@@ -52,6 +50,9 @@ function PurchaseDetailsSummary({
   byCardId: Record<string, string>;
   installmentLabel: string;
 }) {
+  const { hidden } = usePrivacy();
+  const fmtCurrency = (amount: number) =>
+    maskCurrency(amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   return (
     <div className="rounded-lg border bg-muted/30 p-4 flex flex-col gap-3">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

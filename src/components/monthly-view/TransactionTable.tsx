@@ -17,6 +17,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageSizeSelector } from "@/components/ui/page-size-selector";
@@ -30,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { TransactionAmount } from "../transactions/TransactionAmount";
 import { SummaryCard } from "./SummaryCard";
 
@@ -68,10 +70,6 @@ const PAYMENT_LABELS: Record<string, string> = {
   BOLETO: "Boleto",
   ACCOUNT_DEBIT: "Déb. Conta",
 };
-
-function fmtCurrency(amount: number) {
-  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 function fmtDate(date: Date | string) {
   const iso = typeof date === "string" ? date : date.toISOString();
@@ -443,6 +441,9 @@ export function TransactionTable({
   onEdit?: (t: Transaction) => void;
 }) {
   const router = useRouter();
+  const { hidden } = usePrivacy();
+  const fmtCurrency = (amount: number) =>
+    maskCurrency(amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   const byPersonId = Object.fromEntries(people.map((p) => [p.id, p.name]));
   const byCategoryId = Object.fromEntries(
     categories.map((c) => {

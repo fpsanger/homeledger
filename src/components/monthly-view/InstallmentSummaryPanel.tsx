@@ -1,9 +1,9 @@
-import { CheckCircle2, ChevronDown, Clock, CreditCard, Wallet } from "lucide-react";
-import { SummaryCard } from "./SummaryCard";
+"use client";
 
-function fmt(amount: number) {
-  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
+import { CheckCircle2, ChevronDown, Clock, CreditCard, Wallet } from "lucide-react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { maskCurrency } from "@/lib/maskCurrency";
+import { SummaryCard } from "./SummaryCard";
 
 export function InstallmentSummaryPanel({
   installments,
@@ -14,6 +14,9 @@ export function InstallmentSummaryPanel({
   open: boolean;
   onToggle: () => void;
 }) {
+  const { hidden } = usePrivacy();
+  const fmt = (amount: number) =>
+    maskCurrency(amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   const total = installments.reduce((s, i) => s + i.amount, 0);
   const paid = installments.filter((i) => i.isPaid).reduce((s, i) => s + i.amount, 0);
   const remaining = total - paid;

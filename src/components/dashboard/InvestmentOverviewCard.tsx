@@ -10,10 +10,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
 import { INCOME_PERSON_SHADES } from "@/lib/dashboardColors";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { AccessibleChart } from "./AccessibleChart";
+import { ChartPrivacyPlaceholder } from "./ChartPrivacyPlaceholder";
 
 const MONTH_NAMES = [
   "Jan",
@@ -112,12 +115,32 @@ type Props = {
   globalPersonId: string;
 };
 
+function buildInvestmentSummary(
+  months: MonthSummary[],
+  people: Person[],
+  showPersonBreakdown: boolean,
+) {
+  return showPersonBreakdown
+    ? months.map((m) => (
+        <li key={m.month}>
+          {MONTH_NAMES[m.month - 1]}:{" "}
+          {people.map((p) => `${p.name} ${fmtFull(m.investmentsByPerson[p.id] ?? 0)}`).join(", ")}
+        </li>
+      ))
+    : months.map((m) => (
+        <li key={m.month}>
+          {MONTH_NAMES[m.month - 1]}: {fmtFull(m.investments)}
+        </li>
+      ));
+}
+
 export function InvestmentOverviewCard({
   months,
   totalInvestments,
   people,
   globalPersonId,
 }: Props) {
+  const { hidden } = usePrivacy();
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const showPersonBreakdown = !globalPersonId && people.length > 1;
@@ -153,84 +176,73 @@ export function InvestmentOverviewCard({
         <p className="text-xs text-muted-foreground">Investido por mês no ano</p>
       </CardHeader>
       <CardContent className="pt-0 pb-4 flex flex-col gap-6">
-        <AccessibleChart
-          summary={
-            showPersonBreakdown
-              ? months.map((m) => (
-                  <li key={m.month}>
-                    {MONTH_NAMES[m.month - 1]}:{" "}
-                    {people
-                      .map((p) => `${p.name} ${fmtFull(m.investmentsByPerson[p.id] ?? 0)}`)
-                      .join(", ")}
-                  </li>
-                ))
-              : months.map((m) => (
-                  <li key={m.month}>
-                    {MONTH_NAMES[m.month - 1]}: {fmtFull(m.investments)}
-                  </li>
-                ))
-          }
-        >
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart
-              data={data}
-              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-              barCategoryGap="30%"
-            >
-              <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tickFormatter={fmtCompact}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                axisLine={false}
-                tickLine={false}
-                width={52}
-              />
-              <Tooltip
-                content={<CustomTooltip showRate />}
-                cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-              />
-              {showPersonBreakdown ? (
-                <>
-                  <Legend content={<CustomLegend />} />
-                  {people.map((p, i) => (
-                    <Bar
-                      key={p.id}
-                      dataKey={p.name}
-                      stackId="a"
-                      fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
-                      fillOpacity={0.85}
-                      radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
-                      maxBarSize={22}
-                      animationDuration={500}
-                      animationEasing="ease-out"
-                    />
-                  ))}
-                </>
-              ) : (
-                <Bar
-                  dataKey="Investido"
-                  fill="hsl(var(--income))"
-                  fillOpacity={0.85}
-                  radius={[3, 3, 0, 0]}
-                  maxBarSize={22}
-                  animationDuration={500}
-                  animationEasing="ease-out"
+        {hidden ? (
+          <ChartPrivacyPlaceholder height={200} />
+        ) : (
+          <AccessibleChart summary={buildInvestmentSummary(months, people, showPersonBreakdown)}>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                data={data}
+                margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                barCategoryGap="30%"
+              >
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </AccessibleChart>
+                <YAxis
+                  tickFormatter={fmtCompact}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={52}
+                />
+                <Tooltip
+                  content={<CustomTooltip showRate />}
+                  cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+                />
+                {showPersonBreakdown ? (
+                  <>
+                    <Legend content={<CustomLegend />} />
+                    {people.map((p, i) => (
+                      <Bar
+                        key={p.id}
+                        dataKey={p.name}
+                        stackId="a"
+                        fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
+                        fillOpacity={0.85}
+                        radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                        maxBarSize={22}
+                        animationDuration={500}
+                        animationEasing="ease-out"
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <Bar
+                    dataKey="Investido"
+                    fill="hsl(var(--income))"
+                    fillOpacity={0.85}
+                    radius={[3, 3, 0, 0]}
+                    maxBarSize={22}
+                    animationDuration={500}
+                    animationEasing="ease-out"
+                  />
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </AccessibleChart>
+        )}
 
         <div className="grid grid-cols-3 gap-4 pt-2 border-t border-border">
           <div className="flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Total investido</p>
-            <p className="text-sm font-semibold tabular-nums">{fmtFull(totalInvestments)}</p>
+            <p className="text-sm font-semibold tabular-nums">
+              {maskCurrency(fmtFull(totalInvestments), hidden)}
+            </p>
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-xs text-muted-foreground">Taxa este mês</p>

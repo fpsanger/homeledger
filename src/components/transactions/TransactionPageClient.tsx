@@ -3,6 +3,7 @@
 import { ListPlus, Plus, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { InstallmentTable } from "@/components/monthly-view/InstallmentTable";
 import { MonthNav } from "@/components/monthly-view/MonthNav";
 import { SummaryCard } from "@/components/monthly-view/SummaryCard";
@@ -14,6 +15,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { FilterGroup } from "@/components/ui/filter-group";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { InvestmentForm } from "./InvestmentForm";
 import { RecurringTransactionForm } from "./RecurringTransactionForm";
 import {
@@ -74,6 +76,7 @@ export function TransactionPageClient({
   installments,
 }: Props) {
   const router = useRouter();
+  const { hidden } = usePrivacy();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [investmentDialogOpen, setInvestmentDialogOpen] = useState(false);
@@ -146,7 +149,10 @@ export function TransactionPageClient({
   const combinedBalance = combinedIncome - combinedExpenses;
 
   function fmtCurrency(amount: number) {
-    return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    return maskCurrency(
+      amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+      hidden,
+    );
   }
 
   return (

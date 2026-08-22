@@ -1,5 +1,9 @@
+"use client";
+
 import { Scale, TrendingDown, TrendingUp } from "lucide-react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import type { AnnualReportResult } from "@/domain/services/AnnualReport";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { cn } from "@/lib/utils";
 
 const MONTH_NAMES = [
@@ -30,10 +34,11 @@ function formatCompact(amount: number): string {
 }
 
 function Amount({ value, className }: { value: number; className?: string }) {
+  const { hidden } = usePrivacy();
   return (
     <span className={className}>
-      <span className="sm:hidden">{formatCompact(value)}</span>
-      <span className="hidden sm:inline">{formatAmount(value)}</span>
+      <span className="sm:hidden">{maskCurrency(formatCompact(value), hidden)}</span>
+      <span className="hidden sm:inline">{maskCurrency(formatAmount(value), hidden)}</span>
     </span>
   );
 }
@@ -46,6 +51,7 @@ type StatProps = {
 };
 
 function AnnualStat({ icon: Icon, label, value, valueClassName }: StatProps) {
+  const { hidden } = usePrivacy();
   return (
     <div className="flex items-start justify-between gap-2 min-w-0">
       <div className="flex flex-col gap-1 min-w-0">
@@ -58,7 +64,7 @@ function AnnualStat({ icon: Icon, label, value, valueClassName }: StatProps) {
             valueClassName,
           )}
         >
-          {formatAmount(value)}
+          {maskCurrency(formatAmount(value), hidden)}
         </span>
       </div>
       <Icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />

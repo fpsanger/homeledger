@@ -1,4 +1,8 @@
+"use client";
+
 import { TrendingDown, TrendingUp } from "lucide-react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { maskCurrency } from "@/lib/maskCurrency";
 
 type Transaction = { type: string; amount: number };
 type Installment = { amount: number };
@@ -8,11 +12,13 @@ type Props = {
   installments?: Installment[];
 };
 
-function formatAmount(amount: number): string {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount);
-}
-
 export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
+  const { hidden } = usePrivacy();
+  const formatAmount = (amount: number): string =>
+    maskCurrency(
+      new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount),
+      hidden,
+    );
   const income = transactions.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
   const installmentExpenses = installments.reduce((s, i) => s + i.amount, 0);
   const expenses =

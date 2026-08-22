@@ -11,8 +11,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { AccessibleChart } from "./AccessibleChart";
+import { ChartPrivacyPlaceholder } from "./ChartPrivacyPlaceholder";
 
 const MONTH_NAMES = [
   "Jan",
@@ -50,6 +53,7 @@ function CustomTooltip({
   payload?: { value: number }[];
   label?: string;
 }) {
+  const { hidden } = usePrivacy();
   if (!active || !payload?.length) return null;
   const val = payload[0].value;
   return (
@@ -58,7 +62,7 @@ function CustomTooltip({
       <p
         className={`font-semibold tabular-nums ${val >= 0 ? "amount-positive" : "amount-negative"}`}
       >
-        {fmtSigned(val)}
+        {maskCurrency(fmtSigned(val), hidden)}
       </p>
     </div>
   );
@@ -72,10 +76,15 @@ export function fmtSigned(v: number) {
 type ChartProps = { months: MonthSummary[] };
 
 export function AnnualBalanceChart({ months }: ChartProps) {
+  const { hidden } = usePrivacy();
   const data = months.map((m) => ({
     name: MONTH_NAMES[m.month - 1],
     value: m.balance,
   }));
+
+  if (hidden) {
+    return <ChartPrivacyPlaceholder height={220} />;
+  }
 
   return (
     <AccessibleChart

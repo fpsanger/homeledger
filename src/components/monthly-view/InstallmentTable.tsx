@@ -2,6 +2,7 @@
 
 import { ArrowDown, ArrowUp, ArrowUpDown, CreditCard, MoreHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageSizeSelector } from "@/components/ui/page-size-selector";
@@ -17,6 +18,7 @@ import {
 import { useFilteredSortedInstallments } from "@/hooks/useFilteredSortedInstallments";
 import { useInstallmentActions } from "@/hooks/useInstallmentActions";
 import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { InstallmentSummaryPanel } from "./InstallmentSummaryPanel";
 import type { Installment, InstallmentFilters, SortDir, SortKey } from "./InstallmentTable.types";
 
@@ -24,10 +26,6 @@ export type { Installment, InstallmentFilters, SortDir, SortKey } from "./Instal
 
 type Person = { id: string; name: string };
 type CreditCardItem = { id: string; name: string };
-
-function fmt(amount: number) {
-  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 function StatusBadge({ inst }: { inst: Installment }) {
   if (inst.isPaid) {
@@ -147,6 +145,9 @@ function InstallmentTableDesktop({
   sortDir,
   toggleSort,
 }: DesktopProps) {
+  const { hidden } = usePrivacy();
+  const fmt = (amount: number) =>
+    maskCurrency(amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   return (
     <div className="rounded-lg border overflow-x-auto">
       <Table>
@@ -276,6 +277,9 @@ function InstallmentTableMobile({
   sortDir,
   setSortDir,
 }: MobileProps) {
+  const { hidden } = usePrivacy();
+  const fmt = (amount: number) =>
+    maskCurrency(amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">

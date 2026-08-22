@@ -3,8 +3,10 @@
 import { ArrowLeftRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { LoyaltyProgramCreateDialog } from "./LoyaltyProgramCreateDialog";
 import { LoyaltyProgramList } from "./LoyaltyProgramList";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
@@ -46,10 +48,6 @@ type Props = {
   personId?: string;
 };
 
-function formatBrl(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
 function SecondaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="p-5 flex flex-col justify-center gap-1">
@@ -63,6 +61,9 @@ export function LoyaltyPageClient({ programs, transfers, summaries, personId }: 
   const router = useRouter();
   const [openProgram, setOpenProgram] = useState(false);
   const [openTransfer, setOpenTransfer] = useState(false);
+  const { hidden } = usePrivacy();
+  const formatBrl = (value: number) =>
+    maskCurrency(value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
 
   function handleProgramSuccess() {
     setOpenProgram(false);

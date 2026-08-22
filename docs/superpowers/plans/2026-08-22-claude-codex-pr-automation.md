@@ -253,6 +253,7 @@ concurrency:
 
 jobs:
   test:
+    name: Playwright Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -281,11 +282,13 @@ Run:
 
 ```bash
 test "$(rg -c 'continue-on-error' .github/workflows/ci.yml)" -eq 0
+ruby -e 'require "yaml"; workflow = YAML.load_file(".github/workflows/playwright.yml"); abort "missing jobs.test Playwright Tests name" unless workflow.dig("jobs", "test", "name") == "Playwright Tests"; puts "valid job name: Playwright Tests"'
 rg -n 'develop|workflow_dispatch|contents: read|node-version: 22.x|npm ci|npx playwright test' .github/workflows/playwright.yml
 ```
 
-Expected: the first command exits 0; the second shows all required trigger, permission, runtime,
-installation, and test lines.
+Expected: the first command exits 0; the second confirms the `jobs.test` explicit
+`Playwright Tests` name; the third shows all required trigger, permission, runtime, installation,
+and test lines.
 
 - [ ] **Step 4: Parse both workflow files as YAML**
 
@@ -355,22 +358,29 @@ Document these sections and exact settings:
 
 Create a ruleset or branch-protection rule targeting `develop` with:
 
+- For a ruleset, set enforcement status to **Active**. Do not place Claude, Codex, their apps, or
+  any other agent identity on a bypass list.
 - Require a pull request before merging.
 - Require one approving human review.
 - Dismiss stale approvals when new commits are pushed.
 - Require conversation resolution before merging.
 - Require the Tests, Quality ratchet, Database, Lint, Typecheck, Build, and Playwright Tests status
-  checks.
+  checks, with GitHub Actions selected as the expected source for each check.
 - Require the branch to be up to date before merging.
 - Block force pushes and branch deletion.
+- For branch protection, enable **Do not allow bypassing the above settings** and configure no agent
+  actor to bypass required pull requests. Any break-glass identity must be human-only and explicitly
+  documented by the administrators.
 - Do not enable automatic merge during the initial rollout.
 
 ## Claude prerequisites
 
-Claude needs Git and authenticated GitHub CLI access to push and open a PR. Credentials belong in
-the execution environment, never in this repository. Without authorization, Claude must stop after
-creating local commits and provide the manual push and `gh pr create --draft --base develop`
-commands.
+Claude needs Git and authenticated GitHub CLI access to push and open a PR. Use a dedicated,
+least-privilege agent credential scoped only to this repository and the permissions needed to push
+its branch and create pull requests; it must not have administration or ruleset-bypass privileges.
+Credentials belong in the execution environment, never in this repository. Without authorization,
+Claude must stop after creating local commits and provide the manual push and
+`gh pr create --draft --base develop` commands.
 
 ## Operating the workflow
 

@@ -101,6 +101,12 @@ Add a concise repository document describing the one-time settings that cannot b
 - create a GitHub ruleset or branch-protection rule for `develop`;
 - require pull requests, the deterministic status checks, one human approval, and resolved review
   conversations;
+- set ruleset enforcement to Active and keep Claude, Codex, their apps, and other agent identities
+  off every bypass list;
+- bind every required status check to GitHub Actions as its expected source;
+- if branch protection is used instead, enable “Do not allow bypassing the above settings” and
+  configure no agent actor to bypass required pull requests; any break-glass identity must be
+  human-only and explicitly documented;
 - block force pushes and branch deletion;
 - leave automatic merging disabled initially.
 
@@ -111,6 +117,8 @@ must enable in GitHub or Codex Cloud.
 
 - No API keys, personal access tokens, or other credentials are committed.
 - CI workflows use minimum GitHub permissions.
+- Agent credentials are dedicated, repository-scoped, and least-privilege: enough to push their
+  branch and create pull requests, but never administration or ruleset-bypass privileges.
 - Pull requests from agents remain visible and reviewable before merge.
 - Human approval remains mandatory for `develop`.
 - Claude must stop and report when branch push or pull request creation requires unavailable

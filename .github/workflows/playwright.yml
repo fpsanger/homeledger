@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   test:
+    name: Playwright Tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:

@@ -27,3 +27,22 @@ Jest, ts-jest, and Testing Library are configured in `package.json`. Name tests 
 ## Commit & Pull Request Guidelines
 
 Prefer Conventional Commit subjects (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`), written as short imperatives; recent history is mixed, so improve consistency. Name branches `<type>/<scope>-<description>` in lowercase kebab-case, such as `fix/loyalty-mobile-layout`. Open PRs against `develop`, describe behavior and verification, link relevant issues, and include before/after screenshots for UI changes. Update `CHANGELOG.md` for user-visible, domain, schema, or operational changes, and ensure tests, Prisma validation, lint, and the production build pass.
+
+## Code Review Rules
+
+Focus on actionable correctness, security, and regression risks. Do not report formatting or style
+preferences already enforced by Biome.
+
+- Treat imports from application, infrastructure, or UI into `src/domain/` as blocking Clean
+  Architecture violations.
+- Compare changed financial and domain behavior with `SPEC.md`; flag behavior that contradicts a
+  documented rule or changes monetary calculations without direct tests.
+- Require direct automated coverage for new behavior and regression fixes. Existing unrelated tests
+  are not sufficient.
+- Require every Prisma schema change to include a versioned migration under
+  `src/infrastructure/database/migrations/`.
+- Check changed API routes for input validation, authorization, data exposure, and unsafe database
+  access.
+- Require `CHANGELOG.md` updates for user-visible, domain, schema, or operational changes.
+- Treat failed tests, Prisma validation, lint, typecheck, quality ratchet, or production build as
+  blocking.

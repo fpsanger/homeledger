@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CreditCardRefundForm } from "@/components/credit-cards/CreditCardRefundForm";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useInstallmentFilters } from "@/hooks/useInstallmentFilters";
 import { getFullPath } from "@/lib/categoryUtils";
 import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { formatAmountBR } from "@/lib/utils";
 import type { BillInstallmentItem, BillSortDir, BillSortKey } from "./BillView.types";
 
@@ -104,6 +106,11 @@ function formatMonth(year: number, month: number) {
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function useMaskedCurrency() {
+  const { hidden } = usePrivacy();
+  return (value: number) => maskCurrency(formatCurrency(value), hidden);
 }
 
 function SummaryCard({
@@ -652,6 +659,7 @@ function CardHeaderRow({
   onPayFatura: (cardId: string, installments: BillInstallmentItem[]) => void;
   onUnpayFatura: (cardId: string, installments: BillInstallmentItem[]) => void;
 }) {
+  const formatCurrencyMasked = useMaskedCurrency();
   return (
     <CollapsibleTrigger
       className={`no-active-scale w-full rounded-none flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-4 border-b transition-colors text-left ${
@@ -707,7 +715,7 @@ function CardHeaderRow({
           </Button>
         )}
         <div className="text-right shrink-0">
-          <p className="font-semibold text-sm">{formatCurrency(entry.total)}</p>
+          <p className="font-semibold text-sm">{formatCurrencyMasked(entry.total)}</p>
           <p className="text-xs text-muted-foreground whitespace-nowrap">
             {formatItemsSummary(entry)}
           </p>
@@ -722,6 +730,7 @@ type BillViewProps = {
 };
 
 export function BillView({ initialPersonId = "" }: BillViewProps) {
+  const formatCurrencyMasked = useMaskedCurrency();
   const now = new Date();
   const today = now.toISOString().split("T")[0];
   const [year, setYear] = useState(now.getFullYear());
@@ -1047,7 +1056,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
             <SummaryCard
               icon={<Receipt className="w-5 h-5" />}
               label="Total da fatura"
-              value={formatCurrency(totalBill)}
+              value={formatCurrencyMasked(totalBill)}
             />
             <SummaryCard
               icon={<CreditCard className="w-5 h-5" />}

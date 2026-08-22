@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { DatePicker } from "@/components/ui/date-picker";
-
-function formatBrl(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
+import { maskCurrency } from "@/lib/maskCurrency";
 
 type Program = { id: string; name: string; type: string };
 
@@ -34,6 +32,9 @@ type Props = {
 };
 
 export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
+  const { hidden } = usePrivacy();
+  const formatBrl = (value: number) =>
+    maskCurrency(value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   const today = new Date().toISOString().slice(0, 10);
   const [fromProgramId, setFromProgramId] = useState(programs[0]?.id ?? "");
   const [toProgramId, setToProgramId] = useState(programs[1]?.id ?? "");

@@ -4,12 +4,14 @@ import { MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { findDuplicateLoyaltyTransaction } from "@/domain/services/isDuplicateLoyaltyTransaction";
 import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 
 type FifoData = {
   costBrl: number;
@@ -510,12 +512,12 @@ function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
   return <>{dir === "asc" ? "↑" : "↓"}</>;
 }
 
-function formatCostPer1k(tx: Transaction): string {
+function formatCostPer1k(tx: Transaction, hidden: boolean): string {
   if (tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)) {
-    return formatBrl(tx.fifoData.costPer1kPoints);
+    return maskCurrency(formatBrl(tx.fifoData.costPer1kPoints), hidden);
   }
   if (tx.type === "PURCHASE" && tx.costBrl && tx.points > 0) {
-    return formatBrl((tx.costBrl / tx.points) * 1000);
+    return maskCurrency(formatBrl((tx.costBrl / tx.points) * 1000), hidden);
   }
   return "—";
 }
@@ -552,6 +554,7 @@ function TransactionRow({
   onEdit: (tx: Transaction) => void;
   onDelete: (tx: Transaction) => void;
 }) {
+  const { hidden } = usePrivacy();
   const roi = formatRoi(tx);
   return (
     <tr className="border-t hover:bg-muted/30 transition-colors">
@@ -562,7 +565,7 @@ function TransactionRow({
         </span>
       </td>
       <td className="px-4 py-3 text-right font-mono">{pointsSign(tx.type, tx.points)}</td>
-      <td className="px-4 py-3 text-right text-muted-foreground">{formatCostPer1k(tx)}</td>
+      <td className="px-4 py-3 text-right text-muted-foreground">{formatCostPer1k(tx, hidden)}</td>
       <td className="px-4 py-3 text-right">
         {roi ? (
           <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>
@@ -577,7 +580,9 @@ function TransactionRow({
       </td>
       <td className="px-4 py-3 text-muted-foreground text-xs">
         {tx.description ?? ""}
-        {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
+        {tx.costBrl && tx.type === "PURCHASE"
+          ? ` · ${maskCurrency(formatBrl(tx.costBrl), hidden)}`
+          : ""}
       </td>
       <td className="px-4 py-3 text-right">
         <DropdownMenu
@@ -603,6 +608,7 @@ const EDITABLE_TYPES = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUST
 
 export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: Props) {
   const router = useRouter();
+  const { hidden } = usePrivacy();
   const [showModal, setShowModal] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -648,12 +654,22 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <SummaryCard label="Saldo" value={formatPts(summary.currentBalance)} />
-        <SummaryCard label="Total Investido" value={formatBrl(summary.totalInvested)} />
+        <SummaryCard
+          label="Total Investido"
+          value={maskCurrency(formatBrl(summary.totalInvested), hidden)}
+        />
         <SummaryCard
           label="Custo/1k pts"
-          value={summary.avgCostPer1kPoints > 0 ? formatBrl(summary.avgCostPer1kPoints) : "—"}
+          value={
+            summary.avgCostPer1kPoints > 0
+              ? maskCurrency(formatBrl(summary.avgCostPer1kPoints), hidden)
+              : "—"
+          }
         />
-        <SummaryCard label="Total Resgatado" value={formatBrl(summary.totalValueRedeemed)} />
+        <SummaryCard
+          label="Total Resgatado"
+          value={maskCurrency(formatBrl(summary.totalValueRedeemed), hidden)}
+        />
         <SummaryCard label="Expirados" value={formatPts(summary.totalExpired)} />
         <SummaryCard
           label="ROI Geral"

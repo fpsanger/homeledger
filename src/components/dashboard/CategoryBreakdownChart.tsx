@@ -2,8 +2,10 @@
 
 import { BarChart2 } from "lucide-react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { CATEGORY_SHADES } from "@/lib/dashboardColors";
 import { AccessibleChart } from "./AccessibleChart";
+import { ChartPrivacyPlaceholder } from "./ChartPrivacyPlaceholder";
 
 type Transaction = {
   id: string;
@@ -84,6 +86,7 @@ function buildCategoryBreakdown(
 }
 
 export function CategoryBreakdownChart({ transactions, installments = [], categories }: Props) {
+  const { hidden } = usePrivacy();
   const data = buildCategoryBreakdown(transactions, installments, categories, TOP_N);
 
   if (data.length === 0) {
@@ -97,6 +100,10 @@ export function CategoryBreakdownChart({ transactions, installments = [], catego
 
   const barHeight = 32;
   const chartHeight = data.length * barHeight + 16;
+
+  if (hidden) {
+    return <ChartPrivacyPlaceholder height={chartHeight} />;
+  }
 
   return (
     <AccessibleChart

@@ -1,13 +1,18 @@
+"use client";
+
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { maskCurrency } from "@/lib/maskCurrency";
+
 type TransactionAmountProps = {
   type: string;
   amount: number;
 };
 
-function fmtCurrency(amount: number) {
-  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
 export function TransactionAmount({ type, amount }: TransactionAmountProps) {
+  const { hidden } = usePrivacy();
+  const fmtCurrency = (value: number) =>
+    maskCurrency(value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
+
   switch (type) {
     case "INVESTMENT":
       return (

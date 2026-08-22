@@ -2,7 +2,9 @@
 
 import { BarChart2, Table2 } from "lucide-react";
 import { useState } from "react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import type { AnnualReportResult } from "@/domain/services/AnnualReport";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { AnnualBalanceChart, fmtSigned } from "./AnnualBalanceCard";
 import { AnnualReportCards } from "./AnnualReportCards";
 
@@ -12,6 +14,7 @@ type Props = {
 
 export function AnnualReportSection({ report }: Props) {
   const [view, setView] = useState<"table" | "chart">("table");
+  const { hidden } = usePrivacy();
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,7 +58,7 @@ export function AnnualReportSection({ report }: Props) {
           <p
             className={`text-2xl font-bold tabular-nums ${report.totalBalance >= 0 ? "amount-positive" : "amount-negative"}`}
           >
-            {fmtSigned(report.totalBalance)}
+            {maskCurrency(fmtSigned(report.totalBalance), hidden)}
           </p>
           <p className="text-xs text-muted-foreground mb-2">
             Diferença entre receitas e despesas por mês

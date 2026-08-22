@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronDown, Home, Menu, Moon, Sun, User, X } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Home, Menu, Moon, Sun, User, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/ui/select";
+import { usePrivacy } from "./PrivacyProvider";
 import { useTheme } from "./ThemeProvider";
 
 type Person = { id: string; name: string };
@@ -37,6 +38,7 @@ export function TopNav() {
   const [people, setPeople] = useState<Person[]>([]);
   const [globalPersonId, setGlobalPersonId] = useState("");
   const { theme, toggle } = useTheme();
+  const { hidden, toggle: togglePrivacy } = usePrivacy();
   const [moreOpen, setMoreOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -156,6 +158,14 @@ export function TopNav() {
           <div className="hidden lg:flex ml-auto items-center gap-2 shrink-0">
             <button
               type="button"
+              onClick={togglePrivacy}
+              aria-label={hidden ? "Show values" : "Hide values"}
+              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
               onClick={toggle}
               aria-label="Toggle theme"
               className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -179,6 +189,14 @@ export function TopNav() {
 
           {/* Mobile right side */}
           <div className="flex lg:hidden ml-auto items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={togglePrivacy}
+              aria-label={hidden ? "Show values" : "Hide values"}
+              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
             <button
               type="button"
               onClick={toggle}

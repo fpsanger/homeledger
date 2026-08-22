@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { PrivacyProvider } from "@/components/layout/PrivacyProvider";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { TopNav } from "@/components/layout/TopNav";
 import { Toaster } from "@/components/ui/sonner";
@@ -40,9 +41,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
-          <TopNav />
-          <main className="px-4 py-6 md:px-6 md:py-8 max-w-6xl mx-auto">{children}</main>
-          <Toaster />
+          <PrivacyProvider>
+            <TopNav />
+            <main className="px-4 py-6 md:px-6 md:py-8 max-w-6xl mx-auto">{children}</main>
+            <Toaster />
+          </PrivacyProvider>
         </ThemeProvider>
       </body>
     </html>

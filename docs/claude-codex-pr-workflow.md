@@ -2,9 +2,15 @@
 
 ## What the repository configures
 
-- Claude implements on a non-protected branch and opens a Draft PR against `develop`.
-- GitHub Actions runs deterministic checks.
-- Codex reviews the PR using `AGENTS.md`.
+- Repository instructions and templates direct Claude to implement on a non-protected branch and
+  open a Draft PR against `develop`.
+- GitHub Actions runs deterministic checks defined in the repository.
+
+## What administrators enable
+
+- GitHub administrators protect `develop` with the ruleset described below.
+- Codex administrators connect the repository and enable Code review and Automatic reviews; Codex
+  then reviews the PR using `AGENTS.md`.
 - A human remains responsible for approval and merge.
 
 ## One-time Codex setup

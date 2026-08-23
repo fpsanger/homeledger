@@ -277,10 +277,16 @@ Review for:
 Before considering implementation complete run:
 
 ```bash
-npm run quality
+npm run verify
 ```
 
-Do not report a feature as complete until `npm run quality` has finished successfully. Running
+`npm run verify` runs the complete local check: the quality gate (lint, typecheck, quality tests,
+quality ratchet, build), the full Jest suite, and Playwright end-to-end tests. It requires the
+local PostgreSQL service to be available and Playwright browsers installed. It is a local-only
+command — GitHub Actions CI (`ci.yml`, `playwright.yml`) runs the same coverage as separate
+parallel jobs, not `npm run verify` itself.
+
+Do not report a feature as complete until `npm run verify` has finished successfully. Running
 lint, typecheck, selected tests, or a manual smoke test separately does not satisfy the quality
 gate.
 
@@ -290,7 +296,7 @@ After completing an approved change:
 
 1. Confirm the current branch follows `<type>/<scope>-<short-description>` and is not `develop`,
    `main`, or `master`.
-2. Run `npm run quality`. Do not publish the change if it fails.
+2. Run `npm run verify`. Do not publish the change if it fails.
 3. Commit with a Conventional Commit subject and push the current branch.
 4. When GitHub CLI authentication is available, open a Draft pull request against `develop` with
    `gh pr create --draft --base develop`, using `.github/pull_request_template.md` as the content

@@ -37,5 +37,4 @@
 - [ ] `CHANGELOG.md` was updated when the change is user-visible, domain, schema, or operational.
 - [ ] Documentation was updated where behavior or operations changed.
 - [ ] No credentials or sensitive data were added.
-- [ ] This pull request targets `develop` and remains Draft until required checks and blocking
-      findings are resolved.
+- [ ] This pull request targets `develop`.

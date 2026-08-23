@@ -14,7 +14,7 @@ test.describe("dashboard", () => {
   test("annual report card renders (or fails gracefully)", async ({ page }) => {
     const report = page.getByText("Relatório Anual");
     const failure = page.getByText("Falha ao carregar relatório anual.");
-    await expect(report.or(failure)).toBeVisible();
+    await expect(report.or(failure).first()).toBeVisible();
   });
 
   test("monthly summary card renders", async ({ page }) => {

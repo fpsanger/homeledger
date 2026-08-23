@@ -121,7 +121,6 @@ jobs:
         run: npm ci
 
       - name: Run Biome checks
-        continue-on-error: true
         run: npm run lint
 
   typecheck:
@@ -148,7 +147,6 @@ jobs:
         run: npx prisma generate
 
       - name: Check TypeScript
-        continue-on-error: true
         run: npx tsc --noEmit
 
   build:

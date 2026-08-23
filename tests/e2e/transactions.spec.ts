@@ -6,12 +6,14 @@ test.describe("transactions", () => {
   });
 
   test("page loads with header and summary", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Transações", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Transações", exact: true, level: 1 }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Adicionar Transação" })).toBeVisible();
     await expect(page.getByText("Resumo do mês")).toBeVisible();
-    await expect(page.getByText("Receitas")).toBeVisible();
+    await expect(page.getByText("Receitas", { exact: true })).toBeVisible();
     await expect(page.getByText("Despesas", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Saldo")).toBeVisible();
+    await expect(page.getByText("Saldo", { exact: true })).toBeVisible();
   });
 
   test("add-transaction dialog opens and closes", async ({ page }) => {

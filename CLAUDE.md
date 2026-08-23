@@ -283,3 +283,21 @@ npm run quality
 Do not report a feature as complete until `npm run quality` has finished successfully. Running
 lint, typecheck, selected tests, or a manual smoke test separately does not satisfy the quality
 gate.
+
+## 13. Pull Request Handoff
+
+After completing an approved change:
+
+1. Confirm the current branch follows `<type>/<scope>-<short-description>` and is not `develop`,
+   `main`, or `master`.
+2. Run `npm run quality`. Do not publish the change if it fails.
+3. Commit with a Conventional Commit subject and push the current branch.
+4. When GitHub CLI authentication is available, open a Draft pull request against `develop` with
+   `gh pr create --draft --base develop`, using `.github/pull_request_template.md` as the content
+   contract.
+5. Report the pull request URL and any CI or Codex findings. Address findings on the same branch
+   without expanding the approved scope.
+
+Never auto-merge. Never place credentials in commands, commits, pull request bodies, or repository
+files. If push or pull request creation is not authorized, preserve the branch and commits and
+report the exact manual command the maintainer should run.

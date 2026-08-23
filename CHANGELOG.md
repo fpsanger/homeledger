@@ -33,6 +33,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The "Nova transação" and "Novo estorno" dialogs in the credit card bill view now prefill Pessoa from the global person filter, matching the behavior already used in other add forms across the app.
 
+### Removed
+
+- Removed unused code: the orphaned `normalizeDescription` domain service, the superseded `TransactionTabs` component, the deprecated `ClosureManager` wrapper (use `ClosureManagerDialog`), the unused `personShade` helper, the unreferenced `isCircularReference`/`computeUpdatedLevels`/`buildCategoryTree` functions in `CategoryTree`, and the unused `tw-animate-css` dependency. No behavior changes.
+
 ## [0.1.0] - 2026-05-14
 
 ### Added

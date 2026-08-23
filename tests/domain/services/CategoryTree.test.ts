@@ -1,8 +1,5 @@
 import {
-  buildCategoryTree,
   canDeleteCategory,
-  computeUpdatedLevels,
-  isCircularReference,
   isLeafCategory,
   validateExpenseCategory,
   validateInvestmentCategory,
@@ -47,41 +44,6 @@ const transport = makeCategory({
 });
 
 describe("CategoryTree service", () => {
-  describe("isCircularReference", () => {
-    it("returns false when no cycle exists", () => {
-      const categories = [food, restaurants];
-
-      expect(isCircularReference("cat-1", "cat-4", categories)).toBe(false);
-    });
-
-    it("returns true when category would become its own parent", () => {
-      const categories = [food];
-
-      expect(isCircularReference("cat-1", "cat-1", categories)).toBe(true);
-    });
-
-    it("returns true when category would become its own ancestor", () => {
-      const categories = [food, restaurants, italian];
-
-      // moving food under italian would create food → ... → food
-      expect(isCircularReference("cat-1", "cat-3", categories)).toBe(true);
-    });
-
-    it("returns true when assigning parent creates a loop in chain", () => {
-      const categories = [food, restaurants];
-
-      // moving food under restaurants (a child of food) creates loop
-      expect(isCircularReference("cat-1", "cat-2", categories)).toBe(true);
-    });
-
-    it("returns false when assigning sibling as parent", () => {
-      const health = makeCategory({ id: "cat-5", name: "Health", level: 0 });
-      const categories = [food, transport, health];
-
-      expect(isCircularReference("cat-1", "cat-5", categories)).toBe(false);
-    });
-  });
-
   describe("canDeleteCategory", () => {
     it("returns true when category has no children", () => {
       const categories = [food, italian];
@@ -99,88 +61,6 @@ describe("CategoryTree service", () => {
       const categories = [food, restaurants, italian];
 
       expect(canDeleteCategory("cat-2", categories)).toBe(false);
-    });
-  });
-
-  describe("computeUpdatedLevels", () => {
-    it("updates level when parent is reassigned", () => {
-      const categories = [food, restaurants, italian, transport];
-      // Move restaurants under transport
-      const updated = computeUpdatedLevels("cat-2", transport, categories);
-
-      const updatedRestaurants = updated.find((c) => c.id === "cat-2");
-      expect(updatedRestaurants?.level).toBe(1);
-    });
-
-    it("cascades level update to all descendants", () => {
-      const categories = [food, restaurants, italian, transport];
-      // Move restaurants under transport — italian must also update
-      const updated = computeUpdatedLevels("cat-2", transport, categories);
-
-      const updatedItalian = updated.find((c) => c.id === "cat-3");
-      expect(updatedItalian?.level).toBe(2);
-    });
-
-    it("updates level correctly when moving category to root (no parent)", () => {
-      const categories = [food, restaurants, italian];
-      // Promote restaurants to root
-      const updated = computeUpdatedLevels("cat-2", null, categories);
-
-      const updatedRestaurants = updated.find((c) => c.id === "cat-2");
-      expect(updatedRestaurants?.level).toBe(0);
-    });
-
-    it("cascades correctly when category promoted to root", () => {
-      const categories = [food, restaurants, italian];
-      const updated = computeUpdatedLevels("cat-2", null, categories);
-
-      const updatedItalian = updated.find((c) => c.id === "cat-3");
-      expect(updatedItalian?.level).toBe(1);
-    });
-  });
-
-  describe("buildCategoryTree", () => {
-    it("returns root categories at top level", () => {
-      const categories = [food, transport];
-      const tree = buildCategoryTree(categories);
-
-      expect(tree).toHaveLength(2);
-      expect(tree.map((n) => n.category.id)).toContain("cat-1");
-      expect(tree.map((n) => n.category.id)).toContain("cat-4");
-    });
-
-    it("nests children under their parent", () => {
-      const categories = [food, restaurants];
-      const tree = buildCategoryTree(categories);
-
-      const foodNode = tree.find((n) => n.category.id === "cat-1");
-      expect(foodNode?.children).toHaveLength(1);
-      expect(foodNode?.children[0].category.id).toBe("cat-2");
-    });
-
-    it("nests multiple levels deep", () => {
-      const categories = [food, restaurants, italian];
-      const tree = buildCategoryTree(categories);
-
-      const foodNode = tree.find((n) => n.category.id === "cat-1");
-      const restaurantsNode = foodNode?.children.find((n) => n.category.id === "cat-2");
-      expect(restaurantsNode?.children).toHaveLength(1);
-      expect(restaurantsNode?.children[0].category.id).toBe("cat-3");
-    });
-
-    it("returns empty array for empty input", () => {
-      const tree = buildCategoryTree([]);
-
-      expect(tree).toHaveLength(0);
-    });
-
-    it("leaf nodes have empty children array", () => {
-      const categories = [food, restaurants];
-      const tree = buildCategoryTree(categories);
-
-      const foodNode = tree.find((n) => n.category.id === "cat-1");
-      const restaurantsNode = foodNode?.children[0];
-      expect(restaurantsNode?.children).toHaveLength(0);
     });
   });
 });

@@ -236,8 +236,3 @@ export function ClosureManagerDialog({ cardId, onClose }: { cardId: string; onCl
     </Dialog>
   );
 }
-
-/** @deprecated Use ClosureManagerDialog instead */
-export function ClosureManager({ cardId }: { cardId: string }) {
-  return <ClosureManagerDialog cardId={cardId} onClose={() => {}} />;
-}

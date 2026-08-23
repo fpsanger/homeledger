@@ -1,9 +1,9 @@
 {
   "coverage": {
-    "statements": 34.27,
-    "branches": 27.97,
-    "functions": 27.35,
-    "lines": 34.2
+    "statements": 36.65,
+    "branches": 28.67,
+    "functions": 29.16,
+    "lines": 36.74
   },
   "violations": {
     "architecture": 0,
@@ -19,7 +19,7 @@
     "oversizedFiles": [
       {
         "severity": "warning",
-        "message": "This file has too many lines (842). Maximum allowed is 400.",
+        "message": "This file has too many lines (843). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/credit-cards/BillView.tsx",
@@ -28,7 +28,7 @@
             "column": 1
           },
           "end": {
-            "line": 1130,
+            "line": 1131,
             "column": 2
           }
         },
@@ -191,7 +191,7 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (282). Maximum allowed is 80.",
+        "message": "This function has too many lines (283). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/credit-cards/BillView.tsx",
@@ -200,7 +200,7 @@
             "column": 8
           },
           "end": {
-            "line": 1130,
+            "line": 1131,
             "column": 2
           }
         },

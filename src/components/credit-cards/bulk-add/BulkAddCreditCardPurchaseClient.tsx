@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useReducer, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import type { Category, Person } from "../../transactions/types";
 import { CardCombobox } from "./CardCombobox";
 import { CardSection } from "./CardSection";
@@ -32,17 +31,6 @@ export function BulkAddCreditCardPurchaseClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <PersonField
-        people={people}
-        value={form.personId}
-        onChange={form.setPersonId}
-        disabled={form.submitting}
-      />
-      {form.formError && (
-        <p className="text-sm text-destructive" role="alert">
-          {form.formError}
-        </p>
-      )}
       <CardPicker
         availableCards={form.availableCards}
         pendingCardId={form.pendingCardId}
@@ -54,12 +42,20 @@ export function BulkAddCreditCardPurchaseClient({
         sections={form.sections}
         creditCards={creditCards}
         categories={categories}
+        people={people}
+        personId={form.personId}
+        onPersonChange={form.setPersonId}
         submitting={form.submitting}
         onAddRow={form.addRow}
         onEditRow={form.editRow}
         onRemoveRow={form.removeRow}
         onRemoveSection={form.removeCardSection}
       />
+      {form.formError && (
+        <p className="text-sm text-destructive" role="alert">
+          {form.formError}
+        </p>
+      )}
       <SubmitFooter
         progress={form.progress}
         submitting={form.submitting}
@@ -215,35 +211,6 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
   };
 }
 
-function PersonField({
-  people,
-  value,
-  onChange,
-  disabled,
-}: {
-  people: Person[];
-  value: string;
-  onChange: (id: string) => void;
-  disabled: boolean;
-}) {
-  return (
-    <Select
-      aria-label="Pessoa"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      disabled={disabled}
-      className="max-w-xs"
-    >
-      <option value="">Pessoa</option>
-      {people.map((p) => (
-        <option key={p.id} value={p.id}>
-          {p.name}
-        </option>
-      ))}
-    </Select>
-  );
-}
-
 function CardPicker({
   availableCards,
   pendingCardId,
@@ -278,6 +245,9 @@ function SectionsList({
   sections,
   creditCards,
   categories,
+  people,
+  personId,
+  onPersonChange,
   submitting,
   onAddRow,
   onEditRow,
@@ -287,6 +257,9 @@ function SectionsList({
   sections: Section[];
   creditCards: CreditCard[];
   categories: Category[];
+  people: Person[];
+  personId: string;
+  onPersonChange: (id: string) => void;
   submitting: boolean;
   onAddRow: (cardId: string) => void;
   onEditRow: (cardId: string, rowId: string, patch: Partial<PurchaseRow>) => void;
@@ -304,6 +277,9 @@ function SectionsList({
             card={card}
             rows={section.rows}
             categories={categories}
+            people={people}
+            personId={personId}
+            onPersonChange={onPersonChange}
             onAddRow={() => onAddRow(section.cardId)}
             onEditRow={(rowId, patch) => onEditRow(section.cardId, rowId, patch)}
             onRemoveRow={(rowId) => onRemoveRow(section.cardId, rowId)}

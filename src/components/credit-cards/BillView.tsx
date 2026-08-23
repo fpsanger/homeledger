@@ -946,7 +946,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
           allowedTypes={["credit"]}
           initialValues={{
             type: "credit",
-            personId: "",
+            personId: initialPersonId,
             amount: "",
             date: today,
             paymentMethod: "CREDIT_CARD",
@@ -968,6 +968,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
           people={people}
           categories={categories}
           creditCards={creditCards}
+          defaultPersonId={initialPersonId}
           onSuccess={() => {
             setShowAddRefund(false);
             load(year, month, initialPersonId);

@@ -2,7 +2,8 @@
 
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Category } from "../../transactions/types";
+import { Select } from "@/components/ui/select";
+import type { Category, Person } from "../../transactions/types";
 import { PurchaseRowForm } from "./PurchaseRowForm";
 import type { PurchaseRow } from "./types";
 
@@ -12,6 +13,9 @@ type Props = {
   card: CreditCard;
   rows: PurchaseRow[];
   categories: Category[];
+  people: Person[];
+  personId: string;
+  onPersonChange: (id: string) => void;
   onAddRow: () => void;
   onEditRow: (rowId: string, patch: Partial<PurchaseRow>) => void;
   onRemoveRow: (rowId: string) => void;
@@ -23,6 +27,9 @@ export function CardSection({
   card,
   rows,
   categories,
+  people,
+  personId,
+  onPersonChange,
   onAddRow,
   onEditRow,
   onRemoveRow,
@@ -46,6 +53,21 @@ export function CardSection({
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      <Select
+        aria-label="Pessoa"
+        value={personId}
+        onChange={(e) => onPersonChange(e.target.value)}
+        disabled={disabled}
+        className="max-w-xs"
+      >
+        <option value="">Pessoa</option>
+        {people.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </Select>
 
       <div className="flex flex-col gap-2">
         {rows.map((row) => (

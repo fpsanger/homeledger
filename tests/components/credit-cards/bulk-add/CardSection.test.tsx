@@ -51,6 +51,9 @@ describe("CardSection", () => {
         card={card}
         rows={[row(), row({ rowId: "row-2" })]}
         categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
@@ -69,6 +72,9 @@ describe("CardSection", () => {
         card={card}
         rows={[row()]}
         categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
         onAddRow={onAddRow}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
@@ -88,6 +94,9 @@ describe("CardSection", () => {
         card={card}
         rows={[row()]}
         categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
         onAddRow={jest.fn()}
         onEditRow={onEditRow}
         onRemoveRow={onRemoveRow}
@@ -109,6 +118,9 @@ describe("CardSection", () => {
         card={card}
         rows={[row()]}
         categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
@@ -126,6 +138,9 @@ describe("CardSection", () => {
         card={card}
         rows={[row({ status: "success" })]}
         categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
@@ -136,12 +151,38 @@ describe("CardSection", () => {
     expect(screen.getByRole("button", { name: "Remover cartão Nubank" })).toBeDisabled();
   });
 
+  it("renders a Pessoa select inside the card box and forwards changes", () => {
+    const onPersonChange = jest.fn();
+    render(
+      <CardSection
+        card={card}
+        rows={[row()]}
+        categories={[]}
+        people={[{ id: "person-1", name: "Ana" }]}
+        personId=""
+        onPersonChange={onPersonChange}
+        onAddRow={jest.fn()}
+        onEditRow={jest.fn()}
+        onRemoveRow={jest.fn()}
+        onRemoveSection={jest.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Pessoa" }), {
+      target: { value: "person-1" },
+    });
+    expect(onPersonChange).toHaveBeenCalledWith("person-1");
+  });
+
   it("disables adding a row while submitting", () => {
     render(
       <CardSection
         card={card}
         rows={[row()]}
         categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}

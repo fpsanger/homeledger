@@ -20,6 +20,7 @@ type Props = {
   categories: Category[];
   creditCards: CreditCardOption[];
   defaultCreditCardId?: string;
+  defaultPersonId?: string;
   onSuccess: () => void;
 };
 
@@ -28,10 +29,11 @@ export function CreditCardRefundForm({
   categories,
   creditCards,
   defaultCreditCardId = "",
+  defaultPersonId = "",
   onSuccess,
 }: Props) {
   const today = new Date().toISOString().split("T")[0];
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [creditCardId, setCreditCardId] = useState(defaultCreditCardId);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);

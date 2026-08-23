@@ -25,6 +25,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Updated the GitHub Release workflow to create releases from merged `develop` to `master` pull requests using the version from `package.json`.
 - Extracted credit card closure-month resolution into a shared `resolveClosureForDate` helper, reused by both installment purchases and refunds.
 - Reduced oversized-function/file quality-gate violations: extracted filter/sort state out of `BillView`'s `CardInstallmentTable` into `useInstallmentFilters`, split `Step1Upload` into a data-fetch hook plus presentational sub-components, and split `InstallmentTable` into `useInstallmentActions`, `useFilteredSortedInstallments`, and an `InstallmentSummaryPanel` component. No behavior changes.
+- Moved the Pessoa field in the bulk credit-card purchase form (`/credit-cards/bulk-add`) from a single top-level field into each card's own section, shown after the card is added.
+
+### Fixed
+
+- The "Nova transação" and "Novo estorno" dialogs in the credit card bill view now prefill Pessoa from the global person filter, matching the behavior already used in other add forms across the app.
 
 ## [0.1.0] - 2026-05-14
 

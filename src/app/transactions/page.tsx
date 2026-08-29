@@ -1,10 +1,18 @@
+import { cookies } from "next/headers";
 import { TransactionPageClient } from "@/components/transactions/TransactionPageClient";
 import { PageHeader } from "@/components/ui/page-header";
-import { cookies } from "next/headers";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
-type CreditCard = { id: string; name: string };
+type Category = { id: string; name: string; parentId: string | null };
+type CreditCard = {
+  id: string;
+  name: string;
+  closureType: "FIXED" | "VARIABLE";
+  fixedClosureDay: number | null;
+  fixedClosurePreviousMonth: boolean;
+  alwaysNextMonth: boolean;
+  closureNextMonth: boolean;
+};
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
@@ -30,7 +38,11 @@ async function getCreditCards(): Promise<CreditCard[]> {
 }
 
 async function getMonthlyView(year: number, month: number, personId?: string) {
-  const params = new URLSearchParams({ year: String(year), month: String(month) });
+  const params = new URLSearchParams({
+    year: String(year),
+    month: String(month),
+    filterBy: "transactionMonth",
+  });
   if (personId) params.set("personId", personId);
   const res = await fetch(`${BASE_URL}/api/monthly-view?${params.toString()}`, {
     cache: "no-store",
@@ -42,22 +54,19 @@ async function getMonthlyView(year: number, month: number, personId?: string) {
 type SearchParams = {
   year?: string;
   month?: string;
-  personId?: string;
 };
 
 export default async function TransactionsPage({ searchParams }: { searchParams: SearchParams }) {
   const now = new Date();
   const globalPersonId = cookies().get("global-person-id")?.value ?? "";
-  const isGlobalLocked = !!globalPersonId;
   const year = searchParams.year ? parseInt(searchParams.year, 10) : now.getUTCFullYear();
   const month = searchParams.month ? parseInt(searchParams.month, 10) : now.getUTCMonth() + 1;
-  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
 
   const [people, categories, creditCards, { transactions, installments }] = await Promise.all([
     getPeople(),
     getCategories(),
     getCreditCards(),
-    getMonthlyView(year, month, personId || undefined),
+    getMonthlyView(year, month, globalPersonId || undefined),
   ]);
 
   return (
@@ -66,15 +75,16 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         eyebrow="Finanças"
         title="Transações"
         description={
-          transactions.length > 0 ? `${transactions.length} transações no mês` : undefined
+          transactions.length > 0
+            ? `${transactions.length} transações no mês. Compras feitas no mês, não é a visão da fatura do cartão.`
+            : "Compras feitas no mês, não é a visão da fatura do cartão."
         }
       />
       <TransactionPageClient
         year={year}
         month={month}
         people={people}
-        currentPersonId={personId}
-        isGlobalLocked={isGlobalLocked}
+        currentPersonId={globalPersonId}
         categories={categories}
         creditCards={creditCards}
         transactions={transactions}

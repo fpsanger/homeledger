@@ -1,5 +1,6 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createInvestmentUseCase } from "../../../application/use-cases/CreateInvestmentUseCase";
+import { parseDateUTC } from "../_lib/date";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
@@ -20,14 +21,14 @@ export async function POST(request: NextRequest) {
         id: crypto.randomUUID(),
         personId: body.personId,
         amount: body.amount,
-        date: new Date(body.date),
+        date: parseDateUTC(body.date),
         description: body.description ?? "",
         categoryId: body.categoryId,
       },
       transaction,
       category,
     );
-    return Response.json(result, { status: 201 });
+    return Response.json({ ...result.record, isDuplicate: result.isDuplicate }, { status: 201 });
   } catch (error) {
     return errorResponse(error);
   }

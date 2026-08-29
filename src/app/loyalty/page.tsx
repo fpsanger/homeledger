@@ -22,8 +22,6 @@ type Transfer = {
   description: string | null;
 };
 
-type Person = { id: string; name: string };
-
 async function getLoyaltyPrograms(): Promise<LoyaltyProgramRecord[]> {
   const res = await fetch(`${BASE}/api/loyalty/programs`, { cache: "no-store" });
   if (!res.ok) return [];
@@ -38,39 +36,47 @@ async function getTransfers(): Promise<Transfer[]> {
   return data.transfers ?? [];
 }
 
-async function getPeople(): Promise<Person[]> {
-  const res = await fetch(`${BASE}/api/people`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.people ?? [];
-}
+type Summary = {
+  currentBalance: number;
+  totalInvested: number;
+  totalPurchasedPoints: number;
+  avgCostPer1kPoints: number;
+  totalValueRedeemed: number;
+  totalExpired: number;
+  overallRoi: number | null;
+};
 
-async function getProgramBalance(id: string, personId?: string): Promise<number> {
+const EMPTY_SUMMARY: Summary = {
+  currentBalance: 0,
+  totalInvested: 0,
+  totalPurchasedPoints: 0,
+  avgCostPer1kPoints: 0,
+  totalValueRedeemed: 0,
+  totalExpired: 0,
+  overallRoi: null,
+};
+
+async function getProgramSummary(id: string, personId?: string): Promise<Summary> {
   const url = new URL(`${BASE}/api/loyalty/programs/${id}/report`);
   if (personId) url.searchParams.set("personId", personId);
   const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) return 0;
+  if (!res.ok) return EMPTY_SUMMARY;
   const data = await res.json();
-  return data.summary?.currentBalance ?? 0;
+  return { ...EMPTY_SUMMARY, ...data.summary };
 }
 
-type SearchParams = { personId?: string };
-
-export default async function LoyaltyPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function LoyaltyPage() {
   const cookieStore = await cookies();
   const globalPersonId = cookieStore.get("global-person-id")?.value ?? "";
-  const isGlobalLocked = !!globalPersonId;
-  const personId = isGlobalLocked ? globalPersonId : (searchParams.personId ?? "");
 
-  const [programs, transfers, people] = await Promise.all([
-    getLoyaltyPrograms(),
-    getTransfers(),
-    getPeople(),
-  ]);
+  const [programs, transfers] = await Promise.all([getLoyaltyPrograms(), getTransfers()]);
 
-  const balances = Object.fromEntries(
+  const summaries = Object.fromEntries(
     await Promise.all(
-      programs.map(async (p) => [p.id, await getProgramBalance(p.id, personId || undefined)] as [string, number]),
+      programs.map(
+        async (p) =>
+          [p.id, await getProgramSummary(p.id, globalPersonId || undefined)] as [string, Summary],
+      ),
     ),
   );
 
@@ -78,10 +84,8 @@ export default async function LoyaltyPage({ searchParams }: { searchParams: Sear
     <LoyaltyPageClient
       programs={programs}
       transfers={transfers}
-      balances={balances}
-      people={people}
-      currentPersonId={personId}
-      isGlobalLocked={isGlobalLocked}
+      summaries={summaries}
+      personId={globalPersonId || undefined}
     />
   );
 }

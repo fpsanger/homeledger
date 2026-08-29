@@ -1,10 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import * as React from "react";
 import {
   Command,
   CommandEmpty,
@@ -13,12 +10,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getFullPath } from "@/lib/categoryUtils";
+import { cn } from "@/lib/utils";
 
 type Category = {
   id: string;
   name: string;
   parentId: string | null;
-  path?: string;
 };
 
 interface CategoryComboboxProps {
@@ -43,7 +42,7 @@ export function CategoryCombobox({
   const rootCategories = categories.filter((c) => c.parentId === null);
   const selected = categories.find((c) => c.id === value);
 
-  const displayLabel = selected ? selected.path || selected.name : placeholder;
+  const displayLabel = selected ? getFullPath(selected.id, categories) : placeholder;
 
   function handleSelect(id: string) {
     onChange(id === value ? "" : id);

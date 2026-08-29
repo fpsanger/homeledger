@@ -1,7 +1,7 @@
 import { createCategoryUseCase } from "../../../src/application/use-cases/CreateCategoryUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 
 const makeRepo = (
@@ -25,16 +25,14 @@ describe("createCategoryUseCase", () => {
       repo,
     );
     expect(result.name).toBe("Food");
-    expect(result.path).toBe("Food");
     expect(result.level).toBe(0);
   });
 
-  it("creates a child category with correct path and level", async () => {
+  it("creates a child category with correct level", async () => {
     const parent: CategoryRecord = {
       id: "cat-parent",
       name: "Food",
       parentId: null,
-      path: "Food",
       level: 0,
       householdId: "default",
       createdAt: new Date(),
@@ -44,7 +42,6 @@ describe("createCategoryUseCase", () => {
       { id: "cat-child", name: "Restaurants", parentId: "cat-parent", householdId: "default" },
       repo,
     );
-    expect(result.path).toBe("Food/Restaurants");
     expect(result.level).toBe(1);
   });
 
@@ -73,7 +70,6 @@ describe("createCategoryUseCase", () => {
       id: "cat-existing",
       name: "Food",
       parentId: null,
-      path: "Food",
       level: 0,
       householdId: "default",
       createdAt: new Date(),
@@ -92,7 +88,6 @@ describe("createCategoryUseCase", () => {
       id: "cat-root",
       name: "Food",
       parentId: null,
-      path: "Food",
       level: 0,
       householdId: "default",
       createdAt: new Date(),
@@ -102,7 +97,6 @@ describe("createCategoryUseCase", () => {
       { id: "cat-child", name: "Food", parentId: "cat-root", householdId: "default" },
       repo,
     );
-    expect(result.path).toBe("Food/Food");
     expect(result.level).toBe(1);
   });
 });

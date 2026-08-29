@@ -6,36 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | cut -d'\"' -f4); [[ \"$FILE\" == *.ts ]] && node_modules/.bin/biome check --write \"$FILE\" 2>/dev/null || true"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | cut -d'\"' -f4); if [[ \"$FILE\" == src/domain/* ]]; then TEST=$(echo \"$FILE\" | sed 's|src/|tests/|' | sed 's|\\.ts$|.test.ts|'); [[ -f \"$TEST\" ]] && node_modules/.bin/jest \"$TEST\" --no-coverage 2>&1 | tail -15; fi"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | grep -o '\"file_path\":\"[^\"]*\"' | cut -d'\"' -f4); if [[ \"$FILE\" == src/domain/* ]]; then VIOLATIONS=$(grep -E \"from ['\\\"]\\.\\./(application|infrastructure|presentation|app)\" \"$FILE\" 2>/dev/null); [[ -n \"$VIOLATIONS\" ]] && echo \"\u26a0\ufe0f  ARCHITECTURE VIOLATION in $FILE: domain imports from outer layer\" && echo \"$VIOLATIONS\" || true; fi"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *grep*|*rg\\ *|*ripgrep*|*find\\ *|*fd\\ *|*ack\\ *|*ag\\ *)   [ -f graphify-out/graph.json ] &&   echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: Knowledge graph exists. Read graphify-out/GRAPH_REPORT.md for god nodes and community structure before searching raw files.\"}}'   || true ;; esac"
+            "command": "FILE=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get(\"tool_input\", {}).get(\"file_path\", \"\"))' 2>/dev/null); case \"$FILE\" in *.ts|*.tsx) node_modules/.bin/biome check --write \"$FILE\" || true ;; esac"
           }
         ]
       }

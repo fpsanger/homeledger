@@ -1,7 +1,11 @@
-import { createLoyaltyTransfer } from "../../../domain/entities/LoyaltyTransfer";
 import { createLoyaltyTransaction } from "../../../domain/entities/LoyaltyTransaction";
-import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../../domain/repositories/ILoyaltyTransferRepository";
+import { createLoyaltyTransfer } from "../../../domain/entities/LoyaltyTransfer";
 import type { ILoyaltyTransactionRepository } from "../../../domain/repositories/ILoyaltyTransactionRepository";
+import type {
+  ILoyaltyTransferRepository,
+  LoyaltyTransferRecord,
+} from "../../../domain/repositories/ILoyaltyTransferRepository";
+import { computeLoyaltyFifo } from "../../../domain/services/LoyaltyFifo";
 
 type Input = {
   transferId: string;
@@ -47,6 +51,15 @@ export async function createLoyaltyTransferUseCase(
     description: input.description,
   });
 
+  await transactionRepo.save(outTx);
+
+  // Compute the FIFO cost of the sent points so the destination program
+  // inherits the correct cost basis (enables accurate cost-per-1000 after bonus transfers).
+  const fromTransactions = await transactionRepo.findByProgramId(input.fromProgramId);
+  const { transactions: enriched } = computeLoyaltyFifo(fromTransactions);
+  const outTxEnriched = enriched.find((t) => t.id === outTx.id);
+  const inheritedCostBrl = outTxEnriched?.fifoData?.costBrl ?? null;
+
   const inTx = createLoyaltyTransaction({
     id: input.inTxId,
     programId: input.toProgramId,
@@ -54,12 +67,11 @@ export async function createLoyaltyTransferUseCase(
     transferId: savedTransfer.id,
     type: "TRANSFER_IN",
     points: input.pointsReceived,
-    costBrl: input.costBrl,
+    costBrl: inheritedCostBrl,
     date: input.transferDate,
     description: input.description,
   });
 
-  await transactionRepo.save(outTx);
   await transactionRepo.save(inTx);
 
   return savedTransfer;

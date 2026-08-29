@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
-import { parseCurrencyBR } from "@/lib/utils";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { parseCurrencyBR } from "@/lib/utils";
 
 const INCOME_SOURCES = [
   { value: "SALARY", label: "Salário" },
@@ -22,7 +23,7 @@ const INCOME_SOURCES = [
 ];
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 export function IncomeForm({ people, categories }: { people: Person[]; categories: Category[] }) {
   const router = useRouter();
@@ -132,12 +133,7 @@ export function IncomeForm({ people, categories }: { people: Person[]; categorie
           placeholder="Opcional"
         />
       </div>
-      {isDuplicate && (
-        <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
-          mesmo assim.
-        </p>
-      )}
+      <DuplicateWarning match={isDuplicate} />
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Receita"}
       </Button>

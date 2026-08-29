@@ -1,32 +1,34 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 type CreditCard = { id: string; name: string };
 
 export function InstallmentForm({
   people,
   categories,
   creditCards,
+  defaultPersonId = "",
 }: {
   people: Person[];
   categories: Category[];
   creditCards: CreditCard[];
+  defaultPersonId?: string;
 }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [creditCardId, setCreditCardId] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
   const [numberOfInstallments, setNumberOfInstallments] = useState("2");

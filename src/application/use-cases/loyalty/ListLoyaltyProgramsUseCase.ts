@@ -1,4 +1,7 @@
-import type { ILoyaltyProgramRepository, LoyaltyProgramRecord } from "../../../domain/repositories/ILoyaltyProgramRepository";
+import type {
+  ILoyaltyProgramRepository,
+  LoyaltyProgramRecord,
+} from "../../../domain/repositories/ILoyaltyProgramRepository";
 
 export async function listLoyaltyProgramsUseCase(
   repo: ILoyaltyProgramRepository,

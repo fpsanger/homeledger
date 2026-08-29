@@ -1,9 +1,15 @@
-import { computeLoyaltyFifo } from "../../../src/domain/services/LoyaltyFifo";
 import type { LoyaltyTransactionRecord } from "../../../src/domain/repositories/ILoyaltyTransactionRepository";
+import { computeLoyaltyFifo } from "../../../src/domain/services/LoyaltyFifo";
 
-function tx(overrides: Omit<Partial<LoyaltyTransactionRecord>, "date"> & { type: LoyaltyTransactionRecord["type"]; points: number; date: string }): LoyaltyTransactionRecord {
+function tx(
+  overrides: Omit<Partial<LoyaltyTransactionRecord>, "date"> & {
+    type: LoyaltyTransactionRecord["type"];
+    points: number;
+    date: string;
+  },
+): LoyaltyTransactionRecord {
   return {
-    id: overrides.id ?? "tx-" + Math.random(),
+    id: overrides.id ?? `tx-${Math.random()}`,
     programId: "prog-1",
     personId: null,
     transferId: null,
@@ -52,7 +58,7 @@ describe("LoyaltyFifo service", () => {
       const redeem = result.transactions.find((t) => t.type === "REDEEM")!;
       // Consumes all 5000 from first lot (cost 50) + 3000 from second lot (cost 60)
       expect(redeem.fifoData!.costBrl).toBeCloseTo(110);
-      expect(redeem.fifoData!.roi).toBeCloseTo((400 - 110) / 110 * 100);
+      expect(redeem.fifoData!.roi).toBeCloseTo(((400 - 110) / 110) * 100);
     });
 
     it("tracks remaining balance after PURCHASE and REDEEM", () => {
@@ -119,14 +125,20 @@ describe("LoyaltyFifo service", () => {
 
     it("TRANSFER_IN with costBrl creates lot that flows to redemptions", () => {
       const transactions = [
-        tx({ type: "TRANSFER_IN", points: 5000, costBrl: 75, date: "2024-01-01", transferId: "t-1" }),
+        tx({
+          type: "TRANSFER_IN",
+          points: 5000,
+          costBrl: 75,
+          date: "2024-01-01",
+          transferId: "t-1",
+        }),
         tx({ type: "REDEEM", points: 5000, valueBrl: 200, date: "2024-02-01" }),
       ];
       const result = computeLoyaltyFifo(transactions);
 
       const redeem = result.transactions.find((t) => t.type === "REDEEM")!;
       expect(redeem.fifoData!.costBrl).toBeCloseTo(75);
-      expect(redeem.fifoData!.roi).toBeCloseTo((200 - 75) / 75 * 100);
+      expect(redeem.fifoData!.roi).toBeCloseTo(((200 - 75) / 75) * 100);
     });
   });
 
@@ -190,7 +202,13 @@ describe("LoyaltyFifo service", () => {
     it("computes totalInvested from PURCHASE and TRANSFER_IN with costBrl", () => {
       const transactions = [
         tx({ type: "PURCHASE", points: 10000, costBrl: 100, date: "2024-01-01" }),
-        tx({ type: "TRANSFER_IN", points: 5000, costBrl: 50, date: "2024-02-01", transferId: "t-1" }),
+        tx({
+          type: "TRANSFER_IN",
+          points: 5000,
+          costBrl: 50,
+          date: "2024-02-01",
+          transferId: "t-1",
+        }),
         tx({ type: "TRANSFER_IN", points: 3000, date: "2024-03-01", transferId: "t-2" }),
       ];
       const result = computeLoyaltyFifo(transactions);
@@ -203,6 +221,22 @@ describe("LoyaltyFifo service", () => {
       ];
       const result = computeLoyaltyFifo(transactions);
       expect(result.summary.avgCostPer1kPoints).toBeCloseTo(10);
+    });
+
+    it("computes totalPurchasedPoints from PURCHASE and TRANSFER_IN with costBrl", () => {
+      const transactions = [
+        tx({ type: "PURCHASE", points: 10000, costBrl: 100, date: "2024-01-01" }),
+        tx({
+          type: "TRANSFER_IN",
+          points: 5000,
+          costBrl: 50,
+          date: "2024-02-01",
+          transferId: "t-1",
+        }),
+        tx({ type: "EARN", points: 2000, date: "2024-03-01" }),
+      ];
+      const result = computeLoyaltyFifo(transactions);
+      expect(result.summary.totalPurchasedPoints).toBe(15000);
     });
 
     it("computes totalValueRedeemed", () => {

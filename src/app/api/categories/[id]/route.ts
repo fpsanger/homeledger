@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { deleteCategoryUseCase } from "../../../../application/use-cases/DeleteCategoryUseCase";
 import { updateCategoryUseCase } from "../../../../application/use-cases/UpdateCategoryUseCase";
 import { errorResponse } from "../../_lib/errorResponse";

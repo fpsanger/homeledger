@@ -42,6 +42,13 @@ export class PrismaRecurringTransactionRepository implements IRecurringTransacti
     return row ? toRecord(row) : null;
   }
 
+  async findAll(personId?: string): Promise<RecurringTransactionRecord[]> {
+    const rows = await this.prisma.recurringTransaction.findMany({
+      where: personId ? { personId } : undefined,
+    });
+    return rows.map(toRecord);
+  }
+
   async findActiveByPersonAndMonth(
     personId: string,
     year: number,

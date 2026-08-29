@@ -12,6 +12,7 @@ model Person {
   name                  String
   createdAt             DateTime               @default(now())
   creditCardPurchases   CreditCardPurchase[]
+  creditCardRefunds     CreditCardRefund[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
   loyaltyTransactions   LoyaltyTransaction[]
@@ -24,12 +25,13 @@ model Category {
   parentId              String?
   createdAt             DateTime               @default(now())
   level                 Int                    @default(0)
-  path                  String?                @default("")
   parent                Category?              @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children              Category[]             @relation("CategoryHierarchy")
   creditCardPurchases   CreditCardPurchase[]
+  creditCardRefunds     CreditCardRefund[]
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
+  merchantHistories     MerchantCategoryHistory[]
 }
 
 model CreditCard {
@@ -44,6 +46,7 @@ model CreditCard {
   closureNextMonth          Boolean              @default(false)
   closures         CreditCardClosure[]
   purchases        CreditCardPurchase[]
+  refunds          CreditCardRefund[]
 }
 
 model CreditCardClosure {
@@ -97,11 +100,31 @@ model Installment {
   amount               Decimal            @db.Decimal(15, 2)
   dueYear              Int
   dueMonth             Int
+  transactionYear      Int
+  transactionMonth     Int
   isPaid               Boolean            @default(false)
-  isCanceled           Boolean            @default(false)
   creditCardPurchase   CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
 
   @@unique([creditCardPurchaseId, installmentNumber])
+}
+
+model CreditCardRefund {
+  id           String       @id @default(uuid())
+  creditCardId String
+  personId     String
+  description  String
+  amount       Decimal      @db.Decimal(15, 2)
+  refundDate   DateTime
+  dueYear      Int
+  dueMonth     Int
+  categoryId   String?
+  source       RefundSource @default(MANUAL)
+  createdAt    DateTime     @default(now())
+  creditCard   CreditCard   @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  person       Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  category     Category?    @relation(fields: [categoryId], references: [id])
+
+  @@index([creditCardId, dueYear, dueMonth])
 }
 
 model RecurringTransaction {
@@ -154,6 +177,11 @@ enum ClosureType {
   VARIABLE
 }
 
+enum RefundSource {
+  MANUAL
+  IMPORT
+}
+
 enum LoyaltyProgramType {
   AIRLINE
   HOTEL
@@ -170,6 +198,15 @@ enum LoyaltyTransactionType {
   TRANSFER_IN
   EXPIRE
   ADJUSTMENT
+}
+
+model MerchantCategoryHistory {
+  id          String   @id @default(uuid())
+  merchantKey String   @unique
+  categoryId  String
+  usageCount  Int      @default(1)
+  updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id])
 }
 
 model LoyaltyProgram {

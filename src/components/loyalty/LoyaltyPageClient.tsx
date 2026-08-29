@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { ArrowLeftRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { LoyaltyProgramList } from "./LoyaltyProgramList";
+import { useState } from "react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { LoyaltyProgramCreateDialog } from "./LoyaltyProgramCreateDialog";
+import { LoyaltyProgramList } from "./LoyaltyProgramList";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
 import { LoyaltyTransferTable } from "./LoyaltyTransferTable";
-import { PageHeader } from "@/components/ui/page-header";
-import { Select } from "@/components/ui/select";
 
 type Program = {
   id: string;
@@ -28,21 +31,39 @@ type Transfer = {
   description: string | null;
 };
 
-type Person = { id: string; name: string };
+type Summary = {
+  currentBalance: number;
+  totalInvested: number;
+  totalPurchasedPoints: number;
+  avgCostPer1kPoints: number;
+  totalValueRedeemed: number;
+  totalExpired: number;
+  overallRoi: number | null;
+};
 
 type Props = {
   programs: Program[];
   transfers: Transfer[];
-  balances: Record<string, number>;
-  people: Person[];
-  currentPersonId: string;
-  isGlobalLocked?: boolean;
+  summaries: Record<string, Summary>;
+  personId?: string;
 };
 
-export function LoyaltyPageClient({ programs, transfers, balances, people, currentPersonId, isGlobalLocked = false }: Props) {
+function SecondaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="p-5 flex flex-col justify-center gap-1">
+      <span className="text-lg font-semibold tabular-nums tracking-tight">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+export function LoyaltyPageClient({ programs, transfers, summaries, personId }: Props) {
   const router = useRouter();
   const [openProgram, setOpenProgram] = useState(false);
   const [openTransfer, setOpenTransfer] = useState(false);
+  const { hidden } = usePrivacy();
+  const formatBrl = (value: number) =>
+    maskCurrency(value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
 
   function handleProgramSuccess() {
     setOpenProgram(false);
@@ -54,84 +75,125 @@ export function LoyaltyPageClient({ programs, transfers, balances, people, curre
     router.refresh();
   }
 
-  function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const params = new URLSearchParams(window.location.search);
-    if (e.target.value) params.set("personId", e.target.value);
-    else params.delete("personId");
-    router.push(`/loyalty?${params.toString()}`);
-  }
+  const totals = programs.reduce(
+    (acc, p) => {
+      const s = summaries[p.id];
+      if (!s) return acc;
+      acc.points += s.currentBalance;
+      acc.invested += s.totalInvested;
+      acc.purchasedPoints += s.totalPurchasedPoints;
+      acc.redeemed += s.totalValueRedeemed;
+      return acc;
+    },
+    { points: 0, invested: 0, purchasedPoints: 0, redeemed: 0 },
+  );
+  const blendedCostPer1k =
+    totals.purchasedPoints > 0 ? (totals.invested / totals.purchasedPoints) * 1000 : 0;
+  const blendedRoi =
+    totals.invested > 0 ? ((totals.redeemed - totals.invested) / totals.invested) * 100 : null;
 
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <PageHeader
-            eyebrow="Finanças"
-            title="Programas de Milhas"
-            description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
-          />
-          {people.length > 1 && (
-            isGlobalLocked ? (
-              <span className="text-sm text-muted-foreground px-2 py-1 border rounded-md bg-muted/40 shrink-0 mt-1">
-                {people.find((p) => p.id === currentPersonId)?.name ?? "Todas as pessoas"}
-              </span>
-            ) : (
-              <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm shrink-0 mt-1">
-                <option value="">Todas as pessoas</option>
-                {people.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </Select>
-            )
-          )}
-        </div>
+        <PageHeader
+          eyebrow="Finanças"
+          title="Programas de Milhas"
+          description={programs.length > 0 ? `${programs.length} programas cadastrados` : undefined}
+        >
+          <Button onClick={() => setOpenTransfer(true)} className="w-full sm:w-auto shrink-0 gap-2">
+            <ArrowLeftRight className="w-4 h-4" />
+            Transferir entre parceiros
+          </Button>
+        </PageHeader>
 
         {programs.length > 0 && (
           <>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Resumo de Pontos</h2>
+            <div className="rounded-xl border bg-card overflow-hidden grid sm:grid-cols-[1.3fr,1fr,1fr,1fr] divide-y sm:divide-y-0 sm:divide-x">
+              <div className="p-5 flex flex-col gap-1 justify-center">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Total de Pontos
+                </span>
+                <span className="text-4xl font-semibold tabular-nums tracking-tight text-primary leading-none">
+                  {totals.points.toLocaleString("pt-BR")}
+                </span>
+              </div>
+              <SecondaryStat label="Total Investido" value={formatBrl(totals.invested)} />
+              <SecondaryStat
+                label="Custo Médio/1k pts"
+                value={blendedCostPer1k > 0 ? formatBrl(blendedCostPer1k) : "—"}
+              />
+              <SecondaryStat
+                label="ROI Geral"
+                value={
+                  totals.redeemed === 0
+                    ? "Nenhum resgate"
+                    : blendedRoi != null
+                      ? `${blendedRoi.toFixed(1)}%`
+                      : "—"
+                }
+              />
+            </div>
+
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+              Resumo por Programa
+            </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {programs.map((p) => (
-                <div key={p.id} className="rounded-xl border bg-card overflow-hidden flex">
-                  <div className="w-1 shrink-0" style={{ backgroundColor: p.color }} />
+              {programs.map((p) => {
+                const s = summaries[p.id];
+                return (
                   <div
-                    className="p-4 flex flex-col gap-1.5 flex-1 min-w-0"
-                    style={{ background: `linear-gradient(135deg, ${p.color}18 0%, transparent 70%)` }}
+                    key={p.id}
+                    className="rounded-xl border bg-card p-4 flex flex-col gap-1.5 min-w-0"
+                    style={{
+                      background: `linear-gradient(135deg, ${p.color}18 0%, transparent 70%)`,
+                    }}
                   >
-                    <span className="text-xs font-medium text-muted-foreground truncate">{p.name}</span>
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: p.color }}
+                      />
+                      <span className="text-xs font-medium text-muted-foreground truncate">
+                        {p.name}
+                      </span>
+                    </span>
                     <span className="text-2xl font-bold tabular-nums tracking-tight leading-none">
-                      {(balances[p.id] ?? 0).toLocaleString("pt-BR")}
+                      {(s?.currentBalance ?? 0).toLocaleString("pt-BR")}
                     </span>
                     <span className="text-xs text-muted-foreground">pontos</span>
+                    <span className="text-xs text-muted-foreground pt-1 border-t mt-1">
+                      Custo/1k pts:{" "}
+                      {s && s.avgCostPer1kPoints > 0 ? formatBrl(s.avgCostPer1kPoints) : "—"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Investido: {formatBrl(s?.totalInvested ?? 0)}
+                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
 
-        <LoyaltyProgramCreateDialog open={openProgram} onClose={() => setOpenProgram(false)} onSuccess={handleProgramSuccess} />
+        <LoyaltyProgramCreateDialog
+          open={openProgram}
+          onClose={() => setOpenProgram(false)}
+          onSuccess={handleProgramSuccess}
+        />
         <LoyaltyProgramList programs={programs} onAdd={() => setOpenProgram(true)} />
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Histórico de Transferências
-          </h2>
-          <button
-            type="button"
-            onClick={() => setOpenTransfer(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            + Transferências entre parceiros
-          </button>
-        </div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Histórico de Transferências
+        </h2>
 
         <LoyaltyTransferDialog
           open={openTransfer}
           onClose={() => setOpenTransfer(false)}
           onSuccess={handleTransferSuccess}
           programs={programs}
+          personId={personId}
         />
         <LoyaltyTransferTable transfers={transfers} programs={programs} />
       </div>

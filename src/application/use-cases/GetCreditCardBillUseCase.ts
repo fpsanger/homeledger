@@ -1,9 +1,12 @@
 import type { CreditCardRecord } from "../../domain/entities/CreditCard";
-import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
+import type { CreditCardRefundRecord } from "../../domain/entities/CreditCardRefund";
 import type {
+  CreditCardPurchaseWithInstallments,
   ICreditCardPurchaseRepository,
   InstallmentRecord,
 } from "../../domain/repositories/ICreditCardPurchaseRepository";
+import type { ICreditCardRefundRepository } from "../../domain/repositories/ICreditCardRefundRepository";
+import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 
 export type BillInstallmentItem = InstallmentRecord & {
   purchaseDescription: string;
@@ -17,28 +20,18 @@ export type CreditCardBillEntry = {
   card: CreditCardRecord;
   dueDayOfMonth: number;
   installments: BillInstallmentItem[];
+  refunds: CreditCardRefundRecord[];
   total: number;
 };
 
 type Input = { year: number; month: number; personId?: string };
 
-export async function getCreditCardBillUseCase(
-  input: Input,
-  creditCardRepo: ICreditCardRepository,
-  purchaseRepo: ICreditCardPurchaseRepository,
-): Promise<CreditCardBillEntry[]> {
-  const [installments, purchases, cards] = await Promise.all([
-    purchaseRepo.findAllInstallmentsByMonth(input.year, input.month),
-    purchaseRepo.findAllPurchasesWithInstallments(input.personId),
-    creditCardRepo.findAll(),
-  ]);
-
-  const purchaseMap = new Map(purchases.map((p) => [p.id, p]));
-
-  // Group enriched installments by creditCardId (skip canceled)
-  const byCard = new Map<string, BillInstallmentItem[]>();
+function groupInstallmentsByCard(
+  installments: InstallmentRecord[],
+  purchaseMap: Map<string, CreditCardPurchaseWithInstallments>,
+): Map<string, BillInstallmentItem[]> {
+  const installmentsByCard = new Map<string, BillInstallmentItem[]>();
   for (const inst of installments) {
-    if (inst.isCanceled) continue;
     const purchase = purchaseMap.get(inst.creditCardPurchaseId);
     if (!purchase?.creditCardId) continue;
     const enriched: BillInstallmentItem = {
@@ -49,22 +42,64 @@ export async function getCreditCardBillUseCase(
       numberOfInstallments: purchase.numberOfInstallments,
       purchaseDate: purchase.purchaseDate,
     };
-    const list = byCard.get(purchase.creditCardId) ?? [];
+    const list = installmentsByCard.get(purchase.creditCardId) ?? [];
     list.push(enriched);
-    byCard.set(purchase.creditCardId, list);
+    installmentsByCard.set(purchase.creditCardId, list);
   }
+  return installmentsByCard;
+}
+
+function groupRefundsByCard(
+  refunds: CreditCardRefundRecord[],
+  personId: string | undefined,
+): Map<string, CreditCardRefundRecord[]> {
+  const refundsByCard = new Map<string, CreditCardRefundRecord[]>();
+  for (const refund of refunds) {
+    if (personId && refund.personId !== personId) continue;
+    const list = refundsByCard.get(refund.creditCardId) ?? [];
+    list.push(refund);
+    refundsByCard.set(refund.creditCardId, list);
+  }
+  return refundsByCard;
+}
+
+export async function getCreditCardBillUseCase(
+  input: Input,
+  creditCardRepo: ICreditCardRepository,
+  purchaseRepo: ICreditCardPurchaseRepository,
+  refundRepo: ICreditCardRefundRepository,
+): Promise<CreditCardBillEntry[]> {
+  const [installments, purchases, cards, refunds] = await Promise.all([
+    purchaseRepo.findAllInstallmentsByMonth(input.year, input.month),
+    purchaseRepo.findAllPurchasesWithInstallments(input.personId),
+    creditCardRepo.findAll(),
+    refundRepo.findByMonth(input.year, input.month),
+  ]);
+
+  const purchaseMap = new Map(purchases.map((p) => [p.id, p]));
+  const installmentsByCard = groupInstallmentsByCard(installments, purchaseMap);
+  const refundsByCard = groupRefundsByCard(refunds, input.personId);
 
   const cardMap = new Map(cards.map((c) => [c.id, c]));
+  const cardIds = new Set([
+    ...Array.from(installmentsByCard.keys()),
+    ...Array.from(refundsByCard.keys()),
+  ]);
 
   const result: CreditCardBillEntry[] = [];
-  for (const [cardId, insts] of Array.from(byCard.entries())) {
+  for (const cardId of Array.from(cardIds)) {
     const card = cardMap.get(cardId);
     if (!card) continue;
+    const insts = installmentsByCard.get(cardId) ?? [];
+    const cardRefunds = refundsByCard.get(cardId) ?? [];
     result.push({
       card,
       dueDayOfMonth: card.dueDayOfMonth,
-      installments: insts,
-      total: insts.reduce((sum, i) => sum + i.amount, 0),
+      installments: insts.sort((a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime()),
+      refunds: cardRefunds,
+      total:
+        insts.reduce((sum, i) => sum + i.amount, 0) -
+        cardRefunds.reduce((sum, r) => sum + r.amount, 0),
     });
   }
 

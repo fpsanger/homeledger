@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -11,17 +11,31 @@ import { cn } from "@/lib/utils";
 type DatePickerProps = {
   value: string; // yyyy-MM-dd
   onChange: (value: string) => void;
+  placeholder?: string;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
   endMonth?: Date;
+  ariaLabel?: string;
 };
 
-export function DatePicker({ value, onChange, required, className, endMonth }: DatePickerProps) {
+export function DatePicker({
+  value,
+  onChange,
+  placeholder = "Selecione uma data",
+  required,
+  disabled,
+  className,
+  endMonth,
+  ariaLabel,
+}: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
+        aria-label={ariaLabel}
+        disabled={disabled}
         className={cn(
           "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -29,9 +43,7 @@ export function DatePicker({ value, onChange, required, className, endMonth }: D
           className,
         )}
       >
-        {value
-          ? format(parseISO(value), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-          : "Selecione uma data"}
+        {value ? format(parseISO(value), "dd/MM/yyyy") : placeholder}
         <CalendarIcon className="size-4 text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

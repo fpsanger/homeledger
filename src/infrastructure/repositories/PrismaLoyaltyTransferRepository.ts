@@ -1,15 +1,22 @@
-import type { PrismaClient } from "@prisma/client";
-import type { ILoyaltyTransferRepository, LoyaltyTransferRecord } from "../../domain/repositories/ILoyaltyTransferRepository";
+import type { PrismaClient, LoyaltyTransfer as PrismaLoyaltyTransferRow } from "@prisma/client";
+import type {
+  ILoyaltyTransferRepository,
+  LoyaltyTransferRecord,
+} from "../../domain/repositories/ILoyaltyTransferRepository";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toRecord(row: any): LoyaltyTransferRecord {
+function toRecord(row: PrismaLoyaltyTransferRow): LoyaltyTransferRecord {
   return {
     id: row.id,
     fromProgramId: row.fromProgramId,
     toProgramId: row.toProgramId,
     pointsSent: row.pointsSent,
     pointsReceived: row.pointsReceived,
-    costBrl: row.costBrl == null ? null : typeof row.costBrl === "number" ? row.costBrl : row.costBrl.toNumber(),
+    costBrl:
+      row.costBrl == null
+        ? null
+        : typeof row.costBrl === "number"
+          ? row.costBrl
+          : row.costBrl.toNumber(),
     transferDate: row.transferDate,
     personId: row.personId,
     description: row.description,

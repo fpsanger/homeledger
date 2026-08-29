@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { DM_Serif_Display } from "next/font/google";
 import "./globals.css";
-import { TopNav } from "@/components/layout/TopNav";
+import { PrivacyProvider } from "@/components/layout/PrivacyProvider";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { TopNav } from "@/components/layout/TopNav";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = localFont({
@@ -15,11 +15,6 @@ const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
-});
-const dmSerifDisplay = DM_Serif_Display({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -44,13 +39,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${dmSerifDisplay.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
-          <TopNav />
-          <main className="px-6 py-8 max-w-6xl mx-auto">{children}</main>
-          <Toaster />
+          <PrivacyProvider>
+            <TopNav />
+            <main className="px-4 py-6 md:px-6 md:py-8 max-w-6xl mx-auto">{children}</main>
+            <Toaster />
+          </PrivacyProvider>
         </ThemeProvider>
       </body>
     </html>

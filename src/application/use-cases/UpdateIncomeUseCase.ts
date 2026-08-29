@@ -1,8 +1,8 @@
 import type { ICategoryRepository } from "../../domain/repositories/ICategoryRepository";
 import type {
+  IncomeSource,
   ITransactionRepository,
   TransactionRecord,
-  IncomeSource,
 } from "../../domain/repositories/ITransactionRepository";
 import { validateIncomeCategory } from "../../domain/services/CategoryTree";
 

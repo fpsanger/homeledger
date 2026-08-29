@@ -1,37 +1,48 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { parseCurrencyBR } from "@/lib/utils";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 export function InvestmentForm({
   people,
   categories,
+  defaultPersonId = "",
   onSuccess,
 }: {
   people: Person[];
   categories: Category[];
+  defaultPersonId?: string;
   onSuccess?: () => void;
 }) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(today);
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const isDuplicate = useDuplicateCheck(
+    "INVESTMENT",
+    amount ? parseCurrencyBR(amount) : null,
+    date,
+    refreshKey,
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,6 +73,7 @@ export function InvestmentForm({
     setDate(today);
     setCategoryId("");
     setDescription("");
+    setRefreshKey((k) => k + 1);
     router.refresh();
     toast.success("Investimento salvo com sucesso.");
     onSuccess?.();
@@ -106,6 +118,7 @@ export function InvestmentForm({
           placeholder="Opcional"
         />
       </div>
+      <DuplicateWarning match={isDuplicate} />
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Investimento"}
       </Button>

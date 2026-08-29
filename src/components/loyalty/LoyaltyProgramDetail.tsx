@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
-import { Select } from "@/components/ui/select";
+import { findDuplicateLoyaltyTransaction } from "@/domain/services/isDuplicateLoyaltyTransaction";
+import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 
 type FifoData = {
   costBrl: number;
@@ -24,6 +29,7 @@ type Transaction = {
   costBrl: number | null;
   valueBrl: number | null;
   transferId: string | null;
+  personId: string | null;
   fifoData?: FifoData;
 };
 
@@ -43,17 +49,13 @@ type Program = {
   color: string;
 };
 
-type Person = { id: string; name: string };
-
 type Props = {
   program: Program;
   report: {
     summary: Summary;
     transactions: Transaction[];
   };
-  people: Person[];
-  currentPersonId: string;
-  isGlobalLocked?: boolean;
+  defaultPersonId?: string;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -87,8 +89,7 @@ function formatPts(value: number) {
 }
 
 function formatDate(iso: string) {
-  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("pt-BR");
+  return formatDatePtBR(iso);
 }
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
@@ -101,8 +102,11 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 }
 
 function pointsSign(type: string, points: number) {
-  const negative = ["REDEEM", "TRANSFER_OUT", "EXPIRE"].includes(type) || (type === "ADJUSTMENT" && points < 0);
-  return negative ? `-${Math.abs(points).toLocaleString("pt-BR")}` : `+${points.toLocaleString("pt-BR")}`;
+  const negative =
+    ["REDEEM", "TRANSFER_OUT", "EXPIRE"].includes(type) || (type === "ADJUSTMENT" && points < 0);
+  return negative
+    ? `-${Math.abs(points).toLocaleString("pt-BR")}`
+    : `+${points.toLocaleString("pt-BR")}`;
 }
 
 const TRANSACTION_TYPES = [
@@ -114,19 +118,39 @@ const TRANSACTION_TYPES = [
   { value: "ADJUSTMENT", label: "Ajuste" },
 ];
 
-function AddTransactionModal({ programId, onClose, onSuccess }: { programId: string; onClose: () => void; onSuccess: () => void }) {
+function AddTransactionModal({
+  programId,
+  defaultPersonId = "",
+  existingTransactions,
+  onClose,
+  onSuccess,
+}: {
+  programId: string;
+  defaultPersonId?: string;
+  existingTransactions: Transaction[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const today = new Date().toISOString().slice(0, 10);
   const [type, setType] = useState("EARN");
   const [points, setPoints] = useState("");
   const [date, setDate] = useState(today);
   const [description, setDescription] = useState("");
   const [costBrl, setCostBrl] = useState("");
-  const [valueBrl, setValueBrl] = useState("");
+  const [valueBrl, _setValueBrl] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const duplicateMatch = findDuplicateLoyaltyTransaction(
+    existingTransactions,
+    type,
+    points ? Number(points) : null,
+    personId || null,
+    date,
+  );
 
   useEffect(() => {
     fetch("/api/people")
@@ -168,76 +192,181 @@ function AddTransactionModal({ programId, onClose, onSuccess }: { programId: str
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-background rounded-xl border shadow-lg p-6 w-full max-w-md flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-sm font-semibold">Nova Transação</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Tipo</label>
-              <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                {TRANSACTION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Pontos</label>
-              <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} required min="1" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-            </div>
-          </div>
-          <div className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Data</label>
-              <DatePicker value={date} onChange={setDate} required />
-            </div>
-            {type !== "REDEEM" && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">Expiração</label>
-                <DatePicker value={expiresAt} onChange={setExpiresAt} endMonth={new Date(new Date().getFullYear() + 3, 11)} />
-              </div>
-            )}
-          </div>
-          {type === "PURCHASE" && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Custo (R$)</label>
-              <input type="number" step="0.01" value={costBrl} onChange={(e) => setCostBrl(e.target.value)} placeholder="0,00" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-            </div>
-          )}
-          {people.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Pessoa</label>
-              <select value={personId} onChange={(e) => setPersonId(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                <option value="">Todos</option>
-                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-          )}
+    <Dialog open onClose={onClose} title="Nova Transação" className="max-w-md">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Descrição</label>
-            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            <label htmlFor="new-tx-type" className="text-xs font-medium text-muted-foreground">
+              Tipo
+            </label>
+            <select
+              id="new-tx-type"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {TRANSACTION_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <div className="flex gap-2 pt-1">
-            <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {loading ? "Salvando..." : "Salvar"}
-            </button>
-            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-muted transition-colors">
-              Cancelar
-            </button>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="new-tx-points" className="text-xs font-medium text-muted-foreground">
+              Pontos
+            </label>
+            <input
+              id="new-tx-points"
+              type="number"
+              value={points}
+              onChange={(e) => setPoints(e.target.value)}
+              required
+              min="1"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+        <div
+          className={`grid gap-3 ${type !== "REDEEM" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground">Data</span>
+            <DatePicker value={date} onChange={setDate} required ariaLabel="Data" />
+          </div>
+          {type !== "REDEEM" && (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-muted-foreground">Expiração</span>
+              <DatePicker
+                value={expiresAt}
+                onChange={setExpiresAt}
+                endMonth={new Date(new Date().getFullYear() + 3, 11)}
+                ariaLabel="Expiração"
+              />
+            </div>
+          )}
+        </div>
+        {type === "PURCHASE" && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="new-tx-cost" className="text-xs font-medium text-muted-foreground">
+              Custo (R$)
+            </label>
+            <input
+              id="new-tx-cost"
+              type="number"
+              step="0.01"
+              value={costBrl}
+              onChange={(e) => setCostBrl(e.target.value)}
+              placeholder="0,00"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        )}
+        {people.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="new-tx-person" className="text-xs font-medium text-muted-foreground">
+              Pessoa
+            </label>
+            <select
+              id="new-tx-person"
+              value={personId}
+              onChange={(e) => setPersonId(e.target.value)}
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Todos</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="new-tx-description" className="text-xs font-medium text-muted-foreground">
+            Descrição
+          </label>
+          <input
+            id="new-tx-description"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <DuplicateWarning match={duplicateMatch} />
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        <div className="flex gap-2 pt-1">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Salvando..." : "Salvar"}
+          </button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
 
-function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onClose: () => void; onSuccess: () => void }) {
-  const [points, setPoints] = useState(String(tx.points));
-  const [date, setDate] = useState(tx.date.slice(0, 10));
-  const [description, setDescription] = useState(tx.description ?? "");
-  const [costBrl, setCostBrl] = useState(tx.costBrl != null ? String(tx.costBrl) : "");
-  const [expiresAt, setExpiresAt] = useState(tx.expiresAt ? tx.expiresAt.slice(0, 10) : "");
+function computeEditFormInitialState(tx: Transaction) {
+  return {
+    points: String(tx.points),
+    date: tx.date.slice(0, 10),
+    description: tx.description ?? "",
+    costBrl: tx.costBrl != null ? String(tx.costBrl) : "",
+    expiresAt: tx.expiresAt ? tx.expiresAt.slice(0, 10) : "",
+    personId: tx.personId ?? "",
+  };
+}
+
+function resolveDuplicateCheckInputs(
+  points: string,
+  personId: string,
+): { points: number | null; personId: string | null } {
+  return {
+    points: points ? Number(points) : null,
+    personId: personId || null,
+  };
+}
+
+function EditTransactionModal({
+  tx,
+  existingTransactions,
+  onClose,
+  onSuccess,
+}: {
+  tx: Transaction;
+  existingTransactions: Transaction[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const initial = computeEditFormInitialState(tx);
+  const [points, setPoints] = useState(initial.points);
+  const [date, setDate] = useState(initial.date);
+  const [description, setDescription] = useState(initial.description);
+  const [costBrl, setCostBrl] = useState(initial.costBrl);
+  const [expiresAt, setExpiresAt] = useState(initial.expiresAt);
+  const [personId, setPersonId] = useState(initial.personId);
+  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const duplicateCheckInputs = resolveDuplicateCheckInputs(points, personId);
+  const duplicateMatch = findDuplicateLoyaltyTransaction(
+    existingTransactions.filter((t) => t.id !== tx.id),
+    tx.type,
+    duplicateCheckInputs.points,
+    duplicateCheckInputs.personId,
+    date,
+  );
+
+  useEffect(() => {
+    fetch("/api/people")
+      .then((r) => (r.ok ? r.json() : { people: [] }))
+      .then((d) => setPeople(d.people ?? []));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -253,6 +382,7 @@ function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onC
           description: description || null,
           costBrl: costBrl ? Number(costBrl) : null,
           expiresAt: expiresAt || null,
+          personId: personId || null,
         }),
       });
       if (!res.ok) {
@@ -269,74 +399,222 @@ function EditTransactionModal({ tx, onClose, onSuccess }: { tx: Transaction; onC
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-background rounded-xl border shadow-lg p-6 w-full max-w-md flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-sm font-semibold">Editar Transação</h2>
-        <p className="text-xs text-muted-foreground -mt-2">
-          Tipo: <span className="font-medium">{TYPE_LABELS[tx.type] ?? tx.type}</span>
-        </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <Dialog open onClose={onClose} title="Editar Transação" className="max-w-md">
+      <p className="text-xs text-muted-foreground -mt-2 mb-3">
+        Tipo: <span className="font-medium">{TYPE_LABELS[tx.type] ?? tx.type}</span>
+      </p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="edit-tx-points" className="text-xs font-medium text-muted-foreground">
+            Pontos
+          </label>
+          <input
+            id="edit-tx-points"
+            type="number"
+            value={points}
+            onChange={(e) => setPoints(e.target.value)}
+            required
+            min="1"
+            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <div
+          className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
+        >
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Pontos</label>
-            <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} required min="1" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            <span className="text-xs font-medium text-muted-foreground">Data</span>
+            <DatePicker value={date} onChange={setDate} required ariaLabel="Data" />
           </div>
-          <div className={`grid gap-3 ${tx.type !== "REDEEM" ? "grid-cols-2" : "grid-cols-1"}`}>
+          {tx.type !== "REDEEM" && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Data</label>
-              <DatePicker value={date} onChange={setDate} required />
-            </div>
-            {tx.type !== "REDEEM" && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">Expiração</label>
-                <DatePicker value={expiresAt} onChange={setExpiresAt} endMonth={new Date(new Date().getFullYear() + 3, 11)} />
-              </div>
-            )}
-          </div>
-          {tx.type === "PURCHASE" && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">Custo (R$)</label>
-              <input type="number" step="0.01" value={costBrl} onChange={(e) => setCostBrl(e.target.value)} placeholder="0,00" className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <span className="text-xs font-medium text-muted-foreground">Expiração</span>
+              <DatePicker
+                value={expiresAt}
+                onChange={setExpiresAt}
+                endMonth={new Date(new Date().getFullYear() + 3, 11)}
+                ariaLabel="Expiração"
+              />
             </div>
           )}
+        </div>
+        {tx.type === "PURCHASE" && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Descrição</label>
-            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+            <label htmlFor="edit-tx-cost" className="text-xs font-medium text-muted-foreground">
+              Custo (R$)
+            </label>
+            <input
+              id="edit-tx-cost"
+              type="number"
+              step="0.01"
+              value={costBrl}
+              onChange={(e) => setCostBrl(e.target.value)}
+              placeholder="0,00"
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
           </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <div className="flex gap-2 pt-1">
-            <button type="submit" disabled={loading} className="px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
-              {loading ? "Salvando..." : "Salvar"}
-            </button>
-            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm font-medium rounded-md border hover:bg-muted transition-colors">
-              Cancelar
-            </button>
+        )}
+        {people.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="edit-tx-person" className="text-xs font-medium text-muted-foreground">
+              Pessoa
+            </label>
+            <select
+              id="edit-tx-person"
+              value={personId}
+              onChange={(e) => setPersonId(e.target.value)}
+              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Todos</option>
+              {people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="edit-tx-description"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Descrição
+          </label>
+          <input
+            id="edit-tx-description"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+        <DuplicateWarning match={duplicateMatch} />
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        <div className="flex gap-2 pt-1">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Salvando..." : "Salvar"}
+          </button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
 
 type SortKey = "date" | "expiresAt";
 type SortDir = "asc" | "desc";
 
+function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <span className="opacity-30">↕</span>;
+  return <>{dir === "asc" ? "↑" : "↓"}</>;
+}
+
+function formatCostPer1k(tx: Transaction, hidden: boolean): string {
+  if (tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)) {
+    return maskCurrency(formatBrl(tx.fifoData.costPer1kPoints), hidden);
+  }
+  if (tx.type === "PURCHASE" && tx.costBrl && tx.points > 0) {
+    return maskCurrency(formatBrl((tx.costBrl / tx.points) * 1000), hidden);
+  }
+  return "—";
+}
+
+function formatRoi(tx: Transaction): { text: string; positive: boolean } | null {
+  if (tx.fifoData?.roi == null || !Number.isFinite(tx.fifoData.roi)) return null;
+  return { text: `${tx.fifoData.roi.toFixed(1)}%`, positive: tx.fifoData.roi >= 0 };
+}
+
+function buildTransactionRowActions(
+  tx: Transaction,
+  deletingId: string | null,
+  onEdit: (tx: Transaction) => void,
+  onDelete: (tx: Transaction) => void,
+) {
+  return [
+    ...(EDITABLE_TYPES.includes(tx.type) ? [{ label: "Editar", onClick: () => onEdit(tx) }] : []),
+    {
+      label: deletingId === tx.id ? "Excluindo..." : "Excluir",
+      onClick: () => onDelete(tx),
+      variant: "destructive" as const,
+    },
+  ];
+}
+
+function TransactionRow({
+  tx,
+  deletingId,
+  onEdit,
+  onDelete,
+}: {
+  tx: Transaction;
+  deletingId: string | null;
+  onEdit: (tx: Transaction) => void;
+  onDelete: (tx: Transaction) => void;
+}) {
+  const { hidden } = usePrivacy();
+  const roi = formatRoi(tx);
+  return (
+    <tr className="border-t hover:bg-muted/30 transition-colors">
+      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
+      <td className="px-4 py-3">
+        <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
+          {TYPE_LABELS[tx.type] ?? tx.type}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right font-mono">{pointsSign(tx.type, tx.points)}</td>
+      <td className="px-4 py-3 text-right text-muted-foreground">{formatCostPer1k(tx, hidden)}</td>
+      <td className="px-4 py-3 text-right">
+        {roi ? (
+          <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>
+            {roi.text}
+          </span>
+        ) : (
+          "—"
+        )}
+      </td>
+      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+        {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
+      </td>
+      <td className="px-4 py-3 text-muted-foreground text-xs">
+        {tx.description ?? ""}
+        {tx.costBrl && tx.type === "PURCHASE"
+          ? ` · ${maskCurrency(formatBrl(tx.costBrl), hidden)}`
+          : ""}
+      </td>
+      <td className="px-4 py-3 text-right">
+        <DropdownMenu
+          align="right"
+          trigger={
+            <button
+              type="button"
+              disabled={deletingId === tx.id}
+              className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              aria-label="Ações"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          }
+          items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
+        />
+      </td>
+    </tr>
+  );
+}
+
 const EDITABLE_TYPES = ["PURCHASE", "EARN", "BONUS", "REDEEM", "EXPIRE", "ADJUSTMENT"];
 
-export function LoyaltyProgramDetail({ program, report, people, currentPersonId, isGlobalLocked = false }: Props) {
+export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: Props) {
   const router = useRouter();
+  const { hidden } = usePrivacy();
   const [showModal, setShowModal] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { summary, transactions } = report;
-
-  function handlePersonChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const params = new URLSearchParams(window.location.search);
-    if (e.target.value) params.set("personId", e.target.value);
-    else params.delete("personId");
-    router.push(`/loyalty/${program.id}?${params.toString()}`);
-  }
 
   async function handleDelete(tx: Transaction) {
     setDeletingId(tx.id);
@@ -376,28 +654,56 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <SummaryCard label="Saldo" value={formatPts(summary.currentBalance)} />
-        <SummaryCard label="Total Investido" value={formatBrl(summary.totalInvested)} />
-        <SummaryCard label="Custo/1k pts" value={summary.avgCostPer1kPoints > 0 ? formatBrl(summary.avgCostPer1kPoints) : "—"} />
-        <SummaryCard label="Total Resgatado" value={formatBrl(summary.totalValueRedeemed)} />
+        <SummaryCard
+          label="Total Investido"
+          value={maskCurrency(formatBrl(summary.totalInvested), hidden)}
+        />
+        <SummaryCard
+          label="Custo/1k pts"
+          value={
+            summary.avgCostPer1kPoints > 0
+              ? maskCurrency(formatBrl(summary.avgCostPer1kPoints), hidden)
+              : "—"
+          }
+        />
+        <SummaryCard
+          label="Total Resgatado"
+          value={maskCurrency(formatBrl(summary.totalValueRedeemed), hidden)}
+        />
         <SummaryCard label="Expirados" value={formatPts(summary.totalExpired)} />
         <SummaryCard
           label="ROI Geral"
-          value={summary.overallRoi != null ? `${summary.overallRoi.toFixed(1)}%` : "—"}
+          value={
+            summary.totalValueRedeemed === 0
+              ? "Nenhum resgate"
+              : summary.overallRoi != null
+                ? `${summary.overallRoi.toFixed(1)}%`
+                : "—"
+          }
         />
       </div>
 
       {showModal && (
         <AddTransactionModal
           programId={program.id}
+          defaultPersonId={defaultPersonId}
+          existingTransactions={transactions}
           onClose={() => setShowModal(false)}
-          onSuccess={() => { setShowModal(false); router.refresh(); }}
+          onSuccess={() => {
+            setShowModal(false);
+            router.refresh();
+          }}
         />
       )}
       {editingTx && (
         <EditTransactionModal
           tx={editingTx}
+          existingTransactions={transactions}
           onClose={() => setEditingTx(null)}
-          onSuccess={() => { setEditingTx(null); router.refresh(); }}
+          onSuccess={() => {
+            setEditingTx(null);
+            router.refresh();
+          }}
         />
       )}
 
@@ -408,20 +714,6 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
             Transações
           </h2>
           <div className="flex items-center gap-2 ml-auto">
-            {people.length > 1 && (
-              isGlobalLocked ? (
-                <span className="text-sm text-muted-foreground px-2 py-1 border rounded-md bg-muted/40 shrink-0">
-                  {people.find((p) => p.id === currentPersonId)?.name ?? "Todas as pessoas"}
-                </span>
-              ) : (
-                <Select value={currentPersonId} onChange={handlePersonChange} className="w-40 h-8 text-sm">
-                  <option value="">Todas as pessoas</option>
-                  {people.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </Select>
-              )
-            )}
             <button
               type="button"
               onClick={() => setShowModal(true)}
@@ -432,91 +724,53 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
           </div>
         </div>
         {sorted.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma transação registrada.</p>
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            Nenhuma transação registrada.
+          </p>
         ) : (
-          <div className="rounded-xl border overflow-hidden">
+          <div className="hidden md:block rounded-xl border overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    <button type="button" onClick={() => handleSort("date")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                      Data {sortKey === "date" ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                    <button
+                      type="button"
+                      onClick={() => handleSort("date")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      Data <SortIndicator active={sortKey === "date"} dir={sortDir} />
                     </button>
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pontos</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Valor do milheiro (Custo/1k PTS)</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">
+                    Valor do milheiro (Custo/1k PTS)
+                  </th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">ROI</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    <button type="button" onClick={() => handleSort("expiresAt")} className="flex items-center gap-1 hover:text-foreground transition-colors">
-                      Expiração {sortKey === "expiresAt" ? (sortDir === "asc" ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                    <button
+                      type="button"
+                      onClick={() => handleSort("expiresAt")}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                    >
+                      Expiração <SortIndicator active={sortKey === "expiresAt"} dir={sortDir} />
                     </button>
                   </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Descrição</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                    Descrição
+                  </th>
                   <th className="w-8" />
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((tx) => (
-                  <tr key={tx.id} className="border-t hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {formatDate(tx.date)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
-                        {TYPE_LABELS[tx.type] ?? tx.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono">
-                      {pointsSign(tx.type, tx.points)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">
-                      {tx.fifoData && Number.isFinite(tx.fifoData.costPer1kPoints)
-                        ? formatBrl(tx.fifoData.costPer1kPoints)
-                        : tx.type === "PURCHASE" && tx.costBrl && tx.points > 0
-                          ? formatBrl((tx.costBrl / tx.points) * 1000)
-                          : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {tx.fifoData?.roi != null && Number.isFinite(tx.fifoData.roi) ? (
-                        <span className={tx.fifoData.roi >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}>
-                          {tx.fifoData.roi.toFixed(1)}%
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                      {tx.description ?? ""}
-                      {tx.costBrl && tx.type === "PURCHASE" ? ` · ${formatBrl(tx.costBrl)}` : ""}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <DropdownMenu
-                        align="right"
-                        trigger={
-                          <button
-                            type="button"
-                            disabled={deletingId === tx.id}
-                            className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                            aria-label="Ações"
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        }
-                        items={[
-                          ...(EDITABLE_TYPES.includes(tx.type)
-                            ? [{ label: "Editar", onClick: () => setEditingTx(tx) }]
-                            : []),
-                          {
-                            label: deletingId === tx.id ? "Excluindo..." : "Excluir",
-                            onClick: () => handleDelete(tx),
-                            variant: "destructive" as const,
-                          },
-                        ]}
-                      />
-                    </td>
-                  </tr>
+                  <TransactionRow
+                    key={tx.id}
+                    tx={tx}
+                    deletingId={deletingId}
+                    onEdit={setEditingTx}
+                    onDelete={handleDelete}
+                  />
                 ))}
               </tbody>
             </table>
@@ -527,7 +781,9 @@ export function LoyaltyProgramDetail({ program, report, people, currentPersonId,
       {/* Program accent */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: program.color }} />
-        <span>{program.name} · {program.type}</span>
+        <span>
+          {program.name} · {program.type}
+        </span>
       </div>
     </div>
   );

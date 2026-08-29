@@ -10,7 +10,6 @@ type PrismaCategoryRow = {
   id: string;
   name: string;
   parentId: string | null;
-  path: string | null;
   level: number;
   createdAt: Date;
 };
@@ -20,7 +19,6 @@ function toRecord(row: PrismaCategoryRow): CategoryRecord {
     id: row.id,
     name: row.name,
     parentId: row.parentId,
-    path: row.path ?? "",
     level: row.level,
     householdId: HOUSEHOLD_ID,
     createdAt: row.createdAt,
@@ -42,7 +40,7 @@ export class PrismaCategoryRepository implements ICategoryRepository {
     return row ? toRecord(row) : null;
   }
 
-  async findRootByName(name: string, householdId: string): Promise<CategoryRecord | null> {
+  async findRootByName(name: string, _householdId: string): Promise<CategoryRecord | null> {
     const row = await this.prisma.category.findFirst({
       where: { name, parentId: null },
     });
@@ -56,13 +54,11 @@ export class PrismaCategoryRepository implements ICategoryRepository {
         id: category.id,
         name: category.name,
         parentId: category.parentId,
-        path: category.path,
         level: category.level,
       },
       update: {
         name: category.name,
         parentId: category.parentId,
-        path: category.path,
         level: category.level,
       },
     });

@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createRecurringTransactionUseCase } from "../../../application/use-cases/CreateRecurringTransactionUseCase";
 import type { RecurringTransactionRecord } from "../../../domain/repositories/IRecurringTransactionRepository";
 import type { TransactionRecord } from "../../../domain/repositories/ITransactionRepository";
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       },
       recurring,
     );
-    return Response.json(result, { status: 201 });
+    return Response.json({ ...result.record, isDuplicate: result.isDuplicate }, { status: 201 });
   } catch (error) {
     return errorResponse(error);
   }

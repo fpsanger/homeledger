@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { MoreHorizontal, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -12,8 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { formatDatePtBR } from "@/lib/format-date";
 
 type Person = {
   id: string;
@@ -43,7 +44,7 @@ export function PersonList({ people }: { people: Person[] }) {
   }
 
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <div className="rounded-lg border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40">
@@ -57,7 +58,7 @@ export function PersonList({ people }: { people: Person[] }) {
             <TableRow key={person.id}>
               <TableCell className="font-medium text-sm">{person.name}</TableCell>
               <TableCell className="text-muted-foreground text-sm">
-                {new Date(person.createdAt).toLocaleDateString("pt-BR")}
+                {formatDatePtBR(person.createdAt)}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu

@@ -11,8 +11,9 @@ const makeInstallment = (overrides = {}) => ({
   amount: 100,
   dueYear: 2026,
   dueMonth: 5,
+  transactionYear: 2026,
+  transactionMonth: 5,
   isPaid: false,
-  isCanceled: false,
   categoryId: null,
   ...overrides,
 });

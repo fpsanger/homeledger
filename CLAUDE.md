@@ -1,178 +1,62 @@
-# Project
+# HomeLedger implementation guide
 
-The tech stack of this project is:
+HomeLedger is a Next.js 14 App Router application using TypeScript, Prisma, PostgreSQL, Biome,
+Jest, Testing Library, and Playwright.
 
-- TypeScript
-- Next.js 14 (App Router)
-- PostgreSQL
-- Prisma ORM
-- Docker
-- Biome
-- Jest + ts-jest
-- Migrations
-- Vercel / Neon (future)
+## Sources of truth
 
----
+- Read `SPEC.md` before changing financial or product behavior.
+- Read `PRODUCT.md` and `DESIGN.md` before changing UI or UX.
+- Use existing source and tests as implementation context, but do not let them override `SPEC.md`.
+- Load historical plans or generated repository maps only when a task specifically needs them.
 
-# Instructions
+## Architecture
 
-## 1. Mandatory Reading
+- `src/domain`: pure entities, services, errors, and repository contracts. It must not import
+  application, infrastructure, React, Next.js, Prisma, or UI code.
+- `src/application`: use-case orchestration; depends on domain contracts.
+- `src/infrastructure`: Prisma repositories, database, parsers, and external integrations.
+- `src/app`: pages and API routes.
+- `src/components`: reusable UI.
 
-Before working on new features or unclear tasks, read:
+Keep financial rules out of React components, API handlers, and Prisma mappings. All schema changes
+require a versioned migration under `src/infrastructure/database/migrations/`.
 
-- `SPEC.md`
-- `.claude/repo-map.md`
+## Development workflow
 
----
+1. Clarify acceptance criteria and inspect the smallest relevant code surface.
+2. For new behavior or bug fixes, write a failing direct test, implement the minimum change, and
+   refactor while green.
+3. Obtain human approval before material financial-rule, architecture, or schema decisions that
+   are not already explicit in the request.
+4. Avoid unrelated refactors and scope expansion.
+5. Update `CHANGELOG.md` for user-visible, domain, schema, or operational changes.
 
-## 2. Architecture Rules
+Tests live under `tests/` and mirror source areas. E2E tests complement direct unit, component,
+contract, and integration tests; they do not replace them.
 
-Follow Clean Architecture with the following layers:
+## Commands
 
-- Domain → `src/domain/`
-- Application → `src/application/`
-- Infrastructure → `src/infrastructure/`
-- UI → `src/app/` (Next.js App Router)
+```bash
+npm run dev
+npm run lint
+npm run typecheck
+npm test -- --runInBand
+npm run verify:fast
+npm run verify
+```
 
-### Rules:
+Use focused Jest paths during development. `npm run verify` is the full pre-PR check and requires
+PostgreSQL plus installed Playwright browsers.
 
-- Domain must not depend on any other layer
-- Application depends only on Domain
-- Infrastructure depends on Domain
-- UI depends on Application
-- No cross-layer violations
+## Pull requests
 
----
-
-## 3. Code Rules
-
-- Keep code simple
-- Prefer readability over cleverness
-- Avoid duplication (DRY)
-- Respect Single Responsibility Principle (SRP)
-
----
-
-## 4. Business Logic Definition
-
-Business logic includes:
-
-- Domain rules
-- Core calculations
-- Validation rules tied to the domain
-- Use cases
-
-Business logic MUST live in Domain or Application layers.
-
----
-
-## 5. TDD Rules
-
-All **domain logic MUST follow TDD**.
-
-Other layers SHOULD use tests when appropriate.
-
-### Required flow:
-
-1. Write failing tests
-2. Implement the minimal code to pass
-3. Refactor if needed
-4. Validate behavior
-
-### Test location:
-
-Tests mirror domain structure under `/tests/` (not co-located with `src/`).
-
-Example: `src/domain/entities/Category.ts` → `tests/domain/entities/Category.test.ts`
-
-### Test commands:
-
-- Run all: `rtk jest`
-- Run specific file: `rtk jest tests/domain/entities/Category.test.ts`
-- Watch mode: `rtk jest --watch`
-
----
-
-## 6. UI Rules
-
-UI must:
-
-- Collect input
-- Display results
-
-UI must NOT:
-
-- Contain business logic
-
-UI must interact only with the Application layer.
-
----
-
-## 7. Error Handling
-
-- Use explicit and meaningful error types
-- Avoid generic errors
-- Domain errors must be predictable and deterministic
-
----
-
-## 8. Database & Migrations
-
-- All schema changes must go through migrations
-- Migrations must be versioned
-- Never modify the database manually outside migrations
-
-
----
-## 9. Branch Naming Convention
-
-Branches must follow this pattern:
-
-<type>/<scope>-<short-description>
-
-Types:
-- feature
-- fix
-- refactor
-- chore
-- test
-
-Examples:
-- feature/expenses-add-installments
-- fix/api-null-pointer
-- refactor/domain-cleanup
-
-Rules:
-- use kebab-case
-- keep names short and descriptive
-- no uppercase
----
-
-## 10. Commits
-
-Use conventional commits:
-
-- feat: new feature
-- fix: bug fix
-- refactor: code improvement
-- test: tests
-- chore: maintenance
-
----
-
-## 11. Output Rules
-
-- Be concise
-- Be structured
-- Do not over-engineer
-- Add relevant changes to `CHANGELOG.md`
-
-## graphify
-
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- ALWAYS read graphify-out/GRAPH_REPORT.md before reading any source files, running grep/glob searches, or answering codebase questions. The graph is your primary map of the codebase.
-- IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
-- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- Use a non-protected `<type>/<scope>-<description>` branch and Conventional Commit subjects.
+- Open PRs against `develop` and use `.github/pull_request_template.md`.
+- Never auto-merge. A human owns approval and merge.
+- Deterministic CI is mandatory procedure. Request independent Codex review for financial logic,
+  migrations/backfills, security-sensitive API changes, broad cross-layer refactors, unusually
+  large or ambiguous diffs, or when a maintainer requests it.
+- For low-risk documentation, configuration, copy, and well-contained changes, human review plus
+  passing CI is sufficient.
+- Credentials and machine-specific permissions belong outside the repository.

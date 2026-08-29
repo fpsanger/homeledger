@@ -1,6 +1,9 @@
-import type { ILoyaltyTransactionRepository, LoyaltyTransactionRecord } from "../../../domain/repositories/ILoyaltyTransactionRepository";
 import type { LoyaltyTransactionType } from "../../../domain/entities/LoyaltyTransaction";
 import { NotFoundError } from "../../../domain/errors";
+import type {
+  ILoyaltyTransactionRepository,
+  LoyaltyTransactionRecord,
+} from "../../../domain/repositories/ILoyaltyTransactionRepository";
 
 const TRANSFER_TYPES: LoyaltyTransactionType[] = ["TRANSFER_OUT", "TRANSFER_IN"];
 
@@ -12,6 +15,7 @@ type Input = {
   expiresAt?: Date | null;
   costBrl?: number | null;
   valueBrl?: number | null;
+  personId?: string | null;
 };
 
 export async function updateLoyaltyTransactionUseCase(
@@ -22,7 +26,9 @@ export async function updateLoyaltyTransactionUseCase(
   if (!existing) throw new NotFoundError(`LoyaltyTransaction ${input.id} not found`);
 
   if (TRANSFER_TYPES.includes(existing.type)) {
-    throw new Error("Transfer transactions cannot be updated directly. Delete and recreate the transfer.");
+    throw new Error(
+      "Transfer transactions cannot be updated directly. Delete and recreate the transfer.",
+    );
   }
 
   const updated: LoyaltyTransactionRecord = {
@@ -33,6 +39,7 @@ export async function updateLoyaltyTransactionUseCase(
     expiresAt: input.expiresAt !== undefined ? input.expiresAt : existing.expiresAt,
     costBrl: input.costBrl !== undefined ? input.costBrl : existing.costBrl,
     valueBrl: input.valueBrl !== undefined ? input.valueBrl : existing.valueBrl,
+    personId: input.personId !== undefined ? input.personId : existing.personId,
     updatedAt: new Date(),
   };
 

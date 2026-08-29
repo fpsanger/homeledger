@@ -1,7 +1,7 @@
 import { updateExpenseUseCase } from "../../../src/application/use-cases/UpdateExpenseUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
@@ -142,7 +142,10 @@ describe("UpdateExpenseUseCase", () => {
     const repo = makeRepoWithExisting();
     await expect(
       updateExpenseUseCase(
-        { ...baseInput, paymentMethod: "INVALID" as any },
+        {
+          ...baseInput,
+          paymentMethod: "INVALID" as Exclude<TransactionRecord["paymentMethod"], null>,
+        },
         repo,
         makeCategoryRepo(),
       ),

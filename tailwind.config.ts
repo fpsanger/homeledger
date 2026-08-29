@@ -39,6 +39,8 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        income: "hsl(var(--income))",
+        expense: "hsl(var(--expense))",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { createIncomeUseCase } from "../../../application/use-cases/CreateIncomeUseCase";
 import type { IncomeSource } from "../../../domain/repositories/ITransactionRepository";
+import { parseDateUTC } from "../_lib/date";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
         id: crypto.randomUUID(),
         personId: body.personId,
         amount: body.amount,
-        date: new Date(body.date),
+        date: parseDateUTC(body.date),
         description: body.description ?? "",
         source: body.source,
         categoryId: body.categoryId ?? null,

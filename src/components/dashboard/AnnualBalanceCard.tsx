@@ -1,18 +1,21 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Cell,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import { maskCurrency } from "@/lib/maskCurrency";
+import { AccessibleChart } from "./AccessibleChart";
+import { ChartPrivacyPlaceholder } from "./ChartPrivacyPlaceholder";
 
 const MONTH_NAMES = [
   "Jan",
@@ -50,15 +53,16 @@ function CustomTooltip({
   payload?: { value: number }[];
   label?: string;
 }) {
+  const { hidden } = usePrivacy();
   if (!active || !payload?.length) return null;
   const val = payload[0].value;
   return (
     <div className="rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs">
       <p className="text-muted-foreground mb-1 font-medium">{label}</p>
       <p
-        className={`font-semibold tabular-nums ${val >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+        className={`font-semibold tabular-nums ${val >= 0 ? "amount-positive" : "amount-negative"}`}
       >
-        {fmtSigned(val)}
+        {maskCurrency(fmtSigned(val), hidden)}
       </p>
     </div>
   );
@@ -72,67 +76,66 @@ export function fmtSigned(v: number) {
 type ChartProps = { months: MonthSummary[] };
 
 export function AnnualBalanceChart({ months }: ChartProps) {
+  const { hidden } = usePrivacy();
   const data = months.map((m) => ({
     name: MONTH_NAMES[m.month - 1],
     value: m.balance,
   }));
 
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart
-        data={data}
-        margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-        barCategoryGap="35%"
-      >
-        <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
-        <XAxis
-          dataKey="name"
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tickFormatter={fmtCompact}
-          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-          axisLine={false}
-          tickLine={false}
-          width={52}
-        />
-        <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }} />
-        <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={28}>
-          {data.map((entry, i) => (
-            <Cell
-              key={i}
-              fill={entry.value >= 0 ? "hsl(152 55% 42%)" : "hsl(0 65% 55%)"}
-              fillOpacity={0.85}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
+  if (hidden) {
+    return <ChartPrivacyPlaceholder height={220} />;
+  }
 
-type Props = { months: MonthSummary[]; totalBalance: number };
-
-export function AnnualBalanceCard({ months, totalBalance }: Props) {
   return (
-    <Card className="flex flex-col gap-0">
-      <CardHeader className="pb-2">
-        <CardDescription className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Balanço Anual
-        </CardDescription>
-        <CardTitle
-          className={`text-2xl font-bold tabular-nums ${totalBalance >= 0 ? "text-emerald-500" : "text-rose-500"}`}
+    <AccessibleChart
+      summary={data.map((d) => (
+        <li key={d.name}>
+          {d.name}: {fmtSigned(d.value)}
+        </li>
+      ))}
+    >
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart
+          data={data}
+          margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+          barCategoryGap="35%"
         >
-          {fmtSigned(totalBalance)}
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">Diferença entre receitas e despesas por mês</p>
-      </CardHeader>
-      <CardContent className="pt-0 pb-4">
-        <AnnualBalanceChart months={months} />
-      </CardContent>
-    </Card>
+          <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tickFormatter={fmtCompact}
+            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+            width={52}
+          />
+          <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+          />
+          <Bar
+            dataKey="value"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={28}
+            animationDuration={500}
+            animationEasing="ease-out"
+          >
+            {data.map((entry) => (
+              <Cell
+                key={entry.name}
+                fill={entry.value >= 0 ? "hsl(var(--income))" : "hsl(var(--expense))"}
+                fillOpacity={0.85}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </AccessibleChart>
   );
 }

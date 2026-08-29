@@ -1,18 +1,26 @@
 "use client";
 
 import {
-  ComposedChart,
   Bar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
   Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MonthSummary } from "@/domain/services/AnnualReport";
+import {
+  BALANCE_LINE_COLOR,
+  EXPENSE_PERSON_SHADES,
+  INCOME_PERSON_SHADES,
+} from "@/lib/dashboardColors";
+import { AccessibleChart } from "./AccessibleChart";
+import { ChartPrivacyPlaceholder } from "./ChartPrivacyPlaceholder";
 
 const MONTH_NAMES = [
   "Jan",
@@ -41,7 +49,9 @@ function fmtCompact(v: number) {
   return `${sign}R$${abs.toFixed(0)}`;
 }
 
-type TooltipEntry = { name: string; value: number; color: string };
+type Person = { id: string; name: string };
+
+type TooltipPayloadEntry = { name: string; value: number; color: string };
 
 function CustomTooltip({
   active,
@@ -49,7 +59,7 @@ function CustomTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: TooltipEntry[];
+  payload?: TooltipPayloadEntry[];
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
@@ -71,7 +81,7 @@ function CustomTooltip({
 function CustomLegend({ payload }: { payload?: { value: string; color: string }[] }) {
   if (!payload) return null;
   return (
-    <div className="flex items-center justify-center gap-4 pt-2">
+    <div className="flex items-center justify-center gap-4 pt-2 flex-wrap">
       {payload.map((entry) => (
         <div key={entry.value} className="flex items-center gap-1.5">
           <span
@@ -85,23 +95,37 @@ function CustomLegend({ payload }: { payload?: { value: string; color: string }[
   );
 }
 
-type Props = { months: MonthSummary[] };
+type Props = {
+  months: MonthSummary[];
+  people?: Person[];
+  globalPersonId?: string;
+};
 
-export function IncomeExpenseBalanceCard({ months }: Props) {
+export function IncomeExpenseBalanceCard({ months, people = [], globalPersonId = "" }: Props) {
+  const { hidden } = usePrivacy();
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
+  const showPersonBreakdown = !globalPersonId && people.length > 1;
 
   const last6 = months
     .filter((m) => m.month <= currentMonth || months[0]?.month > currentMonth)
     .slice(-6);
 
-  const data = last6.map((m) => ({
-    name: MONTH_NAMES[m.month - 1],
-    Receita: m.income,
-    Despesa: m.expenses,
-    Balanço: m.balance,
-  }));
+  const data = last6.map((m) => {
+    const base = {
+      name: MONTH_NAMES[m.month - 1],
+      Balanço: m.balance,
+    };
+    if (showPersonBreakdown) {
+      const row: Record<string, number | string> = { ...base };
+      for (const p of people) {
+        row[`R:${p.name}`] = m.incomeByPerson[p.id] ?? 0;
+        row[`D:${p.name}`] = m.expensesByPerson[p.id] ?? 0;
+      }
+      return row;
+    }
+    return { ...base, Receita: m.income, Despesa: m.expenses };
+  });
 
   return (
     <Card className="flex flex-col gap-0">
@@ -113,55 +137,111 @@ export function IncomeExpenseBalanceCard({ months }: Props) {
         <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
       </CardHeader>
       <CardContent className="pt-0 pb-4">
-        <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart
-            data={data}
-            margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-            barCategoryGap="30%"
+        {hidden ? (
+          <ChartPrivacyPlaceholder height={260} />
+        ) : (
+          <AccessibleChart
+            summary={last6.map((m) => (
+              <li key={m.month}>
+                {MONTH_NAMES[m.month - 1]}: receita {fmtFull(m.income)}, despesa{" "}
+                {fmtFull(m.expenses)}, balanço {fmtFull(m.balance)}
+              </li>
+            ))}
           >
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
-            <XAxis
-              dataKey="name"
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tickFormatter={fmtCompact}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-              width={52}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-            />
-            <Legend content={<CustomLegend />} />
-            <Bar
-              dataKey="Receita"
-              fill="hsl(152 50% 40%)"
-              fillOpacity={0.85}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={22}
-            />
-            <Bar
-              dataKey="Despesa"
-              fill="hsl(15 70% 50%)"
-              fillOpacity={0.85}
-              radius={[3, 3, 0, 0]}
-              maxBarSize={22}
-            />
-            <Line
-              type="monotone"
-              dataKey="Balanço"
-              stroke="hsl(215 60% 60%)"
-              strokeWidth={2}
-              dot={{ r: 3, fill: "hsl(215 60% 60%)", strokeWidth: 0 }}
-              activeDot={{ r: 4, fill: "hsl(215 70% 70%)", strokeWidth: 0 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart
+                data={data}
+                margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+                barCategoryGap="30%"
+              >
+                <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={fmtCompact}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={52}
+                />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
+                />
+                <Legend content={<CustomLegend />} />
+
+                {showPersonBreakdown ? (
+                  <>
+                    {people.map((p, i) => (
+                      <Bar
+                        key={`income-${p.id}`}
+                        dataKey={`R:${p.name}`}
+                        name={`Receita ${p.name}`}
+                        stackId="income"
+                        fill={INCOME_PERSON_SHADES[i % INCOME_PERSON_SHADES.length]}
+                        fillOpacity={0.85}
+                        radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                        maxBarSize={22}
+                        animationDuration={500}
+                        animationEasing="ease-out"
+                      />
+                    ))}
+                    {people.map((p, i) => (
+                      <Bar
+                        key={`expense-${p.id}`}
+                        dataKey={`D:${p.name}`}
+                        name={`Despesa ${p.name}`}
+                        stackId="expense"
+                        fill={EXPENSE_PERSON_SHADES[i % EXPENSE_PERSON_SHADES.length]}
+                        fillOpacity={0.85}
+                        radius={i === people.length - 1 ? [3, 3, 0, 0] : undefined}
+                        maxBarSize={22}
+                        animationDuration={500}
+                        animationEasing="ease-out"
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <Bar
+                      dataKey="Receita"
+                      fill="hsl(var(--income))"
+                      fillOpacity={0.85}
+                      radius={[3, 3, 0, 0]}
+                      maxBarSize={22}
+                      animationDuration={500}
+                      animationEasing="ease-out"
+                    />
+                    <Bar
+                      dataKey="Despesa"
+                      fill="hsl(var(--expense))"
+                      fillOpacity={0.85}
+                      radius={[3, 3, 0, 0]}
+                      maxBarSize={22}
+                      animationDuration={500}
+                      animationEasing="ease-out"
+                    />
+                  </>
+                )}
+                <Line
+                  type="monotone"
+                  dataKey="Balanço"
+                  stroke={BALANCE_LINE_COLOR}
+                  strokeWidth={2}
+                  strokeDasharray="4 3"
+                  dot={{ r: 3, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+                  activeDot={{ r: 4, fill: BALANCE_LINE_COLOR, strokeWidth: 0 }}
+                  animationDuration={500}
+                  animationEasing="ease-out"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </AccessibleChart>
+        )}
       </CardContent>
     </Card>
   );

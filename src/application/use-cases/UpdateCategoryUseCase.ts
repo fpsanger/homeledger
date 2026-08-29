@@ -1,8 +1,8 @@
 import { createCategory } from "../../domain/entities/Category";
 import { DuplicateCategoryError } from "../../domain/errors";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../domain/repositories/ICategoryRepository";
 
 type Input = {
@@ -12,6 +12,34 @@ type Input = {
   householdId: string;
 };
 
+async function ensureNoDuplicateRootName(
+  repo: ICategoryRepository,
+  name: string,
+  id: string,
+  householdId: string,
+): Promise<void> {
+  const existing = await repo.findRootByName(name.trim(), householdId);
+  if (existing && existing.id !== id) throw new DuplicateCategoryError(name.trim());
+}
+
+async function resolveParent(
+  repo: ICategoryRepository,
+  parentId: string,
+  id: string,
+): Promise<{ level: number }> {
+  if (parentId === id) throw new Error("Category cannot be its own parent");
+  const parentRecord = await repo.findById(parentId);
+  if (!parentRecord) throw new Error("Parent category not found");
+
+  let cur: CategoryRecord | null = parentRecord;
+  while (cur) {
+    if (cur.id === id) throw new Error("Cannot move category under one of its own descendants");
+    cur = cur.parentId ? await repo.findById(cur.parentId) : null;
+  }
+
+  return { level: parentRecord.level };
+}
+
 export async function updateCategoryUseCase(
   input: Input,
   repo: ICategoryRepository,
@@ -19,22 +47,12 @@ export async function updateCategoryUseCase(
   const existing = await repo.findById(input.id);
   if (!existing) throw new Error("Category not found");
 
-  let parent: { path: string; level: number } | null = null;
-
   if (input.parentId === null) {
-    const existing = await repo.findRootByName(input.name.trim(), input.householdId);
-    if (existing && existing.id !== input.id) throw new DuplicateCategoryError(input.name.trim());
+    await ensureNoDuplicateRootName(repo, input.name, input.id, input.householdId);
   }
 
-  if (input.parentId !== null) {
-    if (input.parentId === input.id) throw new Error("Category cannot be its own parent");
-    const parentRecord = await repo.findById(input.parentId);
-    if (!parentRecord) throw new Error("Parent category not found");
-    if ((parentRecord.path ?? "").startsWith((existing.path ?? "") + "/")) {
-      throw new Error("Cannot move category under one of its own descendants");
-    }
-    parent = { path: parentRecord.path, level: parentRecord.level };
-  }
+  const parent =
+    input.parentId !== null ? await resolveParent(repo, input.parentId, input.id) : null;
 
   const updated = createCategory({
     id: input.id,
@@ -44,7 +62,6 @@ export async function updateCategoryUseCase(
     parent,
   });
 
-  // Preserve original createdAt by reconstructing after save
   const saved = await repo.save(updated);
   return saved;
 }

@@ -1,7 +1,7 @@
-import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
-import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
+import type { RecurringTransactionRecord } from "../repositories/IRecurringTransactionRepository";
 import type { TransactionRecord } from "../repositories/ITransactionRepository";
+import { generateOccurrence, isActiveInMonth } from "./RecurringTransaction";
 
 type MonthlyViewInput = {
   transactions: TransactionRecord[];
@@ -11,7 +11,7 @@ type MonthlyViewInput = {
   year: number;
   month: number;
   personId?: string;
-  filterBy?: "dueMonth" | "purchaseDate";
+  filterBy?: "dueMonth" | "purchaseDate" | "transactionMonth";
 };
 
 type MonthlyViewResult = {
@@ -40,10 +40,12 @@ export function buildMonthlyView(input: MonthlyViewInput): MonthlyViewResult {
     .filter((t) => (personId ? t.personId === personId : true));
 
   const filteredInstallments = installments.filter((i) => {
-    if (i.isCanceled) return false;
     if (filterBy === "purchaseDate") {
       const d = i.purchaseDate ? new Date(i.purchaseDate) : null;
       return !!d && d.getUTCFullYear() === year && d.getUTCMonth() + 1 === month;
+    }
+    if (filterBy === "transactionMonth") {
+      return i.transactionYear === year && i.transactionMonth === month;
     }
     return i.dueYear === year && i.dueMonth === month;
   });

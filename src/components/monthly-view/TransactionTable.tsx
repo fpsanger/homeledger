@@ -1,9 +1,27 @@
 "use client";
 
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  CreditCard,
+  Hash,
+  MoreHorizontal,
+  Receipt,
+  Tag,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal, Receipt, TrendingDown, TrendingUp, Wallet, Hash } from "lucide-react";
+import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { PageSizeSelector } from "@/components/ui/page-size-selector";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -12,12 +30,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { CategoryCombobox } from "@/components/ui/category-combobox";
-import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { formatDatePtBR } from "@/lib/format-date";
+import { maskCurrency } from "@/lib/maskCurrency";
 import { TransactionAmount } from "../transactions/TransactionAmount";
+import { SummaryCard } from "./SummaryCard";
 
 type Transaction = {
   id: string;
@@ -32,7 +48,18 @@ type Transaction = {
 };
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; path: string; parentId: string | null };
+type Category = { id: string; name: string; parentId: string | null };
+
+type SortKey = "date" | "amount";
+type SortDir = "asc" | "desc";
+
+export type TransactionFilters = {
+  search: string;
+  categoryFilter: string;
+  paymentFilter: string;
+  dateFrom: string;
+  amountMin: string;
+};
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: "Dinheiro",
@@ -44,66 +71,379 @@ const PAYMENT_LABELS: Record<string, string> = {
   ACCOUNT_DEBIT: "Déb. Conta",
 };
 
-const MONTH_ABBR = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
-
-function fmtCurrency(amount: number) {
-  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
 function fmtDate(date: Date | string) {
-  const d = new Date(date);
-  return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTH_ABBR[d.getUTCMonth()]}`;
+  const iso = typeof date === "string" ? date : date.toISOString();
+  return formatDatePtBR(iso);
 }
 
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  colorClass,
+function toMs(date: Date | string) {
+  return new Date(date).getTime();
+}
+
+function matchesCategoryFilter(
+  t: Transaction,
+  categories: Category[],
+  categoryFilter: string,
+): boolean {
+  if (!categoryFilter) return true;
+  const cat = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
+  const parentId = cat ? (cat.parentId ?? cat.id) : null;
+  return parentId === categoryFilter;
+}
+
+function matchesRangeFilters(
+  t: Transaction,
+  minAmt: number | null,
+  fromMs: number | null,
+): boolean {
+  const tMs = toMs(t.date);
+  if (fromMs !== null && tMs < fromMs) return false;
+  if (minAmt !== null && t.amount < minAmt) return false;
+  return true;
+}
+
+function matchesFilters(
+  t: Transaction,
+  categories: Category[],
+  search: string,
+  categoryFilter: string,
+  paymentFilter: string,
+  minAmt: number | null,
+  fromMs: number | null,
+): boolean {
+  if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
+  if (!matchesCategoryFilter(t, categories, categoryFilter)) return false;
+  if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
+  return matchesRangeFilters(t, minAmt, fromMs);
+}
+
+function SortIcon({
+  col,
+  sortKey,
+  sortDir,
 }: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  colorClass: string;
+  col: SortKey;
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+}) {
+  if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+  return sortDir === "asc" ? (
+    <ArrowUp className="w-3 h-3 ml-1" />
+  ) : (
+    <ArrowDown className="w-3 h-3 ml-1" />
+  );
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function buildRowActions(
+  t: Transaction,
+  deletingId: string | null,
+  handleDelete: (id: string, isRecurring?: boolean) => void,
+  onEdit?: (t: Transaction) => void,
+) {
+  return [
+    ...(!t.isRecurring && onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
+    {
+      label: deletingId === t.id ? "Excluindo..." : "Excluir",
+      onClick: () => handleDelete(t.id, t.isRecurring),
+      variant: "destructive" as const,
+    },
+  ];
+}
+
+function TransactionRow({
+  t,
+  byPersonId,
+  byCategoryId,
+  showCategoryCol,
+  deletingId,
+  handleDelete,
+  onEdit,
+}: {
+  t: Transaction;
+  byPersonId: Record<string, string>;
+  byCategoryId: Record<string, string>;
+  showCategoryCol: boolean;
+  deletingId: string | null;
+  handleDelete: (id: string, isRecurring?: boolean) => void;
+  onEdit?: (t: Transaction) => void;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4 flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium uppercase tracking-wide">
-        <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
-        {label}
-      </div>
-      <p className={`text-lg font-semibold tabular-nums ${colorClass}`}>{value}</p>
+    <TableRow className="group">
+      <TableCell className="text-sm text-muted-foreground tabular-nums">
+        {fmtDate(t.date)}
+      </TableCell>
+      <TableCell className="text-sm">{byPersonId[t.personId] ?? t.personId}</TableCell>
+      <TableCell className="text-sm">
+        <span className="inline-flex items-center gap-2">
+          {t.description || "—"}
+          {t.isRecurring && (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+              Recorrente
+            </span>
+          )}
+        </span>
+      </TableCell>
+      {showCategoryCol && (
+        <TableCell className="text-sm text-muted-foreground">
+          {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
+        </TableCell>
+      )}
+      <TableCell className="text-sm text-muted-foreground">
+        {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
+      </TableCell>
+      <TableCell className="text-right font-medium tabular-nums text-sm">
+        <TransactionAmount type={t.type} amount={t.amount} />
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu
+          align="right"
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-muted-foreground"
+              aria-label="Ações"
+              disabled={deletingId === t.id}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
+          }
+          items={buildRowActions(t, deletingId, handleDelete, onEdit)}
+        />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+type SharedProps = {
+  paginated: Transaction[];
+  byPersonId: Record<string, string>;
+  byCategoryId: Record<string, string>;
+  showCategoryCol: boolean;
+  deletingId: string | null;
+  handleDelete: (id: string, isRecurring?: boolean) => void;
+  onEdit?: (t: Transaction) => void;
+};
+
+type DesktopProps = SharedProps & {
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+  toggleSort: (key: SortKey) => void;
+};
+
+function TransactionTableDesktop({
+  paginated,
+  byPersonId,
+  byCategoryId,
+  showCategoryCol,
+  deletingId,
+  handleDelete,
+  onEdit,
+  sortKey,
+  sortDir,
+  toggleSort,
+}: DesktopProps) {
+  return (
+    <div className="rounded-lg border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40">
+            <TableHead
+              className="w-20 cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("date")}
+            >
+              <span className="inline-flex items-center">
+                Data
+                <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+              </span>
+            </TableHead>
+            <TableHead>Pessoa</TableHead>
+            <TableHead>Descrição</TableHead>
+            {showCategoryCol && <TableHead>Categoria</TableHead>}
+            <TableHead>Método</TableHead>
+            <TableHead
+              className="text-right cursor-pointer select-none hover:text-foreground"
+              onClick={() => toggleSort("amount")}
+            >
+              <span className="inline-flex items-center justify-end w-full">
+                Valor
+                <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+              </span>
+            </TableHead>
+            <TableHead className="w-8" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginated.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={showCategoryCol ? 7 : 6}
+                className="text-center text-sm text-muted-foreground py-8"
+              >
+                Nenhum resultado encontrado
+              </TableCell>
+            </TableRow>
+          ) : (
+            paginated.map((t) => (
+              <TransactionRow
+                key={t.id}
+                t={t}
+                byPersonId={byPersonId}
+                byCategoryId={byCategoryId}
+                showCategoryCol={showCategoryCol}
+                deletingId={deletingId}
+                handleDelete={handleDelete}
+                onEdit={onEdit}
+              />
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }
 
+type MobileProps = SharedProps & {
+  sortKey: SortKey | null;
+  setSortKey: (key: SortKey | null) => void;
+  sortDir: SortDir;
+  setSortDir: (dir: SortDir | ((d: SortDir) => SortDir)) => void;
+};
+
+function TransactionTableMobile({
+  paginated,
+  byPersonId,
+  byCategoryId,
+  deletingId,
+  handleDelete,
+  onEdit,
+  sortKey,
+  setSortKey,
+  sortDir,
+  setSortDir,
+}: MobileProps) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <Select
+          value={sortKey ?? ""}
+          onChange={(e) => {
+            setSortKey((e.target.value as SortKey) || null);
+            setSortDir("asc");
+          }}
+          className="h-8 text-xs flex-1"
+        >
+          <option value="">Ordenar por...</option>
+          <option value="date">Data</option>
+          <option value="amount">Valor</option>
+        </Select>
+        {sortKey && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0 shrink-0"
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+            aria-label="Direção"
+          >
+            {sortDir === "asc" ? (
+              <ArrowUp className="w-3.5 h-3.5" />
+            ) : (
+              <ArrowDown className="w-3.5 h-3.5" />
+            )}
+          </Button>
+        )}
+      </div>
+
+      {paginated.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-8">
+          Nenhum resultado encontrado
+        </p>
+      ) : (
+        paginated.map((t) => (
+          <div key={t.id} className="rounded-xl border bg-card p-4 flex flex-col gap-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-semibold text-sm truncate">{t.description || "—"}</span>
+                {t.isRecurring && (
+                  <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                    Recorrente
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <TransactionAmount type={t.type} amount={t.amount} />
+                <DropdownMenu
+                  align="right"
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-muted-foreground"
+                      aria-label="Ações"
+                      disabled={deletingId === t.id}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  }
+                  items={[
+                    ...(!t.isRecurring && onEdit
+                      ? [{ label: "Editar", onClick: () => onEdit(t) }]
+                      : []),
+                    {
+                      label: deletingId === t.id ? "Excluindo..." : "Excluir",
+                      onClick: () => handleDelete(t.id, t.isRecurring),
+                      variant: "destructive" as const,
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {fmtDate(t.date)}
+              {byPersonId[t.personId] && <> &bull; {byPersonId[t.personId]}</>}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {PAYMENT_LABELS[t.paymentMethod] && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                  <CreditCard className="w-3 h-3" />
+                  {PAYMENT_LABELS[t.paymentMethod]}
+                </span>
+              )}
+              {t.categoryId && byCategoryId[t.categoryId] && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground">
+                  <Tag className="w-3 h-3" />
+                  {byCategoryId[t.categoryId]}
+                </span>
+              )}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+
 export function TransactionTable({
   transactions,
-  installmentExpenses = 0,
   people,
   categories = [],
+  filters,
   onEdit,
 }: {
   transactions: Transaction[];
-  installmentExpenses?: number;
   people: Person[];
   categories?: Category[];
+  filters?: TransactionFilters;
   onEdit?: (t: Transaction) => void;
 }) {
   const router = useRouter();
+  const { hidden } = usePrivacy();
+  const fmtCurrency = (amount: number) =>
+    maskCurrency(amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), hidden);
   const byPersonId = Object.fromEntries(people.map((p) => [p.id, p.name]));
   const byCategoryId = Object.fromEntries(
     categories.map((c) => {
@@ -113,12 +453,22 @@ export function TransactionTable({
       return [c.id, displayName];
     }),
   );
+
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 20;
+  const [pageSize, setPageSize] = useState(20);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
 
   async function handleDelete(id: string, isRecurring?: boolean) {
     setDeletingId(id);
@@ -137,16 +487,10 @@ export function TransactionTable({
   const totalIncome = transactions
     .filter((t) => t.type === "INCOME")
     .reduce((s, t) => s + t.amount, 0);
-  const totalExpenses =
-    transactions.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0) +
-    installmentExpenses;
+  const totalExpenses = transactions
+    .filter((t) => t.type === "EXPENSE")
+    .reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpenses;
-
-  const paymentMethods = useMemo(() => {
-    const seen = new Set<string>();
-    for (const t of transactions) if (t.paymentMethod) seen.add(t.paymentMethod);
-    return Array.from(seen);
-  }, [transactions]);
 
   const usedParentCategoryIds = useMemo(() => {
     const seen = new Set<string>();
@@ -163,24 +507,35 @@ export function TransactionTable({
 
   const filtered = useMemo(() => {
     setPage(0);
-    return transactions.filter((t) => {
-      if (search && !t.description.toLowerCase().includes(search.toLowerCase())) return false;
-      if (categoryFilter) {
-        const cat = t.categoryId ? categories.find((c) => c.id === t.categoryId) : null;
-        const parentId = cat ? (cat.parentId ?? cat.id) : null;
-        if (parentId !== categoryFilter) return false;
-      }
-      if (paymentFilter && t.paymentMethod !== paymentFilter) return false;
-      return true;
-    });
-  }, [transactions, search, categoryFilter, paymentFilter]);
+    if (!filters) return transactions;
+    const { search, categoryFilter, paymentFilter, dateFrom, amountMin } = filters;
+    const minAmt = amountMin !== "" ? parseFloat(amountMin) : null;
+    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
+    return transactions.filter((t) =>
+      matchesFilters(t, categories, search, categoryFilter, paymentFilter, minAmt, fromMs),
+    );
+  }, [transactions, filters, categories]);
 
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [filtered]);
+    const arr = [...filtered];
+    if (sortKey === "date") {
+      arr.sort((a, b) => {
+        const d = toMs(a.date) - toMs(b.date);
+        return sortDir === "asc" ? d : -d;
+      });
+    } else if (sortKey === "amount") {
+      arr.sort((a, b) => {
+        const d = a.amount - b.amount;
+        return sortDir === "asc" ? d : -d;
+      });
+    } else {
+      arr.sort((a, b) => toMs(a.date) - toMs(b.date));
+    }
+    return arr;
+  }, [filtered, sortKey, sortDir]);
 
-  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-  const paginated = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.ceil(sorted.length / pageSize);
+  const paginated = sorted.slice(page * pageSize, (page + 1) * pageSize);
 
   if (transactions.length === 0) {
     return (
@@ -191,179 +546,108 @@ export function TransactionTable({
     );
   }
 
+  const sharedProps = {
+    paginated,
+    byPersonId,
+    byCategoryId,
+    showCategoryCol,
+    deletingId,
+    handleDelete,
+    onEdit,
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <SummaryCard
-          icon={TrendingDown}
-          label="Despesas"
-          value={`-${fmtCurrency(totalExpenses)}`}
-          colorClass="text-red-600"
+      <button
+        type="button"
+        onClick={() => setSummaryOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+      >
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
         />
-        <SummaryCard
-          icon={TrendingUp}
-          label="Receitas"
-          value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)}
-          colorClass="text-green-600"
-        />
-        <SummaryCard
-          icon={Wallet}
-          label="Saldo"
-          value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`}
-          colorClass={balance >= 0 ? "text-green-700" : "text-red-700"}
-        />
-        <SummaryCard
-          icon={Hash}
-          label="Lançamentos"
-          value={String(transactions.length)}
-          colorClass="text-muted-foreground"
-        />
-      </div>
+        {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
+      </button>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        <Input
-          placeholder="Buscar descrição..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-8 w-48 text-sm"
-        />
-        {showCategoryCol && (
-          <CategoryCombobox
-            categories={usedParentCategoryIds.map((cid) => ({
-              id: cid,
-              name: byCategoryId[cid] ?? cid,
-              parentId: null,
-              path: byCategoryId[cid] ?? cid,
-            }))}
-            value={categoryFilter}
-            onChange={setCategoryFilter}
-            placeholder="Todas categorias"
-            className="h-8 w-44 text-sm"
+      {summaryOpen && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <SummaryCard
+            icon={TrendingDown}
+            label="Despesas"
+            value={`-${fmtCurrency(totalExpenses)}`}
+            colorClass="text-red-600"
           />
-        )}
-        {paymentMethods.length > 0 && (
-          <Select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="h-8 w-40 text-sm"
-          >
-            <option value="">Todos métodos</option>
-            {paymentMethods.map((pm) => (
-              <option key={pm} value={pm}>
-                {PAYMENT_LABELS[pm] ?? pm}
-              </option>
-            ))}
-          </Select>
-        )}
-      </div>
-
-      {/* Table */}
-      <div className="rounded-lg border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead className="w-20">Data</TableHead>
-              <TableHead>Pessoa</TableHead>
-              <TableHead>Descrição</TableHead>
-              {showCategoryCol && <TableHead>Categoria</TableHead>}
-              <TableHead>Método</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="w-8" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginated.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={showCategoryCol ? 7 : 6}
-                  className="text-center text-sm text-muted-foreground py-8"
-                >
-                  Nenhum resultado encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              (() => {
-                return paginated.map((t) => {
-                  return (
-                    <TableRow key={t.id} className="group">
-                      <TableCell className="text-sm text-muted-foreground tabular-nums">
-                        {fmtDate(t.date)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {byPersonId[t.personId] ?? t.personId}
-                      </TableCell>
-                      <TableCell className="text-sm">{t.description || "—"}</TableCell>
-                      {showCategoryCol && (
-                        <TableCell className="text-sm text-muted-foreground">
-                          {t.categoryId ? (byCategoryId[t.categoryId] ?? "—") : "—"}
-                        </TableCell>
-                      )}
-                      <TableCell className="text-sm text-muted-foreground">
-                        {PAYMENT_LABELS[t.paymentMethod] ?? t.paymentMethod}
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums text-sm">
-                        <TransactionAmount type={t.type} amount={t.amount} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu
-                          align="right"
-                          trigger={
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground"
-                              aria-label="Ações"
-                              disabled={deletingId === t.id}
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          }
-                          items={[
-                            ...(!t.isRecurring && onEdit
-                              ? [{ label: "Editar", onClick: () => onEdit(t) }]
-                              : []),
-                            {
-                              label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                              onClick: () => handleDelete(t.id, t.isRecurring),
-                              variant: "destructive" as const,
-                            },
-                          ]}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                });
-              })()
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            ← Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {page + 1} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page + 1 >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Próximo →
-          </Button>
+          <SummaryCard
+            icon={TrendingUp}
+            label="Receitas"
+            value={totalIncome > 0 ? `+${fmtCurrency(totalIncome)}` : fmtCurrency(0)}
+            colorClass="text-green-600"
+          />
+          <SummaryCard
+            icon={Wallet}
+            label="Saldo"
+            value={`${balance >= 0 ? "+" : "-"}${fmtCurrency(Math.abs(balance))}`}
+            colorClass={balance >= 0 ? "text-green-700" : "text-red-700"}
+          />
+          <SummaryCard
+            icon={Hash}
+            label="Lançamentos"
+            value={String(transactions.length)}
+            colorClass="text-muted-foreground"
+          />
         </div>
       )}
+
+      <div className="hidden md:block">
+        <TransactionTableDesktop
+          {...sharedProps}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          toggleSort={toggleSort}
+        />
+      </div>
+      <div className="md:hidden">
+        <TransactionTableMobile
+          {...sharedProps}
+          sortKey={sortKey}
+          setSortKey={setSortKey}
+          sortDir={sortDir}
+          setSortDir={setSortDir}
+        />
+      </div>
+
+      <div className="flex items-center justify-between pt-1">
+        <PageSizeSelector
+          value={pageSize}
+          onChange={(size) => {
+            setPageSize(size);
+            setPage(0);
+          }}
+        />
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Próximo →
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,11 +1,10 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, Transaction as PrismaTransactionRow } from "@prisma/client";
 import type {
   ITransactionRepository,
   TransactionRecord,
 } from "../../domain/repositories/ITransactionRepository";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toRecord(row: any): TransactionRecord {
+function toRecord(row: PrismaTransactionRow): TransactionRecord {
   return {
     id: row.id,
     personId: row.personId,

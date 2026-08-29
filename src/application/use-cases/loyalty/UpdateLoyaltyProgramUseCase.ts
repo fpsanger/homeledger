@@ -1,6 +1,9 @@
-import type { ILoyaltyProgramRepository, LoyaltyProgramRecord } from "../../../domain/repositories/ILoyaltyProgramRepository";
 import type { LoyaltyProgramType } from "../../../domain/entities/LoyaltyProgram";
 import { NotFoundError } from "../../../domain/errors";
+import type {
+  ILoyaltyProgramRepository,
+  LoyaltyProgramRecord,
+} from "../../../domain/repositories/ILoyaltyProgramRepository";
 
 type Input = {
   id: string;

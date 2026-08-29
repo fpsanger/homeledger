@@ -1,5 +1,4 @@
 import {
-  cancelInstallmentPurchase,
   createInstallmentPurchase,
   createInstallments,
   resolveFirstDueMonth,
@@ -146,6 +145,68 @@ describe("InstallmentPurchase service", () => {
       }
     });
 
+    it("first transactionMonth equals purchase month regardless of card rules", () => {
+      // basePurchase: Jan 15, closureDay 25, alwaysNextMonth false
+      // purchase before closure → dueMonth = Jan, transactionMonth = Jan
+      const installments = createInstallments(basePurchase);
+
+      expect(installments[0].transactionYear).toBe(2026);
+      expect(installments[0].transactionMonth).toBe(1);
+    });
+
+    it("transactionMonth advances sequentially from purchase month, ignoring card rules", () => {
+      // alwaysNextMonth=true shifts dueMonth by 1, but transactionMonth always starts at purchase month
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-06-20"),
+        numberOfInstallments: 3,
+        alwaysNextMonth: true,
+      };
+      const installments = createInstallments(purchase);
+
+      // dueMonths would be Jul, Aug, Sep (shifted by alwaysNextMonth)
+      // transactionMonths must be Jun, Jul, Aug (starts at purchase month)
+      expect(installments[0].transactionYear).toBe(2026);
+      expect(installments[0].transactionMonth).toBe(6);
+      expect(installments[1].transactionYear).toBe(2026);
+      expect(installments[1].transactionMonth).toBe(7);
+      expect(installments[2].transactionYear).toBe(2026);
+      expect(installments[2].transactionMonth).toBe(8);
+    });
+
+    it("transactionMonth handles year rollover correctly", () => {
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-11-01"),
+        numberOfInstallments: 3,
+      };
+      const installments = createInstallments(purchase);
+
+      expect(installments[0].transactionYear).toBe(2026);
+      expect(installments[0].transactionMonth).toBe(11);
+      expect(installments[1].transactionYear).toBe(2026);
+      expect(installments[1].transactionMonth).toBe(12);
+      expect(installments[2].transactionYear).toBe(2027);
+      expect(installments[2].transactionMonth).toBe(1);
+    });
+
+    it("transactionMonth is independent of closureInPreviousMonth shift", () => {
+      // closureInPreviousMonth shifts dueMonth by 1 or 2, transactionMonth unaffected
+      const purchase = {
+        ...basePurchase,
+        purchaseDate: new Date("2026-03-28"),
+        closureDay: 27,
+        closureInPreviousMonth: true,
+        numberOfInstallments: 2,
+      };
+      const installments = createInstallments(purchase);
+
+      // dueMonths: purchaseDay(28) >= closureDay(27) + closureInPreviousMonth → shift 2 → May, Jun
+      // transactionMonths must always be Mar, Apr
+      expect(installments[0].transactionMonth).toBe(3);
+      expect(installments[1].transactionMonth).toBe(4);
+    });
+
     it("rounding difference goes to last installment so total amount is preserved", () => {
       const installments = createInstallments({
         ...basePurchase,
@@ -262,66 +323,6 @@ describe("InstallmentPurchase service", () => {
       expect(total).toBeCloseTo(100, 10);
       expect(result.installments[0].amount).toBe(33.33);
       expect(result.installments[2].amount).toBe(33.34);
-    });
-  });
-
-  describe("cancelInstallmentPurchase", () => {
-    const makeInstallmentRecord = (overrides = {}) => ({
-      id: "inst-1",
-      creditCardPurchaseId: "purchase-1",
-      installmentNumber: 1,
-      amount: 100,
-      dueYear: 2026,
-      dueMonth: 5,
-      isPaid: false,
-      isCanceled: false,
-      categoryId: null,
-      ...overrides,
-    });
-
-    it("marks all installments as canceled", () => {
-      const installments = [
-        makeInstallmentRecord({ installmentNumber: 1 }),
-        makeInstallmentRecord({ installmentNumber: 2 }),
-      ];
-
-      const canceled = cancelInstallmentPurchase(installments);
-
-      for (const inst of canceled) {
-        expect(inst.isCanceled).toBe(true);
-      }
-    });
-
-    it("cancels all installments regardless of paid status", () => {
-      const installments = [
-        makeInstallmentRecord({ isPaid: true }),
-        makeInstallmentRecord({ isPaid: false }),
-      ];
-
-      const canceled = cancelInstallmentPurchase(installments);
-
-      expect(canceled).toHaveLength(2);
-      for (const inst of canceled) {
-        expect(inst.isCanceled).toBe(true);
-      }
-    });
-
-    it("preserves all original installment fields after cancellation", () => {
-      const installments = [
-        makeInstallmentRecord({ installmentNumber: 3, amount: 150, dueMonth: 7 }),
-      ];
-
-      const canceled = cancelInstallmentPurchase(installments);
-
-      expect(canceled[0].installmentNumber).toBe(3);
-      expect(canceled[0].amount).toBe(150);
-      expect(canceled[0].dueMonth).toBe(7);
-    });
-
-    it("canceling empty list returns empty list", () => {
-      const canceled = cancelInstallmentPurchase([]);
-
-      expect(canceled).toHaveLength(0);
     });
   });
 

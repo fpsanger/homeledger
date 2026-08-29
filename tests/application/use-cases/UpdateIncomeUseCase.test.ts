@@ -1,7 +1,7 @@
 import { updateIncomeUseCase } from "../../../src/application/use-cases/UpdateIncomeUseCase";
 import type {
-  ICategoryRepository,
   CategoryRecord,
+  ICategoryRepository,
 } from "../../../src/domain/repositories/ICategoryRepository";
 import type {
   ITransactionRepository,
@@ -141,7 +141,11 @@ describe("UpdateIncomeUseCase", () => {
   it("throws when source is invalid", async () => {
     const repo = makeRepoWithExisting();
     await expect(
-      updateIncomeUseCase({ ...baseInput, source: "INVALID" as any }, repo, makeCategoryRepo()),
+      updateIncomeUseCase(
+        { ...baseInput, source: "INVALID" as Exclude<TransactionRecord["source"], null> },
+        repo,
+        makeCategoryRepo(),
+      ),
     ).rejects.toThrow("Invalid income source");
   });
 

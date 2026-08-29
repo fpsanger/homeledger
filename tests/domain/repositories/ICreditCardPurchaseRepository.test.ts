@@ -35,11 +35,50 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
   ): Promise<InstallmentRecord[]> {
     return [];
   }
+  async findAllInstallmentsByTransactionMonth(
+    _year: number,
+    _month: number,
+  ): Promise<InstallmentRecord[]> {
+    return [];
+  }
+  async findInstallmentsByTransactionMonth(
+    _personId: string,
+    _year: number,
+    _month: number,
+  ): Promise<InstallmentRecord[]> {
+    return [];
+  }
   async findAllInstallmentsByYear(_year: number): Promise<InstallmentRecord[]> {
     return [];
   }
   async findInstallmentsByYear(_personId: string, _year: number): Promise<InstallmentRecord[]> {
     return [];
+  }
+  async findAllInstallmentsByTransactionYear(_year: number): Promise<InstallmentRecord[]> {
+    return [];
+  }
+  async findInstallmentsByTransactionYear(
+    _personId: string,
+    _year: number,
+  ): Promise<InstallmentRecord[]> {
+    return [];
+  }
+  async findPurchasesByPersonAndMonth(
+    _personId: string,
+    _year: number,
+    _month: number,
+  ): Promise<
+    import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord[]
+  > {
+    return [];
+  }
+  async findPurchaseById(
+    _id: string,
+  ): Promise<
+    | import("../../../src/domain/repositories/ICreditCardPurchaseRepository").CreditCardPurchaseRecord
+    | null
+  > {
+    return null;
   }
   async updatePurchase(
     _id: string,
@@ -60,7 +99,6 @@ class MockCreditCardPurchaseRepository implements ICreditCardPurchaseRepository 
     _id: string,
     _fields: { amount: number; description: string },
   ): Promise<void> {}
-  async updateInstallments(_installments: InstallmentRecord[]): Promise<void> {}
   async findAllPurchasesWithInstallments(
     _personId?: string,
   ): Promise<CreditCardPurchaseWithInstallments[]> {
@@ -76,10 +114,5 @@ describe("ICreditCardPurchaseRepository interface", () => {
   it("findByPurchaseId is part of the contract", async () => {
     const repo = new MockCreditCardPurchaseRepository();
     await expect(repo.findByPurchaseId("purchase-1")).resolves.toEqual([]);
-  });
-
-  it("updateInstallments is part of the contract", async () => {
-    const repo = new MockCreditCardPurchaseRepository();
-    await expect(repo.updateInstallments([])).resolves.toBeUndefined();
   });
 });

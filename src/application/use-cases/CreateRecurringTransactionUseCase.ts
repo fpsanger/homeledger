@@ -2,6 +2,7 @@ import type {
   IRecurringTransactionRepository,
   RecurringTransactionRecord,
 } from "../../domain/repositories/IRecurringTransactionRepository";
+import { findDuplicateRecurringTransaction } from "../../domain/services/isDuplicateRecurringTransaction";
 import { createRecurringTransaction } from "../../domain/services/RecurringTransaction";
 
 type Input = {
@@ -20,7 +21,15 @@ type Input = {
 export async function createRecurringTransactionUseCase(
   input: Input,
   repo: IRecurringTransactionRepository,
-): Promise<RecurringTransactionRecord> {
+): Promise<{ record: RecurringTransactionRecord; isDuplicate: boolean }> {
   const rule = createRecurringTransaction(input);
-  return repo.save(rule);
+
+  const year = input.startDate.getUTCFullYear();
+  const month = input.startDate.getUTCMonth() + 1;
+  const existing = await repo.findAllActiveByMonth(year, month);
+  const isDuplicate =
+    findDuplicateRecurringTransaction(existing, input.type, input.amount) !== null;
+
+  const record = await repo.save(rule);
+  return { record, isDuplicate };
 }

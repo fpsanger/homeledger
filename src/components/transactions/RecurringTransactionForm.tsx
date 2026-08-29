@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro" },
@@ -28,14 +28,20 @@ const PAYMENT_METHODS = [
 type Props = {
   people: Person[];
   categories: Category[];
+  defaultPersonId?: string;
   onSuccess?: () => void;
 };
 
-export function RecurringTransactionForm({ people, categories, onSuccess }: Props) {
+export function RecurringTransactionForm({
+  people,
+  categories,
+  defaultPersonId = "",
+  onSuccess,
+}: Props) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
 
-  const [personId, setPersonId] = useState("");
+  const [personId, setPersonId] = useState(defaultPersonId);
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("ACCOUNT_DEBIT");

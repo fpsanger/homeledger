@@ -1,23 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
 import {
+  Calendar,
+  CreditCard as CreditCardIcon,
+  Lock,
   MoreHorizontal,
   Plus,
-  CreditCard as CreditCardIcon,
-  Calendar,
-  Lock,
   Shuffle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageHeader } from "@/components/ui/page-header";
-import { CreditCardForm } from "./CreditCardForm";
 import { ClosureManagerDialog } from "./ClosureManager";
+import { CreditCardForm } from "./CreditCardForm";
 
 type CreditCard = {
   id: string;
@@ -33,6 +34,7 @@ type CreditCard = {
 type Props = { initialCards: CreditCard[] };
 
 export function CreditCardList({ initialCards }: Props) {
+  const router = useRouter();
   const [cards, setCards] = useState(initialCards);
   const [formOpen, setFormOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
@@ -44,6 +46,7 @@ export function CreditCardList({ initialCards }: Props) {
       const data = await res.json();
       setCards(data.cards);
     }
+    router.refresh();
   }
 
   async function handleDelete(id: string) {
@@ -75,7 +78,7 @@ export function CreditCardList({ initialCards }: Props) {
 
       {/* Summary strip */}
       {cards.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <SummaryCard
             label="Total de Cartões"
             value={cards.length}

@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
-import { parseCurrencyBR } from "@/lib/utils";
+import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateCheck";
+import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
+import { parseCurrencyBR } from "@/lib/utils";
 
 const PAYMENT_METHODS = [
   { value: "CASH", label: "Dinheiro" },
@@ -24,7 +26,7 @@ const PAYMENT_METHODS = [
 ];
 
 type Person = { id: string; name: string };
-type Category = { id: string; name: string; parentId: string | null; path: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 export function ExpenseForm({ people, categories }: { people: Person[]; categories: Category[] }) {
   const router = useRouter();
@@ -43,6 +45,14 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
     date,
     refreshKey,
   );
+  const isCrossEntityDup = useCrossEntityDuplicateCheck(
+    amount ? parseCurrencyBR(amount) : null,
+    date,
+    paymentMethod,
+    refreshKey,
+  );
+  const duplicateMatch = isDuplicate ?? isCrossEntityDup;
+  const isCrossType = !isDuplicate && !!isCrossEntityDup;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -134,12 +144,10 @@ export function ExpenseForm({ people, categories }: { people: Person[]; categori
           placeholder="Opcional"
         />
       </div>
-      {isDuplicate && (
-        <p className="text-sm text-amber-600">
-          Uma transação com o mesmo valor, data e tipo já existe neste mês. Você pode continuar
-          mesmo assim.
-        </p>
-      )}
+      <DuplicateWarning
+        match={duplicateMatch}
+        note={isCrossType ? "Compra de cartão com mesmo valor" : undefined}
+      />
       <Button type="submit" disabled={loading}>
         {loading ? "Adicionando…" : "Adicionar Despesa"}
       </Button>

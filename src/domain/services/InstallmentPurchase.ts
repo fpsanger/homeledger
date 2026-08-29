@@ -1,13 +1,12 @@
-import type { InstallmentRecord } from "../repositories/ICreditCardPurchaseRepository";
-
 export type InstallmentDraft = {
   personId: string;
   installmentNumber: number;
   amount: number;
   dueYear: number;
   dueMonth: number;
+  transactionYear: number;
+  transactionMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   categoryId: string | null;
 };
 
@@ -96,11 +95,17 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
 
   // Convert first due to absolute month index for arithmetic
   const firstAbsolute = (first.year - 1) * 12 + (first.month - 1);
+  // Transaction month starts at purchase month, advances sequentially, independent of card rules
+  const purchaseAbsolute = (purchaseYear - 1) * 12 + (purchaseMonth - 1);
 
   return Array.from({ length: input.numberOfInstallments }, (_, i) => {
     const absolute = firstAbsolute + i;
     const dueYear = Math.floor(absolute / 12) + 1;
     const dueMonth = (absolute % 12) + 1;
+
+    const txAbsolute = purchaseAbsolute + i;
+    const transactionYear = Math.floor(txAbsolute / 12) + 1;
+    const transactionMonth = (txAbsolute % 12) + 1;
 
     const isLast = i === input.numberOfInstallments - 1;
     const amount = isLast
@@ -113,8 +118,9 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
       amount,
       dueYear,
       dueMonth,
+      transactionYear,
+      transactionMonth,
       isPaid: false,
-      isCanceled: false,
       categoryId: input.categoryId,
     };
   });
@@ -166,10 +172,4 @@ export function createInstallmentPurchase(
   };
 
   return { purchase, installments };
-}
-
-export function cancelInstallmentPurchase(
-  installments: InstallmentRecord[],
-): (InstallmentRecord & { isCanceled: true })[] {
-  return installments.map((inst) => ({ ...inst, isCanceled: true as const }));
 }

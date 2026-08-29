@@ -1,3 +1,4 @@
+import type { RecurringTransactionRecord } from "../../../src/domain/repositories/IRecurringTransactionRepository";
 import {
   cancelRecurringTransaction,
   createRecurringTransaction,
@@ -5,7 +6,6 @@ import {
   isActiveInMonth,
   updateRecurringTransaction,
 } from "../../../src/domain/services/RecurringTransaction";
-import type { RecurringTransactionRecord } from "../../../src/domain/repositories/IRecurringTransactionRepository";
 
 const baseInput = {
   id: "rule-1",

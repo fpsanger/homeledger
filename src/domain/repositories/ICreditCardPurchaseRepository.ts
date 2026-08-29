@@ -17,8 +17,9 @@ export interface InstallmentRecord {
   amount: number;
   dueYear: number;
   dueMonth: number;
+  transactionYear: number;
+  transactionMonth: number;
   isPaid: boolean;
-  isCanceled: boolean;
   categoryId: string | null;
   purchaseDescription?: string;
   purchaseDate?: Date;
@@ -49,8 +50,16 @@ export interface ICreditCardPurchaseRepository {
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]>;
+  findAllInstallmentsByTransactionMonth(year: number, month: number): Promise<InstallmentRecord[]>;
+  findInstallmentsByTransactionMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<InstallmentRecord[]>;
   findAllInstallmentsByYear(year: number): Promise<InstallmentRecord[]>;
   findInstallmentsByYear(personId: string, year: number): Promise<InstallmentRecord[]>;
+  findAllInstallmentsByTransactionYear(year: number): Promise<InstallmentRecord[]>;
+  findInstallmentsByTransactionYear(personId: string, year: number): Promise<InstallmentRecord[]>;
   updatePurchase(
     id: string,
     data: Pick<
@@ -65,7 +74,13 @@ export interface ICreditCardPurchaseRepository {
   deleteInstallment(installmentId: string): Promise<void>;
   findByPurchaseId(purchaseId: string): Promise<InstallmentRecord[]>;
   updateInstallment(id: string, fields: { amount: number; description: string }): Promise<void>;
-  updateInstallments(installments: InstallmentRecord[]): Promise<void>;
-  findAllPurchasesWithInstallments(personId?: string): Promise<CreditCardPurchaseWithInstallments[]>;
-  findPurchasesByPersonAndMonth(personId: string, year: number, month: number): Promise<CreditCardPurchaseRecord[]>;
+  findAllPurchasesWithInstallments(
+    personId?: string,
+  ): Promise<CreditCardPurchaseWithInstallments[]>;
+  findPurchasesByPersonAndMonth(
+    personId: string,
+    year: number,
+    month: number,
+  ): Promise<CreditCardPurchaseRecord[]>;
+  findPurchaseById(id: string): Promise<CreditCardPurchaseRecord | null>;
 }

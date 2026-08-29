@@ -23,6 +23,7 @@ const makeRepo = (
   overrides: Partial<IRecurringTransactionRepository> = {},
 ): IRecurringTransactionRepository => ({
   findById: async () => existingRule,
+  findAll: async () => [existingRule],
   findActiveByPersonAndMonth: async () => [],
   findAllActiveByMonth: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }),
@@ -38,7 +39,7 @@ describe("CancelRecurringTransactionUseCase", () => {
     let updatedChanges: Partial<RecurringTransactionRecord> | null = null;
 
     const repo = makeRepo({
-      update: async (id, changes) => {
+      update: async (id: string, changes: Partial<RecurringTransactionRecord>) => {
         updatedId = id;
         updatedChanges = changes;
         return { ...existingRule, ...changes };
@@ -48,7 +49,10 @@ describe("CancelRecurringTransactionUseCase", () => {
     await cancelRecurringTransactionUseCase("rule-1", today, repo);
 
     expect(updatedId).toBe("rule-1");
-    expect(updatedChanges?.endDate).toEqual(today);
+    expect(updatedChanges).not.toBeNull();
+    expect((updatedChanges as unknown as Partial<RecurringTransactionRecord>).endDate).toEqual(
+      today,
+    );
   });
 
   it("throws when rule is not found", async () => {

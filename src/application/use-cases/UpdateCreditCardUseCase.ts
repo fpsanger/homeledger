@@ -1,7 +1,7 @@
 import {
-  createCreditCard,
   type ClosureType,
   type CreditCardRecord,
+  createCreditCard,
 } from "../../domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 

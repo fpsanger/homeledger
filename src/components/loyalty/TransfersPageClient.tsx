@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
 import { LoyaltyTransferTable } from "./LoyaltyTransferTable";
@@ -37,7 +37,9 @@ export function TransfersPageClient({ transfers, programs }: Props) {
       <PageHeader
         eyebrow="Milhas"
         title="Transferências"
-        description={transfers.length > 0 ? `${transfers.length} transferências registradas` : undefined}
+        description={
+          transfers.length > 0 ? `${transfers.length} transferências registradas` : undefined
+        }
       >
         <button
           type="button"

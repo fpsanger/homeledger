@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { getAnnualReportUseCase } from "../../../application/use-cases/GetAnnualReportUseCase";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
@@ -20,11 +20,12 @@ export async function GET(request: NextRequest) {
 
     const personId = searchParams.get("personId") ?? undefined;
 
-    const { transaction, creditCardPurchase } = createRepositories();
+    const { transaction, creditCardPurchase, recurring } = createRepositories();
     const result = await getAnnualReportUseCase(
       { year, personId },
       transaction,
       creditCardPurchase,
+      recurring,
     );
     return Response.json(result);
   } catch (error) {

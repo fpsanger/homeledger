@@ -5,7 +5,7 @@ import type {
   TransactionRecord,
 } from "../../domain/repositories/ITransactionRepository";
 import { validateExpenseCategory } from "../../domain/services/CategoryTree";
-import { isDuplicateTransaction } from "../../domain/services/isDuplicateTransaction";
+import { findDuplicateTransaction } from "../../domain/services/isDuplicateTransaction";
 
 type Input = {
   id: string;
@@ -24,11 +24,19 @@ export async function createExpenseUseCase(
 ): Promise<{ record: TransactionRecord; isDuplicate: boolean }> {
   const expense = createExpense(input);
 
-  const year = input.date.getUTCFullYear();
-  const month = input.date.getUTCMonth() + 1;
-  const existing = await repo.findByPersonAndMonth(input.personId, year, month);
+  const baseYear = input.date.getUTCFullYear();
+  const baseMonth = input.date.getUTCMonth() + 1;
   const dateStr = input.date.toISOString().slice(0, 10);
-  const isDuplicate = isDuplicateTransaction(existing, "EXPENSE", input.amount, dateStr);
+
+  const adjacentMonths = [-1, 0, 1].map((offset) => {
+    const d = new Date(Date.UTC(baseYear, baseMonth - 1 + offset, 1));
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+  });
+  const existingArrays = await Promise.all(
+    adjacentMonths.map(({ year, month }) => repo.findByPersonAndMonth(input.personId, year, month)),
+  );
+  const existing = existingArrays.flat();
+  const isDuplicate = findDuplicateTransaction(existing, "EXPENSE", input.amount, dateStr) !== null;
 
   if (expense.categoryId !== null) {
     const categories = await categoryRepo.findAll();

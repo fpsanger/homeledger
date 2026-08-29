@@ -6,7 +6,7 @@ The project intentionally has no login, invitations, or multi-workspace model. T
 
 ## Status
 
-Homeledger is a private personal project. The basic product surface is implemented and the repository is currently in the `0.1.x` phase: useful for local development, still evolving, and not yet hardened as a public SaaS product.
+Homeledger is a private personal project. The basic product surface is implemented and the repository is currently in the `2.1.x` phase: useful for local development, still evolving, and not yet hardened as a public SaaS product.
 
 ## Features
 
@@ -38,6 +38,12 @@ Homeledger is a private personal project. The basic product surface is implement
 - Docker Compose
 
 ## Getting Started
+
+Use Node.js 22:
+
+```bash
+nvm use
+```
 
 Install dependencies:
 
@@ -100,7 +106,53 @@ npm run start    # Start the production server
 npm run lint     # Run Biome checks against src and tests
 npm run format   # Format src and tests with Biome
 npm test         # Run Jest tests
+npm run verify:fast # Run all non-E2E quality gates
+npm run verify   # Run verify:fast plus Playwright
 ```
+
+### Quality ratchet
+
+Run `npm run quality:ratchet` to generate the current quality snapshot and compare it with the
+versioned baseline. Regressions fail the command, while improvements are reported without changing
+the baseline automatically.
+
+After reviewing an improvement, run `npm run quality:baseline:update` to generate a fresh snapshot
+and promote it. The command refuses snapshots containing regressions and copies only the protected
+coverage and violation metrics into `quality-baseline.json`. Review and commit the baseline diff
+with the change that produced the improvement.
+
+## CI and Releases
+
+GitHub Actions validates pull requests targeting `develop` or `master`. The repository treats the
+following checks as mandatory procedure:
+
+- Jest tests.
+- Prisma schema validation.
+- Applying every Prisma migration to an empty PostgreSQL 16 database.
+- Biome linting and formatting checks.
+- TypeScript checks.
+- Quality-ratchet validation.
+- Building the production application.
+- Playwright tests for pull requests targeting `develop`.
+
+This private repository's current GitHub plan does not provide branch protection. CI failures are
+therefore reported but do not technically prevent a maintainer from merging; the maintainer must
+confirm every applicable check before merge.
+
+Changes normally flow through:
+
+```text
+feature/* or fix/* -> pull request -> develop -> pull request -> master
+```
+
+Direct pushes to `develop` and `master` should be blocked with GitHub rulesets. Before merging
+`develop` into `master`, update the version in `package.json` and move the relevant changelog
+entries from `[Unreleased]` into that version. A successful merge from `develop` into `master`
+creates the matching Git tag and GitHub Release automatically. The version must be newer than the
+latest existing Git tag.
+
+Dependabot checks npm and GitHub Actions updates weekly without adding a noisy vulnerability gate
+to every pull request.
 
 ## Architecture
 

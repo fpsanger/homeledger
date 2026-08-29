@@ -8,6 +8,7 @@ const makeRepo = (
   overrides: Partial<IRecurringTransactionRepository> = {},
 ): IRecurringTransactionRepository => ({
   findById: async () => null,
+  findAll: async () => [],
   findActiveByPersonAndMonth: async () => [],
   findAllActiveByMonth: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }),
@@ -42,9 +43,56 @@ describe("CreateRecurringTransactionUseCase", () => {
     const result = await createRecurringTransactionUseCase(baseInput, repo);
 
     expect(saved).not.toBeNull();
-    expect(result.id).toBe("rule-1");
-    expect(result.amount).toBe(500);
-    expect(result.frequency).toBe("MONTHLY");
+    expect(result.record.id).toBe("rule-1");
+    expect(result.record.amount).toBe(500);
+    expect(result.record.frequency).toBe("MONTHLY");
+    expect(result.isDuplicate).toBe(false);
+  });
+
+  it("returns isDuplicate=true when an active rule with same type and amount exists", async () => {
+    const existingRule: RecurringTransactionRecord = {
+      id: "rule-existing",
+      personId: "person-2",
+      type: "EXPENSE",
+      amount: 500,
+      description: "Other rent",
+      paymentMethod: "PIX",
+      categoryId: null,
+      frequency: "MONTHLY",
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const repo = makeRepo({
+      findAllActiveByMonth: async () => [existingRule],
+    });
+
+    const result = await createRecurringTransactionUseCase(baseInput, repo);
+    expect(result.isDuplicate).toBe(true);
+  });
+
+  it("returns isDuplicate=false when active rule has a different amount", async () => {
+    const existingRule: RecurringTransactionRecord = {
+      id: "rule-existing",
+      personId: "person-1",
+      type: "EXPENSE",
+      amount: 999,
+      description: "Other rent",
+      paymentMethod: "PIX",
+      categoryId: null,
+      frequency: "MONTHLY",
+      startDate: new Date("2026-01-01"),
+      endDate: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const repo = makeRepo({
+      findAllActiveByMonth: async () => [existingRule],
+    });
+
+    const result = await createRecurringTransactionUseCase(baseInput, repo);
+    expect(result.isDuplicate).toBe(false);
   });
 
   it("throws when personId is missing", async () => {

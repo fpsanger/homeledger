@@ -1,6 +1,7 @@
 import { prisma } from "../../../infrastructure/database/client";
 import { PrismaCategoryRepository } from "../../../infrastructure/repositories/PrismaCategoryRepository";
 import { PrismaCreditCardPurchaseRepository } from "../../../infrastructure/repositories/PrismaCreditCardPurchaseRepository";
+import { PrismaCreditCardRefundRepository } from "../../../infrastructure/repositories/PrismaCreditCardRefundRepository";
 import { PrismaCreditCardRepository } from "../../../infrastructure/repositories/PrismaCreditCardRepository";
 import { PrismaLoyaltyProgramRepository } from "../../../infrastructure/repositories/PrismaLoyaltyProgramRepository";
 import { PrismaLoyaltyTransactionRepository } from "../../../infrastructure/repositories/PrismaLoyaltyTransactionRepository";
@@ -15,6 +16,7 @@ export function createRepositories() {
     category: new PrismaCategoryRepository(prisma),
     transaction: new PrismaTransactionRepository(prisma),
     creditCardPurchase: new PrismaCreditCardPurchaseRepository(prisma),
+    creditCardRefund: new PrismaCreditCardRefundRepository(prisma),
     creditCard: new PrismaCreditCardRepository(prisma),
     recurring: new PrismaRecurringTransactionRepository(prisma),
     loyaltyProgram: new PrismaLoyaltyProgramRepository(prisma),

@@ -1,0 +1,466 @@
+{
+  "coverage": {
+    "statements": 36.21,
+    "branches": 28.28,
+    "functions": 28.51,
+    "lines": 36.41
+  },
+  "violations": {
+    "architecture": 0,
+    "circularDependencies": 0,
+    "complexity": 0,
+    "oversizedFiles": 5,
+    "oversizedFunctions": 21
+  },
+  "details": {
+    "architecture": [],
+    "circularDependencies": [],
+    "complexity": [],
+    "oversizedFiles": [
+      {
+        "severity": "warning",
+        "message": "This file has too many lines (843). Maximum allowed is 400.",
+        "category": "lint/nursery/noExcessiveLinesPerFile",
+        "location": {
+          "path": "src/components/credit-cards/BillView.tsx",
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 1131,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This file has too many lines (580). Maximum allowed is 400.",
+        "category": "lint/nursery/noExcessiveLinesPerFile",
+        "location": {
+          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 790,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This file has too many lines (514). Maximum allowed is 400.",
+        "category": "lint/nursery/noExcessiveLinesPerFile",
+        "location": {
+          "path": "src/components/monthly-view/TransactionTable.tsx",
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 653,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This file has too many lines (608). Maximum allowed is 400.",
+        "category": "lint/nursery/noExcessiveLinesPerFile",
+        "location": {
+          "path": "src/components/transactions/UnifiedTransactionForm.tsx",
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 710,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This file has too many lines (468). Maximum allowed is 400.",
+        "category": "lint/nursery/noExcessiveLinesPerFile",
+        "location": {
+          "path": "src/infrastructure/repositories/PrismaCreditCardPurchaseRepository.ts",
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 468,
+            "column": 2
+          }
+        },
+        "advices": []
+      }
+    ],
+    "oversizedFunctions": [
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (81). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/billing-import/Step1Upload.tsx",
+          "start": {
+            "line": 360,
+            "column": 8
+          },
+          "end": {
+            "line": 480,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (156). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/billing-import/Step2Review.tsx",
+          "start": {
+            "line": 58,
+            "column": 8
+          },
+          "end": {
+            "line": 315,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (196). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/billing-import/Step4Import.tsx",
+          "start": {
+            "line": 140,
+            "column": 8
+          },
+          "end": {
+            "line": 480,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (104). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/billing-import/Step4Import.tsx",
+          "start": {
+            "line": 254,
+            "column": 28
+          },
+          "end": {
+            "line": 456,
+            "column": 10
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (147). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/categories/CategoryList.tsx",
+          "start": {
+            "line": 275,
+            "column": 8
+          },
+          "end": {
+            "line": 474,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (283). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/credit-cards/BillView.tsx",
+          "start": {
+            "line": 732,
+            "column": 8
+          },
+          "end": {
+            "line": 1131,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (128). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/credit-cards/ClosureManager.tsx",
+          "start": {
+            "line": 34,
+            "column": 8
+          },
+          "end": {
+            "line": 238,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (91). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/credit-cards/CreditCardForm.tsx",
+          "start": {
+            "line": 59,
+            "column": 8
+          },
+          "end": {
+            "line": 199,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (106). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/dashboard/IncomeExpenseBalanceCard.tsx",
+          "start": {
+            "line": 104,
+            "column": 8
+          },
+          "end": {
+            "line": 248,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (146). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/layout/TopNav.tsx",
+          "start": {
+            "line": 35,
+            "column": 8
+          },
+          "end": {
+            "line": 295,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (108). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
+          "start": {
+            "line": 121,
+            "column": 1
+          },
+          "end": {
+            "line": 311,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (100). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
+          "start": {
+            "line": 334,
+            "column": 1
+          },
+          "end": {
+            "line": 505,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (102). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
+          "start": {
+            "line": 609,
+            "column": 8
+          },
+          "end": {
+            "line": 790,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (110). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/loyalty/LoyaltyTransferForm.tsx",
+          "start": {
+            "line": 34,
+            "column": 8
+          },
+          "end": {
+            "line": 233,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (153). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/monthly-view/TransactionTable.tsx",
+          "start": {
+            "line": 430,
+            "column": 8
+          },
+          "end": {
+            "line": 653,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (82). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/transactions/ExpenseForm.tsx",
+          "start": {
+            "line": 31,
+            "column": 8
+          },
+          "end": {
+            "line": 156,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (86). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/transactions/InstallmentForm.tsx",
+          "start": {
+            "line": 18,
+            "column": 8
+          },
+          "end": {
+            "line": 169,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (99). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/transactions/RecurringTransactionForm.tsx",
+          "start": {
+            "line": 35,
+            "column": 8
+          },
+          "end": {
+            "line": 200,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (203). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/transactions/TransactionPageClient.tsx",
+          "start": {
+            "line": 68,
+            "column": 8
+          },
+          "end": {
+            "line": 389,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (187). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/transactions/UnifiedTransactionForm.tsx",
+          "start": {
+            "line": 422,
+            "column": 8
+          },
+          "end": {
+            "line": 710,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (108). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/ui/calendar.tsx",
+          "start": {
+            "line": 9,
+            "column": 1
+          },
+          "end": {
+            "line": 143,
+            "column": 2
+          }
+        },
+        "advices": []
+      }
+    ]
+  }
+}

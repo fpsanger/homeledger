@@ -34,7 +34,3 @@ export const CATEGORY_SHADES = [
 // Net balance/saldo line: neither income nor expense, so it stays neutral rather than
 // introducing a third saturated hue.
 export const BALANCE_LINE_COLOR = "hsl(var(--foreground))";
-
-export function personShade(shades: string[], index: number): string {
-  return shades[index % shades.length];
-}

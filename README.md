@@ -6,7 +6,7 @@ The project intentionally has no login, invitations, or multi-workspace model. T
 
 ## Status
 
-Homeledger is a private personal project. The basic product surface is implemented and the repository is currently in the `0.1.x` phase: useful for local development, still evolving, and not yet hardened as a public SaaS product.
+Homeledger is a private personal project. The basic product surface is implemented and the repository is currently in the `2.1.x` phase: useful for local development, still evolving, and not yet hardened as a public SaaS product.
 
 ## Features
 

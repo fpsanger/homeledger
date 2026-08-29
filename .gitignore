@@ -36,12 +36,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# mtime-based, breaks after git clone
-graphify-out/manifest.json
-# local only
-graphify-out/cost.json
-# optional: commit for speed, skip to keep repo small
-graphify-out/cache/        
+# generated repository analysis
+/graphify-out/
+
+# local AI-tool configuration and runtime artifacts
+/.claude/settings.local.json
+/.impeccable/config.local.json
+/.impeccable/critique/
+/.impeccable/live/
 # PWA generated files
 public/sw.js
 public/workbox-*.js
@@ -55,3 +57,6 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# generated quality report; quality-baseline.json remains versioned
+/quality-snapshot.json

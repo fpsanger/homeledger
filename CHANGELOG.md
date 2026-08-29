@@ -16,13 +16,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added duplicate detection for recurring transactions: an active rule with the same type and amount in the same household is flagged via `isDuplicate` on creation.
 - Added `closureNextMonth` flag to credit cards. When enabled, the closure day is treated as falling in the month after the purchase, so all purchases in the current month go to the current month's bill. Fixes incorrect next-month assignment for cards with closure day 1 or other next-month closure configurations.
 - Added GitHub Actions CI for tests, Prisma validation, migration replay, Biome checks, TypeScript checks, and production builds.
-- The repository now documents and supports the Claude-to-Draft-PR, CI, Codex-review, and human-approval workflow.
+- The repository now documents and supports the Claude implementation, deterministic CI,
+  risk-based Codex review, ready-for-review PR, and human-approval workflow.
 - Added a complete `npm run verify` gate and clarified the tested manual Codex review flow and the
   current GitHub branch-protection limitation.
 - Added credit card refunds: a standalone credit against a card's bill, entered manually or recognized during statement import, that reduces the bill total for its billing month. Statement imports (PDF and Bradesco/BTG/C6 CSV) now correctly classify credit-card credit/estorno lines as refunds instead of miscategorizing them as personal income.
 
 ### Changed
 
+- Simplified repository AI instructions and pull-request workflow around one implementation agent,
+  deterministic CI, risk-based independent Codex review, and human-controlled merges.
+- Removed stale generated repository-map context, redundant custom agents, duplicate design-skill
+  files, and tracked machine-local AI configuration.
+- Consolidated duplicate Jest execution, added a fast verification command, pinned GitHub Actions,
+  enabled Dependabot updates, and made Playwright create isolated prerequisite fixtures.
 - Refined project documentation for local maintenance and release tracking.
 - Updated the GitHub Release workflow to create releases from merged `develop` to `master` pull requests using the version from `package.json`.
 - Extracted credit card closure-month resolution into a shared `resolveClosureForDate` helper, reused by both installment purchases and refunds.

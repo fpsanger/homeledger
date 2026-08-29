@@ -106,6 +106,8 @@ npm run start    # Start the production server
 npm run lint     # Run Biome checks against src and tests
 npm run format   # Format src and tests with Biome
 npm test         # Run Jest tests
+npm run verify:fast # Run all non-E2E quality gates
+npm run verify   # Run verify:fast plus Playwright
 ```
 
 ### Quality ratchet
@@ -121,16 +123,21 @@ with the change that produced the improvement.
 
 ## CI and Releases
 
-GitHub Actions validates pull requests targeting `develop` or `master`. The initial required
-checks are:
+GitHub Actions validates pull requests targeting `develop` or `master`. The repository treats the
+following checks as mandatory procedure:
 
 - Jest tests.
 - Prisma schema validation.
 - Applying every Prisma migration to an empty PostgreSQL 16 database.
+- Biome linting and formatting checks.
+- TypeScript checks.
+- Quality-ratchet validation.
 - Building the production application.
+- Playwright tests for pull requests targeting `develop`.
 
-Biome linting and TypeScript checks also run in CI. They are initially informational while the
-existing baseline is cleaned up, and should become required checks once they pass consistently.
+This private repository's current GitHub plan does not provide branch protection. CI failures are
+therefore reported but do not technically prevent a maintainer from merging; the maintainer must
+confirm every applicable check before merge.
 
 Changes normally flow through:
 
@@ -143,6 +150,9 @@ Direct pushes to `develop` and `master` should be blocked with GitHub rulesets. 
 entries from `[Unreleased]` into that version. A successful merge from `develop` into `master`
 creates the matching Git tag and GitHub Release automatically. The version must be newer than the
 latest existing Git tag.
+
+Dependabot checks npm and GitHub Actions updates weekly without adding a noisy vulnerability gate
+to every pull request.
 
 ## Architecture
 

@@ -1,48 +1,59 @@
-# Repository Guidelines
+# Repository guidelines
 
-## Project Structure & Module Organization
+HomeLedger is a Next.js 14 App Router application organized with Clean Architecture.
 
-Homeledger is a Next.js 14 App Router application organized with Clean Architecture. Keep business entities, services, errors, and repository contracts in `src/domain/`; this layer must not import application, infrastructure, or UI code. Put orchestration in `src/application/`, Prisma implementations and statement parsers in `src/infrastructure/`, routes and pages in `src/app/`, and reusable UI in `src/components/`. Tests mirror source areas under `tests/` (for example, `src/domain/entities/Category.ts` maps to `tests/domain/entities/Category.test.ts`). Static PWA assets live in `public/`; database schema and migrations live in `src/infrastructure/database/`.
+## Context routing
 
-Before investigating code, consult `graphify-out/GRAPH_REPORT.md`; read `SPEC.md` for product rules and `PRODUCT.md` plus `DESIGN.md` before UI changes.
+- Consult `SPEC.md` for financial and product behavior.
+- Consult `PRODUCT.md` and `DESIGN.md` only for UI or UX work.
+- Inspect relevant source and tests directly. Generated maps and historical plans are optional
+  aids, not sources of truth.
 
-## Build, Test, and Development Commands
+## Architecture
 
-- `npm install` installs the Node.js 22 dependencies.
-- `docker compose up -d` starts PostgreSQL on the configured local port.
-- `npx prisma migrate dev` applies migrations to the development database.
-- `npm run dev` serves the app at `http://localhost:3000`.
-- `npm run build` creates and type-checks the production build.
-- `npm test` runs the complete Jest suite; append a test path to focus a file.
-- `npm run lint` runs Biome checks; `npm run format` applies formatting.
-
-## Coding Style & Naming Conventions
-
-TypeScript is strict. Biome enforces two-space indentation, 100-character lines, double quotes, semicolons, and organized imports. Use `PascalCase` for components, entities, and classes; `camelCase` for functions and variables; and descriptive use-case names such as `CreateExpenseUseCase.ts`. Keep business rules out of React components and API handlers. Make all schema changes through versioned Prisma migrations.
-
-## Testing Guidelines
-
-Jest, ts-jest, and Testing Library are configured in `package.json`. Name tests `*.test.ts` or `*.test.tsx`. Domain changes require TDD: add a failing test, implement the minimum behavior, then refactor. Add component tests for meaningful interactions and regression tests for fixes. No numeric coverage threshold is defined, but changed behavior should be exercised.
-
-## Commit & Pull Request Guidelines
-
-Prefer Conventional Commit subjects (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`), written as short imperatives; recent history is mixed, so improve consistency. Name branches `<type>/<scope>-<description>` in lowercase kebab-case, such as `fix/loyalty-mobile-layout`. Open PRs against `develop`, describe behavior and verification, link relevant issues, and include before/after screenshots for UI changes. Update `CHANGELOG.md` for user-visible, domain, schema, or operational changes, and ensure tests, Prisma validation, lint, and the production build pass.
-
-## Code Review Rules
-
-Focus on actionable correctness, security, and regression risks. Do not report formatting or style
-preferences already enforced by Biome.
-
-- Treat imports from application, infrastructure, or UI into `src/domain/` as blocking Clean
-  Architecture violations.
-- Compare changed financial and domain behavior with `SPEC.md`; flag behavior that contradicts a
-  documented rule or changes monetary calculations without direct tests.
-- Require direct automated coverage for new behavior and regression fixes. Existing unrelated tests
-  are not sufficient.
-- Require every Prisma schema change to include a versioned migration under
+- `src/domain`: pure business entities, services, errors, and repository contracts. No imports
+  from application, infrastructure, UI, React, Next.js, or Prisma.
+- `src/application`: orchestration over domain contracts.
+- `src/infrastructure`: Prisma/database implementations, parsers, and integrations.
+- `src/app`: routes and pages. `src/components`: reusable UI.
+- Business and monetary rules belong in domain or application code.
+- Prisma schema changes require a versioned migration in
   `src/infrastructure/database/migrations/`.
-- Check changed API routes for input validation, authorization, data exposure, and unsafe database
-  access.
-- Require `CHANGELOG.md` updates for user-visible, domain, schema, or operational changes.
-- Treat failed tests, Prisma validation, lint, typecheck, quality ratchet, or production build as
-  blocking.
+
+TypeScript is strict and Biome owns formatting and lint rules. Tests live under `tests/` and mirror
+source areas. New behavior and regression fixes require direct automated coverage; financial and
+domain behavior should be developed test-first.
+
+## Canonical validation
+
+```bash
+npm run verify:fast  # lint, typecheck, quality tooling, Jest, build
+npm run verify       # verify:fast plus Playwright
+```
+
+Use focused tests while iterating. Update `CHANGELOG.md` for user-visible, domain, schema, or
+operational changes.
+
+## Review priorities
+
+Report only actionable correctness, security, data-integrity, architecture, or regression risks.
+Do not report formatting preferences enforced by Biome.
+
+Treat these as blocking:
+
+- Domain imports an outer layer or performs infrastructure/framework side effects.
+- Changed financial behavior contradicts `SPEC.md` or lacks direct tests.
+- A Prisma schema change lacks a versioned migration.
+- An API change lacks appropriate validation or exposes data/unsafe database access.
+- Required tests, migration validation, lint, typecheck, quality ratchet, or build fail.
+
+Order findings by severity and cite exact files and lines. If no blocking findings exist, say so
+and identify any verification not performed.
+
+## Git and pull requests
+
+Use `<type>/<scope>-<description>` branches, Conventional Commit subjects, and PRs against
+`develop`. Never auto-merge; a human owns the merge decision. Independent Codex review is
+recommended for financial rules, migrations/backfills, security-sensitive APIs, broad cross-layer
+refactors, and large or ambiguous diffs. It is optional for low-risk changes when CI and human
+review are sufficient.

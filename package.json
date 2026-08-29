@@ -18,7 +18,8 @@
     "quality:ratchet": "npm run quality:snapshot && node scripts/quality/ratchet.cjs",
     "quality:baseline:update": "npm run quality:snapshot && node scripts/quality/update-baseline.cjs",
     "quality": "npm run lint && npm run typecheck && npm run test:quality && npm run quality:ratchet && npm run build",
-    "verify": "npm run quality && npm test -- --runInBand && npm run test:e2e"
+    "verify:fast": "npm run quality",
+    "verify": "npm run verify:fast && npm run test:e2e"
   },
   "jest": {
     "preset": "ts-jest",

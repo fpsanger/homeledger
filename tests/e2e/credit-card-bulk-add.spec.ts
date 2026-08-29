@@ -1,7 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+function fixtureName(key: "E2E_FIXTURE_CARD_NAME" | "E2E_FIXTURE_PERSON_NAME") {
+  const value = process.env[key];
+  if (!value) throw new Error(`${key} was not provided by Playwright global setup`);
+  return value;
+}
+
 test.describe("bulk add credit card purchase", () => {
-  test.describe.configure({ retries: 1 });
+  const fixtureCardName = fixtureName("E2E_FIXTURE_CARD_NAME");
+  const fixturePersonName = fixtureName("E2E_FIXTURE_PERSON_NAME");
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/credit-cards/bulk-add");
@@ -27,26 +34,26 @@ test.describe("bulk add credit card purchase", () => {
       await page.getByRole("button", { name: "Adicionar cartão" }).click();
     }
 
-    const personSelect = page.getByLabel("Pessoa");
-    const personOptionCount = await personSelect.locator("option").count();
-    if (personOptionCount <= 1) {
-      test.skip(true, "No people available in the database to select for the bulk-add form.");
-    }
-
     await page.getByRole("button", { name: "Selecione o cartão" }).click();
-    const cardOptionCount = await page.locator("[cmdk-item]").count();
-    await page.keyboard.press("Escape");
-    if (cardOptionCount < 1) {
-      test.skip(true, "No credit cards available for the bulk-add form.");
-    }
-
-    const firstPersonValue = await personSelect.locator("option").nth(1).getAttribute("value");
-    await personSelect.selectOption(firstPersonValue ?? "");
-
-    await page.getByRole("button", { name: "Selecione o cartão" }).click();
-    const cardName = await page.locator("[cmdk-item]").nth(0).textContent();
+    await expect
+      .poll(() => page.locator("[cmdk-item]", { hasText: fixtureCardName }).count(), {
+        message: "the E2E credit-card fixture should be available",
+      })
+      .toBeGreaterThan(0);
+    const cardName = await page.locator("[cmdk-item]", { hasText: fixtureCardName }).textContent();
     await page.keyboard.press("Escape");
     await addCardSection(cardName ?? "");
+
+    const personSelect = page.getByLabel("Pessoa");
+    await expect
+      .poll(() => personSelect.locator("option").count(), {
+        message: "the E2E person fixture should be available",
+      })
+      .toBeGreaterThan(1);
+    const fixturePersonValue = await personSelect
+      .locator("option", { hasText: fixturePersonName })
+      .getAttribute("value");
+    await personSelect.selectOption(fixturePersonValue ?? "");
 
     const rows = page.getByTestId("purchase-row");
     await expect(rows).toHaveCount(1);
@@ -67,20 +74,21 @@ test.describe("bulk add credit card purchase", () => {
 
     await expect(page.getByText(/compra\(s\) salva\(s\)\./)).toBeVisible();
 
-    // Clean up both created purchases via the fatura page; the card's closure day
-    // may push the first installment into a later month than today.
-    await page.goto("/installments");
-    for (const description of [descriptionA, descriptionB]) {
-      const row = page.getByRole("row").filter({ hasText: description });
-      for (let i = 0; i < 4 && (await row.count()) === 0; i++) {
-        await page.getByRole("button", { name: "→" }).click();
-        await page.waitForLoadState("networkidle");
-      }
-      await expect(row).toBeVisible();
-      await row.getByRole("button", { name: "Ações" }).click();
-      await page.getByRole("button", { name: "Excluir compra" }).click();
-      await expect(page.getByText("Compra excluída.")).toBeVisible();
-      await expect(page.getByRole("row").filter({ hasText: description })).not.toBeVisible();
+    const purchasesResponse = await page.request.get("/api/credit-card-purchases");
+    expect(purchasesResponse.ok()).toBe(true);
+    const { purchases } = (await purchasesResponse.json()) as {
+      purchases: Array<{ id: string; description: string }>;
+    };
+    const createdPurchases = purchases.filter((purchase) =>
+      [descriptionA, descriptionB].includes(purchase.description),
+    );
+    expect(createdPurchases).toHaveLength(2);
+
+    for (const purchase of createdPurchases) {
+      const cleanupResponse = await page.request.delete(
+        `/api/credit-card-purchases/${purchase.id}`,
+      );
+      expect(cleanupResponse.ok()).toBe(true);
     }
   });
 });

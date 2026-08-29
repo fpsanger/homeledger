@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+function fixtureName(key: "E2E_FIXTURE_CARD_NAME" | "E2E_FIXTURE_PERSON_NAME") {
+  const value = process.env[key];
+  if (!value) throw new Error(`${key} was not provided by Playwright global setup`);
+  return value;
+}
+
 test.describe("fatura cartão", () => {
+  const fixtureCardName = fixtureName("E2E_FIXTURE_CARD_NAME");
+  const fixturePersonName = fixtureName("E2E_FIXTURE_PERSON_NAME");
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/installments");
   });
@@ -37,22 +46,28 @@ test.describe("fatura cartão", () => {
     await page.getByRole("button", { name: "Nova compra" }).click();
 
     const personSelect = page.locator("#u-person");
-    const personOptionCount = await personSelect.locator("option").count();
-    if (personOptionCount <= 1) {
-      test.skip(true, "No people available in the database to select for the purchase form.");
-    }
+    await expect
+      .poll(() => personSelect.locator("option").count(), {
+        message: "the E2E person fixture should be available",
+      })
+      .toBeGreaterThan(1);
 
     const cardSelect = page.locator("#u-card");
-    const cardOptionCount = await cardSelect.locator("option").count();
-    if (cardOptionCount <= 1) {
-      test.skip(true, "No credit cards available in the database to select for the purchase form.");
-    }
+    await expect
+      .poll(() => cardSelect.locator("option").count(), {
+        message: "the E2E credit-card fixture should be available",
+      })
+      .toBeGreaterThan(1);
 
-    const firstPersonValue = await personSelect.locator("option").nth(1).getAttribute("value");
-    await personSelect.selectOption(firstPersonValue ?? "");
+    const fixturePersonValue = await personSelect
+      .locator("option", { hasText: fixturePersonName })
+      .getAttribute("value");
+    await personSelect.selectOption(fixturePersonValue ?? "");
 
-    const firstCardValue = await cardSelect.locator("option").nth(1).getAttribute("value");
-    await cardSelect.selectOption(firstCardValue ?? "");
+    const fixtureCardValue = await cardSelect
+      .locator("option", { hasText: fixtureCardName })
+      .getAttribute("value");
+    await cardSelect.selectOption(fixtureCardValue ?? "");
 
     await page.locator("#u-amount").fill("123,45");
 

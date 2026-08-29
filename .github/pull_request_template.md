@@ -12,7 +12,7 @@
 
 ## Verification
 
-- [ ] `npm run quality`
+- [ ] `npm run verify:fast`
 - [ ] Focused tests for changed behavior
 
 <!-- Record commands and results. Do not check an item that was not run successfully. -->
@@ -38,3 +38,5 @@
 - [ ] Documentation was updated where behavior or operations changed.
 - [ ] No credentials or sensitive data were added.
 - [ ] This pull request targets `develop`.
+- [ ] Independent Codex review was requested when the risk policy requires it, or marked not
+      applicable with rationale.

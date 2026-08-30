@@ -108,40 +108,19 @@ git commit -m "feat: add container health endpoint"
 - Produces: Compose services `postgres`, `migrate`, and `app` in both operational modes.
 - Produces: npm scripts `docker:dev`, `docker:dev:migrate`, `docker:build`, `docker:migrate`, `docker:up`, and `docker:down`.
 
-- [ ] **Step 1: Add an image-context contract test**
+- [ ] **Step 1: Confirm the new Compose contract is initially absent**
 
-Create `tests/quality/docker-config.test.cjs` using `node:test`. It must read `.dockerignore`,
-`Dockerfile`, `compose.yaml`, and `compose.dev.yaml`, then assert all of the following:
+Run: `docker compose -f compose.yaml config --quiet`
 
-```js
-assert.match(dockerignore, /^\.env$/m);
-assert.match(dockerignore, /^node_modules$/m);
-assert.match(dockerfile, /^FROM node:22-alpine AS development$/m);
-assert.match(dockerfile, /^FROM node:22-alpine AS migration$/m);
-assert.match(dockerfile, /^FROM node:22-alpine AS runner$/m);
-assert.match(dockerfile, /USER nextjs/);
-assert.match(productionCompose, /target: runner/);
-assert.match(productionCompose, /target: migration/);
-assert.match(productionCompose, /condition: service_healthy/);
-assert.doesNotMatch(productionCompose, /condition: service_completed_successfully/);
-assert.match(developmentCompose, /target: development/);
-assert.match(developmentCompose, /\.\/:\/app/);
-```
+Expected: FAIL because `compose.yaml` does not exist.
 
-- [ ] **Step 2: Run the contract test and confirm it fails with missing files**
-
-Run: `node --test tests/quality/docker-config.test.cjs`
-
-Expected: FAIL because `.dockerignore`, `Dockerfile`, `compose.yaml`, or `compose.dev.yaml` does not
-exist.
-
-- [ ] **Step 3: Add `.dockerignore`**
+- [ ] **Step 2: Add `.dockerignore`**
 
 Include `.git`, `.github`, `.next`, `node_modules`, test reports, coverage, local environment files,
 Docker Compose files, documentation, and debug logs. Explicitly retain `.env.example` only for
 documentation while excluding `.env` and `.env*.local`.
 
-- [ ] **Step 4: Add the multi-stage `Dockerfile`**
+- [ ] **Step 3: Add the multi-stage `Dockerfile`**
 
 Implement these stages:
 
@@ -156,7 +135,7 @@ Implement these stages:
   `.next/static` with ownership, set `HOSTNAME=0.0.0.0`, expose 3000, switch to `nextjs`, and run
   `node server.js`.
 
-- [ ] **Step 5: Replace the legacy Compose file with production-like `compose.yaml`**
+- [ ] **Step 4: Replace the legacy Compose file with production-like `compose.yaml`**
 
 Define:
 
@@ -169,14 +148,14 @@ Define:
   PostgreSQL, publishing `${APP_PORT:-3000}:3000`, and checking `/api/health` with Node's built-in
   HTTP client.
 
-- [ ] **Step 6: Add `compose.dev.yaml`**
+- [ ] **Step 5: Add `compose.dev.yaml`**
 
 Define the same three service names, using PostgreSQL host port `${POSTGRES_PORT:-5433}:5432`.
 Build `app` from the `development` target, mount `.:/app`, isolate `/app/node_modules` and
 `/app/.next` in named volumes, set `WATCHPACK_POLLING=true`, and use the same explicit profiled
 `migrate` service and database health dependency.
 
-- [ ] **Step 7: Add npm convenience scripts**
+- [ ] **Step 6: Add npm convenience scripts**
 
 Add these exact entries and refresh `package-lock.json` with `npm install --package-lock-only`:
 
@@ -189,11 +168,7 @@ Add these exact entries and refresh `package-lock.json` with `npm install --pack
 "docker:down": "docker compose down"
 ```
 
-- [ ] **Step 8: Run static configuration checks**
-
-Run: `node --test tests/quality/docker-config.test.cjs`
-
-Expected: PASS.
+- [ ] **Step 7: Run Compose configuration checks**
 
 Run: `docker compose config --quiet`
 
@@ -203,11 +178,15 @@ Run: `docker compose -f compose.dev.yaml config --quiet`
 
 Expected: exit 0.
 
-- [ ] **Step 9: Build and smoke-test the production-like stack**
+- [ ] **Step 8: Build and smoke-test the production-like stack**
 
 Run: `docker compose build app migrate`
 
 Expected: both targets build successfully.
+
+Run: `docker compose run --rm --no-deps app id -u`
+
+Expected: `1001`, proving the runtime image does not execute as root.
 
 Run: `docker compose up -d postgres`
 
@@ -229,10 +208,10 @@ Run: `docker compose down --volumes`
 
 Expected: smoke-test containers, network, and disposable test volume are removed.
 
-- [ ] **Step 10: Commit the container workflows**
+- [ ] **Step 9: Commit the container workflows**
 
 ```bash
-git add .dockerignore Dockerfile compose.yaml compose.dev.yaml docker-compose.yml package.json package-lock.json tests/quality/docker-config.test.cjs
+git add .dockerignore Dockerfile compose.yaml compose.dev.yaml docker-compose.yml package.json package-lock.json
 git commit -m "chore: add Docker application workflows"
 ```
 

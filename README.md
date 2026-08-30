@@ -37,7 +37,7 @@ Homeledger is a private personal project. The basic product surface is implement
 - Biome
 - Docker Compose
 
-## Getting Started
+## Host-based development
 
 Use Node.js 22:
 
@@ -60,7 +60,7 @@ cp .env.example .env
 Start PostgreSQL:
 
 ```bash
-docker compose up -d
+docker compose -f compose.dev.yaml up -d postgres
 ```
 
 Apply database migrations:
@@ -76,6 +76,74 @@ npm run dev
 ```
 
 The app runs at `http://localhost:3000`.
+
+## Docker development
+
+Docker Engine or Docker Desktop with Docker Compose v2 is required. The development stack runs
+Node.js 22, the Next.js development server with hot reload, and PostgreSQL 16 in containers.
+
+Create the local environment file if it does not exist:
+
+```bash
+cp .env.example .env
+```
+
+Apply migrations explicitly, then start the development stack:
+
+```bash
+npm run docker:dev:migrate
+npm run docker:dev
+```
+
+The app is available at `http://localhost:3000`, and PostgreSQL is exposed on host port `5433` by
+default. Source files are mounted from the host; container volumes isolate `node_modules` and the
+Next.js build cache.
+
+To stop the development stack:
+
+```bash
+docker compose -f compose.dev.yaml down
+```
+
+## Production-like Docker stack
+
+The default Compose stack builds the optimized Next.js standalone image, runs the app as a
+non-root user, and keeps PostgreSQL on the internal Docker network. Apply migrations before
+starting or updating the application:
+
+```bash
+npm run docker:build
+npm run docker:migrate
+npm run docker:up
+```
+
+The application health endpoint is `http://localhost:3000/api/health`. Inspect status and logs with:
+
+```bash
+docker compose ps
+docker compose logs -f app
+```
+
+Stop the stack without deleting database data:
+
+```bash
+npm run docker:down
+```
+
+Compose defaults to the local `homeledger` database credentials. Override `POSTGRES_USER`,
+`POSTGRES_PASSWORD`, `POSTGRES_DB`, and optionally `APP_PORT` in non-local environments. Do not use
+the development defaults for an exposed deployment, and do not commit production secrets.
+
+Migrations are intentionally separate from application startup. This makes failures visible and
+prevents multiple application instances from racing to change the database schema.
+
+To reset a disposable local Docker database, run the appropriate command below. **These commands
+permanently delete the corresponding PostgreSQL volume and all data stored in it.**
+
+```bash
+docker compose down --volumes
+docker compose -f compose.dev.yaml down --volumes
+```
 
 ## Environment
 
@@ -103,6 +171,12 @@ src/infrastructure/database/migrations
 npm run dev      # Start the Next.js dev server
 npm run build    # Build the production app
 npm run start    # Start the production server
+npm run docker:dev # Start the containerized development stack
+npm run docker:dev:migrate # Apply migrations to the development database
+npm run docker:build # Build the production-like application image
+npm run docker:migrate # Apply migrations to the production-like database
+npm run docker:up # Start the production-like stack
+npm run docker:down # Stop the production-like stack without deleting data
 npm run lint     # Run Biome checks against src and tests
 npm run format   # Format src and tests with Biome
 npm test         # Run Jest tests

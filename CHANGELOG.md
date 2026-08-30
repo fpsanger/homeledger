@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Added full Docker workflows for development and production-like operation, including a
+  multi-stage non-root Next.js image, PostgreSQL and application health checks, hot reload, and an
+  explicit one-shot Prisma migration service.
+
 ## [2.1.0] - 2026-08-29
 
 ### Added

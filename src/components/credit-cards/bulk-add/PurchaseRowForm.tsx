@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Loader2, Trash2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Copy, Loader2, Trash2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -15,10 +15,18 @@ type Props = {
   categories: Category[];
   onChange: (patch: Partial<PurchaseRow>) => void;
   onRemove: () => void;
+  onDuplicate: () => void;
   disabled?: boolean;
 };
 
-export function PurchaseRowForm({ row, categories, onChange, onRemove, disabled = false }: Props) {
+export function PurchaseRowForm({
+  row,
+  categories,
+  onChange,
+  onRemove,
+  onDuplicate,
+  disabled = false,
+}: Props) {
   const locked = disabled || row.status === "loading" || row.status === "success";
 
   return (
@@ -53,7 +61,7 @@ export function PurchaseRowForm({ row, categories, onChange, onRemove, disabled 
         onChange={(e) => onChange({ numberOfInstallments: e.target.value })}
         disabled={locked}
       >
-        {Array.from({ length: 11 }, (_, i) => i + 2).map((n) => (
+        {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
           <option key={n} value={String(n)}>
             {n}x
           </option>
@@ -68,7 +76,13 @@ export function PurchaseRowForm({ row, categories, onChange, onRemove, disabled 
         disabled={locked}
       />
 
-      <RowActions row={row} locked={locked} onRemove={onRemove} />
+      <RowActions
+        row={row}
+        locked={locked}
+        onRemove={onRemove}
+        onDuplicate={onDuplicate}
+        duplicateDisabled={disabled || row.status === "loading"}
+      />
     </div>
   );
 }
@@ -77,14 +91,29 @@ function RowActions({
   row,
   locked,
   onRemove,
+  onDuplicate,
+  duplicateDisabled,
 }: {
   row: PurchaseRow;
   locked: boolean;
   onRemove: () => void;
+  onDuplicate: () => void;
+  duplicateDisabled: boolean;
 }) {
   return (
     <div className="flex items-center justify-end gap-2 sm:col-span-2 xl:col-span-1">
       <RowStatus row={row} />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onDuplicate}
+        disabled={duplicateDisabled}
+        aria-label="Copiar compra"
+        title="Copiar categoria, parcelas e descrição para uma nova compra"
+      >
+        <Copy className="w-4 h-4" />
+      </Button>
       <Button
         type="button"
         variant="ghost"

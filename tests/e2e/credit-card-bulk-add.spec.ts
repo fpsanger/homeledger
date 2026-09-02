@@ -16,7 +16,10 @@ test.describe("bulk add credit card purchase", () => {
 
   test("page loads with header and controls", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Adicionar Compra em Lote" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Voltar" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Voltar" })).toHaveAttribute(
+      "href",
+      "/transactions",
+    );
     await expect(page.getByRole("button", { name: "Enviar tudo" })).toBeVisible();
   });
 
@@ -73,6 +76,7 @@ test.describe("bulk add credit card purchase", () => {
     await page.getByRole("button", { name: "Enviar tudo" }).click();
 
     await expect(page.getByText(/compra\(s\) salva\(s\)\./)).toBeVisible();
+    await expect(page).toHaveURL(/\/transactions$/);
 
     const purchasesResponse = await page.request.get("/api/credit-card-purchases");
     expect(purchasesResponse.ok()).toBe(true);

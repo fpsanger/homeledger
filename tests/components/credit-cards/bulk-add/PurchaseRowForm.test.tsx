@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PurchaseRowForm } from "@/components/credit-cards/bulk-add/PurchaseRowForm";
 import type { PurchaseRow } from "@/components/credit-cards/bulk-add/types";
 
@@ -62,16 +62,18 @@ const baseRow: PurchaseRow = {
 function renderRow(row: PurchaseRow, disabled = false) {
   const onChange = jest.fn();
   const onRemove = jest.fn();
+  const onDuplicate = jest.fn();
   render(
     <PurchaseRowForm
       row={row}
       categories={[]}
       onChange={onChange}
       onRemove={onRemove}
+      onDuplicate={onDuplicate}
       disabled={disabled}
     />,
   );
-  return { onChange, onRemove };
+  return { onChange, onRemove, onDuplicate };
 }
 
 describe("PurchaseRowForm", () => {
@@ -115,6 +117,36 @@ describe("PurchaseRowForm", () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
+  it("offers a single-installment option", () => {
+    const { onChange } = renderRow(baseRow);
+    const select = screen.getByLabelText("Número de parcelas");
+
+    expect(within(select).getByRole("option", { name: "1x" })).toBeInTheDocument();
+
+    fireEvent.change(select, { target: { value: "1" } });
+    expect(onChange).toHaveBeenCalledWith({ numberOfInstallments: "1" });
+  });
+
+  it("copies the row through the button next to the trash icon", () => {
+    const { onDuplicate } = renderRow(baseRow);
+
+    fireEvent.click(screen.getByLabelText("Copiar compra"));
+    expect(onDuplicate).toHaveBeenCalledTimes(1);
+  });
+
+  it("still allows copying a row that already succeeded", () => {
+    renderRow({ ...baseRow, status: "success" });
+
+    expect(screen.getByLabelText("Copiar compra")).toBeEnabled();
+    expect(screen.getByLabelText("Remover compra")).toBeDisabled();
+  });
+
+  it("disables copying while the batch is submitting", () => {
+    renderRow(baseRow, true);
+
+    expect(screen.getByLabelText("Copiar compra")).toBeDisabled();
+  });
+
   it("shows loading and duplicate-success states", () => {
     const { rerender } = render(
       <PurchaseRowForm
@@ -122,6 +154,7 @@ describe("PurchaseRowForm", () => {
         categories={[]}
         onChange={jest.fn()}
         onRemove={jest.fn()}
+        onDuplicate={jest.fn()}
       />,
     );
     expect(document.querySelector(".animate-spin")).toBeInTheDocument();
@@ -132,6 +165,7 @@ describe("PurchaseRowForm", () => {
         categories={[]}
         onChange={jest.fn()}
         onRemove={jest.fn()}
+        onDuplicate={jest.fn()}
       />,
     );
     expect(screen.getByLabelText("Possível duplicata")).toBeVisible();

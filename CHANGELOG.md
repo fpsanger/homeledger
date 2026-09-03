@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Bulk credit-card purchase rows on `/credit-cards/bulk-add` now accept a single installment (1x, à vista). The installment dropdown offers 1x–12x instead of 2x–12x; new rows still default to 2x.
+- Bulk credit-card purchase rows now have a copy button next to the trash icon that starts a new row below, carrying over the category, number of installments and description.
+
+### Changed
+
+- The bulk credit-card purchase page now returns to the transactions page: its `Voltar` link points at `/transactions`, and a batch where every purchase saved navigates there automatically. A batch with failures stays on the page so the failed rows can be fixed.
+
 ## [2.1.0] - 2026-08-29
 
 ### Added

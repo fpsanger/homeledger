@@ -49,7 +49,7 @@ export default async function BulkAddCreditCardPage() {
         description="Aplique a mesma compra a vários cartões de crédito de uma vez."
       >
         <Link
-          href="/credit-cards"
+          href="/transactions"
           className={buttonVariants({ variant: "outline", className: "gap-1.5" })}
         >
           <ArrowLeft className="w-4 h-4" />

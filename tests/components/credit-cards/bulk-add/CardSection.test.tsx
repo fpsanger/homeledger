@@ -11,11 +11,13 @@ jest.mock("@/components/credit-cards/bulk-add/PurchaseRowForm", () => ({
     row,
     onChange,
     onRemove,
+    onDuplicate,
     disabled,
   }: {
     row: PurchaseRow;
     onChange: (patch: Partial<PurchaseRow>) => void;
     onRemove: () => void;
+    onDuplicate: () => void;
     disabled?: boolean;
   }) => (
     <div data-testid="row" data-row-id={row.rowId}>
@@ -24,6 +26,9 @@ jest.mock("@/components/credit-cards/bulk-add/PurchaseRowForm", () => ({
       </button>
       <button type="button" onClick={onRemove} disabled={disabled}>
         Remover compra
+      </button>
+      <button type="button" onClick={onDuplicate} disabled={disabled}>
+        Copiar compra
       </button>
     </div>
   ),
@@ -57,6 +62,7 @@ describe("CardSection", () => {
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={jest.fn()}
       />,
     );
@@ -78,6 +84,7 @@ describe("CardSection", () => {
         onAddRow={onAddRow}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={jest.fn()}
       />,
     );
@@ -100,6 +107,7 @@ describe("CardSection", () => {
         onAddRow={jest.fn()}
         onEditRow={onEditRow}
         onRemoveRow={onRemoveRow}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={jest.fn()}
       />,
     );
@@ -109,6 +117,28 @@ describe("CardSection", () => {
 
     expect(onEditRow).toHaveBeenCalledWith("row-1", { amount: "10,00" });
     expect(onRemoveRow).toHaveBeenCalledWith("row-1");
+  });
+
+  it("forwards a row duplication with the row id", () => {
+    const onDuplicateRow = jest.fn();
+    render(
+      <CardSection
+        card={card}
+        rows={[row()]}
+        categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
+        onAddRow={jest.fn()}
+        onEditRow={jest.fn()}
+        onRemoveRow={jest.fn()}
+        onDuplicateRow={onDuplicateRow}
+        onRemoveSection={jest.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Copiar compra" }));
+    expect(onDuplicateRow).toHaveBeenCalledWith("row-1");
   });
 
   it("removes the section when its remove button is clicked", () => {
@@ -124,6 +154,7 @@ describe("CardSection", () => {
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={onRemoveSection}
       />,
     );
@@ -144,6 +175,7 @@ describe("CardSection", () => {
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={jest.fn()}
       />,
     );
@@ -164,6 +196,7 @@ describe("CardSection", () => {
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={jest.fn()}
       />,
     );
@@ -186,6 +219,7 @@ describe("CardSection", () => {
         onAddRow={jest.fn()}
         onEditRow={jest.fn()}
         onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
         onRemoveSection={jest.fn()}
         disabled
       />,

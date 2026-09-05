@@ -72,8 +72,35 @@ function installmentToRecord(row: {
   };
 }
 
+const FULL_PURCHASE_SELECT = {
+  categoryId: true,
+  description: true,
+  purchaseDate: true,
+  personId: true,
+  creditCardId: true,
+  numberOfInstallments: true,
+  totalAmount: true,
+} as const;
+
+const MINIMAL_PURCHASE_SELECT = { categoryId: true } as const;
+
+function monthRange(year: number, month: number): { gte: Date; lt: Date } {
+  return { gte: new Date(Date.UTC(year, month - 1, 1)), lt: new Date(Date.UTC(year, month, 1)) };
+}
+
 export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRepository {
   constructor(private readonly prisma: PrismaClient) {}
+
+  private async queryInstallments(
+    where: NonNullable<Parameters<PrismaClient["installment"]["findMany"]>[0]>["where"],
+    select: typeof FULL_PURCHASE_SELECT | typeof MINIMAL_PURCHASE_SELECT,
+  ): Promise<InstallmentRecord[]> {
+    const rows = await this.prisma.installment.findMany({
+      where,
+      include: { creditCardPurchase: { select } },
+    });
+    return rows.map(installmentToRecord);
+  }
 
   async save(
     purchase: Omit<CreditCardPurchaseRecord, "createdAt">,
@@ -107,23 +134,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
   }
 
   async findAllInstallmentsByMonth(year: number, month: number): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: { dueYear: year, dueMonth: month },
-      include: {
-        creditCardPurchase: {
-          select: {
-            categoryId: true,
-            description: true,
-            purchaseDate: true,
-            personId: true,
-            creditCardId: true,
-            numberOfInstallments: true,
-            totalAmount: true,
-          },
-        },
-      },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments({ dueYear: year, dueMonth: month }, FULL_PURCHASE_SELECT);
   }
 
   async findInstallmentsByMonth(
@@ -131,55 +142,21 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: {
-        dueYear: year,
-        dueMonth: month,
-        personId,
-      },
-      include: {
-        creditCardPurchase: {
-          select: {
-            categoryId: true,
-            description: true,
-            purchaseDate: true,
-            personId: true,
-            creditCardId: true,
-            numberOfInstallments: true,
-            totalAmount: true,
-          },
-        },
-      },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments(
+      { dueYear: year, dueMonth: month, personId },
+      FULL_PURCHASE_SELECT,
+    );
   }
 
   async findAllInstallmentsByPurchaseMonth(
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]> {
-    const gte = new Date(Date.UTC(year, month - 1, 1));
-    const lt = new Date(Date.UTC(year, month, 1));
-    const rows = await this.prisma.installment.findMany({
-      where: {
-        installmentNumber: 1,
-        creditCardPurchase: { purchaseDate: { gte, lt } },
-      },
-      include: {
-        creditCardPurchase: {
-          select: {
-            categoryId: true,
-            description: true,
-            purchaseDate: true,
-            personId: true,
-            creditCardId: true,
-            numberOfInstallments: true,
-            totalAmount: true,
-          },
-        },
-      },
-    });
-    return rows.map(installmentToRecord);
+    const { gte, lt } = monthRange(year, month);
+    return this.queryInstallments(
+      { installmentNumber: 1, creditCardPurchase: { purchaseDate: { gte, lt } } },
+      FULL_PURCHASE_SELECT,
+    );
   }
 
   async findInstallmentsByPurchaseMonth(
@@ -187,52 +164,21 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]> {
-    const gte = new Date(Date.UTC(year, month - 1, 1));
-    const lt = new Date(Date.UTC(year, month, 1));
-    const rows = await this.prisma.installment.findMany({
-      where: {
-        installmentNumber: 1,
-        personId,
-        creditCardPurchase: { purchaseDate: { gte, lt } },
-      },
-      include: {
-        creditCardPurchase: {
-          select: {
-            categoryId: true,
-            description: true,
-            purchaseDate: true,
-            personId: true,
-            creditCardId: true,
-            numberOfInstallments: true,
-            totalAmount: true,
-          },
-        },
-      },
-    });
-    return rows.map(installmentToRecord);
+    const { gte, lt } = monthRange(year, month);
+    return this.queryInstallments(
+      { installmentNumber: 1, personId, creditCardPurchase: { purchaseDate: { gte, lt } } },
+      FULL_PURCHASE_SELECT,
+    );
   }
 
   async findAllInstallmentsByTransactionMonth(
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: { transactionYear: year, transactionMonth: month },
-      include: {
-        creditCardPurchase: {
-          select: {
-            categoryId: true,
-            description: true,
-            purchaseDate: true,
-            personId: true,
-            creditCardId: true,
-            numberOfInstallments: true,
-            totalAmount: true,
-          },
-        },
-      },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments(
+      { transactionYear: year, transactionMonth: month },
+      FULL_PURCHASE_SELECT,
+    );
   }
 
   async findInstallmentsByTransactionMonth(
@@ -240,62 +186,29 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     year: number,
     month: number,
   ): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: {
-        transactionYear: year,
-        transactionMonth: month,
-        personId,
-      },
-      include: {
-        creditCardPurchase: {
-          select: {
-            categoryId: true,
-            description: true,
-            purchaseDate: true,
-            personId: true,
-            creditCardId: true,
-            numberOfInstallments: true,
-            totalAmount: true,
-          },
-        },
-      },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments(
+      { transactionYear: year, transactionMonth: month, personId },
+      FULL_PURCHASE_SELECT,
+    );
   }
 
   async findAllInstallmentsByYear(year: number): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: { dueYear: year },
-      include: { creditCardPurchase: { select: { categoryId: true } } },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments({ dueYear: year }, MINIMAL_PURCHASE_SELECT);
   }
 
   async findInstallmentsByYear(personId: string, year: number): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: { dueYear: year, personId },
-      include: { creditCardPurchase: { select: { categoryId: true } } },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments({ dueYear: year, personId }, MINIMAL_PURCHASE_SELECT);
   }
 
   async findAllInstallmentsByTransactionYear(year: number): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: { transactionYear: year },
-      include: { creditCardPurchase: { select: { categoryId: true } } },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments({ transactionYear: year }, MINIMAL_PURCHASE_SELECT);
   }
 
   async findInstallmentsByTransactionYear(
     personId: string,
     year: number,
   ): Promise<InstallmentRecord[]> {
-    const rows = await this.prisma.installment.findMany({
-      where: { transactionYear: year, personId },
-      include: { creditCardPurchase: { select: { categoryId: true } } },
-    });
-    return rows.map(installmentToRecord);
+    return this.queryInstallments({ transactionYear: year, personId }, MINIMAL_PURCHASE_SELECT);
   }
 
   async updatePurchase(

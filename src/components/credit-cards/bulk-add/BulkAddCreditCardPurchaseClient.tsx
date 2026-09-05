@@ -8,7 +8,13 @@ import type { Category, Person } from "../../transactions/types";
 import { CardCombobox } from "./CardCombobox";
 import { CardSection } from "./CardSection";
 import { submitPurchase } from "./submitPurchase";
-import { createEmptyRow, type PurchaseRow, validatePersonId, validateRow } from "./types";
+import {
+  createEmptyRow,
+  duplicateRow,
+  type PurchaseRow,
+  validatePersonId,
+  validateRow,
+} from "./types";
 
 type CreditCard = { id: string; name: string };
 type Section = { cardId: string; rows: PurchaseRow[] };
@@ -49,6 +55,7 @@ export function BulkAddCreditCardPurchaseClient({
         onAddRow={form.addRow}
         onEditRow={form.editRow}
         onRemoveRow={form.removeRow}
+        onDuplicateRow={form.duplicateRowInSection}
         onRemoveSection={form.removeCardSection}
       />
       {form.formError && (
@@ -71,6 +78,7 @@ type SectionsAction =
   | { type: "REMOVE_SECTION"; cardId: string }
   | { type: "ADD_ROW"; cardId: string; today: string }
   | { type: "REMOVE_ROW"; cardId: string; rowId: string }
+  | { type: "DUPLICATE_ROW"; cardId: string; rowId: string; today: string }
   | { type: "UPDATE_ROW"; cardId: string; rowId: string; patch: Partial<PurchaseRow> };
 
 function sectionsReducer(state: SectionsState, action: SectionsAction): SectionsState {
@@ -106,6 +114,13 @@ function sectionsReducer(state: SectionsState, action: SectionsAction): Sections
             : s,
         ),
       };
+    case "DUPLICATE_ROW":
+      return {
+        ...state,
+        sections: state.sections.map((s) =>
+          s.cardId === action.cardId ? { ...s, rows: withCopyAfter(s.rows, action) } : s,
+        ),
+      };
     case "UPDATE_ROW":
       return {
         ...state,
@@ -121,6 +136,16 @@ function sectionsReducer(state: SectionsState, action: SectionsAction): Sections
     default:
       return state;
   }
+}
+
+function withCopyAfter(
+  rows: PurchaseRow[],
+  action: { rowId: string; today: string },
+): PurchaseRow[] {
+  const index = rows.findIndex((r) => r.rowId === action.rowId);
+  if (index === -1) return rows;
+  const copy = duplicateRow(rows[index], action.today);
+  return [...rows.slice(0, index + 1), copy, ...rows.slice(index + 1)];
 }
 
 function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
@@ -151,6 +176,9 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
   }
   function removeRow(cardId: string, rowId: string) {
     if (!submitting) dispatch({ type: "REMOVE_ROW", cardId, rowId });
+  }
+  function duplicateRowInSection(cardId: string, rowId: string) {
+    if (!submitting) dispatch({ type: "DUPLICATE_ROW", cardId, rowId, today });
   }
   function updateRow(cardId: string, rowId: string, patch: Partial<PurchaseRow>) {
     dispatch({ type: "UPDATE_ROW", cardId, rowId, patch });
@@ -189,7 +217,10 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
     setProgress(null);
     setSubmitting(false);
 
-    reportSubmission(succeeded, failed, router.refresh);
+    reportSubmission(succeeded, failed, {
+      refresh: () => router.refresh(),
+      goToTransactions: () => router.push("/transactions"),
+    });
   }
 
   return {
@@ -206,6 +237,7 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
     removeCardSection,
     addRow,
     removeRow,
+    duplicateRowInSection,
     editRow,
     handleSubmitAll,
   };
@@ -252,6 +284,7 @@ function SectionsList({
   onAddRow,
   onEditRow,
   onRemoveRow,
+  onDuplicateRow,
   onRemoveSection,
 }: {
   sections: Section[];
@@ -264,6 +297,7 @@ function SectionsList({
   onAddRow: (cardId: string) => void;
   onEditRow: (cardId: string, rowId: string, patch: Partial<PurchaseRow>) => void;
   onRemoveRow: (cardId: string, rowId: string) => void;
+  onDuplicateRow: (cardId: string, rowId: string) => void;
   onRemoveSection: (cardId: string) => void;
 }) {
   return (
@@ -283,6 +317,7 @@ function SectionsList({
             onAddRow={() => onAddRow(section.cardId)}
             onEditRow={(rowId, patch) => onEditRow(section.cardId, rowId, patch)}
             onRemoveRow={(rowId) => onRemoveRow(section.cardId, rowId)}
+            onDuplicateRow={(rowId) => onDuplicateRow(section.cardId, rowId)}
             onRemoveSection={() => onRemoveSection(section.cardId)}
             disabled={submitting}
           />
@@ -327,12 +362,18 @@ async function submitToRows(
   return { succeeded, failed };
 }
 
-function reportSubmission(succeeded: number, failed: number, refresh: () => void) {
-  if (succeeded > 0) {
-    toast.success(`${succeeded} compra(s) salva(s).`);
-    refresh();
+function reportSubmission(
+  succeeded: number,
+  failed: number,
+  navigation: { refresh: () => void; goToTransactions: () => void },
+) {
+  if (succeeded > 0) toast.success(`${succeeded} compra(s) salva(s).`);
+  if (failed > 0) {
+    toast.error(`${failed} compra(s) com erro. Corrija e envie novamente.`);
+    if (succeeded > 0) navigation.refresh();
+    return;
   }
-  if (failed > 0) toast.error(`${failed} compra(s) com erro. Corrija e envie novamente.`);
+  if (succeeded > 0) navigation.goToTransactions();
 }
 
 function SubmitFooter({

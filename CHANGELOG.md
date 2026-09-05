@@ -8,15 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Added a deterministic monthly-ledger E2E scenario, scoped Stryker mutation testing, and
-  diff-aware PR checks for migrations, financial tests, API validation, and harness changes.
+- Added a deterministic monthly-ledger E2E scenario, scoped Stryker mutation testing, and diff-aware PR checks for migrations, financial tests, API validation, and harness changes.
+
+- Bulk credit-card purchase rows on `/credit-cards/bulk-add` now accept a single installment (1x, à vista). The installment dropdown offers 1x–12x instead of 2x–12x; new rows still default to 2x.
+- Bulk credit-card purchase rows now have a copy button next to the trash icon that starts a new row below, carrying over the category, number of installments and description.
 
 ### Changed
 
-- Consolidated CI lint, typecheck, tests, quality ratchet, build, and Prisma validation behind the
-  canonical `agent:check` command while keeping database, Playwright, and mutation jobs separate.
-- Simplified agent documentation and made local PR review include committed, staged, unstaged, and
-  untracked changes.
+- Consolidated CI lint, typecheck, tests, quality ratchet, build, and Prisma validation behind the canonical `agent:check` command while keeping database, Playwright, and mutation jobs separate.
+
+- Simplified agent documentation and made local PR review include committed, staged, unstaged, and untracked changes.
+
+- The bulk credit-card purchase page now returns to the transactions page: its `Voltar` link points at `/transactions`, and a batch where every purchase saved navigates there automatically. A batch with failures stays on the page so the failed rows can be fixed.
 
 ## [2.1.0] - 2026-08-29
 

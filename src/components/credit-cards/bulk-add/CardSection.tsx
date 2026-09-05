@@ -19,6 +19,7 @@ type Props = {
   onAddRow: () => void;
   onEditRow: (rowId: string, patch: Partial<PurchaseRow>) => void;
   onRemoveRow: (rowId: string) => void;
+  onDuplicateRow: (rowId: string) => void;
   onRemoveSection: () => void;
   disabled?: boolean;
 };
@@ -33,6 +34,7 @@ export function CardSection({
   onAddRow,
   onEditRow,
   onRemoveRow,
+  onDuplicateRow,
   onRemoveSection,
   disabled = false,
 }: Props) {
@@ -77,6 +79,7 @@ export function CardSection({
             categories={categories}
             onChange={(patch) => onEditRow(row.rowId, patch)}
             onRemove={() => onRemoveRow(row.rowId)}
+            onDuplicate={() => onDuplicateRow(row.rowId)}
             disabled={disabled}
           />
         ))}

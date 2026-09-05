@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Tightened PR diff heuristics so financial and API changes require corresponding tests or
+  route-local validation instead of being satisfied by unrelated test changes.
+
 - Consolidated CI lint, typecheck, tests, quality ratchet, build, and Prisma validation behind the canonical `agent:check` command while keeping database, Playwright, and mutation jobs separate.
 
 - Simplified agent documentation and made local PR review include committed, staged, unstaged, and untracked changes.

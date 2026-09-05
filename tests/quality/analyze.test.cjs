@@ -44,6 +44,37 @@ test("flags domain imports of forbidden framework packages", () => {
   assert.deepEqual(result.architecture[0], { file: "src/domain/example.ts", imports: "react" });
 });
 
+test("flags every Prisma namespace package in the domain", () => {
+  const root = fixture({
+    "src/domain/example.ts":
+      'import { PrismaPg } from "@prisma/adapter-pg"; export const adapter = PrismaPg;',
+  });
+
+  const result = analyzeSources(root, {
+    limits: { cyclomaticComplexity: 10, fileLines: 400, functionLines: 80 },
+  });
+
+  assert.deepEqual(result.architecture, [
+    { file: "src/domain/example.ts", imports: "@prisma/adapter-pg" },
+  ]);
+});
+
+test("flags Prisma require, import assignment, and dynamic import in the domain", () => {
+  const root = fixture({
+    "src/domain/require.ts": 'const prisma = require("@prisma/client"); export { prisma };',
+    "src/domain/import-assignment.ts":
+      'import Prisma = require("@prisma/client"); export { Prisma };',
+    "src/domain/dynamic.ts":
+      'export async function load() { return import("@prisma/adapter-pg"); }',
+  });
+
+  const result = analyzeSources(root, {
+    limits: { cyclomaticComplexity: 10, fileLines: 400, functionLines: 80 },
+  });
+
+  assert.equal(result.architecture.length, 3);
+});
+
 test("counts cyclomatic complexity violations", () => {
   const root = fixture({
     "src/domain/example.ts": [

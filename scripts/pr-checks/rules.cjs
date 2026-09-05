@@ -1,19 +1,12 @@
 const SCHEMA_PATH = "src/infrastructure/database/schema.prisma";
 const MIGRATIONS_PREFIX = "src/infrastructure/database/migrations/";
-const FINANCIAL_ROOTS = ["src/domain/", "src/application/"];
-const FINANCIAL_TEST_ROOTS = ["tests/domain/", "tests/application/"];
-const FINANCIAL_KEYWORDS = [
-  "amount",
-  "cents",
-  "installment",
-  "closure",
-  "fifo",
-  "refund",
-  "total",
-  "balance",
+const FINANCIAL_ROOTS = [
+  "src/domain/entities/",
+  "src/domain/services/",
+  "src/application/services/",
+  "src/application/use-cases/",
 ];
 const API_ROUTE_PATTERN = /^src\/app\/api\/.*\/route\.ts$/;
-const API_LIB_PREFIX = "src/app/api/_lib/";
 const PROTECTED_HARNESS_FILES = [
   "package.json",
   "quality-baseline.json",
@@ -51,40 +44,62 @@ function schemaWithoutMigration(files) {
 }
 
 function financialLogicWithoutTests(files) {
-  const financialFiles = files.filter(
-    (f) =>
-      matchesAny(f.path, FINANCIAL_ROOTS) &&
-      FINANCIAL_KEYWORDS.some((keyword) => f.path.toLowerCase().includes(keyword)),
+  const changedTests = new Set(files.filter((f) => f.status !== "D").map((f) => f.path));
+  const untestedFiles = files.filter(
+    (file) =>
+      file.status !== "D" &&
+      matchesAny(file.path, FINANCIAL_ROOTS) &&
+      !correspondingTestPaths(file.path).some((testPath) => changedTests.has(testPath)),
   );
-  if (financialFiles.length === 0) return null;
-
-  const hasTestChange = files.some((f) => matchesAny(f.path, FINANCIAL_TEST_ROOTS));
-  if (hasTestChange) return null;
+  if (untestedFiles.length === 0) return null;
 
   return {
     rule: "financial-logic-without-tests",
     severity: "review-required",
     message:
-      "Financial/domain logic changed without a corresponding change under tests/domain/** or tests/application/**",
-    files: financialFiles.map((f) => f.path),
+      "Financial/domain logic changed without a corresponding mirrored test change",
+    files: untestedFiles.map((f) => f.path),
   };
 }
 
+function correspondingTestPaths(sourcePath) {
+  const testPath = sourcePath
+    .replace(/^src\/domain\//, "tests/domain/")
+    .replace(/^src\/application\//, "tests/application/")
+    .replace(/\.(ts|tsx)$/, ".test.$1");
+  return [testPath];
+}
+
 function apiRouteWithoutValidationOrTests(files) {
-  const routeFiles = files.filter((f) => API_ROUTE_PATTERN.test(f.path));
+  const routeFiles = files.filter((f) => f.status !== "D" && API_ROUTE_PATTERN.test(f.path));
   if (routeFiles.length === 0) return null;
 
-  const hasLibChange = files.some((f) => f.path.startsWith(API_LIB_PREFIX));
-  const hasTestChange = files.some((f) => f.path.startsWith("tests/"));
-  if (hasLibChange || hasTestChange) return null;
+  const changedPaths = new Set(files.filter((f) => f.status !== "D").map((f) => f.path));
+  const uncoveredRoutes = routeFiles.filter(
+    (route) => !apiCompanionPaths(route.path).some((candidate) => changedPaths.has(candidate)),
+  );
+  if (uncoveredRoutes.length === 0) return null;
 
   return {
     rule: "api-route-without-validation-or-tests",
     severity: "review-required",
     message:
-      "API route changed without a corresponding validation change under src/app/api/_lib/** or a test change",
-    files: routeFiles.map((f) => f.path),
+      "API route changed without a route-specific validation module or corresponding test change",
+    files: uncoveredRoutes.map((f) => f.path),
   };
+}
+
+function apiCompanionPaths(routePath) {
+  const routeDirectory = routePath.slice(0, -"/route.ts".length);
+  const resource = routeDirectory.slice("src/app/api/".length);
+  const e2eName = resource.replace(/\[([^\]]+)\]/g, "$1").replaceAll("/", "-");
+  return [
+    `${routeDirectory}/validation.ts`,
+    `${routeDirectory}/schema.ts`,
+    `tests/app/api/${resource}/route.test.ts`,
+    `tests/app/api/${resource}/route.test.tsx`,
+    `tests/e2e/${e2eName}.spec.ts`,
+  ];
 }
 
 function protectedHarnessFileTouched(files) {

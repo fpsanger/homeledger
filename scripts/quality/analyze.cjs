@@ -8,7 +8,7 @@ const FORBIDDEN_IMPORTS = {
   application: new Set(["infrastructure", "app", "components", "hooks"]),
   infrastructure: new Set(["app", "components", "hooks"]),
 };
-const FORBIDDEN_DOMAIN_PACKAGES = ["react", "react-dom", "next", "@prisma/client", "prisma"];
+const FORBIDDEN_DOMAIN_PACKAGES = ["react", "react-dom", "next", "@prisma", "prisma"];
 
 function isForbiddenDomainPackage(specifier) {
   return FORBIDDEN_DOMAIN_PACKAGES.some(
@@ -37,24 +37,23 @@ function analyzeSources(root, config) {
       true,
       file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
     );
-    source.forEachChild((node) => {
-      const specifier = moduleSpecifier(node);
-      if (specifier) {
-        const dependency = resolveSourceImport(root, file, specifier, fileSet);
-        if (dependency) {
-          dependencies.get(file).push(dependency);
-          const fromLayer = layerOf(root, file);
-          const toLayer = layerOf(root, dependency);
-          if (FORBIDDEN_IMPORTS[fromLayer]?.has(toLayer)) {
-            result.architecture.push({
-              file: relativeFile,
-              imports: normalize(path.relative(root, dependency)),
-            });
-          }
-        } else if (layerOf(root, file) === "domain" && isForbiddenDomainPackage(specifier)) {
-          result.architecture.push({ file: relativeFile, imports: specifier });
+    visitModuleSpecifiers(source, (specifier) => {
+      const dependency = resolveSourceImport(root, file, specifier, fileSet);
+      if (dependency) {
+        dependencies.get(file).push(dependency);
+        const fromLayer = layerOf(root, file);
+        const toLayer = layerOf(root, dependency);
+        if (FORBIDDEN_IMPORTS[fromLayer]?.has(toLayer)) {
+          result.architecture.push({
+            file: relativeFile,
+            imports: normalize(path.relative(root, dependency)),
+          });
         }
+      } else if (layerOf(root, file) === "domain" && isForbiddenDomainPackage(specifier)) {
+        result.architecture.push({ file: relativeFile, imports: specifier });
       }
+    });
+    source.forEachChild((node) => {
       visitFunctions(node, source, relativeFile, config.limits, result);
     });
   }
@@ -184,7 +183,30 @@ function moduleSpecifier(node) {
   if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier) {
     return ts.isStringLiteral(node.moduleSpecifier) ? node.moduleSpecifier.text : null;
   }
+  if (
+    ts.isImportEqualsDeclaration(node) &&
+    ts.isExternalModuleReference(node.moduleReference) &&
+    node.moduleReference.expression &&
+    ts.isStringLiteral(node.moduleReference.expression)
+  ) {
+    return node.moduleReference.expression.text;
+  }
+  if (
+    ts.isCallExpression(node) &&
+    node.arguments.length === 1 &&
+    ts.isStringLiteral(node.arguments[0]) &&
+    (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+      (ts.isIdentifier(node.expression) && node.expression.text === "require"))
+  ) {
+    return node.arguments[0].text;
+  }
   return null;
+}
+
+function visitModuleSpecifiers(node, visitor) {
+  const specifier = moduleSpecifier(node);
+  if (specifier) visitor(specifier);
+  node.forEachChild((child) => visitModuleSpecifiers(child, visitor));
 }
 
 function isFunctionWithBody(node) {

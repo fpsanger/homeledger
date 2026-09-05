@@ -78,9 +78,26 @@ test("financial logic change with a matching test change passes", () => {
   assert.equal(financialLogicWithoutTests(files), null);
 });
 
-test("domain change without a financial keyword is not flagged", () => {
-  const files = [file("M", "src/domain/entities/Person.ts")];
-  assert.equal(financialLogicWithoutTests(files), null);
+test("financial modules without keyword-like filenames are still flagged", () => {
+  for (const source of [
+    "src/domain/entities/Transaction.ts",
+    "src/domain/services/MonthlyView.ts",
+    "src/domain/services/AnnualReport.ts",
+    "src/application/use-cases/CreateExpenseUseCase.ts",
+  ]) {
+    assert.equal(
+      financialLogicWithoutTests([file("M", source)]).rule,
+      "financial-logic-without-tests",
+    );
+  }
+});
+
+test("an unrelated domain test does not satisfy a changed financial module", () => {
+  const files = [
+    file("M", "src/domain/services/MonthlyView.ts"),
+    file("M", "tests/domain/entities/Person.test.ts"),
+  ];
+  assert.equal(financialLogicWithoutTests(files).rule, "financial-logic-without-tests");
 });
 
 test("API route change without validation or tests is review-required", () => {
@@ -96,6 +113,49 @@ test("API route change with a test change passes", () => {
     file("M", "tests/app/api/people/route.test.ts"),
   ];
   assert.equal(apiRouteWithoutValidationOrTests(files), null);
+});
+
+test("an unrelated test or shared API helper does not satisfy a changed route", () => {
+  const files = [
+    file("M", "src/app/api/people/route.ts"),
+    file("M", "tests/domain/entities/Person.test.ts"),
+    file("M", "src/app/api/_lib/date.ts"),
+  ];
+  assert.equal(
+    apiRouteWithoutValidationOrTests(files).rule,
+    "api-route-without-validation-or-tests",
+  );
+});
+
+test("a validation module beside the changed route satisfies the API check", () => {
+  const files = [
+    file("M", "src/app/api/people/route.ts"),
+    file("M", "src/app/api/people/validation.ts"),
+  ];
+  assert.equal(apiRouteWithoutValidationOrTests(files), null);
+});
+
+test("a top-level resource test does not satisfy a nested API route", () => {
+  const files = [
+    file("M", "src/app/api/credit-cards/bill/route.ts"),
+    file("M", "tests/e2e/credit-cards.spec.ts"),
+  ];
+  assert.equal(
+    apiRouteWithoutValidationOrTests(files).rule,
+    "api-route-without-validation-or-tests",
+  );
+});
+
+test("a nested route-specific E2E test satisfies the API check", () => {
+  const files = [
+    file("M", "src/app/api/credit-cards/bill/route.ts"),
+    file("M", "tests/e2e/credit-cards-bill.spec.ts"),
+  ];
+  assert.equal(apiRouteWithoutValidationOrTests(files), null);
+});
+
+test("deleting an API route does not require new validation or tests", () => {
+  assert.equal(apiRouteWithoutValidationOrTests([file("D", "src/app/api/people/route.ts")]), null);
 });
 
 test("protected harness file touched is always flagged, never blocking", () => {

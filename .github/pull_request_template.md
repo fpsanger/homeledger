@@ -12,7 +12,7 @@
 
 ## Verification
 
-- [ ] `npm run verify:fast`
+- [ ] `npm run agent:check`
 - [ ] Focused tests for changed behavior
 
 <!-- Record commands and results. Do not check an item that was not run successfully. -->

@@ -17,6 +17,7 @@ model Person {
   transactions          Transaction[]
   loyaltyTransactions   LoyaltyTransaction[]
   loyaltyTransfers      LoyaltyTransfer[]
+  installments          Installment[]
 }
 
 model Category {
@@ -79,7 +80,7 @@ model Transaction {
 
 model CreditCardPurchase {
   id                   String        @id @default(uuid())
-  personId             String
+  personId             String?
   description          String
   totalAmount          Decimal       @db.Decimal(15, 2)
   numberOfInstallments Int
@@ -89,13 +90,14 @@ model CreditCardPurchase {
   creditCardId         String?
   category             Category?     @relation(fields: [categoryId], references: [id])
   creditCard           CreditCard?   @relation(fields: [creditCardId], references: [id])
-  person               Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person               Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
   installments         Installment[]
 }
 
 model Installment {
   id                   String             @id @default(uuid())
   creditCardPurchaseId String
+  personId             String
   installmentNumber    Int
   amount               Decimal            @db.Decimal(15, 2)
   dueYear              Int
@@ -104,8 +106,9 @@ model Installment {
   transactionMonth     Int
   isPaid               Boolean            @default(false)
   creditCardPurchase   CreditCardPurchase @relation(fields: [creditCardPurchaseId], references: [id], onDelete: Cascade)
+  person               Person             @relation(fields: [personId], references: [id], onDelete: Cascade)
 
-  @@unique([creditCardPurchaseId, installmentNumber])
+  @@unique([creditCardPurchaseId, installmentNumber, personId])
 }
 
 model CreditCardRefund {

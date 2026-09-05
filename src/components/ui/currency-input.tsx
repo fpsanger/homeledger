@@ -11,6 +11,7 @@ type CurrencyInputProps = {
   disabled?: boolean;
   className?: string;
   placeholder?: string;
+  "aria-label"?: string;
 };
 
 export function CurrencyInput({
@@ -21,11 +22,13 @@ export function CurrencyInput({
   disabled,
   className,
   placeholder = "R$ 0,00",
+  "aria-label": ariaLabel,
 }: CurrencyInputProps) {
   return (
     <RawCurrencyInput
       id={id}
       name={id}
+      aria-label={ariaLabel}
       placeholder={placeholder}
       decimalsLimit={2}
       decimalSeparator=","

@@ -7,8 +7,11 @@ import { BulkAddCreditCardPurchaseClient } from "@/components/credit-cards/bulk-
 import { submitPurchase } from "@/components/credit-cards/bulk-add/submitPurchase";
 import type { PurchaseRow } from "@/components/credit-cards/bulk-add/types";
 
+const push = jest.fn();
+const refresh = jest.fn();
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: jest.fn() }),
+  useRouter: () => ({ push, refresh }),
 }));
 
 jest.mock("sonner", () => ({
@@ -54,6 +57,7 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
     onAddRow,
     onEditRow,
     onRemoveRow,
+    onDuplicateRow,
     onRemoveSection,
     disabled,
   }: {
@@ -62,19 +66,36 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
     onAddRow: () => void;
     onEditRow: (rowId: string, patch: Partial<PurchaseRow>) => void;
     onRemoveRow: (rowId: string) => void;
+    onDuplicateRow: (rowId: string) => void;
     onRemoveSection: () => void;
     disabled?: boolean;
   }) => (
     <div data-testid="section" data-card-id={card.id}>
       <span>{card.name}</span>
       {rows.map((row) => (
-        <div key={row.rowId} data-testid="row" data-status={row.status}>
+        <div
+          key={row.rowId}
+          data-testid="row"
+          data-status={row.status}
+          data-description={row.description}
+          data-installments={row.numberOfInstallments}
+          data-amount={row.amount}
+        >
           <button
             type="button"
-            onClick={() => onEditRow(row.rowId, { amount: "10,00" })}
+            onClick={() =>
+              onEditRow(row.rowId, {
+                amount: "10,00",
+                description: "Mercado",
+                numberOfInstallments: "6",
+              })
+            }
             disabled={disabled}
           >
             Editar valor de {card.name}
+          </button>
+          <button type="button" onClick={() => onDuplicateRow(row.rowId)} disabled={disabled}>
+            Copiar compra de {card.name}
           </button>
           <button type="button" onClick={() => onRemoveRow(row.rowId)} disabled={disabled}>
             Remover compra de {card.name}
@@ -107,6 +128,8 @@ function addCardSection(name: string) {
 describe("BulkAddCreditCardPurchaseClient", () => {
   beforeEach(() => {
     mockedSubmitPurchase.mockReset();
+    push.mockReset();
+    refresh.mockReset();
   });
 
   it("excludes cards that already have a section from the combobox", () => {
@@ -214,6 +237,63 @@ describe("BulkAddCreditCardPurchaseClient", () => {
       expect.objectContaining({ amount: "10,00" }),
       "card-2",
     );
+  });
+
+  it("copies category, installments and description into a new row below the source", () => {
+    render(
+      <BulkAddCreditCardPurchaseClient people={[]} categories={[]} creditCards={creditCards} />,
+    );
+
+    addCardSection("Nubank");
+    fireEvent.click(screen.getByRole("button", { name: "Editar valor de Nubank" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copiar compra de Nubank" }));
+
+    const rows = screen.getAllByTestId("row");
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toHaveAttribute("data-description", "Mercado");
+    expect(rows[1]).toHaveAttribute("data-installments", "6");
+    expect(rows[1]).toHaveAttribute("data-amount", "");
+    expect(rows[1]).toHaveAttribute("data-status", "pending");
+  });
+
+  it("returns to the transactions page once every row succeeds", async () => {
+    mockedSubmitPurchase.mockResolvedValue({ isDuplicate: false });
+
+    render(
+      <BulkAddCreditCardPurchaseClient
+        people={[{ id: "person-1", name: "Felipe" }]}
+        categories={[]}
+        creditCards={creditCards}
+        defaultPersonId="person-1"
+      />,
+    );
+
+    addCardSection("Nubank");
+    fireEvent.click(screen.getByRole("button", { name: "Editar valor de Nubank" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enviar tudo" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/transactions"));
+  });
+
+  it("stays on the page when a row fails", async () => {
+    mockedSubmitPurchase.mockRejectedValue(new Error("Fechamento não configurado."));
+
+    render(
+      <BulkAddCreditCardPurchaseClient
+        people={[{ id: "person-1", name: "Felipe" }]}
+        categories={[]}
+        creditCards={creditCards}
+        defaultPersonId="person-1"
+      />,
+    );
+
+    addCardSection("Nubank");
+    fireEvent.click(screen.getByRole("button", { name: "Editar valor de Nubank" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enviar tudo" }));
+
+    await waitFor(() => expect(mockedSubmitPurchase).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("row")).toHaveAttribute("data-status", "error"));
+    expect(push).not.toHaveBeenCalled();
   });
 
   it("does not resubmit a succeeded row on retry", async () => {

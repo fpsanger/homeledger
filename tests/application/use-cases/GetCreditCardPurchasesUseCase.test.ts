@@ -7,6 +7,7 @@ import type {
 const makeInstallment = (overrides = {}) => ({
   id: "inst-1",
   creditCardPurchaseId: "p-1",
+  personId: "person-1",
   installmentNumber: 1,
   amount: 100,
   dueYear: 2026,

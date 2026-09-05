@@ -142,6 +142,314 @@ type Props = {
 
 type ClosureRecord = { year: number; month: number; closureDay: number; previousMonth: boolean };
 
+type SplitRow = { personId: string; amount: string; edited: boolean };
+
+function toCents(brValue: string): number {
+  const n = parseCurrencyBR(brValue);
+  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+}
+
+function fromCents(cents: number): string {
+  return formatAmountBR(cents / 100);
+}
+
+function rebalanceSplits(rows: SplitRow[], totalCents: number): SplitRow[] {
+  const editedCents = rows.filter((r) => r.edited).reduce((sum, r) => sum + toCents(r.amount), 0);
+  const autoRows = rows.filter((r) => !r.edited);
+  if (autoRows.length === 0) return rows;
+
+  const remainingCents = Math.max(totalCents - editedCents, 0);
+  const shareCents = Math.floor(remainingCents / autoRows.length);
+  let assigned = 0;
+  let autoIndex = 0;
+
+  return rows.map((row) => {
+    if (row.edited) return row;
+    autoIndex += 1;
+    const cents = autoIndex === autoRows.length ? remainingCents - assigned : shareCents;
+    assigned += cents;
+    return { ...row, amount: fromCents(cents) };
+  });
+}
+
+function useSplitRows(totalCents: number, defaultPersonId: string) {
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitRows, setSplitRows] = useState<SplitRow[]>([]);
+
+  function toggleSplitMode() {
+    const turningOn = !splitMode;
+    setSplitMode(turningOn);
+    setSplitRows(
+      turningOn && defaultPersonId
+        ? [{ personId: defaultPersonId, amount: fromCents(totalCents), edited: false }]
+        : [],
+    );
+  }
+
+  function addSplitPerson(id: string) {
+    if (!id) return;
+    setSplitRows((rows) =>
+      rebalanceSplits([...rows, { personId: id, amount: "0,00", edited: false }], totalCents),
+    );
+  }
+
+  function removeSplitPerson(index: number) {
+    setSplitRows((rows) =>
+      rebalanceSplits(
+        rows.filter((_, i) => i !== index),
+        totalCents,
+      ),
+    );
+  }
+
+  function setSplitAmount(index: number, value: string) {
+    setSplitRows((rows) =>
+      rebalanceSplits(
+        rows.map((r, i) => (i === index ? { ...r, amount: value, edited: true } : r)),
+        totalCents,
+      ),
+    );
+  }
+
+  function rebalanceForNewTotal(newTotalCents: number) {
+    setSplitRows((rows) => rebalanceSplits(rows, newTotalCents));
+  }
+
+  const allocatedCents = splitRows.reduce((sum, r) => sum + toCents(r.amount), 0);
+  const remainingCents = totalCents - allocatedCents;
+  const isValid = isSplitComplete(splitRows.length, remainingCents);
+
+  return {
+    splitMode,
+    splitRows,
+    toggleSplitMode,
+    addSplitPerson,
+    removeSplitPerson,
+    setSplitAmount,
+    rebalanceForNewTotal,
+    remainingCents,
+    isValid,
+    reset: () => {
+      setSplitMode(false);
+      setSplitRows([]);
+    },
+  };
+}
+
+function isSplitComplete(rowCount: number, remainingCents: number): boolean {
+  return rowCount >= 2 && remainingCents === 0;
+}
+
+function isCreditFlagActive(type: FormType, isEditMode: boolean, splitMode: boolean): boolean {
+  return type === "credit" && !isEditMode && splitMode;
+}
+
+function PersonAndAmountFields({
+  showPerson,
+  personId,
+  setPersonId,
+  people,
+  showAmount,
+  amountLabel,
+  amount,
+  onAmountChange,
+}: {
+  showPerson: boolean;
+  personId: string;
+  setPersonId: (id: string) => void;
+  people: Person[];
+  showAmount: boolean;
+  amountLabel: string;
+  amount: string;
+  onAmountChange: (v: string) => void;
+}) {
+  return (
+    <>
+      {showPerson && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="u-person">Pessoa</Label>
+          <Select
+            id="u-person"
+            value={personId}
+            onChange={(e) => setPersonId(e.target.value)}
+            required
+          >
+            <option value="">Selecione a pessoa</option>
+            {people.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
+
+      {showAmount && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="u-amount">{amountLabel}</Label>
+          <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
+        </div>
+      )}
+    </>
+  );
+}
+
+function TypeToggle({
+  allowedTypes,
+  type,
+  typeLabels,
+  onSelect,
+}: {
+  allowedTypes: FormType[] | undefined;
+  type: FormType;
+  typeLabels: Record<FormType, string>;
+  onSelect: (t: FormType) => void;
+}) {
+  const types = allowedTypes ?? (["expense", "income", "credit"] as FormType[]);
+  return (
+    <div className="flex rounded-lg border overflow-hidden">
+      {types.map((t) => (
+        <button
+          key={t}
+          type="button"
+          onClick={() => onSelect(t)}
+          className={`flex-1 py-2 text-sm font-medium transition-colors ${
+            type === t
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          {typeLabels[t]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SplitStatus({ rowCount, remainingCents }: { rowCount: number; remainingCents: number }) {
+  if (rowCount === 0) return null;
+  if (rowCount < 2) {
+    return <p className="text-sm text-destructive">Selecione ao menos 2 pessoas.</p>;
+  }
+  if (remainingCents === 0) {
+    return <p className="text-sm text-muted-foreground">Valores conferem com o total.</p>;
+  }
+  const label = remainingCents > 0 ? "Faltam" : "acima do total:";
+  const formatted = fromCents(Math.abs(remainingCents));
+  return (
+    <p className="text-sm text-destructive">
+      {remainingCents > 0 ? `${label} R$ ${formatted}` : `R$ ${formatted} ${label}`}
+    </p>
+  );
+}
+
+function SplitPeopleFields({
+  people,
+  splitRows,
+  remainingCents,
+  onAddPerson,
+  onRemovePerson,
+  onAmountChange,
+}: {
+  people: Person[];
+  splitRows: SplitRow[];
+  remainingCents: number;
+  onAddPerson: (id: string) => void;
+  onRemovePerson: (index: number) => void;
+  onAmountChange: (index: number, value: string) => void;
+}) {
+  const availablePeople = people.filter((p) => !splitRows.some((r) => r.personId === p.id));
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Select
+        aria-label="Adicionar pessoa"
+        value=""
+        onChange={(e) => onAddPerson(e.target.value)}
+        disabled={availablePeople.length === 0}
+      >
+        <option value="">Adicionar pessoa…</option>
+        {availablePeople.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </Select>
+      {splitRows.map((row, index) => {
+        const person = people.find((p) => p.id === row.personId);
+        return (
+          <div key={row.personId} className="flex items-center gap-2">
+            <span className="w-32 shrink-0 truncate text-sm">{person?.name}</span>
+            <CurrencyInput
+              aria-label={`Valor de ${person?.name ?? ""}`}
+              value={row.amount}
+              onChange={(v) => onAmountChange(index, v)}
+              className="flex-1"
+            />
+            <Button type="button" variant="ghost" size="sm" onClick={() => onRemovePerson(index)}>
+              Remover
+            </Button>
+          </div>
+        );
+      })}
+      <SplitStatus rowCount={splitRows.length} remainingCents={remainingCents} />
+    </div>
+  );
+}
+
+function TotalOptions({ installmentAmount }: { installmentAmount: string }) {
+  const parcela = parseCurrencyBR(installmentAmount);
+  if (!parcela || parcela <= 0) {
+    return <option value="">Informe o valor da parcela primeiro</option>;
+  }
+  return Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+    const total = (parcela * n).toFixed(2).replace(".", ",");
+    return (
+      <option key={n} value={String(n)}>
+        {n}x = R$ {total}
+      </option>
+    );
+  });
+}
+
+function ParcelaEntryFields({
+  installmentAmount,
+  onInstallmentAmountChange,
+  numberOfInstallments,
+  onTotalPicked,
+}: {
+  installmentAmount: string;
+  onInstallmentAmountChange: (v: string) => void;
+  numberOfInstallments: string;
+  onTotalPicked: (n: string) => void;
+}) {
+  return (
+    <>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="u-installment-amount">Valor da Parcela</Label>
+        <CurrencyInput
+          id="u-installment-amount"
+          value={installmentAmount}
+          onChange={onInstallmentAmountChange}
+          required
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="u-total-picker">Selecione o total</Label>
+        <Select
+          id="u-total-picker"
+          value={numberOfInstallments}
+          onChange={(e) => onTotalPicked(e.target.value)}
+          required
+        >
+          <option value="">Selecione</option>
+          <TotalOptions installmentAmount={installmentAmount} />
+        </Select>
+      </div>
+    </>
+  );
+}
+
 function InstallmentCountOptions({ amount }: { amount: string }) {
   const total = parseCurrencyBR(amount);
   if (!total || total <= 0) {
@@ -240,6 +548,7 @@ type SubmitFields = {
   categoryId: string;
   description: string;
   numberOfInstallments: string;
+  splits?: { personId: string; amount: number }[];
 };
 
 type SubmitTarget = { url: string; method: string; body: Record<string, unknown> };
@@ -326,7 +635,7 @@ function resolveCreateTarget(type: FormType, fields: SubmitFields): SubmitTarget
     url: "/api/installments",
     method: "POST",
     body: {
-      personId: fields.personId,
+      ...(fields.splits ? { splits: fields.splits } : { personId: fields.personId }),
       creditCardId: fields.creditCardId,
       totalAmount: parseCurrencyBR(fields.amount),
       numberOfInstallments: parseInt(fields.numberOfInstallments, 10),
@@ -419,6 +728,182 @@ function getSubmitButtonLabel(loading: boolean, isEditMode: boolean, typeLabel: 
   return isEditMode ? "Salvar alterações" : `Adicionar ${typeLabel}`;
 }
 
+function AmountEntrySection({
+  parcelaMode,
+  toggleParcelaMode,
+  amount,
+  date,
+  creditCardId,
+  creditCards,
+  cardClosures,
+  numberOfInstallments,
+  setNumberOfInstallments,
+  installmentAmount,
+  setInstallmentAmount,
+  onTotalPicked,
+}: {
+  parcelaMode: boolean;
+  toggleParcelaMode: () => void;
+  amount: string;
+  date: string;
+  creditCardId: string;
+  creditCards: CreditCard[];
+  cardClosures: ClosureRecord[];
+  numberOfInstallments: string;
+  setNumberOfInstallments: (n: string) => void;
+  installmentAmount: string;
+  setInstallmentAmount: (v: string) => void;
+  onTotalPicked: (n: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <Label htmlFor={parcelaMode ? undefined : "u-installments"}>Parcelas</Label>
+        <Button type="button" variant="outline" size="sm" onClick={toggleParcelaMode}>
+          {parcelaMode ? "Informar valor total" : "Informar valor da parcela"}
+        </Button>
+      </div>
+      {parcelaMode ? (
+        <ParcelaEntryFields
+          installmentAmount={installmentAmount}
+          onInstallmentAmountChange={setInstallmentAmount}
+          numberOfInstallments={numberOfInstallments}
+          onTotalPicked={onTotalPicked}
+        />
+      ) : (
+        <Select
+          id="u-installments"
+          value={numberOfInstallments}
+          onChange={(e) => setNumberOfInstallments(e.target.value)}
+          required
+        >
+          <InstallmentCountOptions amount={amount} />
+        </Select>
+      )}
+      <InstallmentPreview
+        amount={amount}
+        date={date}
+        selectedCard={creditCards.find((c) => c.id === creditCardId)}
+        numberOfInstallments={numberOfInstallments}
+        cardClosures={cardClosures}
+      />
+    </div>
+  );
+}
+
+function CreditTypeFields({
+  isEditMode,
+  people,
+  creditCardId,
+  setCreditCardId,
+  creditCards,
+  numberOfInstallments,
+  setNumberOfInstallments,
+  amount,
+  date,
+  cardClosures,
+  splitMode,
+  toggleSplitMode,
+  splitTotalCents,
+  splitRows,
+  splitRemainingCents,
+  addSplitPerson,
+  removeSplitPerson,
+  setSplitAmount,
+  parcelaMode,
+  toggleParcelaMode,
+  installmentAmount,
+  setInstallmentAmount,
+  onTotalPicked,
+}: {
+  isEditMode: boolean;
+  people: Person[];
+  creditCardId: string;
+  setCreditCardId: (id: string) => void;
+  creditCards: CreditCard[];
+  numberOfInstallments: string;
+  setNumberOfInstallments: (n: string) => void;
+  amount: string;
+  date: string;
+  cardClosures: ClosureRecord[];
+  splitMode: boolean;
+  toggleSplitMode: () => void;
+  splitTotalCents: number;
+  splitRows: SplitRow[];
+  splitRemainingCents: number;
+  addSplitPerson: (id: string) => void;
+  removeSplitPerson: (index: number) => void;
+  setSplitAmount: (index: number, value: string) => void;
+  parcelaMode: boolean;
+  toggleParcelaMode: () => void;
+  installmentAmount: string;
+  setInstallmentAmount: (v: string) => void;
+  onTotalPicked: (n: string) => void;
+}) {
+  return (
+    <>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="u-card">Cartão de Crédito</Label>
+        <Select
+          id="u-card"
+          value={creditCardId}
+          onChange={(e) => setCreditCardId(e.target.value)}
+          required
+        >
+          <option value="">Selecione o cartão</option>
+          {creditCards.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
+      </div>
+      {!isEditMode && (
+        <AmountEntrySection
+          parcelaMode={parcelaMode}
+          toggleParcelaMode={toggleParcelaMode}
+          amount={amount}
+          date={date}
+          creditCardId={creditCardId}
+          creditCards={creditCards}
+          cardClosures={cardClosures}
+          numberOfInstallments={numberOfInstallments}
+          setNumberOfInstallments={setNumberOfInstallments}
+          installmentAmount={installmentAmount}
+          setInstallmentAmount={setInstallmentAmount}
+          onTotalPicked={onTotalPicked}
+        />
+      )}
+      {!isEditMode && (
+        <div className="flex flex-col gap-2 rounded-md border border-input p-3">
+          <div className="flex items-center justify-between">
+            <Label>Dividir com outras pessoas</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={splitTotalCents <= 0}
+              onClick={toggleSplitMode}
+            >
+              {splitMode ? "Cancelar divisão" : "Dividir"}
+            </Button>
+          </div>
+          {splitMode && (
+            <SplitPeopleFields
+              people={people}
+              splitRows={splitRows}
+              remainingCents={splitRemainingCents}
+              onAddPerson={addSplitPerson}
+              onRemovePerson={removeSplitPerson}
+              onAmountChange={setSplitAmount}
+            />
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
 export function UnifiedTransactionForm({
   people,
   categories,
@@ -449,6 +934,43 @@ export function UnifiedTransactionForm({
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [cardClosures, setCardClosures] = useState<ClosureRecord[]>([]);
+  const [parcelaMode, setParcelaMode] = useState(false);
+  const [installmentAmount, setInstallmentAmount] = useState("");
+
+  const splitTotalCents = toCents(amount);
+  const {
+    splitMode,
+    splitRows,
+    toggleSplitMode,
+    addSplitPerson,
+    removeSplitPerson,
+    setSplitAmount,
+    rebalanceForNewTotal,
+    remainingCents: splitRemainingCents,
+    isValid: isSplitValid,
+    reset: resetSplit,
+  } = useSplitRows(splitTotalCents, personId);
+  const isCreditSplit = isCreditFlagActive(type, isEditMode, splitMode);
+  const isParcelaMode = isCreditFlagActive(type, isEditMode, parcelaMode);
+
+  function toggleParcelaMode() {
+    if (!parcelaMode) {
+      setAmount("");
+      setNumberOfInstallments("");
+      if (splitMode) rebalanceForNewTotal(0);
+    }
+    setParcelaMode(!parcelaMode);
+    setInstallmentAmount("");
+  }
+
+  function handleTotalPicked(value: string) {
+    const n = parseInt(value, 10);
+    if (!n) return;
+    const totalCents = toCents(installmentAmount) * n;
+    setAmount(fromCents(totalCents));
+    setNumberOfInstallments(value);
+    if (splitMode) rebalanceForNewTotal(totalCents);
+  }
 
   useEffect(() => {
     const card = creditCards.find((c) => c.id === creditCardId);
@@ -498,7 +1020,16 @@ export function UnifiedTransactionForm({
     setSource("SALARY");
     setCreditCardId("");
     setNumberOfInstallments("2");
+    resetSplit();
+    setParcelaMode(false);
+    setInstallmentAmount("");
     setRefreshKey((k) => k + 1);
+  }
+
+  function handleAmountChange(v: string) {
+    setAmount(v);
+    setNumberOfInstallments("1");
+    if (splitMode) rebalanceForNewTotal(toCents(v));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -515,6 +1046,14 @@ export function UnifiedTransactionForm({
       categoryId,
       description,
       numberOfInstallments,
+      ...(isCreditSplit
+        ? {
+            splits: splitRows.map((r) => ({
+              personId: r.personId,
+              amount: parseCurrencyBR(r.amount),
+            })),
+          }
+        : {}),
     });
 
     if ("error" in target) {
@@ -555,53 +1094,30 @@ export function UnifiedTransactionForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {!isEditMode && (
-        <div className="flex rounded-lg border overflow-hidden">
-          {(allowedTypes ?? (["expense", "income", "credit"] as FormType[])).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setType(t)}
-              className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                type === t
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {typeLabels[t]}
-            </button>
-          ))}
-        </div>
+        <TypeToggle
+          allowedTypes={allowedTypes}
+          type={type}
+          typeLabels={typeLabels}
+          onSelect={(t) => {
+            setType(t);
+            if (t !== "credit") {
+              resetSplit();
+              setParcelaMode(false);
+            }
+          }}
+        />
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-person">Pessoa</Label>
-        <Select
-          id="u-person"
-          value={personId}
-          onChange={(e) => setPersonId(e.target.value)}
-          required
-        >
-          <option value="">Selecione a pessoa</option>
-          {people.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-amount">{amountLabel}</Label>
-        <CurrencyInput
-          id="u-amount"
-          value={amount}
-          onChange={(v) => {
-            setAmount(v);
-            setNumberOfInstallments("1");
-          }}
-          required
-        />
-      </div>
+      <PersonAndAmountFields
+        showPerson={!isCreditSplit}
+        personId={personId}
+        setPersonId={setPersonId}
+        people={people}
+        showAmount={!isParcelaMode}
+        amountLabel={amountLabel}
+        amount={amount}
+        onAmountChange={handleAmountChange}
+      />
 
       <div className="flex flex-col gap-1.5">
         <Label>{dateLabel}</Label>
@@ -640,44 +1156,31 @@ export function UnifiedTransactionForm({
       )}
 
       {type === "credit" && (
-        <>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="u-card">Cartão de Crédito</Label>
-            <Select
-              id="u-card"
-              value={creditCardId}
-              onChange={(e) => setCreditCardId(e.target.value)}
-              required
-            >
-              <option value="">Selecione o cartão</option>
-              {creditCards.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-          </div>
-          {!isEditMode && (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="u-installments">Parcelas</Label>
-              <Select
-                id="u-installments"
-                value={numberOfInstallments}
-                onChange={(e) => setNumberOfInstallments(e.target.value)}
-                required
-              >
-                <InstallmentCountOptions amount={amount} />
-              </Select>
-              <InstallmentPreview
-                amount={amount}
-                date={date}
-                selectedCard={creditCards.find((c) => c.id === creditCardId)}
-                numberOfInstallments={numberOfInstallments}
-                cardClosures={cardClosures}
-              />
-            </div>
-          )}
-        </>
+        <CreditTypeFields
+          isEditMode={isEditMode}
+          people={people}
+          creditCardId={creditCardId}
+          setCreditCardId={setCreditCardId}
+          creditCards={creditCards}
+          numberOfInstallments={numberOfInstallments}
+          setNumberOfInstallments={setNumberOfInstallments}
+          amount={amount}
+          date={date}
+          cardClosures={cardClosures}
+          splitMode={splitMode}
+          toggleSplitMode={toggleSplitMode}
+          splitTotalCents={splitTotalCents}
+          splitRows={splitRows}
+          splitRemainingCents={splitRemainingCents}
+          addSplitPerson={addSplitPerson}
+          removeSplitPerson={removeSplitPerson}
+          setSplitAmount={setSplitAmount}
+          parcelaMode={parcelaMode}
+          toggleParcelaMode={toggleParcelaMode}
+          installmentAmount={installmentAmount}
+          setInstallmentAmount={setInstallmentAmount}
+          onTotalPicked={handleTotalPicked}
+        />
       )}
 
       <div className="flex flex-col gap-1.5">
@@ -702,7 +1205,7 @@ export function UnifiedTransactionForm({
         />
       )}
 
-      <Button type="submit" disabled={loading}>
+      <Button type="submit" disabled={loading || (splitMode && !isSplitValid)}>
         {getSubmitButtonLabel(loading, isEditMode, typeLabels[type])}
       </Button>
     </form>

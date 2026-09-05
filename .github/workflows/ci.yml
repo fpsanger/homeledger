@@ -19,13 +19,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality-ratchet:
-    name: Tests and quality ratchet
+  agent-check:
+    name: Agent check
     runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgresql://homeledger:homeledger@localhost:5432/homeledger
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -36,11 +39,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Test quality tooling
-        run: npm run test:quality
+      - name: Run canonical agent completion gate
+        run: npm run agent:check
 
-      - name: Reject quality regressions
-        run: npm run quality:ratchet
+  pr-diff-review:
+    name: PR diff review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Analyze PR diff
+        run: node scripts/pr-checks/analyze-diff.cjs --base=${{ github.event.pull_request.base.sha }} --head=${{ github.event.pull_request.head.sha }}
 
   database:
     name: Database
@@ -66,7 +86,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -82,75 +102,3 @@ jobs:
 
       - name: Apply migrations to empty database
         run: npx prisma migrate deploy
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22.x
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Biome checks
-        run: npm run lint
-
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
-
-    env:
-      DATABASE_URL: postgresql://homeledger:homeledger@localhost:5432/homeledger
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22.x
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Check TypeScript
-        run: npx tsc --noEmit
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-
-    env:
-      DATABASE_URL: postgresql://homeledger:homeledger@localhost:5432/homeledger
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22.x
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Build application
-        run: npm run build

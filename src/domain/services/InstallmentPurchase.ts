@@ -10,13 +10,18 @@ export type InstallmentDraft = {
   categoryId: string | null;
 };
 
+export type PurchaseSplitInput = {
+  personId: string;
+  amount: number;
+};
+
 export type InstallmentDraftWithPurchaseId = InstallmentDraft & {
   creditCardPurchaseId: string;
 };
 
 export type PurchaseDraft = {
   id: string;
-  personId: string;
+  personId: string | null;
   totalAmount: number;
   numberOfInstallments: number;
   purchaseDate: Date;
@@ -163,6 +168,56 @@ export function createInstallmentPurchase(
   const purchase: PurchaseDraft = {
     id: input.id,
     personId: input.personId,
+    totalAmount: input.totalAmount,
+    numberOfInstallments: input.numberOfInstallments,
+    purchaseDate: input.purchaseDate,
+    description: input.description,
+    categoryId: input.categoryId,
+    creditCardId: input.creditCardId,
+  };
+
+  return { purchase, installments };
+}
+
+type CreateSplitInstallmentPurchaseInput = Omit<CreateInstallmentPurchaseInput, "personId"> & {
+  splits: PurchaseSplitInput[];
+};
+
+function validateSplits(splits: PurchaseSplitInput[], totalAmount: number): void {
+  if (splits.length < 2) throw new Error("A split purchase requires at least 2 people");
+
+  const personIds = new Set<string>();
+  for (const split of splits) {
+    if (!split.personId) throw new Error("Person is required");
+    if (personIds.has(split.personId))
+      throw new Error("Each person can only appear once in a split");
+    personIds.add(split.personId);
+    if (split.amount <= 0) throw new Error("Amount must be positive");
+  }
+
+  const totalCents = Math.round(totalAmount * 100);
+  const splitCents = splits.reduce((sum, split) => sum + Math.round(split.amount * 100), 0);
+  if (splitCents !== totalCents) {
+    throw new Error("Split amounts must sum to the total amount");
+  }
+}
+
+export function createSplitInstallmentPurchase(
+  input: CreateSplitInstallmentPurchaseInput,
+): InstallmentPurchaseResult {
+  if (input.totalAmount <= 0) throw new Error("Amount must be positive");
+  if (input.numberOfInstallments < 1) throw new Error("Number of installments must be at least 1");
+  validateSplits(input.splits, input.totalAmount);
+
+  const installments: InstallmentDraftWithPurchaseId[] = input.splits.flatMap((split) =>
+    createInstallments({ ...input, personId: split.personId, totalAmount: split.amount }).map(
+      (draft) => ({ ...draft, creditCardPurchaseId: input.id }),
+    ),
+  );
+
+  const purchase: PurchaseDraft = {
+    id: input.id,
+    personId: null,
     totalAmount: input.totalAmount,
     numberOfInstallments: input.numberOfInstallments,
     purchaseDate: input.purchaseDate,

@@ -26,6 +26,15 @@ export function createEmptyRow(defaultDate: string): PurchaseRow {
   };
 }
 
+export function duplicateRow(row: PurchaseRow, defaultDate: string): PurchaseRow {
+  return {
+    ...createEmptyRow(defaultDate),
+    categoryId: row.categoryId,
+    description: row.description,
+    numberOfInstallments: row.numberOfInstallments,
+  };
+}
+
 function hasInvalidAmount(value: string): boolean {
   if (!value) return true;
   const amount = parseCurrencyBR(value);
@@ -36,7 +45,7 @@ export function validateRow(row: PurchaseRow): string | null {
   if (hasInvalidAmount(row.amount)) return "Informe um valor válido.";
   if (!row.date) return "Informe a data.";
   const n = parseInt(row.numberOfInstallments, 10);
-  if (!n || n < 2) return "Informe o número de parcelas.";
+  if (!n || n < 1) return "Informe o número de parcelas.";
   return null;
 }
 

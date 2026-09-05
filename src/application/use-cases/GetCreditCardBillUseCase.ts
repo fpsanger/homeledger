@@ -37,7 +37,7 @@ function groupInstallmentsByCard(
     const enriched: BillInstallmentItem = {
       ...inst,
       purchaseDescription: purchase.description,
-      personId: purchase.personId,
+      personId: inst.personId,
       categoryId: purchase.categoryId,
       numberOfInstallments: purchase.numberOfInstallments,
       purchaseDate: purchase.purchaseDate,
@@ -77,7 +77,10 @@ export async function getCreditCardBillUseCase(
   ]);
 
   const purchaseMap = new Map(purchases.map((p) => [p.id, p]));
-  const installmentsByCard = groupInstallmentsByCard(installments, purchaseMap);
+  const scopedInstallments = input.personId
+    ? installments.filter((i) => i.personId === input.personId)
+    : installments;
+  const installmentsByCard = groupInstallmentsByCard(scopedInstallments, purchaseMap);
   const refundsByCard = groupRefundsByCard(refunds, input.personId);
 
   const cardMap = new Map(cards.map((c) => [c.id, c]));

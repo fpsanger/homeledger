@@ -21,6 +21,7 @@ const makeTransaction = (overrides: Partial<TransactionRecord> = {}): Transactio
 const makeInstallment = (overrides: Partial<InstallmentRecord> = {}): InstallmentRecord => ({
   id: "inst-1",
   creditCardPurchaseId: "purchase-1",
+  personId: "person-1",
   installmentNumber: 1,
   amount: 100,
   dueYear: 2026,

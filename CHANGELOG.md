@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-09-05
+
 ### Added
 
 - Added a deterministic monthly-ledger E2E scenario, scoped Stryker mutation testing, and diff-aware PR checks for migrations, financial tests, API validation, and harness changes.

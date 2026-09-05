@@ -21,7 +21,7 @@ export type InstallmentDraftWithPurchaseId = InstallmentDraft & {
 
 export type PurchaseDraft = {
   id: string;
-  personId: string;
+  personId: string | null;
   totalAmount: number;
   numberOfInstallments: number;
   purchaseDate: Date;
@@ -217,7 +217,7 @@ export function createSplitInstallmentPurchase(
 
   const purchase: PurchaseDraft = {
     id: input.id,
-    personId: input.splits[0].personId,
+    personId: null,
     totalAmount: input.totalAmount,
     numberOfInstallments: input.numberOfInstallments,
     purchaseDate: input.purchaseDate,

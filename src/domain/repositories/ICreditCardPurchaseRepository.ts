@@ -1,6 +1,6 @@
 export interface CreditCardPurchaseRecord {
   id: string;
-  personId: string;
+  personId: string | null;
   creditCardId: string | null;
   description: string;
   totalAmount: number;

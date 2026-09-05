@@ -8,7 +8,7 @@ import type {
 
 function purchaseToRecord(row: {
   id: string;
-  personId: string;
+  personId: string | null;
   creditCardId: string | null;
   description: string;
   totalAmount: { toNumber(): number } | number;

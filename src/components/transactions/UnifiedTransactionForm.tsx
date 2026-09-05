@@ -954,7 +954,12 @@ export function UnifiedTransactionForm({
   const isParcelaMode = isCreditFlagActive(type, isEditMode, parcelaMode);
 
   function toggleParcelaMode() {
-    setParcelaMode((mode) => !mode);
+    if (!parcelaMode) {
+      setAmount("");
+      setNumberOfInstallments("");
+      if (splitMode) rebalanceForNewTotal(0);
+    }
+    setParcelaMode(!parcelaMode);
     setInstallmentAmount("");
   }
 

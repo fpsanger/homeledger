@@ -80,7 +80,7 @@ model Transaction {
 
 model CreditCardPurchase {
   id                   String        @id @default(uuid())
-  personId             String
+  personId             String?
   description          String
   totalAmount          Decimal       @db.Decimal(15, 2)
   numberOfInstallments Int
@@ -90,7 +90,7 @@ model CreditCardPurchase {
   creditCardId         String?
   category             Category?     @relation(fields: [categoryId], references: [id])
   creditCard           CreditCard?   @relation(fields: [creditCardId], references: [id])
-  person               Person        @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person               Person?       @relation(fields: [personId], references: [id], onDelete: Cascade)
   installments         Installment[]
 }
 

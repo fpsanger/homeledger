@@ -4,8 +4,11 @@ const test = require("node:test");
 
 const packageJson = require(path.resolve(__dirname, "../../package.json"));
 
-test("agent:check validates the Prisma schema", () => {
-  assert.match(packageJson.scripts["agent:check"], /prisma validate/);
+test("agent:check generates the Prisma client before running checks and validates the schema", () => {
+  assert.equal(
+    packageJson.scripts["agent:check"],
+    "prisma generate && npm run verify:fast && prisma validate",
+  );
 });
 
 test("verify composes the canonical agent gate with Playwright", () => {

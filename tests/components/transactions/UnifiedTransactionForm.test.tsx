@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 
 jest.mock("next/navigation", () => ({
@@ -13,7 +13,12 @@ jest.mock("@/components/ui/category-combobox", () => ({
   CategoryCombobox: () => null,
 }));
 jest.mock("@/components/ui/currency-input", () => ({
-  CurrencyInput: () => null,
+  CurrencyInput: ({
+    onChange,
+    ...props
+  }: React.InputHTMLAttributes<HTMLInputElement> & {
+    onChange?: (value: string) => void;
+  }) => <input {...props} onChange={(event) => onChange?.(event.target.value)} />,
 }));
 jest.mock("@/components/ui/date-picker", () => ({
   DatePicker: () => null,
@@ -115,5 +120,43 @@ describe("UnifiedTransactionForm — credit-card closure", () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+});
+
+describe("UnifiedTransactionForm — installment amount mode", () => {
+  it("clears the hidden total and installment count when entering installment amount mode", () => {
+    const card = {
+      id: "card-1",
+      name: "Card",
+      closureType: "FIXED" as const,
+      fixedClosureDay: 20,
+      fixedClosurePreviousMonth: false,
+      alwaysNextMonth: false,
+      closureNextMonth: false,
+    };
+
+    render(
+      <UnifiedTransactionForm
+        people={people}
+        categories={categories}
+        creditCards={[card]}
+        initialValues={{
+          ...baseInitialValues,
+          type: "credit",
+          personId: "p1",
+          amount: "300,00",
+          date: "2026-01-15",
+          creditCardId: card.id,
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
+    fireEvent.click(screen.getByRole("button", { name: "Informar valor da parcela" }));
+
+    expect(screen.getByLabelText("Selecione o total")).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Informar valor total" }));
+    expect(screen.getByLabelText("Valor Total")).toHaveValue("");
   });
 });

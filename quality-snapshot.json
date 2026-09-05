@@ -1,9 +1,9 @@
 {
   "coverage": {
-    "statements": 36.95,
-    "branches": 28.28,
-    "functions": 29.04,
-    "lines": 37.22
+    "statements": 37.79,
+    "branches": 29.22,
+    "functions": 30.18,
+    "lines": 38.16
   },
   "violations": {
     "architecture": 0,
@@ -53,7 +53,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (608). Maximum allowed is 400.",
+        "message": "This file has too many lines (1064). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
@@ -62,7 +62,7 @@
             "column": 1
           },
           "end": {
-            "line": 710,
+            "line": 1213,
             "column": 2
           }
         },
@@ -70,7 +70,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (468). Maximum allowed is 400.",
+        "message": "This file has too many lines (482). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/infrastructure/repositories/PrismaCreditCardPurchaseRepository.ts",
@@ -79,7 +79,7 @@
             "column": 1
           },
           "end": {
-            "line": 468,
+            "line": 482,
             "column": 2
           }
         },
@@ -412,16 +412,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (187). Maximum allowed is 80.",
+        "message": "This function has too many lines (232). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 422,
+            "line": 907,
             "column": 8
           },
           "end": {
-            "line": 710,
+            "line": 1213,
             "column": 2
           }
         },

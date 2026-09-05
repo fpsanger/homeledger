@@ -28,6 +28,7 @@ const card2 = {
 const installment1 = {
   id: "i-1",
   creditCardPurchaseId: "p-1",
+  personId: "person-1",
   installmentNumber: 1,
   amount: 100,
   dueYear: 2026,
@@ -37,6 +38,7 @@ const installment1 = {
 const installment2 = {
   id: "i-2",
   creditCardPurchaseId: "p-2",
+  personId: "person-1",
   installmentNumber: 1,
   amount: 200,
   dueYear: 2026,

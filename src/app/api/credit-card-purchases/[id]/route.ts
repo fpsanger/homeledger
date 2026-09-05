@@ -33,6 +33,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const { creditCardPurchase } = createRepositories();
+
+    const [existingPurchase, installments] = await Promise.all([
+      creditCardPurchase.findPurchaseById(params.id),
+      creditCardPurchase.findByPurchaseId(params.id),
+    ]);
+    if (!existingPurchase) return Response.json({ error: "Not found" }, { status: 404 });
+
+    const isSplit = new Set(installments.map((i) => i.personId)).size > 1;
+    const totalChanged =
+      Math.round(totalAmount * 100) !== Math.round(existingPurchase.totalAmount * 100);
+    if (isSplit && totalChanged) {
+      return Response.json(
+        { error: "Editing the total amount of a split purchase is not supported yet" },
+        { status: 409 },
+      );
+    }
+
     await creditCardPurchase.updatePurchase(params.id, {
       description: description ?? "",
       totalAmount,

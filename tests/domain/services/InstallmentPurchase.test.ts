@@ -1,6 +1,7 @@
 import {
   createInstallmentPurchase,
   createInstallments,
+  createSplitInstallmentPurchase,
   resolveFirstDueMonth,
 } from "../../../src/domain/services/InstallmentPurchase";
 
@@ -323,6 +324,120 @@ describe("InstallmentPurchase service", () => {
       expect(total).toBeCloseTo(100, 10);
       expect(result.installments[0].amount).toBe(33.33);
       expect(result.installments[2].amount).toBe(33.34);
+    });
+  });
+
+  describe("createSplitInstallmentPurchase", () => {
+    const basePurchaseWithId = {
+      id: "purchase-1",
+      totalAmount: 300,
+      numberOfInstallments: 3,
+      purchaseDate: new Date("2026-01-15"),
+      description: "Groceries",
+      categoryId: null,
+      creditCardId: "card-1",
+      closureDay: 25,
+      alwaysNextMonth: false,
+    };
+
+    it("creates installments for every person, each summing to their own share", () => {
+      const result = createSplitInstallmentPurchase({
+        ...basePurchaseWithId,
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+      });
+
+      const anaInstallments = result.installments.filter((i) => i.personId === "ana");
+      const bobInstallments = result.installments.filter((i) => i.personId === "bob");
+      expect(anaInstallments).toHaveLength(3);
+      expect(bobInstallments).toHaveLength(3);
+      expect(anaInstallments.reduce((sum, i) => sum + i.amount, 0)).toBeCloseTo(200, 10);
+      expect(bobInstallments.reduce((sum, i) => sum + i.amount, 0)).toBeCloseTo(100, 10);
+    });
+
+    it("every installment is linked to the same creditCardPurchaseId", () => {
+      const result = createSplitInstallmentPurchase({
+        ...basePurchaseWithId,
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+      });
+
+      for (const inst of result.installments) {
+        expect(inst.creditCardPurchaseId).toBe("purchase-1");
+      }
+    });
+
+    it("throws when fewer than 2 people are given", () => {
+      expect(() =>
+        createSplitInstallmentPurchase({
+          ...basePurchaseWithId,
+          splits: [{ personId: "ana", amount: 300 }],
+        }),
+      ).toThrow("A split purchase requires at least 2 people");
+    });
+
+    it("throws when split amounts do not sum to totalAmount", () => {
+      expect(() =>
+        createSplitInstallmentPurchase({
+          ...basePurchaseWithId,
+          splits: [
+            { personId: "ana", amount: 200 },
+            { personId: "bob", amount: 50 },
+          ],
+        }),
+      ).toThrow("Split amounts must sum to the total amount");
+    });
+
+    it("throws when the same person appears twice", () => {
+      expect(() =>
+        createSplitInstallmentPurchase({
+          ...basePurchaseWithId,
+          splits: [
+            { personId: "ana", amount: 200 },
+            { personId: "ana", amount: 100 },
+          ],
+        }),
+      ).toThrow("Each person can only appear once in a split");
+    });
+
+    it("throws when a split amount is not positive", () => {
+      expect(() =>
+        createSplitInstallmentPurchase({
+          ...basePurchaseWithId,
+          splits: [
+            { personId: "ana", amount: 300 },
+            { personId: "bob", amount: 0 },
+          ],
+        }),
+      ).toThrow("Amount must be positive");
+    });
+
+    it("purchase draft totalAmount is the full amount, not one person's share", () => {
+      const result = createSplitInstallmentPurchase({
+        ...basePurchaseWithId,
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+      });
+
+      expect(result.purchase.totalAmount).toBe(300);
+    });
+
+    it("does not assign the shared purchase to an arbitrary participant", () => {
+      const result = createSplitInstallmentPurchase({
+        ...basePurchaseWithId,
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+      });
+
+      expect(result.purchase.personId).toBeNull();
     });
   });
 

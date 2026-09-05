@@ -31,6 +31,19 @@ test("counts architecture violations and dependency cycles", () => {
   assert.equal(result.circularDependencies.length, 1);
 });
 
+test("flags domain imports of forbidden framework packages", () => {
+  const root = fixture({
+    "src/domain/example.ts": 'import { useState } from "react"; export const x = useState;',
+  });
+
+  const result = analyzeSources(root, {
+    limits: { cyclomaticComplexity: 10, fileLines: 400, functionLines: 80 },
+  });
+
+  assert.equal(result.architecture.length, 1);
+  assert.deepEqual(result.architecture[0], { file: "src/domain/example.ts", imports: "react" });
+});
+
 test("counts cyclomatic complexity violations", () => {
   const root = fixture({
     "src/domain/example.ts": [

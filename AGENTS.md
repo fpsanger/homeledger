@@ -24,15 +24,42 @@ TypeScript is strict and Biome owns formatting and lint rules. Tests live under 
 source areas. New behavior and regression fixes require direct automated coverage; financial and
 domain behavior should be developed test-first.
 
+Layering, circular dependencies, cyclomatic complexity, file/function size, and coverage are
+enforced mechanically by `scripts/quality/*.cjs` (`npm run quality:ratchet`), not by convention
+alone — see `quality-baseline.json` for current thresholds.
+
 ## Canonical validation
 
 ```bash
-npm run verify:fast  # lint, typecheck, quality tooling, Jest, build
-npm run verify       # verify:fast plus Playwright
+npm run agent:check  # lint, typecheck, Jest/coverage, quality ratchet, build, Prisma validation
+npm run verify        # agent:check plus Playwright e2e (requires Postgres + installed browsers)
+npm run pr:review     # review committed and local changes for migration/test/harness risks
 ```
 
-Use focused tests while iterating. Update `CHANGELOG.md` for user-visible, domain, schema, or
-operational changes.
+`npm run agent:check` is the required gate before declaring any implementation complete. Use
+focused Jest/Playwright paths while iterating; run the full command before finishing.
+
+## Agent completion contract
+
+1. Understand the task.
+2. Read only the documentation relevant to it (this file routes you to the rest).
+3. Inspect the existing implementation before modifying it.
+4. Implement the smallest appropriate change.
+5. Run `npm run agent:check`.
+6. If it fails, inspect the failures and fix the implementation.
+7. Repeat steps 5-6 until it passes.
+8. Review the diff for unnecessary changes.
+9. Only then declare the implementation complete.
+
+Never:
+
+- Bypass or skip a failing check to get past it.
+- Lower a coverage baseline or raise a complexity/size threshold merely to pass.
+- Disable or delete a test to make a run go green.
+- Suppress an architecture violation without a documented justification.
+- Claim success without having actually run `npm run agent:check`.
+
+Update `CHANGELOG.md` for user-visible, domain, schema, or operational changes.
 
 ## Review priorities
 
@@ -49,6 +76,17 @@ Treat these as blocking:
 
 Order findings by severity and cite exact files and lines. If no blocking findings exist, say so
 and identify any verification not performed.
+
+The `pr-diff-review` CI job (`npm run pr:review`, `scripts/pr-checks/analyze-diff.cjs`) mechanically
+pre-checks a subset of the above on every PR against `develop`: schema-without-migration (blocking),
+financial-logic-without-tests, API-route-without-validation-or-tests, and any touch to a protected
+harness file (all three flagged, not blocked — false-positive-prone heuristics). It complements, and
+does not replace, human/Codex judgment on the rest of this list.
+
+## Mutation testing
+
+`npm run mutation:test` runs the financial-critical Stryker scope from `stryker.config.mjs`.
+It is advisory and runs only weekly or manually; `npm run mutation:report` summarizes the result.
 
 ## Git and pull requests
 

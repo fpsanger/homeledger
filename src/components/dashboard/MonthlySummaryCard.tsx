@@ -73,7 +73,10 @@ export function MonthlySummaryCard({ transactions, installments = [] }: Props) {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Despesas
             </p>
-            <p className="text-xl font-semibold tracking-tight tabular-nums mt-1 amount-negative">
+            <p
+              className="text-xl font-semibold tracking-tight tabular-nums mt-1 amount-negative"
+              data-stat="monthly-expenses"
+            >
               {formatAmount(expenses)}
             </p>
           </div>

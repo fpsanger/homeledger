@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Added a deterministic monthly-ledger E2E scenario, scoped Stryker mutation testing, and
+  diff-aware PR checks for migrations, financial tests, API validation, and harness changes.
+
+### Changed
+
+- Consolidated CI lint, typecheck, tests, quality ratchet, build, and Prisma validation behind the
+  canonical `agent:check` command while keeping database, Playwright, and mutation jobs separate.
+- Simplified agent documentation and made local PR review include committed, staged, unstaged, and
+  untracked changes.
+
 ## [2.1.0] - 2026-08-29
 
 ### Added

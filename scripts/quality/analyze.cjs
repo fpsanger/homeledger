@@ -8,6 +8,13 @@ const FORBIDDEN_IMPORTS = {
   application: new Set(["infrastructure", "app", "components", "hooks"]),
   infrastructure: new Set(["app", "components", "hooks"]),
 };
+const FORBIDDEN_DOMAIN_PACKAGES = ["react", "react-dom", "next", "@prisma/client", "prisma"];
+
+function isForbiddenDomainPackage(specifier) {
+  return FORBIDDEN_DOMAIN_PACKAGES.some(
+    (forbidden) => specifier === forbidden || specifier.startsWith(`${forbidden}/`),
+  );
+}
 
 function analyzeSources(root, config) {
   const sourceRoot = path.join(root, "src");
@@ -44,6 +51,8 @@ function analyzeSources(root, config) {
               imports: normalize(path.relative(root, dependency)),
             });
           }
+        } else if (layerOf(root, file) === "domain" && isForbiddenDomainPackage(specifier)) {
+          result.architecture.push({ file: relativeFile, imports: specifier });
         }
       }
       visitFunctions(node, source, relativeFile, config.limits, result);

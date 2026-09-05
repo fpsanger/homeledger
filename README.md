@@ -106,8 +106,8 @@ npm run start    # Start the production server
 npm run lint     # Run Biome checks against src and tests
 npm run format   # Format src and tests with Biome
 npm test         # Run Jest tests
-npm run verify:fast # Run all non-E2E quality gates
-npm run verify   # Run verify:fast plus Playwright
+npm run agent:check # Run all non-E2E quality gates, including Prisma validation
+npm run verify   # Run agent:check plus Playwright
 ```
 
 ### Quality ratchet

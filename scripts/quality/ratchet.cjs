@@ -42,6 +42,28 @@ function compareSnapshots(baseline, current) {
   }
 }
 
+function formatViolation(metric, violation) {
+  switch (metric) {
+    case "architecture":
+      return `  - ${violation.file} imports ${violation.imports} (forbidden by layering rules)`;
+    case "circularDependencies":
+      return `  - cycle: ${violation.join(" -> ")}`;
+    case "complexity":
+      return `  - ${violation.file}:${violation.line} function \`${violation.name}\` has cyclomatic complexity ${violation.complexity}`;
+    case "oversizedFiles":
+    case "oversizedFunctions":
+      return `  - ${violation.location?.path ?? "unknown file"}:${violation.location?.start?.line ?? "?"} ${violation.message}`;
+    default:
+      return `  - ${JSON.stringify(violation)}`;
+  }
+}
+
+function printRegressionDetails(metric, details) {
+  const entries = details?.[metric];
+  if (!Array.isArray(entries) || entries.length === 0) return;
+  for (const entry of entries) console.error(formatViolation(metric, entry));
+}
+
 function main() {
   const root = path.resolve(__dirname, "../..");
   const baseline = JSON.parse(fs.readFileSync(path.join(root, "quality-baseline.json"), "utf8"));
@@ -49,7 +71,11 @@ function main() {
   const result = compareSnapshots(baseline, current);
 
   for (const message of result.improvements) console.log(`IMPROVEMENT: ${message}`);
-  for (const message of result.regressions) console.error(`REGRESSION: ${message}`);
+  for (const message of result.regressions) {
+    console.error(`REGRESSION: ${message}`);
+    const metric = message.split(".")[1]?.split(" ")[0];
+    printRegressionDetails(metric, current.details);
+  }
 
   if (result.regressions.length > 0) {
     console.error(`Quality ratchet failed with ${result.regressions.length} regression(s).`);
@@ -61,5 +87,5 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { compareSnapshots };
+module.exports = { compareSnapshots, formatViolation };
 

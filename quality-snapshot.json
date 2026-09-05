@@ -1,9 +1,9 @@
 {
   "coverage": {
-    "statements": 37.79,
-    "branches": 29.22,
-    "functions": 30.18,
-    "lines": 38.16
+    "statements": 38.22,
+    "branches": 29.36,
+    "functions": 30.54,
+    "lines": 38.62
   },
   "violations": {
     "architecture": 0,
@@ -53,7 +53,7 @@
       },
       {
         "severity": "warning",
-        "message": "This file has too many lines (1064). Maximum allowed is 400.",
+        "message": "This file has too many lines (1091). Maximum allowed is 400.",
         "category": "lint/nursery/noExcessiveLinesPerFile",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
@@ -62,7 +62,7 @@
             "column": 1
           },
           "end": {
-            "line": 1213,
+            "line": 1245,
             "column": 2
           }
         },
@@ -242,16 +242,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (146). Maximum allowed is 80.",
+        "message": "This function has too many lines (150). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/layout/TopNav.tsx",
           "start": {
-            "line": 35,
+            "line": 36,
             "column": 8
           },
           "end": {
-            "line": 295,
+            "line": 301,
             "column": 2
           }
         },
@@ -412,16 +412,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (232). Maximum allowed is 80.",
+        "message": "This function has too many lines (238). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 907,
+            "line": 930,
             "column": 8
           },
           "end": {
-            "line": 1213,
+            "line": 1245,
             "column": 2
           }
         },

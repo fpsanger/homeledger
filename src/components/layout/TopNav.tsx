@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/ui/select";
+import { lockBodyScroll } from "@/lib/scroll-lock";
 import { usePrivacy } from "./PrivacyProvider";
 import { useTheme } from "./ThemeProvider";
 
@@ -52,6 +53,11 @@ export function TopNav() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    return lockBodyScroll();
+  }, [drawerOpen]);
 
   useEffect(() => {
     setGlobalPersonId(getCookie("global-person-id"));

@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { lockBodyScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
 type DialogProps = {
@@ -24,10 +25,8 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
   }, [open, onClose]);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (!open) return;
+    return lockBodyScroll();
   }, [open]);
 
   if (!open) return null;

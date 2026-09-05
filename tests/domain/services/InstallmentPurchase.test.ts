@@ -427,6 +427,18 @@ describe("InstallmentPurchase service", () => {
 
       expect(result.purchase.totalAmount).toBe(300);
     });
+
+    it("does not assign the shared purchase to an arbitrary participant", () => {
+      const result = createSplitInstallmentPurchase({
+        ...basePurchaseWithId,
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+      });
+
+      expect(result.purchase.personId).toBeNull();
+    });
   });
 
   describe("resolveFirstDueMonth", () => {

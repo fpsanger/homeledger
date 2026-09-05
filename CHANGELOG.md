@@ -108,6 +108,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Prevented stale totals when switching to installment-value entry and prevented deleting one
+  participant from cascading into other participants' split installments.
 - Fixed installment amount calculation so monthly views do not duplicate full purchase totals across installments.
 - Fixed number-of-installments validation for credit card purchase flows.
 - Fixed handling for one-installment credit card purchases.

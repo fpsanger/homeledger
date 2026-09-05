@@ -19,7 +19,11 @@
     "quality:baseline:update": "npm run quality:snapshot && node scripts/quality/update-baseline.cjs",
     "quality": "npm run lint && npm run typecheck && npm run test:quality && npm run quality:ratchet && npm run build",
     "verify:fast": "npm run quality",
-    "verify": "npm run verify:fast && npm run test:e2e"
+    "verify": "npm run agent:check && npm run test:e2e",
+    "agent:check": "prisma generate && npm run verify:fast && prisma validate",
+    "pr:review": "node scripts/pr-checks/analyze-diff.cjs",
+    "mutation:test": "stryker run",
+    "mutation:report": "node scripts/quality/mutation-report.cjs"
   },
   "jest": {
     "preset": "ts-jest",
@@ -89,6 +93,8 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.14",
     "@playwright/test": "^1.62.1",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/jest-runner": "^10.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

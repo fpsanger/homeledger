@@ -33,6 +33,7 @@ function purchaseToRecord(row: {
 function installmentToRecord(row: {
   id: string;
   creditCardPurchaseId: string;
+  personId: string;
   installmentNumber: number;
   amount: { toNumber(): number } | number;
   dueYear: number;
@@ -44,7 +45,6 @@ function installmentToRecord(row: {
     categoryId: string | null;
     description?: string;
     purchaseDate?: Date;
-    personId?: string;
     creditCardId?: string | null;
     numberOfInstallments?: number;
     totalAmount?: { toNumber(): number } | number;
@@ -64,7 +64,7 @@ function installmentToRecord(row: {
     categoryId: row.creditCardPurchase?.categoryId ?? null,
     purchaseDescription: row.creditCardPurchase?.description,
     purchaseDate: row.creditCardPurchase?.purchaseDate,
-    personId: row.creditCardPurchase?.personId,
+    personId: row.personId,
     creditCardId: row.creditCardPurchase?.creditCardId,
     numberOfInstallments: row.creditCardPurchase?.numberOfInstallments,
     purchaseTotalAmount:
@@ -91,6 +91,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
         categoryId: purchase.categoryId,
         installments: {
           create: installments.map((i) => ({
+            personId: i.personId,
             installmentNumber: i.installmentNumber,
             amount: i.amount,
             dueYear: i.dueYear,
@@ -134,7 +135,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       where: {
         dueYear: year,
         dueMonth: month,
-        creditCardPurchase: { personId },
+        personId,
       },
       include: {
         creditCardPurchase: {
@@ -191,7 +192,8 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     const rows = await this.prisma.installment.findMany({
       where: {
         installmentNumber: 1,
-        creditCardPurchase: { personId, purchaseDate: { gte, lt } },
+        personId,
+        creditCardPurchase: { purchaseDate: { gte, lt } },
       },
       include: {
         creditCardPurchase: {
@@ -242,7 +244,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       where: {
         transactionYear: year,
         transactionMonth: month,
-        creditCardPurchase: { personId },
+        personId,
       },
       include: {
         creditCardPurchase: {
@@ -271,7 +273,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
 
   async findInstallmentsByYear(personId: string, year: number): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
-      where: { dueYear: year, creditCardPurchase: { personId } },
+      where: { dueYear: year, personId },
       include: { creditCardPurchase: { select: { categoryId: true } } },
     });
     return rows.map(installmentToRecord);
@@ -290,7 +292,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     year: number,
   ): Promise<InstallmentRecord[]> {
     const rows = await this.prisma.installment.findMany({
-      where: { transactionYear: year, creditCardPurchase: { personId } },
+      where: { transactionYear: year, personId },
       include: { creditCardPurchase: { select: { categoryId: true } } },
     });
     return rows.map(installmentToRecord);
@@ -308,10 +310,15 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       orderBy: { installmentNumber: "asc" },
     });
 
+    // A split purchase has more than one person's installment rows under the same
+    // creditCardPurchaseId. Re-splitting shares after creation isn't supported yet (the API
+    // layer rejects totalAmount changes on split purchases), so leave each person's installment
+    // amounts untouched here and only recompute when there is a single owner.
+    const isSplit = new Set(installments.map((i) => i.personId)).size > 1;
     const count = installments.length;
     const base = count > 0 ? Math.floor((data.totalAmount / count) * 100) / 100 : 0;
 
-    if (count > 0 && base <= 0) {
+    if (!isSplit && count > 0 && base <= 0) {
       throw new Error("Valor total muito pequeno para o número de parcelas");
     }
 
@@ -326,17 +333,19 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
           creditCardId: data.creditCardId,
         },
       }),
-      ...installments.map((inst, i) =>
-        this.prisma.installment.update({
-          where: { id: inst.id },
-          data: {
-            amount:
-              i === count - 1
-                ? Math.round((data.totalAmount - base * (count - 1)) * 100) / 100
-                : base,
-          },
-        }),
-      ),
+      ...(isSplit
+        ? []
+        : installments.map((inst, i) =>
+            this.prisma.installment.update({
+              where: { id: inst.id },
+              data: {
+                amount:
+                  i === count - 1
+                    ? Math.round((data.totalAmount - base * (count - 1)) * 100) / 100
+                    : base,
+              },
+            }),
+          )),
     ]);
   }
 
@@ -382,32 +391,35 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     id: string,
     fields: { amount: number; description: string },
   ): Promise<void> {
-    const installment = await this.prisma.installment.findUniqueOrThrow({
-      where: { id },
-      include: { creditCardPurchase: { select: { totalAmount: true } } },
-    });
+    const installment = await this.prisma.installment.findUniqueOrThrow({ where: { id } });
 
-    const purchaseTotalAmount =
-      typeof installment.creditCardPurchase.totalAmount === "number"
-        ? installment.creditCardPurchase.totalAmount
-        : installment.creditCardPurchase.totalAmount.toNumber();
-
+    // Scoped to this installment's own person, so a split purchase (multiple people,
+    // each with their own installment rows for the same creditCardPurchaseId) only has
+    // that one person's schedule recomputed — other people's rows are untouched.
     const allInstallments = await this.prisma.installment.findMany({
-      where: { creditCardPurchaseId: installment.creditCardPurchaseId },
+      where: {
+        creditCardPurchaseId: installment.creditCardPurchaseId,
+        personId: installment.personId,
+      },
       orderBy: { installmentNumber: "asc" },
     });
 
+    const toNumber = (v: { toNumber(): number } | number) =>
+      typeof v === "number" ? v : v.toNumber();
+
+    const personTotalAmount = allInstallments.reduce((sum, i) => sum + toNumber(i.amount), 0);
+
     const paidAmount = allInstallments
       .filter((i) => i.id !== id && i.isPaid)
-      .reduce((sum, i) => sum + (typeof i.amount === "number" ? i.amount : i.amount.toNumber()), 0);
+      .reduce((sum, i) => sum + toNumber(i.amount), 0);
 
     const futureInstallments = allInstallments.filter((i) => i.id !== id && !i.isPaid);
 
-    if (fields.amount > purchaseTotalAmount) {
+    if (fields.amount > personTotalAmount) {
       throw new Error("O valor da parcela não pode ser maior que o total da compra");
     }
 
-    const remainingAmount = purchaseTotalAmount - paidAmount - fields.amount;
+    const remainingAmount = personTotalAmount - paidAmount - fields.amount;
     const count = futureInstallments.length;
     const base = count > 0 ? Math.floor((remainingAmount / count) * 100) / 100 : 0;
 
@@ -438,13 +450,15 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     personId?: string,
   ): Promise<CreditCardPurchaseWithInstallments[]> {
     const rows = await this.prisma.creditCardPurchase.findMany({
-      where: personId ? { personId } : undefined,
+      where: personId ? { installments: { some: { personId } } } : undefined,
       include: { installments: true },
       orderBy: { purchaseDate: "desc" },
     });
     return rows.map((row) => ({
       ...purchaseToRecord(row),
-      installments: row.installments.map(installmentToRecord),
+      installments: row.installments
+        .filter((i) => !personId || i.personId === personId)
+        .map(installmentToRecord),
     }));
   }
 
@@ -461,7 +475,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     const gte = new Date(Date.UTC(year, month - 1, 1));
     const lt = new Date(Date.UTC(year, month, 1));
     const rows = await this.prisma.creditCardPurchase.findMany({
-      where: { personId, purchaseDate: { gte, lt } },
+      where: { installments: { some: { personId } }, purchaseDate: { gte, lt } },
     });
     return rows.map(purchaseToRecord);
   }

@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Credit-card installment purchases can now be split between multiple people, each with their own (possibly unequal) share. In the "Nova compra"/"Compra com Cartão" form (`/installments` and elsewhere `UnifiedTransactionForm` is used), toggling "Dividir com outras pessoas" after entering the total replaces the single person field with a list of people and per-person amounts that must sum to the total. If the global person filter is active, that person is pre-seeded as the first split row (still editable/removable) instead of starting empty. Each person's installments are tracked (and can be marked paid) independently; dashboards, bills, and reports attribute each installment to its own person. Editing the total amount of an already-split purchase is not supported yet and is rejected with an error.
+- The credit-card purchase form also accepts an alternate entry order: "Informar valor da parcela" lets you type the value of a single installment first, then pick the total from a "Nx = R$ Y" dropdown, instead of entering the total up front and picking the installment count.
 - Bulk credit-card purchase rows on `/credit-cards/bulk-add` now accept a single installment (1x, à vista). The installment dropdown offers 1x–12x instead of 2x–12x; new rows still default to 2x.
 - Bulk credit-card purchase rows now have a copy button next to the trash icon that starts a new row below, carrying over the category, number of installments and description.
 

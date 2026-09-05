@@ -1,12 +1,15 @@
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
-import { createInstallmentPurchase } from "../../domain/services/InstallmentPurchase";
+import {
+  createInstallmentPurchase,
+  createSplitInstallmentPurchase,
+  type PurchaseSplitInput,
+} from "../../domain/services/InstallmentPurchase";
 import { findDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
 import { resolveClosureForDate } from "../services/resolveCardClosure";
 
-type Input = {
+type SharedInput = {
   id: string;
-  personId: string;
   totalAmount: number;
   numberOfInstallments: number;
   purchaseDate: Date;
@@ -14,6 +17,32 @@ type Input = {
   categoryId: string | null;
   creditCardId: string;
 };
+
+type Input = SharedInput &
+  (
+    | { personId: string; splits?: undefined }
+    | { splits: PurchaseSplitInput[]; personId?: undefined }
+  );
+
+async function findExistingPurchasesForPerson(
+  personId: string,
+  purchaseDate: Date,
+  repo: ICreditCardPurchaseRepository,
+) {
+  const baseYear = purchaseDate.getUTCFullYear();
+  const baseMonth = purchaseDate.getUTCMonth() + 1;
+
+  const adjacentMonths = [-1, 0, 1].map((offset) => {
+    const d = new Date(Date.UTC(baseYear, baseMonth - 1 + offset, 1));
+    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+  });
+  const existingArrays = await Promise.all(
+    adjacentMonths.map(({ year, month }) =>
+      repo.findPurchasesByPersonAndMonth(personId, year, month),
+    ),
+  );
+  return existingArrays.flat();
+}
 
 export async function createInstallmentPurchaseUseCase(
   input: Input,
@@ -26,31 +55,29 @@ export async function createInstallmentPurchaseUseCase(
   const { closureDay, closureInPreviousMonth, effectiveClosureNextMonth } =
     await resolveClosureForDate(card, input.purchaseDate, creditCardRepo);
 
-  const baseYear = input.purchaseDate.getUTCFullYear();
-  const baseMonth = input.purchaseDate.getUTCMonth() + 1;
   const dateStr = input.purchaseDate.toISOString().slice(0, 10);
+  const peopleToCheck = input.splits ? input.splits.map((s) => s.personId) : [input.personId];
 
-  const adjacentMonths = [-1, 0, 1].map((offset) => {
-    const d = new Date(Date.UTC(baseYear, baseMonth - 1 + offset, 1));
-    return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
-  });
-  const existingArrays = await Promise.all(
-    adjacentMonths.map(({ year, month }) =>
-      repo.findPurchasesByPersonAndMonth(input.personId, year, month),
+  const existingByPerson = await Promise.all(
+    peopleToCheck.map((personId) =>
+      findExistingPurchasesForPerson(personId, input.purchaseDate, repo),
     ),
   );
-  const existing = existingArrays.flat();
+  const existing = existingByPerson.flat();
   const isDuplicate =
     findDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId) !==
     null;
 
-  const { purchase, installments } = createInstallmentPurchase({
-    ...input,
+  const closureFields = {
     closureDay,
     closureInPreviousMonth,
     alwaysNextMonth: card.alwaysNextMonth,
     closureNextMonth: effectiveClosureNextMonth,
-  });
+  };
+
+  const { purchase, installments } = input.splits
+    ? createSplitInstallmentPurchase({ ...input, splits: input.splits, ...closureFields })
+    : createInstallmentPurchase({ ...input, personId: input.personId, ...closureFields });
 
   const record = await repo.save(purchase, installments);
   return { record, isDuplicate };

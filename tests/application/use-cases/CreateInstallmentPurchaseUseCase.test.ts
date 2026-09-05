@@ -173,6 +173,80 @@ describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
   });
 });
 
+describe("createInstallmentPurchaseUseCase — split purchases", () => {
+  it("persists one installment per person per installment number", async () => {
+    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const purchaseRepo = makePurchaseRepo();
+
+    const result = await createInstallmentPurchaseUseCase(
+      {
+        id: "purchase-1",
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+        totalAmount: 300,
+        numberOfInstallments: 3,
+        description: "",
+        categoryId: null,
+        creditCardId: "card-1",
+        purchaseDate: new Date("2026-05-04"),
+      },
+      purchaseRepo,
+      cardRepo,
+    );
+
+    const installments = (
+      result.record as unknown as { installments: { personId: string; amount: number }[] }
+    ).installments;
+    expect(installments.filter((i) => i.personId === "ana")).toHaveLength(3);
+    expect(installments.filter((i) => i.personId === "bob")).toHaveLength(3);
+  });
+
+  it("flags a duplicate when any split person already has a matching purchase", async () => {
+    const existingPurchase: CreditCardPurchaseRecord = {
+      id: "purchase-existing",
+      personId: "bob",
+      creditCardId: "card-1",
+      description: "Other purchase",
+      totalAmount: 300,
+      numberOfInstallments: 3,
+      purchaseDate: new Date("2026-05-04"),
+      categoryId: null,
+      createdAt: new Date(),
+    };
+    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const purchaseRepo = {
+      ...makePurchaseRepo(),
+      findPurchasesByPersonAndMonth: jest
+        .fn()
+        .mockImplementation((personId: string) =>
+          Promise.resolve(personId === "bob" ? [existingPurchase] : []),
+        ),
+    };
+
+    const result = await createInstallmentPurchaseUseCase(
+      {
+        id: "purchase-1",
+        splits: [
+          { personId: "ana", amount: 200 },
+          { personId: "bob", amount: 100 },
+        ],
+        totalAmount: 300,
+        numberOfInstallments: 3,
+        description: "",
+        categoryId: null,
+        creditCardId: "card-1",
+        purchaseDate: new Date("2026-05-04"),
+      },
+      purchaseRepo,
+      cardRepo,
+    );
+
+    expect(result.isDuplicate).toBe(true);
+  });
+});
+
 describe("createInstallmentPurchaseUseCase — FIXED card with fixedClosurePreviousMonth=true", () => {
   // fixedClosureDay=27, fixedClosurePreviousMonth=true
   // April billing closes March 27; May billing closes April 27

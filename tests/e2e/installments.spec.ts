@@ -127,8 +127,11 @@ test.describe("fatura cartão", () => {
     await expect(page.getByLabel("Pessoa", { exact: true })).not.toBeVisible();
 
     const addPersonSelect = page.getByLabel("Adicionar pessoa");
+    const addPersonButton = page.getByRole("button", { name: "Adicionar", exact: true });
     await addPersonSelect.selectOption({ label: fixturePersonName });
+    await addPersonButton.click();
     await addPersonSelect.selectOption({ label: fixturePerson2Name });
+    await addPersonButton.click();
 
     // Both rows should auto-split the total equally (R$ 150,00 each).
     await expect(page.getByLabel(`Valor de ${fixturePersonName}`)).toHaveValue("R$ 150,00");
@@ -199,12 +202,11 @@ test.describe("fatura cartão", () => {
       .getAttribute("value");
     await cardSelect.selectOption(fixtureCardValue ?? "");
 
-    await page.getByRole("button", { name: "Informar valor da parcela" }).click();
+    await page.getByRole("button", { name: "Valor da parcela" }).click();
 
-    // The generic "Valor Total" field and the count-first "Parcelas" select are replaced.
-    await expect(page.locator("#u-amount")).not.toBeVisible();
-
-    await page.locator("#u-installment-amount").fill("50,00");
+    // The same amount field is reused for "Valor da Parcela"; the count-first
+    // "Parcelas" select is replaced by the total picker.
+    await page.locator("#u-amount").fill("50,00");
     await page.locator("#u-total-picker").selectOption({ label: "3x = R$ 150,00" });
 
     const description = `E2E parcela-first ${Date.now()}`;
@@ -267,6 +269,7 @@ test.describe("fatura cartão", () => {
 
     const addPersonSelect = page.getByLabel("Adicionar pessoa");
     await addPersonSelect.selectOption({ label: fixturePerson2Name });
+    await page.getByRole("button", { name: "Adicionar", exact: true }).click();
     await expect(page.getByLabel(`Valor de ${fixturePersonName}`)).toHaveValue("R$ 150,00");
     await expect(page.getByLabel(`Valor de ${fixturePerson2Name}`)).toHaveValue("R$ 150,00");
     await expect(page.getByText("Valores conferem com o total.")).toBeVisible();

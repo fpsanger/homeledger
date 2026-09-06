@@ -244,12 +244,67 @@ function isCreditFlagActive(type: FormType, isEditMode: boolean, splitMode: bool
   return type === "credit" && !isEditMode && splitMode;
 }
 
+function isCreditEntryMode(type: FormType, isEditMode: boolean): boolean {
+  return type === "credit" && !isEditMode;
+}
+
+function getAmountFieldProps(
+  isParcelaMode: boolean,
+  amountLabel: string,
+  amount: string,
+  installmentAmount: string,
+  onAmountChange: (v: string) => void,
+  onInstallmentAmountChange: (v: string) => void,
+) {
+  if (isParcelaMode) {
+    return {
+      amountLabel: "Valor da Parcela",
+      amount: installmentAmount,
+      onAmountChange: onInstallmentAmountChange,
+    };
+  }
+  return { amountLabel, amount, onAmountChange };
+}
+
+function ValueModeSelector({
+  parcelaMode,
+  onChange,
+}: {
+  parcelaMode: boolean;
+  onChange: (mode: "total" | "parcela") => void;
+}) {
+  const options: { mode: "total" | "parcela"; label: string }[] = [
+    { mode: "total", label: "Valor total" },
+    { mode: "parcela", label: "Valor da parcela" },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label>Como informar o valor</Label>
+      <div className="flex rounded-lg border overflow-hidden">
+        {options.map((opt) => (
+          <button
+            key={opt.mode}
+            type="button"
+            onClick={() => onChange(opt.mode)}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              (opt.mode === "parcela") === parcelaMode
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PersonAndAmountFields({
   showPerson,
   personId,
   setPersonId,
   people,
-  showAmount,
   amountLabel,
   amount,
   onAmountChange,
@@ -258,7 +313,6 @@ function PersonAndAmountFields({
   personId: string;
   setPersonId: (id: string) => void;
   people: Person[];
-  showAmount: boolean;
   amountLabel: string;
   amount: string;
   onAmountChange: (v: string) => void;
@@ -284,12 +338,10 @@ function PersonAndAmountFields({
         </div>
       )}
 
-      {showAmount && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="u-amount">{amountLabel}</Label>
-          <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
-        </div>
-      )}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="u-amount">{amountLabel}</Label>
+        <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
+      </div>
     </>
   );
 }
@@ -359,22 +411,38 @@ function SplitPeopleFields({
   onAmountChange: (index: number, value: string) => void;
 }) {
   const availablePeople = people.filter((p) => !splitRows.some((r) => r.personId === p.id));
+  const [pendingPersonId, setPendingPersonId] = useState("");
 
   return (
     <div className="flex flex-col gap-2">
-      <Select
-        aria-label="Adicionar pessoa"
-        value=""
-        onChange={(e) => onAddPerson(e.target.value)}
-        disabled={availablePeople.length === 0}
-      >
-        <option value="">Adicionar pessoa…</option>
-        {availablePeople.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select
+          aria-label="Adicionar pessoa"
+          value={pendingPersonId}
+          onChange={(e) => setPendingPersonId(e.target.value)}
+          disabled={availablePeople.length === 0}
+          className="flex-1"
+        >
+          <option value="">Selecione uma pessoa</option>
+          {availablePeople.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </Select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!pendingPersonId}
+          onClick={() => {
+            onAddPerson(pendingPersonId);
+            setPendingPersonId("");
+          }}
+        >
+          Adicionar
+        </Button>
+      </div>
       {splitRows.map((row, index) => {
         const person = people.find((p) => p.id === row.personId);
         return (
@@ -410,44 +478,6 @@ function TotalOptions({ installmentAmount }: { installmentAmount: string }) {
       </option>
     );
   });
-}
-
-function ParcelaEntryFields({
-  installmentAmount,
-  onInstallmentAmountChange,
-  numberOfInstallments,
-  onTotalPicked,
-}: {
-  installmentAmount: string;
-  onInstallmentAmountChange: (v: string) => void;
-  numberOfInstallments: string;
-  onTotalPicked: (n: string) => void;
-}) {
-  return (
-    <>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-installment-amount">Valor da Parcela</Label>
-        <CurrencyInput
-          id="u-installment-amount"
-          value={installmentAmount}
-          onChange={onInstallmentAmountChange}
-          required
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-total-picker">Selecione o total</Label>
-        <Select
-          id="u-total-picker"
-          value={numberOfInstallments}
-          onChange={(e) => onTotalPicked(e.target.value)}
-          required
-        >
-          <option value="">Selecione</option>
-          <TotalOptions installmentAmount={installmentAmount} />
-        </Select>
-      </div>
-    </>
-  );
 }
 
 function InstallmentCountOptions({ amount }: { amount: string }) {
@@ -730,7 +760,6 @@ function getSubmitButtonLabel(loading: boolean, isEditMode: boolean, typeLabel: 
 
 function AmountEntrySection({
   parcelaMode,
-  toggleParcelaMode,
   amount,
   date,
   creditCardId,
@@ -739,11 +768,9 @@ function AmountEntrySection({
   numberOfInstallments,
   setNumberOfInstallments,
   installmentAmount,
-  setInstallmentAmount,
   onTotalPicked,
 }: {
   parcelaMode: boolean;
-  toggleParcelaMode: () => void;
   amount: string;
   date: string;
   creditCardId: string;
@@ -752,33 +779,35 @@ function AmountEntrySection({
   numberOfInstallments: string;
   setNumberOfInstallments: (n: string) => void;
   installmentAmount: string;
-  setInstallmentAmount: (v: string) => void;
   onTotalPicked: (n: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={parcelaMode ? undefined : "u-installments"}>Parcelas</Label>
-        <Button type="button" variant="outline" size="sm" onClick={toggleParcelaMode}>
-          {parcelaMode ? "Informar valor total" : "Informar valor da parcela"}
-        </Button>
-      </div>
       {parcelaMode ? (
-        <ParcelaEntryFields
-          installmentAmount={installmentAmount}
-          onInstallmentAmountChange={setInstallmentAmount}
-          numberOfInstallments={numberOfInstallments}
-          onTotalPicked={onTotalPicked}
-        />
+        <>
+          <Label htmlFor="u-total-picker">Selecione o total</Label>
+          <Select
+            id="u-total-picker"
+            value={numberOfInstallments}
+            onChange={(e) => onTotalPicked(e.target.value)}
+            required
+          >
+            <option value="">Selecione</option>
+            <TotalOptions installmentAmount={installmentAmount} />
+          </Select>
+        </>
       ) : (
-        <Select
-          id="u-installments"
-          value={numberOfInstallments}
-          onChange={(e) => setNumberOfInstallments(e.target.value)}
-          required
-        >
-          <InstallmentCountOptions amount={amount} />
-        </Select>
+        <>
+          <Label htmlFor="u-installments">Parcelas</Label>
+          <Select
+            id="u-installments"
+            value={numberOfInstallments}
+            onChange={(e) => setNumberOfInstallments(e.target.value)}
+            required
+          >
+            <InstallmentCountOptions amount={amount} />
+          </Select>
+        </>
       )}
       <InstallmentPreview
         amount={amount}
@@ -811,9 +840,7 @@ function CreditTypeFields({
   removeSplitPerson,
   setSplitAmount,
   parcelaMode,
-  toggleParcelaMode,
   installmentAmount,
-  setInstallmentAmount,
   onTotalPicked,
 }: {
   isEditMode: boolean;
@@ -835,9 +862,7 @@ function CreditTypeFields({
   removeSplitPerson: (index: number) => void;
   setSplitAmount: (index: number, value: string) => void;
   parcelaMode: boolean;
-  toggleParcelaMode: () => void;
   installmentAmount: string;
-  setInstallmentAmount: (v: string) => void;
   onTotalPicked: (n: string) => void;
 }) {
   return (
@@ -861,7 +886,6 @@ function CreditTypeFields({
       {!isEditMode && (
         <AmountEntrySection
           parcelaMode={parcelaMode}
-          toggleParcelaMode={toggleParcelaMode}
           amount={amount}
           date={date}
           creditCardId={creditCardId}
@@ -870,7 +894,6 @@ function CreditTypeFields({
           numberOfInstallments={numberOfInstallments}
           setNumberOfInstallments={setNumberOfInstallments}
           installmentAmount={installmentAmount}
-          setInstallmentAmount={setInstallmentAmount}
           onTotalPicked={onTotalPicked}
         />
       )}
@@ -952,14 +975,17 @@ export function UnifiedTransactionForm({
   } = useSplitRows(splitTotalCents, personId);
   const isCreditSplit = isCreditFlagActive(type, isEditMode, splitMode);
   const isParcelaMode = isCreditFlagActive(type, isEditMode, parcelaMode);
+  const showValueModeSelector = isCreditEntryMode(type, isEditMode);
 
-  function toggleParcelaMode() {
-    if (!parcelaMode) {
+  function setValueMode(mode: "total" | "parcela") {
+    const next = mode === "parcela";
+    if (next === parcelaMode) return;
+    if (next) {
       setAmount("");
       setNumberOfInstallments("");
       if (splitMode) rebalanceForNewTotal(0);
     }
-    setParcelaMode(!parcelaMode);
+    setParcelaMode(next);
     setInstallmentAmount("");
   }
 
@@ -1108,15 +1134,23 @@ export function UnifiedTransactionForm({
         />
       )}
 
+      {showValueModeSelector && (
+        <ValueModeSelector parcelaMode={parcelaMode} onChange={setValueMode} />
+      )}
+
       <PersonAndAmountFields
         showPerson={!isCreditSplit}
         personId={personId}
         setPersonId={setPersonId}
         people={people}
-        showAmount={!isParcelaMode}
-        amountLabel={amountLabel}
-        amount={amount}
-        onAmountChange={handleAmountChange}
+        {...getAmountFieldProps(
+          isParcelaMode,
+          amountLabel,
+          amount,
+          installmentAmount,
+          handleAmountChange,
+          setInstallmentAmount,
+        )}
       />
 
       <div className="flex flex-col gap-1.5">
@@ -1176,9 +1210,7 @@ export function UnifiedTransactionForm({
           removeSplitPerson={removeSplitPerson}
           setSplitAmount={setSplitAmount}
           parcelaMode={parcelaMode}
-          toggleParcelaMode={toggleParcelaMode}
           installmentAmount={installmentAmount}
-          setInstallmentAmount={setInstallmentAmount}
           onTotalPicked={handleTotalPicked}
         />
       )}

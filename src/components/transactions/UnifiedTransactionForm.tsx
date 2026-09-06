@@ -102,14 +102,17 @@ export function UnifiedTransactionForm({
   } = useSplitRows(splitTotalCents, personId);
   const isCreditSplit = isCreditFlagActive(type, isEditMode, splitMode);
   const isParcelaMode = isCreditFlagActive(type, isEditMode, parcelaMode);
+  const showValueModeSelector = isCreditEntryMode(type, isEditMode);
 
-  function toggleParcelaMode() {
-    if (!parcelaMode) {
+  function setValueMode(mode: "total" | "parcela") {
+    const next = mode === "parcela";
+    if (next === parcelaMode) return;
+    if (next) {
       setAmount("");
       setNumberOfInstallments("");
       if (splitMode) rebalanceForNewTotal(0);
     }
-    setParcelaMode(!parcelaMode);
+    setParcelaMode(next);
     setInstallmentAmount("");
   }
 
@@ -258,15 +261,23 @@ export function UnifiedTransactionForm({
         />
       )}
 
+      {showValueModeSelector && (
+        <ValueModeSelector parcelaMode={parcelaMode} onChange={setValueMode} />
+      )}
+
       <PersonAndAmountFields
         showPerson={!isCreditSplit}
         personId={personId}
         setPersonId={setPersonId}
         people={people}
-        showAmount={!isParcelaMode}
-        amountLabel={amountLabel}
-        amount={amount}
-        onAmountChange={handleAmountChange}
+        {...getAmountFieldProps(
+          isParcelaMode,
+          amountLabel,
+          amount,
+          installmentAmount,
+          handleAmountChange,
+          setInstallmentAmount,
+        )}
       />
 
       <div className="flex flex-col gap-1.5">
@@ -326,9 +337,7 @@ export function UnifiedTransactionForm({
           removeSplitPerson={removeSplitPerson}
           setSplitAmount={setSplitAmount}
           parcelaMode={parcelaMode}
-          toggleParcelaMode={toggleParcelaMode}
           installmentAmount={installmentAmount}
-          setInstallmentAmount={setInstallmentAmount}
           onTotalPicked={handleTotalPicked}
         />
       )}

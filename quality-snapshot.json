@@ -173,16 +173,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (146). Maximum allowed is 80.",
+        "message": "This function has too many lines (150). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/layout/TopNav.tsx",
           "start": {
-            "line": 35,
+            "line": 36,
             "column": 8
           },
           "end": {
-            "line": 295,
+            "line": 301,
             "column": 2
           }
         },
@@ -309,7 +309,7 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (232). Maximum allowed is 80.",
+        "message": "This function has too many lines (238). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",

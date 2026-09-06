@@ -152,11 +152,11 @@ describe("UnifiedTransactionForm — installment amount mode", () => {
     );
 
     fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
-    fireEvent.click(screen.getByRole("button", { name: "Informar valor da parcela" }));
+    fireEvent.click(screen.getByRole("button", { name: "Valor da parcela" }));
 
     expect(screen.getByLabelText("Selecione o total")).toHaveValue("");
 
-    fireEvent.click(screen.getByRole("button", { name: "Informar valor total" }));
+    fireEvent.click(screen.getByRole("button", { name: "Valor total" }));
     expect(screen.getByLabelText("Valor Total")).toHaveValue("");
   });
 });

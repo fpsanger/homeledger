@@ -1,91 +1,22 @@
 {
   "coverage": {
-    "statements": 38.22,
-    "branches": 29.36,
-    "functions": 30.54,
-    "lines": 38.62
+    "statements": 39.29,
+    "branches": 29.64,
+    "functions": 30.93,
+    "lines": 39.77
   },
   "violations": {
     "architecture": 0,
     "circularDependencies": 0,
     "complexity": 0,
-    "oversizedFiles": 4,
-    "oversizedFunctions": 21
+    "oversizedFiles": 0,
+    "oversizedFunctions": 19
   },
   "details": {
     "architecture": [],
     "circularDependencies": [],
     "complexity": [],
-    "oversizedFiles": [
-      {
-        "severity": "warning",
-        "message": "This file has too many lines (580). Maximum allowed is 400.",
-        "category": "lint/nursery/noExcessiveLinesPerFile",
-        "location": {
-          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
-          "start": {
-            "line": 1,
-            "column": 1
-          },
-          "end": {
-            "line": 790,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This file has too many lines (514). Maximum allowed is 400.",
-        "category": "lint/nursery/noExcessiveLinesPerFile",
-        "location": {
-          "path": "src/components/monthly-view/TransactionTable.tsx",
-          "start": {
-            "line": 1,
-            "column": 1
-          },
-          "end": {
-            "line": 653,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This file has too many lines (1091). Maximum allowed is 400.",
-        "category": "lint/nursery/noExcessiveLinesPerFile",
-        "location": {
-          "path": "src/components/transactions/UnifiedTransactionForm.tsx",
-          "start": {
-            "line": 1,
-            "column": 1
-          },
-          "end": {
-            "line": 1245,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This file has too many lines (482). Maximum allowed is 400.",
-        "category": "lint/nursery/noExcessiveLinesPerFile",
-        "location": {
-          "path": "src/infrastructure/repositories/PrismaCreditCardPurchaseRepository.ts",
-          "start": {
-            "line": 1,
-            "column": 1
-          },
-          "end": {
-            "line": 482,
-            "column": 2
-          }
-        },
-        "advices": []
-      }
-    ],
+    "oversizedFiles": [],
     "oversizedFunctions": [
       {
         "severity": "warning",
@@ -262,13 +193,13 @@
         "message": "This function has too many lines (108). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
-          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
+          "path": "src/components/loyalty/AddTransactionModal.tsx",
           "start": {
-            "line": 121,
-            "column": 1
+            "line": 10,
+            "column": 8
           },
           "end": {
-            "line": 311,
+            "line": 200,
             "column": 2
           }
         },
@@ -279,13 +210,13 @@
         "message": "This function has too many lines (100). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
-          "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
+          "path": "src/components/loyalty/EditTransactionModal.tsx",
           "start": {
-            "line": 334,
-            "column": 1
+            "line": 31,
+            "column": 8
           },
           "end": {
-            "line": 505,
+            "line": 202,
             "column": 2
           }
         },
@@ -298,11 +229,11 @@
         "location": {
           "path": "src/components/loyalty/LoyaltyProgramDetail.tsx",
           "start": {
-            "line": 609,
+            "line": 50,
             "column": 8
           },
           "end": {
-            "line": 790,
+            "line": 231,
             "column": 2
           }
         },
@@ -332,45 +263,11 @@
         "location": {
           "path": "src/components/monthly-view/TransactionTable.tsx",
           "start": {
-            "line": 430,
+            "line": 32,
             "column": 8
           },
           "end": {
-            "line": 653,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This function has too many lines (82). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/components/transactions/ExpenseForm.tsx",
-          "start": {
-            "line": 31,
-            "column": 8
-          },
-          "end": {
-            "line": 156,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This function has too many lines (86). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/components/transactions/InstallmentForm.tsx",
-          "start": {
-            "line": 18,
-            "column": 8
-          },
-          "end": {
-            "line": 169,
+            "line": 255,
             "column": 2
           }
         },
@@ -417,11 +314,11 @@
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 930,
+            "line": 57,
             "column": 8
           },
           "end": {
-            "line": 1245,
+            "line": 363,
             "column": 2
           }
         },

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
@@ -27,12 +28,63 @@ export const INCOME_SOURCES = [
   { value: "OTHER", label: "Outro" },
 ];
 
+export function getAmountFieldProps(
+  isParcelaMode: boolean,
+  amountLabel: string,
+  amount: string,
+  installmentAmount: string,
+  onAmountChange: (v: string) => void,
+  onInstallmentAmountChange: (v: string) => void,
+) {
+  if (isParcelaMode) {
+    return {
+      amountLabel: "Valor da Parcela",
+      amount: installmentAmount,
+      onAmountChange: onInstallmentAmountChange,
+    };
+  }
+  return { amountLabel, amount, onAmountChange };
+}
+
+export function ValueModeSelector({
+  parcelaMode,
+  onChange,
+}: {
+  parcelaMode: boolean;
+  onChange: (mode: "total" | "parcela") => void;
+}) {
+  const options: { mode: "total" | "parcela"; label: string }[] = [
+    { mode: "total", label: "Valor total" },
+    { mode: "parcela", label: "Valor da parcela" },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label>Como informar o valor</Label>
+      <div className="flex rounded-lg border overflow-hidden">
+        {options.map((opt) => (
+          <button
+            key={opt.mode}
+            type="button"
+            onClick={() => onChange(opt.mode)}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
+              (opt.mode === "parcela") === parcelaMode
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PersonAndAmountFields({
   showPerson,
   personId,
   setPersonId,
   people,
-  showAmount,
   amountLabel,
   amount,
   onAmountChange,
@@ -41,7 +93,6 @@ export function PersonAndAmountFields({
   personId: string;
   setPersonId: (id: string) => void;
   people: Person[];
-  showAmount: boolean;
   amountLabel: string;
   amount: string;
   onAmountChange: (v: string) => void;
@@ -67,12 +118,10 @@ export function PersonAndAmountFields({
         </div>
       )}
 
-      {showAmount && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="u-amount">{amountLabel}</Label>
-          <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
-        </div>
-      )}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="u-amount">{amountLabel}</Label>
+        <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
+      </div>
     </>
   );
 }
@@ -148,22 +197,38 @@ export function SplitPeopleFields({
   onAmountChange: (index: number, value: string) => void;
 }) {
   const availablePeople = people.filter((p) => !splitRows.some((r) => r.personId === p.id));
+  const [pendingPersonId, setPendingPersonId] = useState("");
 
   return (
     <div className="flex flex-col gap-2">
-      <Select
-        aria-label="Adicionar pessoa"
-        value=""
-        onChange={(e) => onAddPerson(e.target.value)}
-        disabled={availablePeople.length === 0}
-      >
-        <option value="">Adicionar pessoa…</option>
-        {availablePeople.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select
+          aria-label="Adicionar pessoa"
+          value={pendingPersonId}
+          onChange={(e) => setPendingPersonId(e.target.value)}
+          disabled={availablePeople.length === 0}
+          className="flex-1"
+        >
+          <option value="">Selecione uma pessoa</option>
+          {availablePeople.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </Select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!pendingPersonId}
+          onClick={() => {
+            onAddPerson(pendingPersonId);
+            setPendingPersonId("");
+          }}
+        >
+          Adicionar
+        </Button>
+      </div>
       {splitRows.map((row, index) => {
         const person = people.find((p) => p.id === row.personId);
         return (

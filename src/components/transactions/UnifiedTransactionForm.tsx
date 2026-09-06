@@ -18,6 +18,7 @@ import {
   type ClosureRecord,
   type CreditCard,
   fromCents,
+  isCreditEntryMode,
   isCreditFlagActive,
   toCents,
   useSplitRows,
@@ -26,11 +27,13 @@ import { CreditTypeFields } from "./unifiedTransactionForm/creditFields";
 import {
   type Category,
   type FormType,
+  getAmountFieldProps,
   INCOME_SOURCES,
   PAYMENT_METHODS,
   type Person,
   PersonAndAmountFields,
   TypeToggle,
+  ValueModeSelector,
 } from "./unifiedTransactionForm/fields";
 import {
   computeDuplicateCheckValues,

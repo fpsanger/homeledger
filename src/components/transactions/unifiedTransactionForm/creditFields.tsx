@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
@@ -25,44 +24,6 @@ export function TotalOptions({ installmentAmount }: { installmentAmount: string 
       </option>
     );
   });
-}
-
-export function ParcelaEntryFields({
-  installmentAmount,
-  onInstallmentAmountChange,
-  numberOfInstallments,
-  onTotalPicked,
-}: {
-  installmentAmount: string;
-  onInstallmentAmountChange: (v: string) => void;
-  numberOfInstallments: string;
-  onTotalPicked: (n: string) => void;
-}) {
-  return (
-    <>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-installment-amount">Valor da Parcela</Label>
-        <CurrencyInput
-          id="u-installment-amount"
-          value={installmentAmount}
-          onChange={onInstallmentAmountChange}
-          required
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-total-picker">Selecione o total</Label>
-        <Select
-          id="u-total-picker"
-          value={numberOfInstallments}
-          onChange={(e) => onTotalPicked(e.target.value)}
-          required
-        >
-          <option value="">Selecione</option>
-          <TotalOptions installmentAmount={installmentAmount} />
-        </Select>
-      </div>
-    </>
-  );
 }
 
 export function InstallmentCountOptions({ amount }: { amount: string }) {
@@ -155,7 +116,6 @@ export function InstallmentPreview({
 
 export function AmountEntrySection({
   parcelaMode,
-  toggleParcelaMode,
   amount,
   date,
   creditCardId,
@@ -164,11 +124,9 @@ export function AmountEntrySection({
   numberOfInstallments,
   setNumberOfInstallments,
   installmentAmount,
-  setInstallmentAmount,
   onTotalPicked,
 }: {
   parcelaMode: boolean;
-  toggleParcelaMode: () => void;
   amount: string;
   date: string;
   creditCardId: string;
@@ -177,33 +135,35 @@ export function AmountEntrySection({
   numberOfInstallments: string;
   setNumberOfInstallments: (n: string) => void;
   installmentAmount: string;
-  setInstallmentAmount: (v: string) => void;
   onTotalPicked: (n: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={parcelaMode ? undefined : "u-installments"}>Parcelas</Label>
-        <Button type="button" variant="outline" size="sm" onClick={toggleParcelaMode}>
-          {parcelaMode ? "Informar valor total" : "Informar valor da parcela"}
-        </Button>
-      </div>
       {parcelaMode ? (
-        <ParcelaEntryFields
-          installmentAmount={installmentAmount}
-          onInstallmentAmountChange={setInstallmentAmount}
-          numberOfInstallments={numberOfInstallments}
-          onTotalPicked={onTotalPicked}
-        />
+        <>
+          <Label htmlFor="u-total-picker">Selecione o total</Label>
+          <Select
+            id="u-total-picker"
+            value={numberOfInstallments}
+            onChange={(e) => onTotalPicked(e.target.value)}
+            required
+          >
+            <option value="">Selecione</option>
+            <TotalOptions installmentAmount={installmentAmount} />
+          </Select>
+        </>
       ) : (
-        <Select
-          id="u-installments"
-          value={numberOfInstallments}
-          onChange={(e) => setNumberOfInstallments(e.target.value)}
-          required
-        >
-          <InstallmentCountOptions amount={amount} />
-        </Select>
+        <>
+          <Label htmlFor="u-installments">Parcelas</Label>
+          <Select
+            id="u-installments"
+            value={numberOfInstallments}
+            onChange={(e) => setNumberOfInstallments(e.target.value)}
+            required
+          >
+            <InstallmentCountOptions amount={amount} />
+          </Select>
+        </>
       )}
       <InstallmentPreview
         amount={amount}
@@ -236,9 +196,7 @@ export function CreditTypeFields({
   removeSplitPerson,
   setSplitAmount,
   parcelaMode,
-  toggleParcelaMode,
   installmentAmount,
-  setInstallmentAmount,
   onTotalPicked,
 }: {
   isEditMode: boolean;
@@ -260,9 +218,7 @@ export function CreditTypeFields({
   removeSplitPerson: (index: number) => void;
   setSplitAmount: (index: number, value: string) => void;
   parcelaMode: boolean;
-  toggleParcelaMode: () => void;
   installmentAmount: string;
-  setInstallmentAmount: (v: string) => void;
   onTotalPicked: (n: string) => void;
 }) {
   return (
@@ -286,7 +242,6 @@ export function CreditTypeFields({
       {!isEditMode && (
         <AmountEntrySection
           parcelaMode={parcelaMode}
-          toggleParcelaMode={toggleParcelaMode}
           amount={amount}
           date={date}
           creditCardId={creditCardId}
@@ -295,7 +250,6 @@ export function CreditTypeFields({
           numberOfInstallments={numberOfInstallments}
           setNumberOfInstallments={setNumberOfInstallments}
           installmentAmount={installmentAmount}
-          setInstallmentAmount={setInstallmentAmount}
           onTotalPicked={onTotalPicked}
         />
       )}

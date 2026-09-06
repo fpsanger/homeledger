@@ -189,3 +189,7 @@ export function isCreditFlagActive(
 ): boolean {
   return type === "credit" && !isEditMode && splitMode;
 }
+
+export function isCreditEntryMode(type: FormType, isEditMode: boolean): boolean {
+  return type === "credit" && !isEditMode;
+}

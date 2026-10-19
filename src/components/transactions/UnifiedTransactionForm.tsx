@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,12 @@ import { useCrossEntityDuplicateCheck } from "@/hooks/useCrossEntityDuplicateChe
 import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { parseCurrencyBR } from "@/lib/utils";
 import {
-  type ClosureRecord,
   type CreditCard,
   fromCents,
   isCreditEntryMode,
   isCreditFlagActive,
   toCents,
+  useBillingMonth,
   useSplitRows,
 } from "./unifiedTransactionForm/billing";
 import { CreditTypeFields } from "./unifiedTransactionForm/creditFields";
@@ -86,7 +86,10 @@ export function UnifiedTransactionForm({
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const [cardClosures, setCardClosures] = useState<ClosureRecord[]>([]);
+  const { billingMonth, setBillingMonth, resetBillingMonth } = useBillingMonth(
+    date,
+    creditCards.find((c) => c.id === creditCardId),
+  );
   const [parcelaMode, setParcelaMode] = useState(false);
   const [installmentAmount, setInstallmentAmount] = useState("");
 
@@ -128,18 +131,6 @@ export function UnifiedTransactionForm({
     if (splitMode) rebalanceForNewTotal(totalCents);
   }
 
-  useEffect(() => {
-    const card = creditCards.find((c) => c.id === creditCardId);
-    if (!card || card.closureType !== "VARIABLE") {
-      setCardClosures([]);
-      return;
-    }
-    fetch(`/api/credit-cards/${creditCardId}/closures`)
-      .then((r) => r.json())
-      .then((data) => setCardClosures(data.closures ?? []))
-      .catch(() => setCardClosures([]));
-  }, [creditCardId, creditCards]);
-
   const dup = computeDuplicateCheckValues(type, amount, date, paymentMethod, creditCardId);
   const duplicateTransaction = useDuplicateCheck(
     dup.dupType,
@@ -175,6 +166,7 @@ export function UnifiedTransactionForm({
     setPaymentMethod("CASH");
     setSource("SALARY");
     setCreditCardId("");
+    resetBillingMonth();
     setNumberOfInstallments("2");
     resetSplit();
     setParcelaMode(false);
@@ -202,6 +194,7 @@ export function UnifiedTransactionForm({
       categoryId,
       description,
       numberOfInstallments,
+      billingMonth,
       ...(isCreditSplit
         ? {
             splits: splitRows.map((r) => ({
@@ -324,13 +317,16 @@ export function UnifiedTransactionForm({
           isEditMode={isEditMode}
           people={people}
           creditCardId={creditCardId}
-          setCreditCardId={setCreditCardId}
+          setCreditCardId={(id) => {
+            setCreditCardId(id);
+            resetBillingMonth();
+          }}
           creditCards={creditCards}
           numberOfInstallments={numberOfInstallments}
           setNumberOfInstallments={setNumberOfInstallments}
           amount={amount}
-          date={date}
-          cardClosures={cardClosures}
+          billingMonth={billingMonth}
+          setBillingMonth={setBillingMonth}
           splitMode={splitMode}
           toggleSplitMode={toggleSplitMode}
           splitTotalCents={splitTotalCents}

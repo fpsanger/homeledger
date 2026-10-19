@@ -9,7 +9,6 @@ export type CreditCard = {
   closureType: "FIXED" | "VARIABLE";
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 };
 
@@ -28,46 +27,53 @@ export const MONTH_NAMES_PT = [
   "Dez",
 ];
 
-export function computeBillingMonths(
-  totalAmount: number,
-  n: number,
-  date: string,
-  card: CreditCard,
-): Array<{ installmentNumber: number; dueYear: number; dueMonth: number; amount: number }> {
+/** "YYYY-MM" of the bill a purchase lands on when the user does not pick one. */
+export function defaultBillingMonth(date: string, card: CreditCard | undefined): string {
+  if (!date) return "";
   const d = new Date(`${date}T00:00:00Z`);
   const purchaseDay = d.getUTCDate();
   const purchaseYear = d.getUTCFullYear();
   const purchaseMonth = d.getUTCMonth() + 1;
-  if (card.fixedClosureDay == null) {
-    throw new Error("Credit card closure day must be resolved before calculating billing months");
+  if (!card || card.closureType === "VARIABLE" || card.fixedClosureDay == null) {
+    return toBillingMonthValue(purchaseYear, purchaseMonth);
   }
   const closureDay = card.fixedClosureDay;
 
   const shiftNext =
-    card.alwaysNextMonth ||
-    card.fixedClosurePreviousMonth ||
-    (!card.closureNextMonth && purchaseDay >= closureDay);
+    card.fixedClosurePreviousMonth || (!card.closureNextMonth && purchaseDay >= closureDay);
+  if (!shiftNext) return toBillingMonthValue(purchaseYear, purchaseMonth);
 
-  let firstYear = purchaseYear;
-  let firstMonth = purchaseMonth;
+  const shiftBy = card.fixedClosurePreviousMonth && purchaseDay >= closureDay ? 2 : 1;
+  const absolute = purchaseYear * 12 + (purchaseMonth - 1) + shiftBy;
+  return toBillingMonthValue(Math.floor(absolute / 12), (absolute % 12) + 1);
+}
 
-  if (shiftNext) {
-    const shiftBy = card.fixedClosurePreviousMonth && purchaseDay >= closureDay ? 2 : 1;
-    const targetMonth = purchaseMonth + shiftBy;
-    if (targetMonth > 12) {
-      firstYear = purchaseYear + 1;
-      firstMonth = targetMonth - 12;
-    } else {
-      firstMonth = targetMonth;
-    }
-  }
+/** Billing month the user picked, falling back to the card's default for the date. */
+export function useBillingMonth(date: string, card: CreditCard | undefined) {
+  const [override, setOverride] = useState("");
+  return {
+    billingMonth: override || defaultBillingMonth(date, card),
+    setBillingMonth: setOverride,
+    resetBillingMonth: () => setOverride(""),
+  };
+}
 
+export function toBillingMonthValue(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+export function computeBillingMonths(
+  totalAmount: number,
+  n: number,
+  billingMonth: string,
+): Array<{ installmentNumber: number; dueYear: number; dueMonth: number; amount: number }> {
+  const [firstYear, firstMonth] = billingMonth.split("-").map(Number);
   const baseAmount = Math.floor((totalAmount / n) * 100) / 100;
-  const firstAbsolute = (firstYear - 1) * 12 + (firstMonth - 1);
+  const firstAbsolute = firstYear * 12 + (firstMonth - 1);
 
   return Array.from({ length: n }, (_, i) => {
     const absolute = firstAbsolute + i;
-    const dueYear = Math.floor(absolute / 12) + 1;
+    const dueYear = Math.floor(absolute / 12);
     const dueMonth = (absolute % 12) + 1;
     const isLast = i === n - 1;
     const amount = isLast
@@ -76,13 +82,6 @@ export function computeBillingMonths(
     return { installmentNumber: i + 1, dueYear, dueMonth, amount };
   });
 }
-
-export type ClosureRecord = {
-  year: number;
-  month: number;
-  closureDay: number;
-  previousMonth: boolean;
-};
 
 export type SplitRow = { personId: string; amount: string; edited: boolean };
 

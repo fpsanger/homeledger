@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import type { ClosureType } from "../../credit-cards/bulk-add/types";
 import type { Category, Person } from "../types";
 import { BulkAddRow } from "./BulkAddRow";
 import { submitRow } from "./submitRow";
 import { type BulkRow, createEmptyRow, validateRow } from "./types";
 
-type CreditCard = { id: string; name: string };
+type CreditCard = { id: string; name: string; closureType: ClosureType };
 
 type Props = {
   people: Person[];
@@ -67,7 +68,8 @@ export function BulkAddClient({ people, categories, creditCards, defaultPersonId
       const row = toSubmit[i];
       setProgress({ current: i + 1, total: toSubmit.length });
 
-      const validationError = validateRow(row);
+      const closureType = creditCards.find((c) => c.id === row.creditCardId)?.closureType;
+      const validationError = validateRow(row, closureType);
       if (validationError) {
         updateRow(row.clientId, { status: "error", error: validationError });
         failed++;

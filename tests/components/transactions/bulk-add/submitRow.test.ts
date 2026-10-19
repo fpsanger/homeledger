@@ -78,6 +78,12 @@ describe("submitRow", () => {
     });
   });
 
+  it("sends the installment bill when one is chosen", async () => {
+    await submitRow(row({ type: "installment", creditCardId: "card-1", billingMonth: "2026-09" }));
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).billingMonth).toBe("2026-09");
+  });
+
   it("surfaces the API error message", async () => {
     fetchMock.mockResolvedValue({
       ok: false,

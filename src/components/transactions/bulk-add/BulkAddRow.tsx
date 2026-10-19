@@ -6,11 +6,13 @@ import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
+import type { ClosureType } from "../../credit-cards/bulk-add/types";
 import type { Category, Person } from "../types";
 import type { BulkRow } from "./types";
 
-type CreditCard = { id: string; name: string };
+type CreditCard = { id: string; name: string; closureType: ClosureType };
 
 const ROW_TYPES = [
   { value: "expense", label: "Despesa" },
@@ -45,6 +47,16 @@ type Props = {
   onRemove: () => void;
   disabled?: boolean;
 };
+
+function cardChangePatch(
+  row: BulkRow,
+  creditCards: CreditCard[],
+  creditCardId: string,
+): Partial<BulkRow> {
+  const card = creditCards.find((c) => c.id === creditCardId);
+  if (card?.closureType !== "VARIABLE" || row.billingMonth) return { creditCardId };
+  return { creditCardId, billingMonth: row.date.slice(0, 7) };
+}
 
 export function BulkAddRow({
   row,
@@ -144,7 +156,7 @@ export function BulkAddRow({
           <Select
             aria-label="Cartão de crédito"
             value={row.creditCardId}
-            onChange={(e) => onChange({ creditCardId: e.target.value })}
+            onChange={(e) => onChange(cardChangePatch(row, creditCards, e.target.value))}
             disabled={locked}
           >
             <option value="">Cartão</option>
@@ -166,6 +178,14 @@ export function BulkAddRow({
               </option>
             ))}
           </Select>
+          <MonthPicker
+            ariaLabel="Fatura (mês)"
+            value={row.billingMonth}
+            onChange={(v) => onChange({ billingMonth: v })}
+            placeholder="Fatura automática"
+            clearLabel="Automática pelo fechamento"
+            disabled={locked}
+          />
         </div>
       )}
 

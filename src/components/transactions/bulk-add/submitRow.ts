@@ -44,6 +44,7 @@ export async function submitRow(row: BulkRow): Promise<{ isDuplicate: boolean }>
     totalAmount: parseCurrencyBR(row.amount),
     numberOfInstallments: parseInt(row.numberOfInstallments, 10),
     purchaseDate: row.date,
+    ...(row.billingMonth ? { billingMonth: row.billingMonth } : {}),
     categoryId: row.categoryId || null,
     description: row.description,
   });

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null };
-type CreditCard = { id: string; name: string };
+type CreditCard = { id: string; name: string; closureType: "FIXED" | "VARIABLE" };
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 

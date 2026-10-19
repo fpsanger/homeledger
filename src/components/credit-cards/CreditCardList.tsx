@@ -17,7 +17,6 @@ import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { PageHeader } from "@/components/ui/page-header";
-import { ClosureManagerDialog } from "./ClosureManager";
 import { CreditCardForm } from "./CreditCardForm";
 
 type CreditCard = {
@@ -27,7 +26,6 @@ type CreditCard = {
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 };
 
@@ -38,7 +36,6 @@ export function CreditCardList({ initialCards }: Props) {
   const [cards, setCards] = useState(initialCards);
   const [formOpen, setFormOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
-  const [closureCardId, setClosureCardId] = useState<string | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/credit-cards");
@@ -118,7 +115,6 @@ export function CreditCardList({ initialCards }: Props) {
             card={card}
             onEdit={() => setEditingCard(card)}
             onDelete={() => handleDelete(card.id)}
-            onManageClosures={() => setClosureCardId(card.id)}
           />
         ))}
       </div>
@@ -151,11 +147,6 @@ export function CreditCardList({ initialCards }: Props) {
           />
         )}
       </Dialog>
-
-      {/* Closure manager dialog */}
-      {closureCardId && (
-        <ClosureManagerDialog cardId={closureCardId} onClose={() => setClosureCardId(null)} />
-      )}
     </div>
   );
 }
@@ -184,18 +175,15 @@ function CreditCardRow({
   card,
   onEdit,
   onDelete,
-  onManageClosures,
 }: {
   card: CreditCard;
   onEdit: () => void;
   onDelete: () => void;
-  onManageClosures: () => void;
 }) {
   const isFixed = card.closureType === "FIXED";
 
   const menuItems = [
     { label: "Editar", onClick: onEdit },
-    ...(isFixed ? [] : [{ label: "Gerenciar Fechamentos", onClick: onManageClosures }]),
     { label: "Excluir", onClick: onDelete, variant: "destructive" as const },
   ];
 
@@ -222,9 +210,9 @@ function CreditCardRow({
               <CreditCardIcon className="w-3.5 h-3.5" />
               Vence no dia {card.dueDayOfMonth}
             </span>
-            {card.alwaysNextMonth && (
+            {!isFixed && (
               <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                1ª parcela → mês seguinte
+                Fatura escolhida em cada compra
               </span>
             )}
             {card.closureNextMonth && (

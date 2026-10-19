@@ -54,6 +54,8 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
   CardSection: ({
     card,
     rows,
+    billingMonth,
+    onBillingMonthChange,
     onAddRow,
     onEditRow,
     onRemoveRow,
@@ -63,6 +65,8 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
   }: {
     card: { id: string; name: string };
     rows: PurchaseRow[];
+    billingMonth: string;
+    onBillingMonthChange: (value: string) => void;
     onAddRow: () => void;
     onEditRow: (rowId: string, patch: Partial<PurchaseRow>) => void;
     onRemoveRow: (rowId: string) => void;
@@ -72,6 +76,11 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
   }) => (
     <div data-testid="section" data-card-id={card.id}>
       <span>{card.name}</span>
+      <input
+        aria-label={`Fatura de ${card.name}`}
+        value={billingMonth}
+        onChange={(e) => onBillingMonthChange(e.target.value)}
+      />
       {rows.map((row) => (
         <div
           key={row.rowId}
@@ -94,6 +103,13 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
           >
             Editar valor de {card.name}
           </button>
+          <button
+            type="button"
+            onClick={() => onEditRow(row.rowId, { billingMonth: "2026-12" })}
+            disabled={disabled}
+          >
+            Outra fatura em {card.name}
+          </button>
           <button type="button" onClick={() => onDuplicateRow(row.rowId)} disabled={disabled}>
             Copiar compra de {card.name}
           </button>
@@ -115,9 +131,22 @@ jest.mock("@/components/credit-cards/bulk-add/CardSection", () => ({
 const mockedSubmitPurchase = jest.mocked(submitPurchase);
 
 const creditCards = [
-  { id: "card-1", name: "Nubank" },
-  { id: "card-2", name: "Itaú" },
+  { id: "card-1", name: "Nubank", closureType: "FIXED" as const },
+  { id: "card-2", name: "Itaú", closureType: "VARIABLE" as const },
 ];
+
+const currentMonth = new Date().toISOString().slice(0, 7);
+
+function renderWithPerson() {
+  render(
+    <BulkAddCreditCardPurchaseClient
+      people={[{ id: "person-1", name: "Felipe" }]}
+      categories={[]}
+      creditCards={creditCards}
+      defaultPersonId="person-1"
+    />,
+  );
+}
 
 function addCardSection(name: string) {
   const id = creditCards.find((c) => c.name === name)?.id ?? "";
@@ -226,6 +255,7 @@ describe("BulkAddCreditCardPurchaseClient", () => {
       "person-1",
       expect.objectContaining({ amount: "10,00" }),
       "card-1",
+      "",
     );
 
     rejectFirst?.(new Error("Fechamento não configurado."));
@@ -236,6 +266,7 @@ describe("BulkAddCreditCardPurchaseClient", () => {
       "person-1",
       expect.objectContaining({ amount: "10,00" }),
       "card-2",
+      currentMonth,
     );
   });
 
@@ -319,5 +350,43 @@ describe("BulkAddCreditCardPurchaseClient", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enviar tudo" }));
 
     await waitFor(() => expect(mockedSubmitPurchase).toHaveBeenCalledTimes(2));
+  });
+
+  it("defaults a VARIABLE section's bill to the current month and a FIXED one to automatic", () => {
+    renderWithPerson();
+    addCardSection("Nubank");
+    addCardSection("Itaú");
+
+    expect(screen.getByLabelText("Fatura de Nubank")).toHaveValue("");
+    expect(screen.getByLabelText("Fatura de Itaú")).toHaveValue(currentMonth);
+  });
+
+  it("sends the section's bill for every row and a row's own bill when overridden", async () => {
+    mockedSubmitPurchase.mockResolvedValue({ isDuplicate: false });
+    renderWithPerson();
+
+    addCardSection("Itaú");
+    fireEvent.change(screen.getByLabelText("Fatura de Itaú"), { target: { value: "2026-11" } });
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar compra a Itaú" }));
+    const editButtons = screen.getAllByRole("button", { name: "Editar valor de Itaú" });
+    for (const button of editButtons) fireEvent.click(button);
+    fireEvent.click(screen.getAllByRole("button", { name: "Outra fatura em Itaú" })[1]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Enviar tudo" }));
+
+    await waitFor(() => expect(mockedSubmitPurchase).toHaveBeenCalledTimes(2));
+    expect(mockedSubmitPurchase.mock.calls.map((call) => call[3])).toEqual(["2026-11", "2026-12"]);
+  });
+
+  it("flags rows of a VARIABLE section without a bill instead of submitting them", async () => {
+    renderWithPerson();
+
+    addCardSection("Itaú");
+    fireEvent.change(screen.getByLabelText("Fatura de Itaú"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Editar valor de Itaú" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enviar tudo" }));
+
+    await waitFor(() => expect(screen.getByTestId("row")).toHaveAttribute("data-status", "error"));
+    expect(mockedSubmitPurchase).not.toHaveBeenCalled();
   });
 });

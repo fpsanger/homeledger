@@ -6,6 +6,33 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PurchaseRowForm } from "@/components/credit-cards/bulk-add/PurchaseRowForm";
 import type { PurchaseRow } from "@/components/credit-cards/bulk-add/types";
 
+jest.mock("@/components/ui/month-picker", () => ({
+  MonthPicker: ({
+    id,
+    ariaLabel,
+    value,
+    onChange,
+    clearLabel,
+    disabled,
+  }: {
+    id?: string;
+    ariaLabel?: string;
+    value: string;
+    onChange: (value: string) => void;
+    clearLabel?: string;
+    disabled?: boolean;
+  }) => (
+    <input
+      id={id}
+      aria-label={ariaLabel}
+      value={value}
+      data-clear-label={clearLabel}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+}));
+
 jest.mock("@/components/ui/category-combobox", () => ({
   CategoryCombobox: ({
     disabled,
@@ -66,6 +93,7 @@ function renderRow(row: PurchaseRow, disabled = false) {
   render(
     <PurchaseRowForm
       row={row}
+      sectionBillingMonth="2026-09"
       categories={[]}
       onChange={onChange}
       onRemove={onRemove}
@@ -151,6 +179,7 @@ describe("PurchaseRowForm", () => {
     const { rerender } = render(
       <PurchaseRowForm
         row={{ ...baseRow, status: "loading" }}
+        sectionBillingMonth=""
         categories={[]}
         onChange={jest.fn()}
         onRemove={jest.fn()}
@@ -162,6 +191,7 @@ describe("PurchaseRowForm", () => {
     rerender(
       <PurchaseRowForm
         row={{ ...baseRow, status: "success", isDuplicate: true }}
+        sectionBillingMonth=""
         categories={[]}
         onChange={jest.fn()}
         onRemove={jest.fn()}
@@ -169,5 +199,27 @@ describe("PurchaseRowForm", () => {
       />,
     );
     expect(screen.getByLabelText("Possível duplicata")).toBeVisible();
+  });
+
+  it("starts a per-row bill from the section's bill", () => {
+    const { onChange } = renderRow(baseRow);
+
+    fireEvent.click(screen.getByLabelText("Outra fatura"));
+
+    expect(onChange).toHaveBeenCalledWith({ billingMonth: "2026-09" });
+  });
+
+  it("edits and clears a per-row bill", () => {
+    const { onChange } = renderRow({ ...baseRow, billingMonth: "2026-10" });
+
+    expect(screen.queryByLabelText("Outra fatura")).not.toBeInTheDocument();
+    const input = screen.getByLabelText("Fatura desta compra");
+    expect(input).toHaveValue("2026-10");
+
+    fireEvent.change(input, { target: { value: "2026-11" } });
+    expect(onChange).toHaveBeenCalledWith({ billingMonth: "2026-11" });
+
+    fireEvent.click(screen.getByLabelText("Usar fatura do cartão"));
+    expect(onChange).toHaveBeenCalledWith({ billingMonth: undefined });
   });
 });

@@ -5,6 +5,7 @@ export async function submitPurchase(
   personId: string,
   row: PurchaseRow,
   creditCardId: string,
+  billingMonth = "",
 ): Promise<{ isDuplicate: boolean }> {
   const res = await fetch("/api/installments", {
     method: "POST",
@@ -15,6 +16,7 @@ export async function submitPurchase(
       totalAmount: parseCurrencyBR(row.amount),
       numberOfInstallments: parseInt(row.numberOfInstallments, 10),
       purchaseDate: row.date,
+      ...(billingMonth ? { billingMonth } : {}),
       categoryId: row.categoryId || null,
       description: row.description,
     }),

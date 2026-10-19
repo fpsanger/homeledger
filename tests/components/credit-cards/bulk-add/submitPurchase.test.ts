@@ -42,6 +42,13 @@ describe("submitPurchase", () => {
     });
   });
 
+  it("sends the billing month when one is given", async () => {
+    await submitPurchase("person-1", row(), "card-1", "2026-09");
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.billingMonth).toBe("2026-09");
+  });
+
   it("returns isDuplicate from the response", async () => {
     fetchMock.mockResolvedValue({
       ok: true,

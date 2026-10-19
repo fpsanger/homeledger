@@ -10,7 +10,6 @@ const card1 = {
   closureType: "FIXED" as const,
   fixedClosureDay: 25,
   dueDayOfMonth: 10,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   createdAt: new Date(),
 };
@@ -20,7 +19,6 @@ const card2 = {
   closureType: "FIXED" as const,
   fixedClosureDay: 20,
   dueDayOfMonth: 5,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   createdAt: new Date(),
 };
@@ -77,10 +75,6 @@ function makeCreditCardRepo(): ICreditCardRepository {
     findAll: jest.fn().mockResolvedValue([card1, card2]),
     delete: jest.fn(),
     hasPurchases: jest.fn(),
-    setClosure: jest.fn(),
-    findClosure: jest.fn(),
-    findClosuresByCard: jest.fn(),
-    deleteClosure: jest.fn(),
   };
 }
 

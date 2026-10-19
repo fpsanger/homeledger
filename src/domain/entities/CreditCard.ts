@@ -7,18 +7,8 @@ export interface CreditCardRecord {
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
   createdAt: Date;
-}
-
-export interface CreditCardClosureRecord {
-  id: string;
-  creditCardId: string;
-  year: number;
-  month: number;
-  closureDay: number;
-  previousMonth: boolean;
 }
 
 type CreateCreditCardInput = {
@@ -28,7 +18,6 @@ type CreateCreditCardInput = {
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 };
 
@@ -59,7 +48,6 @@ export function createCreditCard(input: CreateCreditCardInput): CreditCardRecord
     fixedClosureDay: input.fixedClosureDay ?? null,
     fixedClosurePreviousMonth: input.fixedClosurePreviousMonth,
     dueDayOfMonth: input.dueDayOfMonth,
-    alwaysNextMonth: input.alwaysNextMonth,
     closureNextMonth: input.closureNextMonth,
     createdAt: new Date(),
   };

@@ -1,8 +1,5 @@
 import { createInstallmentPurchaseUseCase } from "../../../src/application/use-cases/CreateInstallmentPurchaseUseCase";
-import type {
-  CreditCardClosureRecord,
-  CreditCardRecord,
-} from "../../../src/domain/entities/CreditCard";
+import type { CreditCardRecord } from "../../../src/domain/entities/CreditCard";
 import type {
   CreditCardPurchaseRecord,
   ICreditCardPurchaseRepository,
@@ -25,41 +22,26 @@ const VARIABLE_CARD: CreditCardRecord = {
   closureType: "VARIABLE",
   fixedClosureDay: null,
   dueDayOfMonth: 10,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   fixedClosurePreviousMonth: false,
   createdAt: new Date(),
 };
 
-function makeClosure(
-  month: number,
-  closureDay: number,
-  previousMonth: boolean,
-  year = 2026,
-): CreditCardClosureRecord {
-  return { id: `closure-${month}`, creditCardId: "card-1", year, month, closureDay, previousMonth };
-}
-
-function makeCardRepo(
-  card: CreditCardRecord,
-  closuresByBillingMonth: Record<number, CreditCardClosureRecord>,
-): ICreditCardRepository {
+function makeCardRepo(card: CreditCardRecord): ICreditCardRepository {
   return {
     findById: jest.fn().mockResolvedValue(card),
-    findClosure: jest
-      .fn()
-      .mockImplementation((_cardId: string, _year: number, month: number) =>
-        Promise.resolve(closuresByBillingMonth[month] ?? null),
-      ),
     save: jest.fn(),
     update: jest.fn(),
     findAll: jest.fn(),
     delete: jest.fn(),
     hasPurchases: jest.fn(),
-    setClosure: jest.fn(),
-    findClosuresByCard: jest.fn(),
-    deleteClosure: jest.fn(),
   };
+}
+
+type DueInstallment = { dueYear: number; dueMonth: number };
+
+function installmentsOf(record: unknown): DueInstallment[] {
+  return (record as { installments: DueInstallment[] }).installments;
 }
 
 function makePurchaseRepo(): ICreditCardPurchaseRepository {
@@ -99,7 +81,6 @@ const FIXED_CARD: CreditCardRecord = {
   closureType: "FIXED",
   fixedClosureDay: 10,
   dueDayOfMonth: 17,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   fixedClosurePreviousMonth: false,
   createdAt: new Date(),
@@ -111,7 +92,6 @@ const FIXED_CARD_PREV_MONTH: CreditCardRecord = {
   closureType: "FIXED",
   fixedClosureDay: 27,
   dueDayOfMonth: 10,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   fixedClosurePreviousMonth: true,
   createdAt: new Date(),
@@ -130,7 +110,7 @@ describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
       categoryId: null,
       createdAt: new Date(),
     };
-    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const cardRepo = makeCardRepo(FIXED_CARD);
     const purchaseRepo = {
       ...makePurchaseRepo(),
       findPurchasesByPersonAndMonth: jest.fn().mockResolvedValue([existingPurchase]),
@@ -157,7 +137,7 @@ describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
       categoryId: null,
       createdAt: new Date(),
     };
-    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const cardRepo = makeCardRepo(FIXED_CARD);
     const purchaseRepo = {
       ...makePurchaseRepo(),
       findPurchasesByPersonAndMonth: jest.fn().mockResolvedValue([existingPurchase]),
@@ -175,7 +155,7 @@ describe("createInstallmentPurchaseUseCase — duplicate detection", () => {
 
 describe("createInstallmentPurchaseUseCase — split purchases", () => {
   it("persists one installment per person per installment number", async () => {
-    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const cardRepo = makeCardRepo(FIXED_CARD);
     const purchaseRepo = makePurchaseRepo();
 
     const result = await createInstallmentPurchaseUseCase(
@@ -215,7 +195,7 @@ describe("createInstallmentPurchaseUseCase — split purchases", () => {
       categoryId: null,
       createdAt: new Date(),
     };
-    const cardRepo = makeCardRepo(FIXED_CARD, {});
+    const cardRepo = makeCardRepo(FIXED_CARD);
     const purchaseRepo = {
       ...makePurchaseRepo(),
       findPurchasesByPersonAndMonth: jest
@@ -251,7 +231,7 @@ describe("createInstallmentPurchaseUseCase — FIXED card with fixedClosurePrevi
   // fixedClosureDay=27, fixedClosurePreviousMonth=true
   // April billing closes March 27; May billing closes April 27
   it("purchase on April 20 (before April 27 closure) → May billing", async () => {
-    const cardRepo = makeCardRepo(FIXED_CARD_PREV_MONTH, {});
+    const cardRepo = makeCardRepo(FIXED_CARD_PREV_MONTH);
     const purchaseRepo = makePurchaseRepo();
     const result = await createInstallmentPurchaseUseCase(
       { ...BASE_INPUT, purchaseDate: new Date("2026-04-20T12:00:00Z") },
@@ -266,7 +246,7 @@ describe("createInstallmentPurchaseUseCase — FIXED card with fixedClosurePrevi
   });
 
   it("purchase on April 27 (on closure day) → June billing", async () => {
-    const cardRepo = makeCardRepo(FIXED_CARD_PREV_MONTH, {});
+    const cardRepo = makeCardRepo(FIXED_CARD_PREV_MONTH);
     const purchaseRepo = makePurchaseRepo();
     const result = await createInstallmentPurchaseUseCase(
       { ...BASE_INPUT, purchaseDate: new Date("2026-04-27T12:00:00Z") },
@@ -281,87 +261,73 @@ describe("createInstallmentPurchaseUseCase — FIXED card with fixedClosurePrevi
   });
 });
 
-describe("createInstallmentPurchaseUseCase — billing month assignment (previousMonth=true)", () => {
-  // Card: April billing closes March 27, May billing closes April 28
-  const closures: Record<number, CreditCardClosureRecord> = {
-    3: makeClosure(3, 27, true), // March billing closes Feb 27
-    4: makeClosure(4, 27, true), // April billing closes March 27
-    5: makeClosure(5, 28, true), // May billing closes April 28
-    6: makeClosure(6, 28, true), // June billing closes May 28
-  };
-
-  it("purchase on March 26 (before April closure March 27) → April billing", async () => {
-    const cardRepo = makeCardRepo(VARIABLE_CARD, closures);
+describe("createInstallmentPurchaseUseCase — explicit billing month", () => {
+  it("VARIABLE card: installments start at the billing month the user chose", async () => {
     const purchaseRepo = makePurchaseRepo();
     const result = await createInstallmentPurchaseUseCase(
-      { ...BASE_INPUT, purchaseDate: new Date("2026-03-26T12:00:00Z") },
+      {
+        ...BASE_INPUT,
+        numberOfInstallments: 3,
+        totalAmount: 300,
+        purchaseDate: new Date("2026-11-20T12:00:00Z"),
+        billingMonth: { year: 2026, month: 12 },
+      },
       purchaseRepo,
-      cardRepo,
+      makeCardRepo(VARIABLE_CARD),
     );
-    const installments = (
-      result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }
-    ).installments;
-    expect(installments[0].dueMonth).toBe(4); // April
-    expect(installments[0].dueYear).toBe(2026);
+    expect(installmentsOf(result.record)).toEqual([
+      expect.objectContaining({ dueYear: 2026, dueMonth: 12 }),
+      expect.objectContaining({ dueYear: 2027, dueMonth: 1 }),
+      expect.objectContaining({ dueYear: 2027, dueMonth: 2 }),
+    ]);
   });
 
-  it("purchase on March 27 (on April closure) → May billing", async () => {
-    const cardRepo = makeCardRepo(VARIABLE_CARD, closures);
+  it("VARIABLE card without a billing month is rejected and nothing is saved", async () => {
     const purchaseRepo = makePurchaseRepo();
-    const result = await createInstallmentPurchaseUseCase(
-      { ...BASE_INPUT, purchaseDate: new Date("2026-03-27T12:00:00Z") },
-      purchaseRepo,
-      cardRepo,
-    );
-    const installments = (
-      result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }
-    ).installments;
-    expect(installments[0].dueMonth).toBe(5); // May
-    expect(installments[0].dueYear).toBe(2026);
+    await expect(
+      createInstallmentPurchaseUseCase(
+        { ...BASE_INPUT, purchaseDate: new Date("2026-04-20T12:00:00Z") },
+        purchaseRepo,
+        makeCardRepo(VARIABLE_CARD),
+      ),
+    ).rejects.toThrow("Billing month is required for variable-closure cards");
+    expect(purchaseRepo.save).not.toHaveBeenCalled();
   });
 
-  it("purchase on April 27 (before May closure April 28) → May billing", async () => {
-    const cardRepo = makeCardRepo(VARIABLE_CARD, closures);
-    const purchaseRepo = makePurchaseRepo();
+  it("FIXED card: an explicit billing month overrides the computed one", async () => {
     const result = await createInstallmentPurchaseUseCase(
-      { ...BASE_INPUT, purchaseDate: new Date("2026-04-27T12:00:00Z") },
-      purchaseRepo,
-      cardRepo,
+      {
+        ...BASE_INPUT,
+        purchaseDate: new Date("2026-04-02T12:00:00Z"), // computed would be April
+        billingMonth: { year: 2026, month: 6 },
+      },
+      makePurchaseRepo(),
+      makeCardRepo(FIXED_CARD),
     );
-    const installments = (
-      result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }
-    ).installments;
-    expect(installments[0].dueMonth).toBe(5); // May
-    expect(installments[0].dueYear).toBe(2026);
+    expect(installmentsOf(result.record)[0]).toMatchObject({ dueYear: 2026, dueMonth: 6 });
   });
 
-  it("purchase on April 28 (on May closure) → June billing", async () => {
-    const cardRepo = makeCardRepo(VARIABLE_CARD, closures);
-    const purchaseRepo = makePurchaseRepo();
+  it("split purchase: every person's installments use the chosen billing month", async () => {
     const result = await createInstallmentPurchaseUseCase(
-      { ...BASE_INPUT, purchaseDate: new Date("2026-04-28T12:00:00Z") },
-      purchaseRepo,
-      cardRepo,
+      {
+        id: "purchase-1",
+        splits: [
+          { personId: "ana", amount: 60 },
+          { personId: "bob", amount: 40 },
+        ],
+        totalAmount: 100,
+        numberOfInstallments: 1,
+        description: "",
+        categoryId: null,
+        creditCardId: "card-1",
+        purchaseDate: new Date("2026-04-20T12:00:00Z"),
+        billingMonth: { year: 2026, month: 5 },
+      },
+      makePurchaseRepo(),
+      makeCardRepo(VARIABLE_CARD),
     );
-    const installments = (
-      result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }
-    ).installments;
-    expect(installments[0].dueMonth).toBe(6); // June
-    expect(installments[0].dueYear).toBe(2026);
-  });
-
-  it("purchase on April 29 (after May closure) → June billing", async () => {
-    const cardRepo = makeCardRepo(VARIABLE_CARD, closures);
-    const purchaseRepo = makePurchaseRepo();
-    const result = await createInstallmentPurchaseUseCase(
-      { ...BASE_INPUT, purchaseDate: new Date("2026-04-29T12:00:00Z") },
-      purchaseRepo,
-      cardRepo,
-    );
-    const installments = (
-      result.record as unknown as { installments: { dueYear: number; dueMonth: number }[] }
-    ).installments;
-    expect(installments[0].dueMonth).toBe(6); // June
-    expect(installments[0].dueYear).toBe(2026);
+    for (const inst of installmentsOf(result.record)) {
+      expect(inst).toMatchObject({ dueYear: 2026, dueMonth: 5 });
+    }
   });
 });

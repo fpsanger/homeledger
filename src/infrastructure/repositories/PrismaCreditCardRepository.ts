@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import type { CreditCardClosureRecord, CreditCardRecord } from "../../domain/entities/CreditCard";
+import type { CreditCardRecord } from "../../domain/entities/CreditCard";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 
 function toRecord(row: {
@@ -9,7 +9,6 @@ function toRecord(row: {
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
   createdAt: Date;
 }): CreditCardRecord {
@@ -20,27 +19,8 @@ function toRecord(row: {
     fixedClosureDay: row.fixedClosureDay,
     fixedClosurePreviousMonth: row.fixedClosurePreviousMonth,
     dueDayOfMonth: row.dueDayOfMonth,
-    alwaysNextMonth: row.alwaysNextMonth,
     closureNextMonth: row.closureNextMonth,
     createdAt: row.createdAt,
-  };
-}
-
-function closureToRecord(row: {
-  id: string;
-  creditCardId: string;
-  year: number;
-  month: number;
-  closureDay: number;
-  previousMonth: boolean;
-}): CreditCardClosureRecord {
-  return {
-    id: row.id,
-    creditCardId: row.creditCardId,
-    year: row.year,
-    month: row.month,
-    closureDay: row.closureDay,
-    previousMonth: row.previousMonth,
   };
 }
 
@@ -56,7 +36,6 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
         fixedClosureDay: card.fixedClosureDay,
         fixedClosurePreviousMonth: card.fixedClosurePreviousMonth,
         dueDayOfMonth: card.dueDayOfMonth,
-        alwaysNextMonth: card.alwaysNextMonth,
         closureNextMonth: card.closureNextMonth,
       },
     });
@@ -72,7 +51,6 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
         fixedClosureDay: card.fixedClosureDay,
         fixedClosurePreviousMonth: card.fixedClosurePreviousMonth,
         dueDayOfMonth: card.dueDayOfMonth,
-        alwaysNextMonth: card.alwaysNextMonth,
         closureNextMonth: card.closureNextMonth,
       },
     });
@@ -98,52 +76,5 @@ export class PrismaCreditCardRepository implements ICreditCardRepository {
       where: { creditCardId: { equals: id } },
     });
     return count > 0;
-  }
-
-  async setClosure(closure: Omit<CreditCardClosureRecord, "id">): Promise<CreditCardClosureRecord> {
-    const row = await this.prisma.creditCardClosure.upsert({
-      where: {
-        creditCardId_year_month: {
-          creditCardId: closure.creditCardId,
-          year: closure.year,
-          month: closure.month,
-        },
-      },
-      create: {
-        id: crypto.randomUUID(),
-        creditCardId: closure.creditCardId,
-        year: closure.year,
-        month: closure.month,
-        closureDay: closure.closureDay,
-        previousMonth: closure.previousMonth,
-      },
-      update: { closureDay: closure.closureDay, previousMonth: closure.previousMonth },
-    });
-    return closureToRecord(row);
-  }
-
-  async findClosure(
-    creditCardId: string,
-    year: number,
-    month: number,
-  ): Promise<CreditCardClosureRecord | null> {
-    const row = await this.prisma.creditCardClosure.findUnique({
-      where: { creditCardId_year_month: { creditCardId, year, month } },
-    });
-    return row ? closureToRecord(row) : null;
-  }
-
-  async findClosuresByCard(creditCardId: string): Promise<CreditCardClosureRecord[]> {
-    const rows = await this.prisma.creditCardClosure.findMany({
-      where: { creditCardId },
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-    return rows.map(closureToRecord);
-  }
-
-  async deleteClosure(creditCardId: string, year: number, month: number): Promise<void> {
-    await this.prisma.creditCardClosure.delete({
-      where: { creditCardId_year_month: { creditCardId, year, month } },
-    });
   }
 }

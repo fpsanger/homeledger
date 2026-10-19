@@ -42,24 +42,10 @@ model CreditCard {
   fixedClosureDay           Int?
   fixedClosurePreviousMonth Boolean              @default(false)
   dueDayOfMonth             Int
-  alwaysNextMonth           Boolean              @default(false)
   createdAt                 DateTime             @default(now())
   closureNextMonth          Boolean              @default(false)
-  closures         CreditCardClosure[]
   purchases        CreditCardPurchase[]
   refunds          CreditCardRefund[]
-}
-
-model CreditCardClosure {
-  id            String     @id @default(uuid())
-  creditCardId  String
-  year          Int
-  month         Int
-  closureDay    Int
-  previousMonth Boolean    @default(false)
-  creditCard    CreditCard @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
-
-  @@unique([creditCardId, year, month])
 }
 
 model Transaction {

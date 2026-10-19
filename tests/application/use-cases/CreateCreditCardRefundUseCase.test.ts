@@ -1,8 +1,5 @@
 import { createCreditCardRefundUseCase } from "../../../src/application/use-cases/CreateCreditCardRefundUseCase";
-import type {
-  CreditCardClosureRecord,
-  CreditCardRecord,
-} from "../../../src/domain/entities/CreditCard";
+import type { CreditCardRecord } from "../../../src/domain/entities/CreditCard";
 import type { ICreditCardRefundRepository } from "../../../src/domain/repositories/ICreditCardRefundRepository";
 import type { ICreditCardRepository } from "../../../src/domain/repositories/ICreditCardRepository";
 
@@ -12,7 +9,6 @@ const FIXED_CARD: CreditCardRecord = {
   closureType: "FIXED",
   fixedClosureDay: 10,
   dueDayOfMonth: 17,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   fixedClosurePreviousMonth: false,
   createdAt: new Date(),
@@ -28,25 +24,14 @@ const BASE_INPUT = {
   source: "MANUAL" as const,
 };
 
-function makeCardRepo(
-  card: CreditCardRecord | null,
-  closuresByBillingMonth: Record<number, CreditCardClosureRecord> = {},
-): ICreditCardRepository {
+function makeCardRepo(card: CreditCardRecord | null): ICreditCardRepository {
   return {
     findById: jest.fn().mockResolvedValue(card),
-    findClosure: jest
-      .fn()
-      .mockImplementation((_cardId: string, _year: number, month: number) =>
-        Promise.resolve(closuresByBillingMonth[month] ?? null),
-      ),
     save: jest.fn(),
     update: jest.fn(),
     findAll: jest.fn(),
     delete: jest.fn(),
     hasPurchases: jest.fn(),
-    setClosure: jest.fn(),
-    findClosuresByCard: jest.fn(),
-    deleteClosure: jest.fn(),
   };
 }
 
@@ -90,6 +75,25 @@ describe("createCreditCardRefundUseCase", () => {
     );
 
     expect(result.dueMonth).toBe(6);
+  });
+
+  it("uses the explicit billing month for a VARIABLE card", async () => {
+    const variableCard: CreditCardRecord = {
+      ...FIXED_CARD,
+      closureType: "VARIABLE",
+      fixedClosureDay: null,
+    };
+    const result = await createCreditCardRefundUseCase(
+      {
+        ...BASE_INPUT,
+        refundDate: new Date("2026-05-04T12:00:00Z"),
+        billingMonth: { year: 2026, month: 7 },
+      },
+      makeRefundRepo(),
+      makeCardRepo(variableCard),
+    );
+
+    expect(result).toMatchObject({ dueYear: 2026, dueMonth: 7 });
   });
 
   it("throws when the credit card is not found", async () => {

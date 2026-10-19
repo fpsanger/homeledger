@@ -6,7 +6,6 @@ const baseFixed = {
   closureType: "FIXED" as const,
   fixedClosureDay: 25,
   dueDayOfMonth: 10,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   fixedClosurePreviousMonth: false,
 };
@@ -17,7 +16,6 @@ const baseVariable = {
   closureType: "VARIABLE" as const,
   fixedClosureDay: null,
   dueDayOfMonth: 5,
-  alwaysNextMonth: false,
   closureNextMonth: false,
   fixedClosurePreviousMonth: false,
 };
@@ -30,7 +28,6 @@ describe("createCreditCard", () => {
     expect(card.closureType).toBe("FIXED");
     expect(card.fixedClosureDay).toBe(25);
     expect(card.dueDayOfMonth).toBe(10);
-    expect(card.alwaysNextMonth).toBe(false);
   });
 
   it("creates a VARIABLE card with null fixedClosureDay", () => {
@@ -81,16 +78,6 @@ describe("createCreditCard", () => {
     expect(() => createCreditCard({ ...baseFixed, dueDayOfMonth: 32 })).toThrow(
       "dueDayOfMonth must be between 1 and 31",
     );
-  });
-
-  it("alwaysNextMonth defaults to false when false", () => {
-    const card = createCreditCard(baseFixed);
-    expect(card.alwaysNextMonth).toBe(false);
-  });
-
-  it("creates card with alwaysNextMonth true", () => {
-    const card = createCreditCard({ ...baseFixed, alwaysNextMonth: true });
-    expect(card.alwaysNextMonth).toBe(true);
   });
 
   it("creates FIXED card with fixedClosurePreviousMonth true", () => {

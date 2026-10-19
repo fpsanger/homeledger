@@ -1,12 +1,13 @@
 import type { ICreditCardPurchaseRepository } from "../../domain/repositories/ICreditCardPurchaseRepository";
 import type { ICreditCardRepository } from "../../domain/repositories/ICreditCardRepository";
 import {
+  type BillingMonth,
   createInstallmentPurchase,
   createSplitInstallmentPurchase,
   type PurchaseSplitInput,
 } from "../../domain/services/InstallmentPurchase";
 import { findDuplicateCreditCardPurchase } from "../../domain/services/isDuplicateCreditCardPurchase";
-import { resolveClosureForDate } from "../services/resolveCardClosure";
+import { resolveBillingMonth } from "../services/resolveBillingMonth";
 
 type SharedInput = {
   id: string;
@@ -16,6 +17,7 @@ type SharedInput = {
   description: string;
   categoryId: string | null;
   creditCardId: string;
+  billingMonth?: BillingMonth;
 };
 
 type Input = SharedInput &
@@ -52,8 +54,7 @@ export async function createInstallmentPurchaseUseCase(
   const card = await creditCardRepo.findById(input.creditCardId);
   if (!card) throw new Error("Credit card not found");
 
-  const { closureDay, closureInPreviousMonth, effectiveClosureNextMonth } =
-    await resolveClosureForDate(card, input.purchaseDate, creditCardRepo);
+  const firstDue = resolveBillingMonth(card, input.purchaseDate, input.billingMonth);
 
   const dateStr = input.purchaseDate.toISOString().slice(0, 10);
   const peopleToCheck = input.splits ? input.splits.map((s) => s.personId) : [input.personId];
@@ -68,16 +69,9 @@ export async function createInstallmentPurchaseUseCase(
     findDuplicateCreditCardPurchase(existing, input.totalAmount, dateStr, input.creditCardId) !==
     null;
 
-  const closureFields = {
-    closureDay,
-    closureInPreviousMonth,
-    alwaysNextMonth: card.alwaysNextMonth,
-    closureNextMonth: effectiveClosureNextMonth,
-  };
-
   const { purchase, installments } = input.splits
-    ? createSplitInstallmentPurchase({ ...input, splits: input.splits, ...closureFields })
-    : createInstallmentPurchase({ ...input, personId: input.personId, ...closureFields });
+    ? createSplitInstallmentPurchase({ ...input, splits: input.splits, firstDue })
+    : createInstallmentPurchase({ ...input, personId: input.personId, firstDue });
 
   const record = await repo.save(purchase, installments);
   return { record, isDuplicate };

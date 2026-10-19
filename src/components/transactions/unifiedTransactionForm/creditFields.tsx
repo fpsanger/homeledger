@@ -1,14 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
 import { formatAmountBR, parseCurrencyBR } from "@/lib/utils";
-import {
-  type ClosureRecord,
-  type CreditCard,
-  computeBillingMonths,
-  MONTH_NAMES_PT,
-  type SplitRow,
-} from "./billing";
+import { type CreditCard, computeBillingMonths, MONTH_NAMES_PT, type SplitRow } from "./billing";
 import { type Person, SplitPeopleFields } from "./fields";
 
 export function TotalOptions({ installmentAmount }: { installmentAmount: string }) {
@@ -43,61 +38,19 @@ export function InstallmentCountOptions({ amount }: { amount: string }) {
 
 export function InstallmentPreview({
   amount,
-  date,
-  selectedCard,
+  billingMonth,
   numberOfInstallments,
-  cardClosures,
 }: {
   amount: string;
-  date: string;
-  selectedCard: CreditCard | undefined;
+  billingMonth: string;
   numberOfInstallments: string;
-  cardClosures: ClosureRecord[];
 }) {
   const total = parseCurrencyBR(amount);
-  if (!selectedCard || !total || total <= 0 || !date) return null;
+  if (!billingMonth || !total || total <= 0) return null;
   const n = parseInt(numberOfInstallments, 10);
   if (!n || n < 1) return null;
 
-  if (selectedCard.closureType === "VARIABLE") {
-    const d = new Date(`${date}T00:00:00Z`);
-    const purchaseYear = d.getUTCFullYear();
-    const purchaseMonth = d.getUTCMonth() + 1;
-    const closure = cardClosures.find((c) => c.year === purchaseYear && c.month === purchaseMonth);
-    if (!closure) {
-      return (
-        <p className="text-xs text-amber-600">
-          Fechamento do mês {MONTH_NAMES_PT[purchaseMonth - 1]}/{purchaseYear} não configurado.
-          Adicione um fechamento para este cartão antes de registrar a compra.
-        </p>
-      );
-    }
-    const variableCard = {
-      ...selectedCard,
-      fixedClosureDay: closure.closureDay,
-      fixedClosurePreviousMonth: closure.previousMonth,
-    };
-    const months = computeBillingMonths(total, n, date, variableCard);
-    return (
-      <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
-        {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
-          <div
-            key={installmentNumber}
-            className="flex justify-between text-xs text-muted-foreground"
-          >
-            <span>
-              Parcela {installmentNumber}/{n}
-            </span>
-            <span>
-              {MONTH_NAMES_PT[dueMonth - 1]}/{dueYear} — {formatAmountBR(installAmount)}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  const months = computeBillingMonths(total, n, date, selectedCard);
+  const months = computeBillingMonths(total, n, billingMonth);
   return (
     <div className="rounded-md border bg-muted/40 px-3 py-2 flex flex-col gap-1">
       {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
@@ -114,13 +67,25 @@ export function InstallmentPreview({
   );
 }
 
+export function BillingMonthField({
+  billingMonth,
+  setBillingMonth,
+}: {
+  billingMonth: string;
+  setBillingMonth: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="u-billing-month">Fatura (mês)</Label>
+      <MonthPicker id="u-billing-month" value={billingMonth} onChange={setBillingMonth} />
+    </div>
+  );
+}
+
 export function AmountEntrySection({
   parcelaMode,
   amount,
-  date,
-  creditCardId,
-  creditCards,
-  cardClosures,
+  billingMonth,
   numberOfInstallments,
   setNumberOfInstallments,
   installmentAmount,
@@ -128,10 +93,7 @@ export function AmountEntrySection({
 }: {
   parcelaMode: boolean;
   amount: string;
-  date: string;
-  creditCardId: string;
-  creditCards: CreditCard[];
-  cardClosures: ClosureRecord[];
+  billingMonth: string;
   numberOfInstallments: string;
   setNumberOfInstallments: (n: string) => void;
   installmentAmount: string;
@@ -167,10 +129,8 @@ export function AmountEntrySection({
       )}
       <InstallmentPreview
         amount={amount}
-        date={date}
-        selectedCard={creditCards.find((c) => c.id === creditCardId)}
+        billingMonth={billingMonth}
         numberOfInstallments={numberOfInstallments}
-        cardClosures={cardClosures}
       />
     </div>
   );
@@ -185,8 +145,8 @@ export function CreditTypeFields({
   numberOfInstallments,
   setNumberOfInstallments,
   amount,
-  date,
-  cardClosures,
+  billingMonth,
+  setBillingMonth,
   splitMode,
   toggleSplitMode,
   splitTotalCents,
@@ -207,8 +167,8 @@ export function CreditTypeFields({
   numberOfInstallments: string;
   setNumberOfInstallments: (n: string) => void;
   amount: string;
-  date: string;
-  cardClosures: ClosureRecord[];
+  billingMonth: string;
+  setBillingMonth: (value: string) => void;
   splitMode: boolean;
   toggleSplitMode: () => void;
   splitTotalCents: number;
@@ -240,13 +200,13 @@ export function CreditTypeFields({
         </Select>
       </div>
       {!isEditMode && (
+        <BillingMonthField billingMonth={billingMonth} setBillingMonth={setBillingMonth} />
+      )}
+      {!isEditMode && (
         <AmountEntrySection
           parcelaMode={parcelaMode}
           amount={amount}
-          date={date}
-          creditCardId={creditCardId}
-          creditCards={creditCards}
-          cardClosures={cardClosures}
+          billingMonth={billingMonth}
           numberOfInstallments={numberOfInstallments}
           setNumberOfInstallments={setNumberOfInstallments}
           installmentAmount={installmentAmount}

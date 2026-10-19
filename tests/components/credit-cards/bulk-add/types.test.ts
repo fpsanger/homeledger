@@ -1,7 +1,10 @@
 import {
   createEmptyRow,
+  defaultSectionBillingMonth,
   duplicateRow,
   type PurchaseRow,
+  resolveRowBillingMonth,
+  validateBillingMonth,
   validatePersonId,
   validateRow,
 } from "@/components/credit-cards/bulk-add/types";
@@ -43,6 +46,11 @@ describe("bulk-add credit card duplicateRow", () => {
     isDuplicate: true,
   });
 
+  it("keeps the row's own billing month override", () => {
+    const copy = duplicateRow({ ...source, billingMonth: "2026-10" }, "2026-09-01");
+    expect(copy.billingMonth).toBe("2026-10");
+  });
+
   it("copies only the category, installments and description", () => {
     const copy = duplicateRow(source, "2026-09-01");
 
@@ -69,5 +77,33 @@ describe("bulk-add credit card person validation", () => {
 
   it("accepts a selected person", () => {
     expect(validatePersonId("person-1")).toBeNull();
+  });
+});
+
+describe("bulk-add credit card billing month", () => {
+  it("a row without its own billing month inherits the section's", () => {
+    expect(resolveRowBillingMonth(validRow(), "2026-09")).toBe("2026-09");
+    expect(resolveRowBillingMonth(validRow({ billingMonth: "" }), "2026-09")).toBe("2026-09");
+  });
+
+  it("a row's own billing month overrides the section's", () => {
+    expect(resolveRowBillingMonth(validRow({ billingMonth: "2026-10" }), "2026-09")).toBe(
+      "2026-10",
+    );
+  });
+
+  it("VARIABLE sections default to the current month, FIXED to automatic", () => {
+    expect(defaultSectionBillingMonth("VARIABLE", "2026-08-17")).toBe("2026-08");
+    expect(defaultSectionBillingMonth("FIXED", "2026-08-17")).toBe("");
+  });
+
+  it("requires a billing month for VARIABLE cards only", () => {
+    expect(validateBillingMonth("", "VARIABLE")).toBe("Informe a fatura (mês).");
+    expect(validateBillingMonth("", "FIXED")).toBeNull();
+    expect(validateBillingMonth("2026-09", "VARIABLE")).toBeNull();
+  });
+
+  it("rejects a malformed billing month", () => {
+    expect(validateBillingMonth("2026-13", "FIXED")).toBe("Fatura inválida.");
   });
 });

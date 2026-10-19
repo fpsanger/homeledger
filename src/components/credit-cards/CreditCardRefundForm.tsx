@@ -8,17 +8,18 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
 import { parseCurrencyBR } from "@/lib/utils";
+import { type CreditCard, useBillingMonth } from "../transactions/unifiedTransactionForm/billing";
 
 type Person = { id: string; name: string };
 type Category = { id: string; name: string; parentId: string | null };
-type CreditCardOption = { id: string; name: string };
 
 type Props = {
   people: Person[];
   categories: Category[];
-  creditCards: CreditCardOption[];
+  creditCards: CreditCard[];
   defaultCreditCardId?: string;
   defaultPersonId?: string;
   onSuccess: () => void;
@@ -39,6 +40,10 @@ export function CreditCardRefundForm({
   const [date, setDate] = useState(today);
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const { billingMonth, setBillingMonth, resetBillingMonth } = useBillingMonth(
+    date,
+    creditCards.find((c) => c.id === creditCardId),
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -54,6 +59,7 @@ export function CreditCardRefundForm({
         description,
         amount: parseCurrencyBR(amount),
         refundDate: date,
+        billingMonth,
         categoryId: categoryId || null,
         source: "MANUAL",
       }),
@@ -95,7 +101,10 @@ export function CreditCardRefundForm({
         <Select
           id="r-card"
           value={creditCardId}
-          onChange={(e) => setCreditCardId(e.target.value)}
+          onChange={(e) => {
+            setCreditCardId(e.target.value);
+            resetBillingMonth();
+          }}
           required
         >
           <option value="">Selecione o cartão</option>
@@ -115,6 +124,11 @@ export function CreditCardRefundForm({
       <div className="flex flex-col gap-1.5">
         <Label>Data</Label>
         <DatePicker value={date} onChange={setDate} required />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="r-billing-month">Fatura (mês)</Label>
+        <MonthPicker id="r-billing-month" value={billingMonth} onChange={setBillingMonth} />
       </div>
 
       <div className="flex flex-col gap-1.5">

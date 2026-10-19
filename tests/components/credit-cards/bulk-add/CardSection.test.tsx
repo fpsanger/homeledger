@@ -6,6 +6,33 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { CardSection } from "@/components/credit-cards/bulk-add/CardSection";
 import type { PurchaseRow } from "@/components/credit-cards/bulk-add/types";
 
+jest.mock("@/components/ui/month-picker", () => ({
+  MonthPicker: ({
+    id,
+    ariaLabel,
+    value,
+    onChange,
+    clearLabel,
+    disabled,
+  }: {
+    id?: string;
+    ariaLabel?: string;
+    value: string;
+    onChange: (value: string) => void;
+    clearLabel?: string;
+    disabled?: boolean;
+  }) => (
+    <input
+      id={id}
+      aria-label={ariaLabel}
+      value={value}
+      data-clear-label={clearLabel}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+}));
+
 jest.mock("@/components/credit-cards/bulk-add/PurchaseRowForm", () => ({
   PurchaseRowForm: ({
     row,
@@ -34,7 +61,7 @@ jest.mock("@/components/credit-cards/bulk-add/PurchaseRowForm", () => ({
   ),
 }));
 
-const card = { id: "card-1", name: "Nubank" };
+const card = { id: "card-1", name: "Nubank", closureType: "FIXED" as const };
 
 function row(patch: Partial<PurchaseRow> = {}): PurchaseRow {
   return {
@@ -54,6 +81,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row(), row({ rowId: "row-2" })]}
         categories={[]}
         people={[]}
@@ -76,6 +105,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row()]}
         categories={[]}
         people={[]}
@@ -99,6 +130,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row()]}
         categories={[]}
         people={[]}
@@ -124,6 +157,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row()]}
         categories={[]}
         people={[]}
@@ -146,6 +181,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row()]}
         categories={[]}
         people={[]}
@@ -167,6 +204,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row({ status: "success" })]}
         categories={[]}
         people={[]}
@@ -188,6 +227,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row()]}
         categories={[]}
         people={[{ id: "person-1", name: "Ana" }]}
@@ -211,6 +252,8 @@ describe("CardSection", () => {
     render(
       <CardSection
         card={card}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
         rows={[row()]}
         categories={[]}
         people={[]}
@@ -226,5 +269,58 @@ describe("CardSection", () => {
     );
 
     expect(screen.getByRole("button", { name: "Adicionar compra" })).toBeDisabled();
+  });
+
+  it("changes the bill used by every row of the section", () => {
+    const onBillingMonthChange = jest.fn();
+    render(
+      <CardSection
+        card={{ ...card, closureType: "VARIABLE" }}
+        rows={[row()]}
+        billingMonth="2026-08"
+        onBillingMonthChange={onBillingMonthChange}
+        categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
+        onAddRow={jest.fn()}
+        onEditRow={jest.fn()}
+        onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
+        onRemoveSection={jest.fn()}
+      />,
+    );
+
+    const input = screen.getByLabelText("Fatura das compras");
+    expect(input).toHaveValue("2026-08");
+    expect(input).not.toHaveAttribute("data-clear-label");
+    fireEvent.change(input, { target: { value: "2026-09" } });
+    expect(onBillingMonthChange).toHaveBeenCalledWith("2026-09");
+  });
+
+  it("explains that a FIXED card without a chosen bill computes it automatically", () => {
+    render(
+      <CardSection
+        card={card}
+        rows={[row()]}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
+        categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
+        onAddRow={jest.fn()}
+        onEditRow={jest.fn()}
+        onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
+        onRemoveSection={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Fatura das compras")).toHaveAttribute(
+      "data-clear-label",
+      "Automática pelo fechamento",
+    );
+    expect(screen.getByText("calculada pela data de fechamento")).toBeVisible();
   });
 });

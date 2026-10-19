@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { createInstallmentPurchaseUseCase } from "../../../application/use-cases/CreateInstallmentPurchaseUseCase";
+import { parseBillingMonth } from "../_lib/billingMonth";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
@@ -42,7 +43,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const validationError = validateBody(body);
+    const billingMonth = parseBillingMonth(body.billingMonth);
+    const validationError = validateBody(body) ?? billingMonth.error;
     if (validationError) return Response.json({ error: validationError }, { status: 400 });
 
     const hasSplits = Array.isArray(body.splits);
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
         description: body.description ?? "",
         categoryId: body.categoryId ?? null,
         creditCardId: body.creditCardId,
+        billingMonth: billingMonth.value,
       },
       creditCardPurchase,
       creditCard,

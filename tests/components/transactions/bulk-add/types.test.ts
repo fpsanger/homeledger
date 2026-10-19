@@ -27,6 +27,18 @@ describe("bulk-add row validation", () => {
     expect(validateRow(validRow(patch))).toBe(expected);
   });
 
+  it("requires a bill for an installment on a VARIABLE card", () => {
+    const row = validRow({ type: "installment", creditCardId: "card-1" });
+    expect(validateRow(row, "VARIABLE")).toBe("Informe a fatura (mês).");
+    expect(validateRow({ ...row, billingMonth: "2026-09" }, "VARIABLE")).toBeNull();
+    expect(validateRow(row, "FIXED")).toBeNull();
+  });
+
+  it("rejects a malformed installment bill", () => {
+    const row = validRow({ type: "installment", creditCardId: "card-1", billingMonth: "2026-13" });
+    expect(validateRow(row, "FIXED")).toBe("Fatura inválida.");
+  });
+
   it("accepts a complete expense", () => {
     expect(validateRow(validRow())).toBeNull();
   });

@@ -28,6 +28,7 @@ export type SubmitFields = {
   categoryId: string;
   description: string;
   numberOfInstallments: string;
+  billingMonth?: string;
   splits?: { personId: string; amount: number }[];
 };
 
@@ -120,6 +121,7 @@ export function resolveCreateTarget(type: FormType, fields: SubmitFields): Submi
       totalAmount: parseCurrencyBR(fields.amount),
       numberOfInstallments: parseInt(fields.numberOfInstallments, 10),
       purchaseDate: fields.date,
+      ...(fields.billingMonth ? { billingMonth: fields.billingMonth } : {}),
       categoryId: fields.categoryId || null,
       description: fields.description,
     },

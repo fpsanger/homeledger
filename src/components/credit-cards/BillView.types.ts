@@ -24,7 +24,6 @@ export type CreditCardFull = {
   closureType: "FIXED" | "VARIABLE";
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 };
 

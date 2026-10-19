@@ -13,8 +13,7 @@ const basePurchase = {
   description: "TV",
   categoryId: null,
   creditCardId: "card-1",
-  closureDay: 25,
-  alwaysNextMonth: false,
+  firstDue: { year: 2026, month: 1 },
 };
 
 describe("InstallmentPurchase service", () => {
@@ -61,6 +60,7 @@ describe("InstallmentPurchase service", () => {
         ...basePurchase,
         purchaseDate: new Date("2026-11-01"),
         numberOfInstallments: 3,
+        firstDue: { year: 2026, month: 11 },
       };
 
       const installments = createInstallments(purchase);
@@ -146,27 +146,44 @@ describe("InstallmentPurchase service", () => {
       }
     });
 
+    it("first installment is due in the given firstDue month, not the purchase month", () => {
+      const installments = createInstallments({
+        ...basePurchase,
+        purchaseDate: new Date("2026-01-15"),
+        numberOfInstallments: 2,
+        firstDue: { year: 2026, month: 3 },
+      });
+
+      expect(installments[0]).toMatchObject({ dueYear: 2026, dueMonth: 3 });
+      expect(installments[1]).toMatchObject({ dueYear: 2026, dueMonth: 4 });
+    });
+
+    it("throws when firstDue month is out of range", () => {
+      expect(() =>
+        createInstallments({ ...basePurchase, firstDue: { year: 2026, month: 13 } }),
+      ).toThrow("Billing month must be between 1 and 12");
+      expect(() =>
+        createInstallments({ ...basePurchase, firstDue: { year: 2026, month: 0 } }),
+      ).toThrow("Billing month must be between 1 and 12");
+    });
+
     it("first transactionMonth equals purchase month regardless of card rules", () => {
-      // basePurchase: Jan 15, closureDay 25, alwaysNextMonth false
-      // purchase before closure → dueMonth = Jan, transactionMonth = Jan
       const installments = createInstallments(basePurchase);
 
       expect(installments[0].transactionYear).toBe(2026);
       expect(installments[0].transactionMonth).toBe(1);
     });
 
-    it("transactionMonth advances sequentially from purchase month, ignoring card rules", () => {
-      // alwaysNextMonth=true shifts dueMonth by 1, but transactionMonth always starts at purchase month
+    it("transactionMonth advances sequentially from purchase month, ignoring billing month", () => {
       const purchase = {
         ...basePurchase,
         purchaseDate: new Date("2026-06-20"),
         numberOfInstallments: 3,
-        alwaysNextMonth: true,
+        firstDue: { year: 2026, month: 7 },
       };
       const installments = createInstallments(purchase);
 
-      // dueMonths would be Jul, Aug, Sep (shifted by alwaysNextMonth)
-      // transactionMonths must be Jun, Jul, Aug (starts at purchase month)
+      // dueMonths are Jul, Aug, Sep; transactionMonths must be Jun, Jul, Aug
       expect(installments[0].transactionYear).toBe(2026);
       expect(installments[0].transactionMonth).toBe(6);
       expect(installments[1].transactionYear).toBe(2026);
@@ -191,19 +208,16 @@ describe("InstallmentPurchase service", () => {
       expect(installments[2].transactionMonth).toBe(1);
     });
 
-    it("transactionMonth is independent of closureInPreviousMonth shift", () => {
-      // closureInPreviousMonth shifts dueMonth by 1 or 2, transactionMonth unaffected
+    it("transactionMonth is independent of a two-month billing shift", () => {
       const purchase = {
         ...basePurchase,
         purchaseDate: new Date("2026-03-28"),
-        closureDay: 27,
-        closureInPreviousMonth: true,
+        firstDue: { year: 2026, month: 5 },
         numberOfInstallments: 2,
       };
       const installments = createInstallments(purchase);
 
-      // dueMonths: purchaseDay(28) >= closureDay(27) + closureInPreviousMonth → shift 2 → May, Jun
-      // transactionMonths must always be Mar, Apr
+      // dueMonths are May, Jun; transactionMonths must always be Mar, Apr
       expect(installments[0].transactionMonth).toBe(3);
       expect(installments[1].transactionMonth).toBe(4);
     });
@@ -303,7 +317,8 @@ describe("InstallmentPurchase service", () => {
     it("each installment has due_month set correctly", () => {
       const result = createInstallmentPurchase({
         ...basePurchaseWithId,
-        purchaseDate: new Date("2026-03-01"), // day 1 < closure 25 → starts March
+        purchaseDate: new Date("2026-03-01"),
+        firstDue: { year: 2026, month: 3 },
         numberOfInstallments: 3,
         totalAmount: 300,
       });
@@ -336,8 +351,7 @@ describe("InstallmentPurchase service", () => {
       description: "Groceries",
       categoryId: null,
       creditCardId: "card-1",
-      closureDay: 25,
-      alwaysNextMonth: false,
+      firstDue: { year: 2026, month: 1 },
     };
 
     it("creates installments for every person, each summing to their own share", () => {
@@ -448,7 +462,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 3,
         closureDay: 25,
-        alwaysNextMonth: false,
       });
       expect(result).toEqual({ year: 2026, month: 3 });
     });
@@ -459,7 +472,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 3,
         closureDay: 25,
-        alwaysNextMonth: false,
       });
       expect(result).toEqual({ year: 2026, month: 4 });
     });
@@ -470,7 +482,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 3,
         closureDay: 25,
-        alwaysNextMonth: false,
       });
       expect(result).toEqual({ year: 2026, month: 4 });
     });
@@ -481,20 +492,8 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 12,
         closureDay: 25,
-        alwaysNextMonth: false,
       });
       expect(result).toEqual({ year: 2027, month: 1 });
-    });
-
-    it("alwaysNextMonth forces next month even when purchase is before closure", () => {
-      const result = resolveFirstDueMonth({
-        purchaseDay: 5,
-        purchaseYear: 2026,
-        purchaseMonth: 3,
-        closureDay: 25,
-        alwaysNextMonth: true,
-      });
-      expect(result).toEqual({ year: 2026, month: 4 });
     });
 
     it("closureInPreviousMonth forces next month even when purchaseDay < closureDay", () => {
@@ -505,7 +504,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 5,
         closureDay: 28,
-        alwaysNextMonth: false,
         closureInPreviousMonth: true,
       });
       expect(result).toEqual({ year: 2026, month: 6 });
@@ -517,7 +515,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 12,
         closureDay: 28,
-        alwaysNextMonth: false,
         closureInPreviousMonth: true,
       });
       expect(result).toEqual({ year: 2027, month: 1 });
@@ -530,7 +527,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 3,
         closureDay: 27,
-        alwaysNextMonth: false,
         closureInPreviousMonth: true,
       });
       expect(result).toEqual({ year: 2026, month: 5 });
@@ -543,7 +539,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 11,
         closureDay: 27,
-        alwaysNextMonth: false,
         closureInPreviousMonth: true,
       });
       expect(result).toEqual({ year: 2027, month: 1 });
@@ -556,7 +551,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 10,
         closureDay: 1,
-        alwaysNextMonth: false,
         closureNextMonth: true,
       });
       expect(result).toEqual({ year: 2026, month: 10 });
@@ -569,7 +563,6 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 10,
         closureDay: 25,
-        alwaysNextMonth: false,
         closureNextMonth: true,
       });
       expect(result).toEqual({ year: 2026, month: 10 });
@@ -581,22 +574,9 @@ describe("InstallmentPurchase service", () => {
         purchaseYear: 2026,
         purchaseMonth: 12,
         closureDay: 1,
-        alwaysNextMonth: false,
         closureNextMonth: true,
       });
       expect(result).toEqual({ year: 2026, month: 12 });
-    });
-
-    it("closureNextMonth is overridden by alwaysNextMonth", () => {
-      const result = resolveFirstDueMonth({
-        purchaseDay: 10,
-        purchaseYear: 2026,
-        purchaseMonth: 10,
-        closureDay: 1,
-        alwaysNextMonth: true,
-        closureNextMonth: true,
-      });
-      expect(result).toEqual({ year: 2026, month: 11 });
     });
   });
 });

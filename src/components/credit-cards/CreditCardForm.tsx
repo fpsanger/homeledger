@@ -14,7 +14,6 @@ type CreditCard = {
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 };
 
@@ -36,7 +35,6 @@ function buildCreditCardPayload(fields: {
   fixedClosureDay: string;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: string;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 }) {
   return {
@@ -46,8 +44,7 @@ function buildCreditCardPayload(fields: {
     fixedClosurePreviousMonth:
       fields.closureType === "FIXED" ? fields.fixedClosurePreviousMonth : false,
     dueDayOfMonth: parseInt(fields.dueDayOfMonth, 10),
-    alwaysNextMonth: fields.closureType === "VARIABLE" ? fields.alwaysNextMonth : false,
-    closureNextMonth: fields.closureNextMonth,
+    closureNextMonth: fields.closureType === "FIXED" ? fields.closureNextMonth : false,
   };
 }
 
@@ -66,7 +63,6 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
   const [fixedClosurePreviousMonth, setFixedClosurePreviousMonth] = useState(
     card?.fixedClosurePreviousMonth ?? false,
   );
-  const [alwaysNextMonth, setAlwaysNextMonth] = useState(card?.alwaysNextMonth ?? false);
   const [closureNextMonth, setClosureNextMonth] = useState(card?.closureNextMonth ?? false);
   const [loading, setLoading] = useState(false);
 
@@ -81,7 +77,6 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
       fixedClosureDay,
       fixedClosurePreviousMonth,
       dueDayOfMonth,
-      alwaysNextMonth,
       closureNextMonth,
     });
 
@@ -124,7 +119,7 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
           required
         >
           <option value="FIXED">Fixo (mesmo dia todo mês)</option>
-          <option value="VARIABLE">Variável (definido por mês)</option>
+          <option value="VARIABLE">Variável (você escolhe a fatura em cada compra)</option>
         </Select>
       </div>
       {closureType === "FIXED" && (
@@ -152,6 +147,17 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
               Fechamento no mês anterior ao período de cobrança
             </Label>
           </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="cc-closure-next-month"
+              type="checkbox"
+              checked={closureNextMonth}
+              onChange={(e) => setClosureNextMonth(e.target.checked)}
+            />
+            <Label htmlFor="cc-closure-next-month">
+              Dia de fechamento é no mês seguinte à compra
+            </Label>
+          </div>
         </>
       )}
       <div className="flex flex-col gap-1.5">
@@ -165,26 +171,6 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
           onChange={(e) => setDueDayOfMonth(e.target.value)}
           required
         />
-      </div>
-      {closureType === "VARIABLE" && (
-        <div className="flex items-center gap-2">
-          <input
-            id="cc-always-next"
-            type="checkbox"
-            checked={alwaysNextMonth}
-            onChange={(e) => setAlwaysNextMonth(e.target.checked)}
-          />
-          <Label htmlFor="cc-always-next">Primeira parcela sempre vai para o mês seguinte</Label>
-        </div>
-      )}
-      <div className="flex items-center gap-2">
-        <input
-          id="cc-closure-next-month"
-          type="checkbox"
-          checked={closureNextMonth}
-          onChange={(e) => setClosureNextMonth(e.target.checked)}
-        />
-        <Label htmlFor="cc-closure-next-month">Dia de fechamento é no mês seguinte à compra</Label>
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={loading}>

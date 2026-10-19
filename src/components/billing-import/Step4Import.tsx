@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { InstallmentBillingItem } from "@/domain/entities/BillingItem";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
+import { statementBillingMonth } from "./statementBillingMonth";
 import type { ImportSummary, Step1Data } from "./types";
 
 type Props = {
@@ -24,6 +25,7 @@ type ItemForm =
       totalAmount: number;
       numberOfInstallments: number;
       purchaseDate: string;
+      billingMonth: string;
       creditCardId: string;
       personId: string;
     }
@@ -40,6 +42,7 @@ type ItemForm =
       description: string;
       amount: number;
       date: string;
+      billingMonth: string;
       creditCardId: string;
       personId: string;
     };
@@ -67,6 +70,7 @@ async function importInstallment(form: InstallmentForm, categoryId: string | nul
       totalAmount: form.totalAmount,
       numberOfInstallments: form.numberOfInstallments,
       purchaseDate: form.purchaseDate,
+      billingMonth: form.billingMonth,
       description: form.description,
       creditCardId: form.creditCardId,
       categoryId,
@@ -88,6 +92,7 @@ async function importRefund(form: RefundForm, categoryId: string | null): Promis
       description: form.description,
       amount: form.amount,
       refundDate: form.date,
+      billingMonth: form.billingMonth,
       categoryId,
       source: "IMPORT",
     }),
@@ -157,6 +162,11 @@ export function Step4Import({
           totalAmount: item.amount * item.totalInstallments,
           numberOfInstallments: item.totalInstallments,
           purchaseDate: estimatePurchaseDate(item.date, item.installmentNumber),
+          billingMonth: statementBillingMonth(
+            step1Data.year,
+            step1Data.month,
+            item.installmentNumber,
+          ),
           creditCardId: step1Data.creditCardId ?? "",
           personId: step1Data.personId,
         };
@@ -166,6 +176,7 @@ export function Step4Import({
           description: item.description,
           amount: item.amount,
           date: new Date(item.date).toISOString().slice(0, 10),
+          billingMonth: statementBillingMonth(step1Data.year, step1Data.month),
           creditCardId: step1Data.creditCardId ?? "",
           personId: step1Data.personId,
         };

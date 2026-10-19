@@ -2,16 +2,19 @@
 
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
 import type { Category, Person } from "../../transactions/types";
 import { PurchaseRowForm } from "./PurchaseRowForm";
-import type { PurchaseRow } from "./types";
+import type { ClosureType, PurchaseRow } from "./types";
 
-type CreditCard = { id: string; name: string };
+type CreditCard = { id: string; name: string; closureType: ClosureType };
 
 type Props = {
   card: CreditCard;
   rows: PurchaseRow[];
+  billingMonth: string;
+  onBillingMonthChange: (value: string) => void;
   categories: Category[];
   people: Person[];
   personId: string;
@@ -27,6 +30,8 @@ type Props = {
 export function CardSection({
   card,
   rows,
+  billingMonth,
+  onBillingMonthChange,
   categories,
   people,
   personId,
@@ -56,26 +61,35 @@ export function CardSection({
         </button>
       </div>
 
-      <Select
-        aria-label="Pessoa"
-        value={personId}
-        onChange={(e) => onPersonChange(e.target.value)}
-        disabled={disabled}
-        className="max-w-xs"
-      >
-        <option value="">Pessoa</option>
-        {people.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </Select>
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          aria-label="Pessoa"
+          value={personId}
+          onChange={(e) => onPersonChange(e.target.value)}
+          disabled={disabled}
+          className="max-w-xs"
+        >
+          <option value="">Pessoa</option>
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </Select>
+        <SectionBillingMonth
+          closureType={card.closureType}
+          value={billingMonth}
+          onChange={onBillingMonthChange}
+          disabled={disabled}
+        />
+      </div>
 
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <PurchaseRowForm
             key={row.rowId}
             row={row}
+            sectionBillingMonth={billingMonth}
             categories={categories}
             onChange={(patch) => onEditRow(row.rowId, patch)}
             onRemove={() => onRemoveRow(row.rowId)}
@@ -95,6 +109,36 @@ export function CardSection({
         <Plus className="w-4 h-4" />
         Adicionar compra
       </Button>
+    </div>
+  );
+}
+
+function SectionBillingMonth({
+  closureType,
+  value,
+  onChange,
+  disabled,
+}: {
+  closureType: ClosureType;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="text-muted-foreground">Fatura</span>
+      <MonthPicker
+        ariaLabel="Fatura das compras"
+        value={value}
+        onChange={onChange}
+        placeholder="Automática"
+        clearLabel={closureType === "FIXED" ? "Automática pelo fechamento" : undefined}
+        disabled={disabled}
+        className="w-40"
+      />
+      {closureType === "FIXED" && !value && (
+        <span className="text-xs text-muted-foreground">calculada pela data de fechamento</span>
+      )}
     </div>
   );
 }

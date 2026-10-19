@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { createCreditCardRefundUseCase } from "../../../application/use-cases/CreateCreditCardRefundUseCase";
+import { parseBillingMonth } from "../_lib/billingMonth";
 import { errorResponse } from "../_lib/errorResponse";
 import { createRepositories } from "../_lib/repositories";
 
@@ -14,6 +15,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "amount must be a number" }, { status: 400 });
     if (!body.refundDate)
       return Response.json({ error: "refundDate is required" }, { status: 400 });
+    const billingMonth = parseBillingMonth(body.billingMonth);
+    if (billingMonth.error) return Response.json({ error: billingMonth.error }, { status: 400 });
 
     const { creditCardRefund, creditCard } = createRepositories();
     const refund = await createCreditCardRefundUseCase(
@@ -26,6 +29,7 @@ export async function POST(request: NextRequest) {
         refundDate: new Date(body.refundDate),
         categoryId: body.categoryId ?? null,
         source: body.source === "IMPORT" ? "IMPORT" : "MANUAL",
+        billingMonth: billingMonth.value,
       },
       creditCardRefund,
       creditCard,

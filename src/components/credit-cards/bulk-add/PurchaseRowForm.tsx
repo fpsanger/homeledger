@@ -1,17 +1,28 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Copy, Loader2, Trash2, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  Copy,
+  Loader2,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
 import type { Category } from "../../transactions/types";
 import type { PurchaseRow } from "./types";
 
 type Props = {
   row: PurchaseRow;
+  sectionBillingMonth: string;
   categories: Category[];
   onChange: (patch: Partial<PurchaseRow>) => void;
   onRemove: () => void;
@@ -21,6 +32,7 @@ type Props = {
 
 export function PurchaseRowForm({
   row,
+  sectionBillingMonth,
   categories,
   onChange,
   onRemove,
@@ -81,8 +93,18 @@ export function PurchaseRowForm({
         locked={locked}
         onRemove={onRemove}
         onDuplicate={onDuplicate}
+        onOverrideBillingMonth={() => onChange({ billingMonth: sectionBillingMonth })}
         duplicateDisabled={disabled || row.status === "loading"}
       />
+
+      {row.billingMonth !== undefined && (
+        <RowBillingMonth
+          value={row.billingMonth}
+          onChange={(v) => onChange({ billingMonth: v })}
+          onClear={() => onChange({ billingMonth: undefined })}
+          locked={locked}
+        />
+      )}
     </div>
   );
 }
@@ -92,17 +114,32 @@ function RowActions({
   locked,
   onRemove,
   onDuplicate,
+  onOverrideBillingMonth,
   duplicateDisabled,
 }: {
   row: PurchaseRow;
   locked: boolean;
   onRemove: () => void;
   onDuplicate: () => void;
+  onOverrideBillingMonth: () => void;
   duplicateDisabled: boolean;
 }) {
   return (
     <div className="flex items-center justify-end gap-2 sm:col-span-2 xl:col-span-1">
       <RowStatus row={row} />
+      {row.billingMonth === undefined && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onOverrideBillingMonth}
+          disabled={locked}
+          aria-label="Outra fatura"
+          title="Lançar esta compra em outra fatura"
+        >
+          <CalendarClock className="w-4 h-4" />
+        </Button>
+      )}
       <Button
         type="button"
         variant="ghost"
@@ -123,6 +160,42 @@ function RowActions({
         aria-label="Remover compra"
       >
         <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
+
+function RowBillingMonth({
+  value,
+  onChange,
+  onClear,
+  locked,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onClear: () => void;
+  locked: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm sm:col-span-2 xl:col-span-6">
+      <span className="text-muted-foreground">Fatura desta compra</span>
+      <MonthPicker
+        ariaLabel="Fatura desta compra"
+        value={value}
+        onChange={onChange}
+        disabled={locked}
+        className="w-40"
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onClear}
+        disabled={locked}
+        aria-label="Usar fatura do cartão"
+        title="Usar a fatura definida para o cartão"
+      >
+        <X className="w-4 h-4" />
       </Button>
     </div>
   );

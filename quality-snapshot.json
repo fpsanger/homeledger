@@ -1,22 +1,40 @@
 {
   "coverage": {
-    "statements": 39.29,
-    "branches": 29.64,
-    "functions": 30.93,
-    "lines": 39.77
+    "statements": 42.27,
+    "branches": 32.17,
+    "functions": 33.83,
+    "lines": 42.91
   },
   "violations": {
     "architecture": 0,
     "circularDependencies": 0,
     "complexity": 0,
-    "oversizedFiles": 0,
+    "oversizedFiles": 1,
     "oversizedFunctions": 19
   },
   "details": {
     "architecture": [],
     "circularDependencies": [],
     "complexity": [],
-    "oversizedFiles": [],
+    "oversizedFiles": [
+      {
+        "severity": "warning",
+        "message": "This file has too many lines (429). Maximum allowed is 400.",
+        "category": "lint/nursery/noExcessiveLinesPerFile",
+        "location": {
+          "path": "src/components/credit-cards/bulk-add/BulkAddCreditCardPurchaseClient.tsx",
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 452,
+            "column": 2
+          }
+        },
+        "advices": []
+      }
+    ],
     "oversizedFunctions": [
       {
         "severity": "warning",
@@ -54,16 +72,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (196). Maximum allowed is 80.",
+        "message": "This function has too many lines (202). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/billing-import/Step4Import.tsx",
           "start": {
-            "line": 140,
+            "line": 145,
             "column": 8
           },
           "end": {
-            "line": 480,
+            "line": 491,
             "column": 2
           }
         },
@@ -76,11 +94,11 @@
         "location": {
           "path": "src/components/billing-import/Step4Import.tsx",
           "start": {
-            "line": 254,
+            "line": 265,
             "column": 28
           },
           "end": {
-            "line": 456,
+            "line": 467,
             "column": 10
           }
         },
@@ -122,33 +140,16 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (128). Maximum allowed is 80.",
-        "category": "lint/complexity/noExcessiveLinesPerFunction",
-        "location": {
-          "path": "src/components/credit-cards/ClosureManager.tsx",
-          "start": {
-            "line": 34,
-            "column": 8
-          },
-          "end": {
-            "line": 238,
-            "column": 2
-          }
-        },
-        "advices": []
-      },
-      {
-        "severity": "warning",
-        "message": "This function has too many lines (91). Maximum allowed is 80.",
+        "message": "This function has too many lines (82). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/credit-cards/CreditCardForm.tsx",
           "start": {
-            "line": 59,
+            "line": 56,
             "column": 8
           },
           "end": {
-            "line": 199,
+            "line": 185,
             "column": 2
           }
         },
@@ -309,16 +310,33 @@
       },
       {
         "severity": "warning",
-        "message": "This function has too many lines (238). Maximum allowed is 80.",
+        "message": "This function has too many lines (235). Maximum allowed is 80.",
         "category": "lint/complexity/noExcessiveLinesPerFunction",
         "location": {
           "path": "src/components/transactions/UnifiedTransactionForm.tsx",
           "start": {
-            "line": 57,
+            "line": 60,
             "column": 8
           },
           "end": {
-            "line": 363,
+            "line": 371,
+            "column": 2
+          }
+        },
+        "advices": []
+      },
+      {
+        "severity": "warning",
+        "message": "This function has too many lines (85). Maximum allowed is 80.",
+        "category": "lint/complexity/noExcessiveLinesPerFunction",
+        "location": {
+          "path": "src/components/transactions/bulk-add/BulkAddRow.tsx",
+          "start": {
+            "line": 61,
+            "column": 8
+          },
+          "end": {
+            "line": 203,
             "column": 2
           }
         },

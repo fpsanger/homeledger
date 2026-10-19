@@ -9,15 +9,25 @@ import { CardCombobox } from "./CardCombobox";
 import { CardSection } from "./CardSection";
 import { submitPurchase } from "./submitPurchase";
 import {
+  type ClosureType,
   createEmptyRow,
+  defaultSectionBillingMonth,
   duplicateRow,
   type PurchaseRow,
+  resolveRowBillingMonth,
+  validateBillingMonth,
   validatePersonId,
   validateRow,
 } from "./types";
 
-type CreditCard = { id: string; name: string };
-type Section = { cardId: string; rows: PurchaseRow[] };
+type CreditCard = { id: string; name: string; closureType: ClosureType };
+type Section = { cardId: string; billingMonth: string; rows: PurchaseRow[] };
+type SubmitItem = {
+  cardId: string;
+  closureType: ClosureType;
+  billingMonth: string;
+  row: PurchaseRow;
+};
 type SectionsState = { sections: Section[]; pendingCardId: string };
 
 type Props = {
@@ -57,6 +67,7 @@ export function BulkAddCreditCardPurchaseClient({
         onRemoveRow={form.removeRow}
         onDuplicateRow={form.duplicateRowInSection}
         onRemoveSection={form.removeCardSection}
+        onBillingMonthChange={form.setSectionBillingMonth}
       />
       {form.formError && (
         <p className="text-sm text-destructive" role="alert">
@@ -74,7 +85,8 @@ export function BulkAddCreditCardPurchaseClient({
 
 type SectionsAction =
   | { type: "SET_PENDING_CARD"; cardId: string }
-  | { type: "ADD_SECTION"; today: string }
+  | { type: "ADD_SECTION"; today: string; billingMonth: string }
+  | { type: "SET_BILLING_MONTH"; cardId: string; billingMonth: string }
   | { type: "REMOVE_SECTION"; cardId: string }
   | { type: "ADD_ROW"; cardId: string; today: string }
   | { type: "REMOVE_ROW"; cardId: string; rowId: string }
@@ -90,9 +102,22 @@ function sectionsReducer(state: SectionsState, action: SectionsAction): Sections
       return {
         sections: [
           ...state.sections,
-          { cardId: state.pendingCardId, rows: [createEmptyRow(action.today)] },
+          {
+            cardId: state.pendingCardId,
+            billingMonth: action.billingMonth,
+            rows: [createEmptyRow(action.today)],
+          },
         ],
         pendingCardId: "",
+      };
+    case "SET_BILLING_MONTH":
+      return {
+        ...state,
+        sections: state.sections.map((s) =>
+          s.cardId === action.cardId
+            ? { ...s, billingMonth: action.billingMonth, rows: s.rows.map(clearRowError) }
+            : s,
+        ),
       };
     case "REMOVE_SECTION":
       return { ...state, sections: state.sections.filter((s) => s.cardId !== action.cardId) };
@@ -138,6 +163,10 @@ function sectionsReducer(state: SectionsState, action: SectionsAction): Sections
   }
 }
 
+function clearRowError(row: PurchaseRow): PurchaseRow {
+  return row.status === "error" ? { ...row, status: "pending", error: undefined } : row;
+}
+
 function withCopyAfter(
   rows: PurchaseRow[],
   action: { rowId: string; today: string },
@@ -166,7 +195,13 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
     dispatch({ type: "SET_PENDING_CARD", cardId });
   }
   function addCardSection() {
-    if (!submitting) dispatch({ type: "ADD_SECTION", today });
+    const card = creditCards.find((c) => c.id === pendingCardId);
+    if (submitting || !card) return;
+    const billingMonth = defaultSectionBillingMonth(card.closureType, today);
+    dispatch({ type: "ADD_SECTION", today, billingMonth });
+  }
+  function setSectionBillingMonth(cardId: string, billingMonth: string) {
+    if (!submitting) dispatch({ type: "SET_BILLING_MONTH", cardId, billingMonth });
   }
   function removeCardSection(cardId: string) {
     if (!submitting) dispatch({ type: "REMOVE_SECTION", cardId });
@@ -197,9 +232,7 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
   async function handleSubmitAll() {
     if (submitting) return;
 
-    const toSubmit = sections.flatMap((s) =>
-      s.rows.filter((r) => r.status !== "success").map((row) => ({ cardId: s.cardId, row })),
-    );
+    const toSubmit = collectSubmitItems(sections, creditCards);
     if (toSubmit.length === 0) {
       toast.error("Nenhuma compra para enviar.");
       return;
@@ -234,6 +267,7 @@ function useBulkAddForm(creditCards: CreditCard[], defaultPersonId: string) {
     progress,
     availableCards,
     addCardSection,
+    setSectionBillingMonth,
     removeCardSection,
     addRow,
     removeRow,
@@ -286,6 +320,7 @@ function SectionsList({
   onRemoveRow,
   onDuplicateRow,
   onRemoveSection,
+  onBillingMonthChange,
 }: {
   sections: Section[];
   creditCards: CreditCard[];
@@ -299,6 +334,7 @@ function SectionsList({
   onRemoveRow: (cardId: string, rowId: string) => void;
   onDuplicateRow: (cardId: string, rowId: string) => void;
   onRemoveSection: (cardId: string) => void;
+  onBillingMonthChange: (cardId: string, billingMonth: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -310,6 +346,8 @@ function SectionsList({
             key={section.cardId}
             card={card}
             rows={section.rows}
+            billingMonth={section.billingMonth}
+            onBillingMonthChange={(value) => onBillingMonthChange(section.cardId, value)}
             categories={categories}
             people={people}
             personId={personId}
@@ -327,8 +365,22 @@ function SectionsList({
   );
 }
 
+function collectSubmitItems(sections: Section[], creditCards: CreditCard[]): SubmitItem[] {
+  return sections.flatMap((s) => {
+    const closureType = creditCards.find((c) => c.id === s.cardId)?.closureType ?? "FIXED";
+    return s.rows
+      .filter((r) => r.status !== "success")
+      .map((row) => ({
+        cardId: s.cardId,
+        closureType,
+        billingMonth: resolveRowBillingMonth(row, s.billingMonth),
+        row,
+      }));
+  });
+}
+
 async function submitToRows(
-  toSubmit: { cardId: string; row: PurchaseRow }[],
+  toSubmit: SubmitItem[],
   personId: string,
   updateRow: (cardId: string, rowId: string, patch: Partial<PurchaseRow>) => void,
   setProgress: (progress: { current: number; total: number }) => void,
@@ -337,10 +389,10 @@ async function submitToRows(
   let failed = 0;
 
   for (let i = 0; i < toSubmit.length; i++) {
-    const { cardId, row } = toSubmit[i];
+    const { cardId, closureType, billingMonth, row } = toSubmit[i];
     setProgress({ current: i + 1, total: toSubmit.length });
 
-    const rowError = validateRow(row);
+    const rowError = validateRow(row) ?? validateBillingMonth(billingMonth, closureType);
     if (rowError) {
       updateRow(cardId, row.rowId, { status: "error", error: rowError });
       failed++;
@@ -349,7 +401,7 @@ async function submitToRows(
 
     updateRow(cardId, row.rowId, { status: "loading", error: undefined });
     try {
-      const { isDuplicate } = await submitPurchase(personId, row, cardId);
+      const { isDuplicate } = await submitPurchase(personId, row, cardId, billingMonth);
       updateRow(cardId, row.rowId, { status: "success", isDuplicate, error: undefined });
       succeeded++;
     } catch (err) {

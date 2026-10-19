@@ -12,7 +12,6 @@ type Input = {
   fixedClosureDay: number | null;
   fixedClosurePreviousMonth: boolean;
   dueDayOfMonth: number;
-  alwaysNextMonth: boolean;
   closureNextMonth: boolean;
 };
 

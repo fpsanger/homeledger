@@ -40,4 +40,54 @@ test.describe("API input contracts", () => {
     expect(response.status()).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: "dueDayOfMonth is required" });
   });
+
+  test("variable-closure cards bill purchases on the month the user picks", async ({ request }) => {
+    const { people } = (await (await request.get("/api/people")).json()) as {
+      people: { id: string }[];
+    };
+    const cardResponse = await request.post("/api/credit-cards", {
+      data: {
+        name: `Variable contract card ${Date.now()}`,
+        closureType: "VARIABLE",
+        dueDayOfMonth: 5,
+      },
+    });
+    expect(cardResponse.status()).toBe(201);
+    const card = (await cardResponse.json()) as { id: string };
+    const description = `Variable bill contract ${Date.now()}`;
+    const purchase = {
+      personId: people[0].id,
+      creditCardId: card.id,
+      totalAmount: 200,
+      numberOfInstallments: 2,
+      purchaseDate: "2030-10-20",
+      description,
+    };
+    let purchaseId: string | undefined;
+
+    try {
+      const missingBill = await request.post("/api/installments", { data: purchase });
+      expect(missingBill.status()).toBe(400);
+      await expect(missingBill.json()).resolves.toEqual({
+        error: "Billing month is required for variable-closure cards",
+      });
+
+      const created = await request.post("/api/installments", {
+        data: { ...purchase, billingMonth: "2030-12" },
+      });
+      expect(created.status()).toBe(201);
+      purchaseId = ((await created.json()) as { id: string }).id;
+
+      const billFor = async (year: number, month: number) =>
+        JSON.stringify(
+          await (await request.get(`/api/credit-cards/bill?year=${year}&month=${month}`)).json(),
+        );
+      expect(await billFor(2030, 10)).not.toContain(description);
+      expect(await billFor(2030, 12)).toContain(description);
+      expect(await billFor(2031, 1)).toContain(description);
+    } finally {
+      if (purchaseId) await request.delete(`/api/credit-card-purchases/${purchaseId}`);
+      await request.delete(`/api/credit-cards/${card.id}`);
+    }
+  });
 });

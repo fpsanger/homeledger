@@ -30,22 +30,28 @@ export type PurchaseDraft = {
   creditCardId: string;
 };
 
+export type BillingMonth = {
+  year: number;
+  month: number;
+};
+
+export function validateBillingMonth(billingMonth: BillingMonth): void {
+  if (!Number.isInteger(billingMonth.year)) throw new Error("Billing year must be an integer");
+  if (!Number.isInteger(billingMonth.month) || billingMonth.month < 1 || billingMonth.month > 12)
+    throw new Error("Billing month must be between 1 and 12");
+}
+
 type ResolveFirstDueMonthInput = {
   purchaseDay: number;
   purchaseYear: number;
   purchaseMonth: number;
   closureDay: number;
-  alwaysNextMonth: boolean;
   closureInPreviousMonth?: boolean;
   closureNextMonth?: boolean;
 };
 
-export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): {
-  year: number;
-  month: number;
-} {
+export function resolveFirstDueMonth(input: ResolveFirstDueMonthInput): BillingMonth {
   const shiftNext =
-    input.alwaysNextMonth ||
     input.closureInPreviousMonth ||
     (!input.closureNextMonth && input.purchaseDay >= input.closureDay);
   if (!shiftNext) return { year: input.purchaseYear, month: input.purchaseMonth };
@@ -70,10 +76,7 @@ type CreateInstallmentsInput = {
   description: string;
   categoryId: string | null;
   creditCardId: string;
-  closureDay: number;
-  alwaysNextMonth: boolean;
-  closureInPreviousMonth?: boolean;
-  closureNextMonth?: boolean;
+  firstDue: BillingMonth;
 };
 
 export function createInstallments(input: CreateInstallmentsInput): InstallmentDraft[] {
@@ -84,19 +87,11 @@ export function createInstallments(input: CreateInstallmentsInput): InstallmentD
   const baseAmount = Math.floor((input.totalAmount / input.numberOfInstallments) * 100) / 100;
   if (baseAmount <= 0) throw new Error("Amount too small for the number of installments");
 
-  const purchaseDay = input.purchaseDate.getUTCDate();
+  validateBillingMonth(input.firstDue);
+
   const purchaseYear = input.purchaseDate.getUTCFullYear();
   const purchaseMonth = input.purchaseDate.getUTCMonth() + 1;
-
-  const first = resolveFirstDueMonth({
-    purchaseDay,
-    purchaseYear,
-    purchaseMonth,
-    closureDay: input.closureDay,
-    alwaysNextMonth: input.alwaysNextMonth,
-    closureInPreviousMonth: input.closureInPreviousMonth,
-    closureNextMonth: input.closureNextMonth,
-  });
+  const first = input.firstDue;
 
   // Convert first due to absolute month index for arithmetic
   const firstAbsolute = (first.year - 1) * 12 + (first.month - 1);
@@ -140,10 +135,7 @@ type CreateInstallmentPurchaseInput = {
   description: string;
   categoryId: string | null;
   creditCardId: string;
-  closureDay: number;
-  alwaysNextMonth: boolean;
-  closureInPreviousMonth?: boolean;
-  closureNextMonth?: boolean;
+  firstDue: BillingMonth;
 };
 
 type InstallmentPurchaseResult = {

@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Credit-card purchases and refunds now have a "Fatura (mês)" field for the bill they land on. For FIXED-closure cards it is pre-filled from the closure day and can be changed; for VARIABLE-closure cards the user picks it (it starts on the purchase month). The installment preview follows the chosen bill. `POST /api/installments` and `POST /api/credit-card-refunds` accept an optional `billingMonth` (`YYYY-MM`), which is required for VARIABLE cards.
+- Bulk credit-card purchases (`/credit-cards/bulk-add`) have one "Fatura" per card section, applied to every row, so many purchases for the same bill can be entered at once. A row can switch to its own bill with the "Outra fatura" button. VARIABLE sections default to the current month; FIXED sections can be left empty to compute each row's bill from its date.
+- Installment rows on the mixed bulk-add page also accept a "Fatura (mês)", which is pre-filled when a VARIABLE card is picked. The statement import now sends each item's exact bill, derived from the statement month and installment number.
+
+### Fixed
+
+- Popovers built on the shared `PopoverContent` primitive no longer render with a transparent background: the `popover` color token (used by `bg-popover`) was missing from the theme and is now defined with the card surface colors in light and dark mode.
+
+### Removed
+
+- Removed per-month closure dates for VARIABLE-closure cards: the "Gerenciar Fechamentos" dialog, the `/api/credit-cards/[id]/closures` endpoints, and the "Primeira parcela sempre vai para o mês seguinte" (`alwaysNextMonth`) option. The `CreditCardClosure` table and the `CreditCard.alwaysNextMonth` column are dropped by migration `20261019120000_drop_variable_closures`. Installments and refunds that already exist keep their stored bill month.
+
 ## [2.2.0] - 2026-09-05
 
 ### Added

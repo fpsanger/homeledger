@@ -100,27 +100,55 @@ type UpdateableFields = Partial<
   >
 >;
 
+/** A calendar month, with `month` in 1-12. */
+export type YearMonth = { year: number; month: number };
+
+function startDateInMonth(originalStartDate: Date, { year, month }: YearMonth): Date {
+  const lastDayOfMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const day = Math.min(originalStartDate.getUTCDate(), lastDayOfMonth);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+export type RecurringUpdate =
+  /** `effectiveFrom` is the first month of the series, so there is no history to preserve. */
+  | { kind: "in-place"; rule: RecurringTransactionRecord }
+  /** Earlier months stay on `closed`; `effectiveFrom` onward is served by `next`. */
+  | { kind: "split"; closed: RecurringTransactionRecord; next: RecurringTransactionRecord };
+
+/** Applies `updates` from `effectiveFrom` onward, leaving earlier months untouched. */
 export function updateRecurringTransaction(
   rule: RecurringTransactionRecord,
   updates: UpdateableFields,
   newId: string,
-  today: Date,
-): [RecurringTransactionRecord, RecurringTransactionRecord] {
-  const closedRule: RecurringTransactionRecord = {
-    ...rule,
-    endDate: today,
-    updatedAt: new Date(),
-  };
+  effectiveFrom: YearMonth,
+): RecurringUpdate {
+  if (updates.amount !== undefined && updates.amount <= 0) {
+    throw new Error("Amount must be positive");
+  }
+  if (!isActiveInMonth(rule, effectiveFrom.year, effectiveFrom.month)) {
+    throw new Error("Effective month is outside the recurring transaction period");
+  }
 
-  const newRule: RecurringTransactionRecord = {
-    ...rule,
-    ...updates,
-    id: newId,
-    startDate: today,
-    endDate: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const start = yearMonthOf(rule.startDate);
+  if (compareYearMonth(start, { y: effectiveFrom.year, m: effectiveFrom.month }) === 0) {
+    return { kind: "in-place", rule: { ...rule, ...updates, updatedAt: new Date() } };
+  }
 
-  return [closedRule, newRule];
+  return {
+    kind: "split",
+    closed: {
+      ...rule,
+      endDate: new Date(Date.UTC(effectiveFrom.year, effectiveFrom.month - 1, 1)),
+      updatedAt: new Date(),
+    },
+    next: {
+      ...rule,
+      ...updates,
+      id: newId,
+      startDate: startDateInMonth(rule.startDate, effectiveFrom),
+      endDate: rule.endDate,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  };
 }

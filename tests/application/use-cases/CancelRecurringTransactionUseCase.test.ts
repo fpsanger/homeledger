@@ -27,6 +27,7 @@ const makeRepo = (
   findActiveByPersonAndMonth: async () => [],
   findAllActiveByMonth: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }),
+  saveSplit: async (_closed, next) => ({ ...next, createdAt: new Date(), updatedAt: new Date() }),
   update: async (_id, changes) => ({ ...existingRule, ...changes }),
   delete: async () => {},
   ...overrides,

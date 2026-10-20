@@ -40,5 +40,13 @@ export interface IRecurringTransactionRepository {
     record: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">,
   ): Promise<RecurringTransactionRecord>;
   update(id: string, changes: UpdateableFields): Promise<RecurringTransactionRecord>;
+  /**
+   * Closes `closed` and creates `next` atomically, so a series can never end up closed without
+   * its replacement. Returns the newly created rule.
+   */
+  saveSplit(
+    closed: Pick<RecurringTransactionRecord, "id" | "endDate">,
+    next: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">,
+  ): Promise<RecurringTransactionRecord>;
   delete(id: string): Promise<void>;
 }

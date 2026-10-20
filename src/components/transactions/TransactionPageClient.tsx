@@ -16,6 +16,7 @@ import { FilterGroup } from "@/components/ui/filter-group";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { maskCurrency } from "@/lib/maskCurrency";
+import { EditRecurringDialog } from "./EditRecurringDialog";
 import { InvestmentForm } from "./InvestmentForm";
 import { RecurringTransactionForm } from "./RecurringTransactionForm";
 import {
@@ -81,6 +82,7 @@ export function TransactionPageClient({
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [investmentDialogOpen, setInvestmentDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingRecurring, setEditingRecurring] = useState<Transaction | null>(null);
   const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<Installment | null>(null);
 
@@ -227,6 +229,13 @@ export function TransactionPageClient({
         />
       </Dialog>
 
+      <EditRecurringDialog
+        transaction={editingRecurring}
+        people={people}
+        categories={categories}
+        onClose={() => setEditingRecurring(null)}
+      />
+
       <EditTransactionDialog
         transaction={editingTransaction}
         people={people}
@@ -358,6 +367,7 @@ export function TransactionPageClient({
             categories={categories}
             filters={transactionFilters}
             onEdit={(t) => setEditingTransaction(t)}
+            onEditRecurring={(t) => setEditingRecurring(t)}
           />
         </div>
 

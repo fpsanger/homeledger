@@ -80,4 +80,47 @@ describe("MonthPicker", () => {
 
     expect(screen.queryByText("2026")).not.toBeInTheDocument();
   });
+
+  describe("min/max bounds", () => {
+    async function openBounded() {
+      const { onChange } = renderPicker({ minValue: "2026-03", maxValue: "2026-10" });
+      fireEvent.click(screen.getByRole("button", { name: "Fatura" }));
+      await screen.findByText("2026");
+      return { onChange };
+    }
+
+    it("disables months before minValue", async () => {
+      await openBounded();
+      expect(screen.getByRole("button", { name: "fevereiro de 2026" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "março de 2026" })).toBeEnabled();
+    });
+
+    it("disables months after maxValue", async () => {
+      await openBounded();
+      expect(screen.getByRole("button", { name: "novembro de 2026" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "outubro de 2026" })).toBeEnabled();
+    });
+
+    it("does not report a pick for an out-of-range month", async () => {
+      const { onChange } = await openBounded();
+      fireEvent.click(screen.getByRole("button", { name: "fevereiro de 2026" }));
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("stops the year steppers at the boundary years", async () => {
+      await openBounded();
+      expect(screen.getByRole("button", { name: "Ano anterior" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Próximo ano" })).toBeDisabled();
+    });
+
+    it("leaves every month selectable when unbounded", async () => {
+      renderPicker();
+      fireEvent.click(screen.getByRole("button", { name: "Fatura" }));
+      await screen.findByText("2026");
+
+      expect(screen.getByRole("button", { name: "fevereiro de 2026" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Ano anterior" })).toBeEnabled();
+    });
+  });
 });

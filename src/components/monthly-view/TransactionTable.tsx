@@ -35,12 +35,14 @@ export function TransactionTable({
   categories = [],
   filters,
   onEdit,
+  onEditRecurring,
 }: {
   transactions: Transaction[];
   people: Person[];
   categories?: Category[];
   filters?: TransactionFilters;
   onEdit?: (t: Transaction) => void;
+  onEditRecurring?: (t: Transaction) => void;
 }) {
   const router = useRouter();
   const { hidden } = usePrivacy();
@@ -156,6 +158,7 @@ export function TransactionTable({
     deletingId,
     handleDelete,
     onEdit,
+    onEditRecurring,
   };
 
   return (

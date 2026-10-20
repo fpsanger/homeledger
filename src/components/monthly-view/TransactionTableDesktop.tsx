@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TransactionAmount } from "../transactions/TransactionAmount";
+import { buildRowActions } from "./rowActions";
 import {
   fmtDate,
   PAYMENT_LABELS,
@@ -37,22 +38,6 @@ export function SortIcon({
   );
 }
 
-export function buildRowActions(
-  t: Transaction,
-  deletingId: string | null,
-  handleDelete: (id: string, isRecurring?: boolean) => void,
-  onEdit?: (t: Transaction) => void,
-) {
-  return [
-    ...(!t.isRecurring && onEdit ? [{ label: "Editar", onClick: () => onEdit(t) }] : []),
-    {
-      label: deletingId === t.id ? "Excluindo..." : "Excluir",
-      onClick: () => handleDelete(t.id, t.isRecurring),
-      variant: "destructive" as const,
-    },
-  ];
-}
-
 function TransactionRow({
   t,
   byPersonId,
@@ -61,6 +46,7 @@ function TransactionRow({
   deletingId,
   handleDelete,
   onEdit,
+  onEditRecurring,
 }: {
   t: Transaction;
   byPersonId: Record<string, string>;
@@ -69,6 +55,7 @@ function TransactionRow({
   deletingId: string | null;
   handleDelete: (id: string, isRecurring?: boolean) => void;
   onEdit?: (t: Transaction) => void;
+  onEditRecurring?: (t: Transaction) => void;
 }) {
   return (
     <TableRow className="group">
@@ -111,7 +98,7 @@ function TransactionRow({
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           }
-          items={buildRowActions(t, deletingId, handleDelete, onEdit)}
+          items={buildRowActions({ t, deletingId, handleDelete, onEdit, onEditRecurring })}
         />
       </TableCell>
     </TableRow>
@@ -126,6 +113,7 @@ export type SharedProps = {
   deletingId: string | null;
   handleDelete: (id: string, isRecurring?: boolean) => void;
   onEdit?: (t: Transaction) => void;
+  onEditRecurring?: (t: Transaction) => void;
 };
 
 type DesktopProps = SharedProps & {
@@ -142,6 +130,7 @@ export function TransactionTableDesktop({
   deletingId,
   handleDelete,
   onEdit,
+  onEditRecurring,
   sortKey,
   sortDir,
   toggleSort,
@@ -197,6 +186,7 @@ export function TransactionTableDesktop({
                 deletingId={deletingId}
                 handleDelete={handleDelete}
                 onEdit={onEdit}
+                onEditRecurring={onEditRecurring}
               />
             ))
           )}

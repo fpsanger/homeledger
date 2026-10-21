@@ -290,3 +290,60 @@ describe("UnifiedTransactionForm — linked total and installment amounts", () =
     expect(screen.getByText(/última parcela R\$\s33,34/)).toBeInTheDocument();
   });
 });
+
+describe("UnifiedTransactionForm — split credit card purchase", () => {
+  const card = {
+    id: "card-1",
+    name: "Card",
+    closureType: "FIXED" as const,
+    fixedClosureDay: 10,
+    fixedClosurePreviousMonth: false,
+    closureNextMonth: false,
+  };
+
+  it("sends one installment and both split rows for the seeded person", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    global.fetch = fetchMock;
+
+    render(
+      <UnifiedTransactionForm
+        people={people}
+        categories={categories}
+        creditCards={[card]}
+        defaultPersonId="p1"
+        initialValues={{
+          ...baseInitialValues,
+          type: "credit",
+          personId: "p1",
+          date: "2026-10-21",
+          creditCardId: card.id,
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "300,00" } });
+    fireEvent.click(screen.getByRole("button", { name: "Dividir" }));
+    expect(screen.getByLabelText("Valor de Alice")).toHaveValue("300,00");
+
+    fireEvent.change(screen.getByLabelText("Adicionar pessoa"), { target: { value: "p2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    expect(screen.getByLabelText("Valor de Alice")).toHaveValue("150,00");
+    expect(screen.getByLabelText("Valor de Bob")).toHaveValue("150,00");
+
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar Compra com Cartão" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/installments");
+    expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
+      creditCardId: card.id,
+      totalAmount: 300,
+      numberOfInstallments: 1,
+      billingMonth: "2026-11",
+      splits: [
+        { personId: "p1", amount: 150 },
+        { personId: "p2", amount: 150 },
+      ],
+    });
+  });
+});

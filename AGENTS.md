@@ -88,6 +88,21 @@ does not replace, human/Codex judgment on the rest of this list.
 `npm run mutation:test` runs the financial-critical Stryker scope from `stryker.config.mjs`.
 It is advisory and runs only weekly or manually; `npm run mutation:report` summarizes the result.
 
+## Deployment
+
+`develop` deploys itself. After CI goes green on a push to `develop`,
+`.github/workflows/deploy.yml` runs on a self-hosted runner on the Tailscale-connected Linux host
+and `deploy/deploy.sh` builds a new release, applies migrations, swaps it in atomically, and rolls
+back if `/api/health` does not answer. Full setup and operations are in `docs/deployment.md`.
+
+Two consequences for any change you make:
+
+- **Migrations must be backward-compatible with the previous release.** A rollback reverts code, not
+  schema, and migrations have already been applied by the time a health check can fail. Add columns
+  and tables; drop them in a later release.
+- **The deployed app has no authentication** — the tailnet is the access control. Never add a path
+  that assumes a logged-in user, and never expose the instance publicly (no `tailscale funnel`).
+
 ## Git and pull requests
 
 Use `<type>/<scope>-<description>` branches, Conventional Commit subjects, and PRs against

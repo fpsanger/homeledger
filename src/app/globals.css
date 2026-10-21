@@ -25,6 +25,7 @@
   --radius: 0.5rem;
   --income: 158 72% 28%;
   --expense: 0 84% 60%;
+  color-scheme: light;
 }
 
 .dark {
@@ -48,10 +49,20 @@
   --input: 215 20% 18%;
   --ring: 158 60% 40%;
   --income: 158 60% 40%;
+  color-scheme: dark;
 }
 
 * {
   border-color: hsl(var(--border));
+}
+
+/* Chrome on Windows paints the native select popup from the control’s own
+   background-color and color, ignoring color-scheme, so both are set explicitly. */
+select,
+option,
+optgroup {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 html {

@@ -206,7 +206,7 @@ test.describe("fatura cartão", () => {
     // derives the total — there is no entry mode to pick first.
     await page.locator("#u-installments").selectOption("3");
     await page.locator("#u-installment-amount").fill("50,00");
-    await expect(page.locator("#u-amount")).toHaveValue("150,00");
+    await expect(page.locator("#u-amount")).toHaveValue("R$ 150,00");
 
     const description = `E2E parcela-first ${Date.now()}`;
     await page.locator("#u-description").fill(description);

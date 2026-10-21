@@ -17,6 +17,7 @@ import { parseCurrencyBR } from "@/lib/utils";
 import {
   type CreditCard,
   isCreditFlagActive,
+  isInstallmentEntry,
   toCents,
   useBillingMonth,
   useInstallmentAmounts,
@@ -41,6 +42,7 @@ import {
   getInitialFormState,
   getSubmitButtonLabel,
   type InitialValues,
+  isSubmitDisabled,
   resolveSubmitTarget,
 } from "./unifiedTransactionForm/submit";
 
@@ -102,9 +104,7 @@ export function UnifiedTransactionForm({
     reset: resetSplit,
   } = useSplitRows(splitTotalCents, personId);
   const isCreditSplit = isCreditFlagActive(type, isEditMode, splitMode);
-  // Creating a credit purchase puts the amount next to the installment count; every other case
-  // (expense, income, editing a purchase) keeps the single shared amount field.
-  const showInstallmentFields = type === "credit" && !isEditMode;
+  const showInstallmentFields = isInstallmentEntry(type, isEditMode);
 
   function applyTotalCents(totalCents: number) {
     if (splitMode) rebalanceForNewTotal(totalCents);
@@ -323,7 +323,7 @@ export function UnifiedTransactionForm({
         />
       )}
 
-      <Button type="submit" disabled={loading || (splitMode && !isSplitValid)}>
+      <Button type="submit" disabled={isSubmitDisabled(loading, splitMode, isSplitValid)}>
         {getSubmitButtonLabel(loading, isEditMode, typeLabels[type])}
       </Button>
     </form>

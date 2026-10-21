@@ -32,6 +32,53 @@ function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+type Schedule = {
+  months: ReturnType<typeof computeBillingMonths>;
+  count: number;
+  summary: string;
+};
+
+/** The bill range a purchase covers, and the uneven last installment when there is one. */
+export function describeSchedule(
+  amount: string,
+  billingMonth: string,
+  numberOfInstallments: string,
+): Schedule | null {
+  const total = parseCurrencyBR(amount);
+  const count = parseInt(numberOfInstallments, 10);
+  if (!billingMonth || !total || total <= 0 || !count || count < 1) return null;
+
+  const months = computeBillingMonths(total, count, billingMonth);
+  const first = months[0];
+  const last = months[months.length - 1];
+  const { baseCents, lastCents } = splitInstallmentCents(toCents(amount), count);
+  const range =
+    count === 1
+      ? monthLabel(first.dueYear, first.dueMonth)
+      : `${monthLabel(first.dueYear, first.dueMonth)} a ${monthLabel(last.dueYear, last.dueMonth)}`;
+  const summary =
+    lastCents === baseCents ? range : `${range} · última parcela ${formatBRL(last.amount)}`;
+
+  return { months, count, summary };
+}
+
+function InstallmentList({ months, count }: { months: Schedule["months"]; count: number }) {
+  return (
+    <div className="flex flex-col gap-1">
+      {months.map(({ installmentNumber, dueYear, dueMonth, amount }) => (
+        <div key={installmentNumber} className="flex justify-between text-xs text-muted-foreground">
+          <span>
+            Parcela {installmentNumber}/{count}
+          </span>
+          <span>
+            {monthLabel(dueYear, dueMonth)} — {formatBRL(amount)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function InstallmentSchedule({
   amount,
   billingMonth,
@@ -42,27 +89,14 @@ export function InstallmentSchedule({
   numberOfInstallments: string;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const total = parseCurrencyBR(amount);
-  const n = parseInt(numberOfInstallments, 10);
-  if (!billingMonth || !total || total <= 0 || !n || n < 1) return null;
-
-  const months = computeBillingMonths(total, n, billingMonth);
-  const first = months[0];
-  const last = months[months.length - 1];
-  const { baseCents, lastCents } = splitInstallmentCents(toCents(amount), n);
-  const range =
-    n === 1
-      ? monthLabel(first.dueYear, first.dueMonth)
-      : `${monthLabel(first.dueYear, first.dueMonth)} a ${monthLabel(last.dueYear, last.dueMonth)}`;
+  const schedule = describeSchedule(amount, billingMonth, numberOfInstallments);
+  if (!schedule) return null;
 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-        <span id="u-schedule-summary">
-          {range}
-          {lastCents !== baseCents && ` · última parcela ${formatBRL(last.amount)}`}
-        </span>
-        {n > 1 && (
+        <span id="u-schedule-summary">{schedule.summary}</span>
+        {schedule.count > 1 && (
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
@@ -73,23 +107,7 @@ export function InstallmentSchedule({
           </button>
         )}
       </div>
-      {expanded && (
-        <div className="flex flex-col gap-1">
-          {months.map(({ installmentNumber, dueYear, dueMonth, amount: installAmount }) => (
-            <div
-              key={installmentNumber}
-              className="flex justify-between text-xs text-muted-foreground"
-            >
-              <span>
-                Parcela {installmentNumber}/{n}
-              </span>
-              <span>
-                {monthLabel(dueYear, dueMonth)} — {formatBRL(installAmount)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {expanded && <InstallmentList months={schedule.months} count={schedule.count} />}
     </div>
   );
 }

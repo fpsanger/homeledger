@@ -205,6 +205,15 @@ export function getFieldLabels(type: FormType) {
   };
 }
 
+/** A split that does not add up to the total must not be submitted. */
+export function isSubmitDisabled(
+  loading: boolean,
+  splitMode: boolean,
+  isSplitValid: boolean,
+): boolean {
+  return loading || (splitMode && !isSplitValid);
+}
+
 export function getSubmitButtonLabel(loading: boolean, isEditMode: boolean, typeLabel: string) {
   if (loading) return isEditMode ? "Salvando…" : "Adicionando…";
   return isEditMode ? "Salvar alterações" : `Adicionar ${typeLabel}`;

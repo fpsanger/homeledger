@@ -261,6 +261,14 @@ export function isSplitComplete(rowCount: number, remainingCents: number): boole
   return rowCount >= 2 && remainingCents === 0;
 }
 
+/**
+ * Creating a credit purchase puts the amount next to the installment count; every other case
+ * (expense, income, editing a purchase) keeps the single shared amount field.
+ */
+export function isInstallmentEntry(type: FormType, isEditMode: boolean): boolean {
+  return type === "credit" && !isEditMode;
+}
+
 export function isCreditFlagActive(
   type: FormType,
   isEditMode: boolean,

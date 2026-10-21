@@ -2,6 +2,7 @@ import {
   type CreditCard,
   computeBillingMonths,
   defaultBillingMonth,
+  isInstallmentEntry,
   linkFromInstallment,
   linkFromTotal,
   linkWithCount,
@@ -117,5 +118,14 @@ describe("linkWithCount", () => {
   it("keeps the installment amount and moves the total after an installment edit", () => {
     const link = linkWithCount(linkFromInstallment("50,00", "3"), "6");
     expect(link).toMatchObject({ amount: "300,00", installmentAmount: "50,00" });
+  });
+});
+
+describe("isInstallmentEntry", () => {
+  it("is true only while creating a credit purchase", () => {
+    expect(isInstallmentEntry("credit", false)).toBe(true);
+    expect(isInstallmentEntry("credit", true)).toBe(false);
+    expect(isInstallmentEntry("expense", false)).toBe(false);
+    expect(isInstallmentEntry("income", false)).toBe(false);
   });
 });

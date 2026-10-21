@@ -1,0 +1,26 @@
+# Install to /etc/systemd/system/homeledger.service, replacing DEPLOY_USER with
+# the account that runs the GitHub Actions runner. See docs/deployment.md.
+[Unit]
+Description=HomeLedger (Next.js)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=DEPLOY_USER
+WorkingDirectory=/srv/homeledger/current
+EnvironmentFile=/srv/homeledger/shared/.env
+Environment=NODE_ENV=production
+# Call Next's binary directly rather than via npm so systemd signals reach Node,
+# and bind to loopback so only `tailscale serve` can reach the app.
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/srv/homeledger
+
+[Install]
+WantedBy=multi-user.target

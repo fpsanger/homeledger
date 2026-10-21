@@ -1,0 +1,11 @@
+# Install to /etc/systemd/system/homeledger-healthcheck.service, replacing
+# DEPLOY_USER with the account that runs the GitHub Actions runner.
+[Unit]
+Description=HomeLedger health check and heartbeat
+After=homeledger.service
+
+[Service]
+Type=oneshot
+User=DEPLOY_USER
+EnvironmentFile=/srv/homeledger/shared/.env
+ExecStart=/srv/homeledger/current/deploy/healthcheck.sh

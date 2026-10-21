@@ -139,6 +139,11 @@ This private repository's current GitHub plan does not provide branch protection
 therefore reported but do not technically prevent a maintainer from merging; the maintainer must
 confirm every applicable check before merge.
 
+Pushes to `develop` that pass CI are deployed automatically to the self-hosted
+instance reached over Tailscale, by `.github/workflows/deploy.yml` running on a self-hosted runner
+on that host. See [docs/deployment.md](docs/deployment.md) for the host setup, the rollback path and
+the operational caveats.
+
 Changes normally flow through:
 
 ```text
@@ -201,5 +206,4 @@ Near-term ideas:
 - Improve seed/import workflows.
 - Add more confidence around UI behavior with focused tests.
 - Refine dashboards and reporting flows.
-- Prepare deployment notes for Vercel and Neon.
 - Keep documentation aligned with the current product surface.

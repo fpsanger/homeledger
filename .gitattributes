@@ -1,0 +1,4 @@
+# Host-side files must keep LF: CRLF breaks shebangs and systemd units on Linux.
+*.sh text eol=lf
+*.service text eol=lf
+*.timer text eol=lf

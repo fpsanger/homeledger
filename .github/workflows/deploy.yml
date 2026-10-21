@@ -1,0 +1,62 @@
+name: Deploy
+
+# Runs on the self-hosted runner on the Tailscale-connected host, only after CI
+# has gone green on develop. Never triggered by `pull_request`: the runner is a
+# shell on a home network and must not be reachable from a fork.
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit SHA or ref to deploy
+        required: false
+        default: develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-homeledger
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on:
+      - self-hosted
+      - linux
+      - homeledger-prod
+    timeout-minutes: 30
+    steps:
+      - name: Resolve ref to deploy
+        id: target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_REF: ${{ inputs.ref }}
+          CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "ref=$DISPATCH_REF" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=$CI_HEAD_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.ref }}
+
+      - name: Deploy
+        env:
+          TARGET_REF: ${{ steps.target.outputs.ref }}
+        run: |
+          SHA="$(git rev-parse HEAD)"
+          echo "Deploying $TARGET_REF ($SHA)"
+          bash deploy/deploy.sh "$SHA" "$GITHUB_WORKSPACE"

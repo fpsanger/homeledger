@@ -123,6 +123,33 @@ export class PrismaRecurringTransactionRepository implements IRecurringTransacti
     return toRecord(row);
   }
 
+  async saveSplit(
+    closed: Pick<RecurringTransactionRecord, "id" | "endDate">,
+    next: Omit<RecurringTransactionRecord, "createdAt" | "updatedAt">,
+  ): Promise<RecurringTransactionRecord> {
+    const [, created] = await this.prisma.$transaction([
+      this.prisma.recurringTransaction.update({
+        where: { id: closed.id },
+        data: { endDate: closed.endDate },
+      }),
+      this.prisma.recurringTransaction.create({
+        data: {
+          id: next.id,
+          personId: next.personId,
+          type: next.type,
+          amount: next.amount,
+          description: next.description,
+          paymentMethod: next.paymentMethod,
+          categoryId: next.categoryId,
+          frequency: next.frequency,
+          startDate: next.startDate,
+          endDate: next.endDate,
+        },
+      }),
+    ]);
+    return toRecord(created);
+  }
+
   async delete(id: string): Promise<void> {
     await this.prisma.recurringTransaction.delete({ where: { id } });
   }

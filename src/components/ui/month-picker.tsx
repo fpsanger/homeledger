@@ -14,6 +14,10 @@ type MonthPickerProps = {
   placeholder?: string;
   /** When set, shows an option that clears the value (onChange("")). */
   clearLabel?: string;
+  /** Earliest selectable month, as yyyy-MM. Earlier months are disabled. */
+  minValue?: string;
+  /** Latest selectable month, as yyyy-MM. Later months are disabled. */
+  maxValue?: string;
   disabled?: boolean;
   className?: string;
   id?: string;
@@ -30,17 +34,26 @@ function toValue(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
+/** Sortable ordinal for a year-month, so bounds compare with plain arithmetic. */
+function ordinal({ year, month }: { year: number; month: number }): number {
+  return year * 12 + month;
+}
+
 export function MonthPicker({
   value,
   onChange,
   placeholder = "Selecione o mês",
   clearLabel,
+  minValue,
+  maxValue,
   disabled,
   className,
   id,
   ariaLabel,
 }: MonthPickerProps) {
   const selected = parseMonth(value);
+  const min = parseMonth(minValue ?? "");
+  const max = parseMonth(maxValue ?? "");
   const today = new Date();
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(selected?.year ?? today.getFullYear());
@@ -82,6 +95,7 @@ export function MonthPicker({
             size="icon"
             className="h-7 w-7"
             aria-label="Ano anterior"
+            disabled={min !== null && viewYear <= min.year}
             onClick={() => setViewYear((y) => y - 1)}
           >
             <ChevronLeftIcon className="size-4" />
@@ -93,6 +107,7 @@ export function MonthPicker({
             size="icon"
             className="h-7 w-7"
             aria-label="Próximo ano"
+            disabled={max !== null && viewYear >= max.year}
             onClick={() => setViewYear((y) => y + 1)}
           >
             <ChevronRightIcon className="size-4" />
@@ -103,6 +118,8 @@ export function MonthPicker({
           selected={selected}
           currentYear={today.getFullYear()}
           currentMonth={today.getMonth() + 1}
+          min={min}
+          max={max}
           onPick={(month) => pick(toValue(viewYear, month))}
         />
         {clearLabel && (
@@ -126,12 +143,16 @@ function MonthGrid({
   selected,
   currentYear,
   currentMonth,
+  min,
+  max,
   onPick,
 }: {
   viewYear: number;
   selected: { year: number; month: number } | null;
   currentYear: number;
   currentMonth: number;
+  min?: { year: number; month: number } | null;
+  max?: { year: number; month: number } | null;
   onPick: (month: number) => void;
 }) {
   return (
@@ -140,17 +161,22 @@ function MonthGrid({
         const date = new Date(viewYear, month - 1, 1);
         const isSelected = selected?.year === viewYear && selected.month === month;
         const isCurrent = currentYear === viewYear && currentMonth === month;
+        const cell = ordinal({ year: viewYear, month });
+        const isOutOfRange =
+          (min != null && cell < ordinal(min)) || (max != null && cell > ordinal(max));
         return (
           <button
             key={month}
             type="button"
             aria-label={format(date, "MMMM 'de' yyyy", { locale: ptBR })}
             aria-pressed={isSelected}
+            disabled={isOutOfRange}
             onClick={() => onPick(month)}
             className={cn(
               buttonVariants({ variant: isSelected ? "default" : "ghost", size: "sm" }),
               "capitalize",
               !isSelected && isCurrent && "bg-accent text-accent-foreground",
+              isOutOfRange && "pointer-events-none opacity-40",
             )}
           >
             {format(date, "MMM", { locale: ptBR })}

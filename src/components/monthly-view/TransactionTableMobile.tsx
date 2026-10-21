@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { TransactionAmount } from "../transactions/TransactionAmount";
+import { buildRowActions } from "./rowActions";
 import type { SharedProps } from "./TransactionTableDesktop";
 import { fmtDate, PAYMENT_LABELS, type SortDir, type SortKey } from "./transactionTableFilters";
 
@@ -22,6 +23,7 @@ export function TransactionTableMobile({
   deletingId,
   handleDelete,
   onEdit,
+  onEditRecurring,
   sortKey,
   setSortKey,
   sortDir,
@@ -90,16 +92,13 @@ export function TransactionTableMobile({
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   }
-                  items={[
-                    ...(!t.isRecurring && onEdit
-                      ? [{ label: "Editar", onClick: () => onEdit(t) }]
-                      : []),
-                    {
-                      label: deletingId === t.id ? "Excluindo..." : "Excluir",
-                      onClick: () => handleDelete(t.id, t.isRecurring),
-                      variant: "destructive" as const,
-                    },
-                  ]}
+                  items={buildRowActions({
+                    t,
+                    deletingId,
+                    handleDelete,
+                    onEdit,
+                    onEditRecurring,
+                  })}
                 />
               </div>
             </div>

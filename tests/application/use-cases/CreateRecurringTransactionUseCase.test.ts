@@ -12,6 +12,7 @@ const makeRepo = (
   findActiveByPersonAndMonth: async () => [],
   findAllActiveByMonth: async () => [],
   save: async (r) => ({ ...r, createdAt: new Date(), updatedAt: new Date() }),
+  saveSplit: async (_closed, next) => ({ ...next, createdAt: new Date(), updatedAt: new Date() }),
   update: async (id, changes) => ({ id, ...changes }) as RecurringTransactionRecord,
   delete: async () => {},
   ...overrides,

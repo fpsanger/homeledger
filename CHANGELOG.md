@@ -8,12 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Recurring transactions can now be edited from a chosen month onward. The "Editar" action is available on recurring rows in the transactions table and opens a dialog whose "Alterar a partir de" month defaults to the month of the clicked row and is clamped to the recurrence's own period. Value, description, category and payment method can be changed, and a confirmation step shows the resulting periods before anything is written (e.g. "Mantém · jan/2026 — mar/2026 · R$ 1.200,00" and "Passa a · abr/2026 — dez/2026 · R$ 1.450,00"). Months before the chosen one keep their original values. `PATCH /api/recurring-transactions/[id]` now requires `effectiveFrom` (`YYYY-MM`) and validates that `amount` is a positive number; a new `GET /api/recurring-transactions/[id]` returns a single rule.
+
 - Credit-card purchases and refunds now have a "Fatura (mês)" field for the bill they land on. For FIXED-closure cards it is pre-filled from the closure day and can be changed; for VARIABLE-closure cards the user picks it (it starts on the purchase month). The installment preview follows the chosen bill. `POST /api/installments` and `POST /api/credit-card-refunds` accept an optional `billingMonth` (`YYYY-MM`), which is required for VARIABLE cards.
 - Bulk credit-card purchases (`/credit-cards/bulk-add`) have one "Fatura" per card section, applied to every row, so many purchases for the same bill can be entered at once. A row can switch to its own bill with the "Outra fatura" button. VARIABLE sections default to the current month; FIXED sections can be left empty to compute each row's bill from its date.
 - Installment rows on the mixed bulk-add page also accept a "Fatura (mês)", which is pre-filled when a VARIABLE card is picked. The statement import now sends each item's exact bill, derived from the statement month and installment number.
 
 ### Fixed
 
+- Editing a bounded recurring transaction no longer discards its end date. The replacement rule created by the edit inherits the original `endDate`, so a 12-month recurrence edited part-way through still ends when it was meant to instead of becoming open-ended.
+- Splitting a recurring transaction is now atomic: closing the old rule and creating its replacement run in a single database transaction (`IRecurringTransactionRepository.saveSplit`), so a failure can no longer leave a recurrence closed with no replacement.
+- An edit effective from a month outside the recurrence's period is rejected, which also prevents an already-split recurrence from producing two overlapping rules that would double-count a month.
 - Popovers built on the shared `PopoverContent` primitive no longer render with a transparent background: the `popover` color token (used by `bg-popover`) was missing from the theme and is now defined with the card surface colors in light and dark mode.
 
 ### Removed

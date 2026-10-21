@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { lockBodyScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
@@ -14,8 +14,6 @@ type DialogProps = {
 };
 
 export function Dialog({ open, onClose, title, children, className }: DialogProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -32,13 +30,8 @@ export function Dialog({ open, onClose, title, children, className }: DialogProp
   if (!open) return null;
 
   return (
-    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Close dialog"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm cursor-default"
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div aria-hidden="true" className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div
         className={cn(
           "relative z-10 bg-card border rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto",

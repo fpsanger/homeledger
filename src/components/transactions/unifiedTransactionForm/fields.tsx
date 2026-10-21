@@ -28,101 +28,44 @@ export const INCOME_SOURCES = [
   { value: "OTHER", label: "Outro" },
 ];
 
-export function getAmountFieldProps(
-  isParcelaMode: boolean,
-  amountLabel: string,
-  amount: string,
-  installmentAmount: string,
-  onAmountChange: (v: string) => void,
-  onInstallmentAmountChange: (v: string) => void,
-) {
-  if (isParcelaMode) {
-    return {
-      amountLabel: "Valor da Parcela",
-      amount: installmentAmount,
-      onAmountChange: onInstallmentAmountChange,
-    };
-  }
-  return { amountLabel, amount, onAmountChange };
-}
-
-export function ValueModeSelector({
-  parcelaMode,
-  onChange,
+export function PersonField({
+  personId,
+  setPersonId,
+  people,
 }: {
-  parcelaMode: boolean;
-  onChange: (mode: "total" | "parcela") => void;
+  personId: string;
+  setPersonId: (id: string) => void;
+  people: Person[];
 }) {
-  const options: { mode: "total" | "parcela"; label: string }[] = [
-    { mode: "total", label: "Valor total" },
-    { mode: "parcela", label: "Valor da parcela" },
-  ];
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>Como informar o valor</Label>
-      <div className="flex rounded-lg border overflow-hidden">
-        {options.map((opt) => (
-          <button
-            key={opt.mode}
-            type="button"
-            onClick={() => onChange(opt.mode)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              (opt.mode === "parcela") === parcelaMode
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
-            {opt.label}
-          </button>
+      <Label htmlFor="u-person">Pessoa</Label>
+      <Select id="u-person" value={personId} onChange={(e) => setPersonId(e.target.value)} required>
+        <option value="">Selecione a pessoa</option>
+        {people.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
         ))}
-      </div>
+      </Select>
     </div>
   );
 }
 
-export function PersonAndAmountFields({
-  showPerson,
-  personId,
-  setPersonId,
-  people,
-  amountLabel,
+export function AmountField({
+  label,
   amount,
   onAmountChange,
 }: {
-  showPerson: boolean;
-  personId: string;
-  setPersonId: (id: string) => void;
-  people: Person[];
-  amountLabel: string;
+  label: string;
   amount: string;
   onAmountChange: (v: string) => void;
 }) {
   return (
-    <>
-      {showPerson && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="u-person">Pessoa</Label>
-          <Select
-            id="u-person"
-            value={personId}
-            onChange={(e) => setPersonId(e.target.value)}
-            required
-          >
-            <option value="">Selecione a pessoa</option>
-            {people.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="u-amount">{amountLabel}</Label>
-        <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
-      </div>
-    </>
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="u-amount">{label}</Label>
+      <CurrencyInput id="u-amount" value={amount} onChange={onAmountChange} required />
+    </div>
   );
 }
 
@@ -145,6 +88,7 @@ export function TypeToggle({
           key={t}
           type="button"
           onClick={() => onSelect(t)}
+          aria-pressed={type === t}
           className={`flex-1 py-2 text-sm font-medium transition-colors ${
             type === t
               ? "bg-primary text-primary-foreground"

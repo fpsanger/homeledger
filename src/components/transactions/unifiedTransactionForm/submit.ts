@@ -200,8 +200,8 @@ export function deriveDuplicateMatch<A, B, C>(
 
 export function getFieldLabels(type: FormType) {
   return {
-    amountLabel: type === "credit" ? "Valor Total" : "Valor",
-    dateLabel: type === "credit" ? "Data da Compra" : "Data",
+    amountLabel: type === "credit" ? "Valor total" : "Valor",
+    dateLabel: type === "credit" ? "Data da compra" : "Data",
   };
 }
 

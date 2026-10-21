@@ -62,24 +62,35 @@ export function toBillingMonthValue(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
+/**
+ * How a total splits across `n` installments: every installment gets the floored share and the
+ * last one absorbs the remainder. Single source of this rule for the fields, the summary line and
+ * the schedule, so none of them can disagree.
+ */
+export function splitInstallmentCents(
+  totalCents: number,
+  n: number,
+): { baseCents: number; lastCents: number } {
+  if (n < 1) return { baseCents: totalCents, lastCents: totalCents };
+  const baseCents = Math.floor(totalCents / n);
+  return { baseCents, lastCents: totalCents - baseCents * (n - 1) };
+}
+
 export function computeBillingMonths(
   totalAmount: number,
   n: number,
   billingMonth: string,
 ): Array<{ installmentNumber: number; dueYear: number; dueMonth: number; amount: number }> {
   const [firstYear, firstMonth] = billingMonth.split("-").map(Number);
-  const baseAmount = Math.floor((totalAmount / n) * 100) / 100;
+  const { baseCents, lastCents } = splitInstallmentCents(Math.round(totalAmount * 100), n);
   const firstAbsolute = firstYear * 12 + (firstMonth - 1);
 
   return Array.from({ length: n }, (_, i) => {
     const absolute = firstAbsolute + i;
     const dueYear = Math.floor(absolute / 12);
     const dueMonth = (absolute % 12) + 1;
-    const isLast = i === n - 1;
-    const amount = isLast
-      ? Math.round((totalAmount - baseAmount * (n - 1)) * 100) / 100
-      : baseAmount;
-    return { installmentNumber: i + 1, dueYear, dueMonth, amount };
+    const cents = i === n - 1 ? lastCents : baseCents;
+    return { installmentNumber: i + 1, dueYear, dueMonth, amount: cents / 100 };
   });
 }
 
@@ -92,6 +103,75 @@ export function toCents(brValue: string): number {
 
 export function fromCents(cents: number): string {
   return formatAmountBR(cents / 100);
+}
+
+/**
+ * The total and the per-installment amount are two views of the same money. Whichever one the user
+ * typed last stays put; the other is derived from it and the installment count.
+ */
+export type AmountLink = {
+  amount: string;
+  installmentAmount: string;
+  numberOfInstallments: string;
+  lastEdited: "total" | "installment";
+};
+
+function toCount(value: string): number {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+export function linkFromTotal(amount: string, numberOfInstallments: string): AmountLink {
+  const n = toCount(numberOfInstallments);
+  const { baseCents } = splitInstallmentCents(toCents(amount), n);
+  return {
+    amount,
+    installmentAmount: amount ? fromCents(baseCents) : "",
+    numberOfInstallments,
+    lastEdited: "total",
+  };
+}
+
+export function linkFromInstallment(
+  installmentAmount: string,
+  numberOfInstallments: string,
+): AmountLink {
+  const n = toCount(numberOfInstallments);
+  return {
+    amount: installmentAmount ? fromCents(toCents(installmentAmount) * n) : "",
+    installmentAmount,
+    numberOfInstallments,
+    lastEdited: "installment",
+  };
+}
+
+export function linkWithCount(link: AmountLink, numberOfInstallments: string): AmountLink {
+  return link.lastEdited === "installment"
+    ? linkFromInstallment(link.installmentAmount, numberOfInstallments)
+    : linkFromTotal(link.amount, numberOfInstallments);
+}
+
+/**
+ * Amount state for the form. Every mutator returns the resulting total in cents so the caller can
+ * rebalance the split rows without reaching back into this hook's state.
+ */
+export function useInstallmentAmounts(initialAmount: string) {
+  const [link, setLink] = useState<AmountLink>(() => linkFromTotal(initialAmount, "1"));
+
+  function apply(next: AmountLink): number {
+    setLink(next);
+    return toCents(next.amount);
+  }
+
+  return {
+    amount: link.amount,
+    installmentAmount: link.installmentAmount,
+    numberOfInstallments: link.numberOfInstallments,
+    setTotal: (value: string) => apply(linkFromTotal(value, link.numberOfInstallments)),
+    setInstallment: (value: string) => apply(linkFromInstallment(value, link.numberOfInstallments)),
+    setCount: (value: string) => apply(linkWithCount(link, value)),
+    reset: (amount = "") => apply(linkFromTotal(amount, "1")),
+  };
 }
 
 export function rebalanceSplits(rows: SplitRow[], totalCents: number): SplitRow[] {
@@ -187,8 +267,4 @@ export function isCreditFlagActive(
   splitMode: boolean,
 ): boolean {
   return type === "credit" && !isEditMode && splitMode;
-}
-
-export function isCreditEntryMode(type: FormType, isEditMode: boolean): boolean {
-  return type === "credit" && !isEditMode;
 }

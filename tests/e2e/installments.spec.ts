@@ -35,8 +35,8 @@ test.describe("fatura cartão", () => {
     const dialog = page.getByRole("heading", { name: "Nova transação" });
     await expect(dialog).toBeVisible();
     await expect(page.getByLabel("Pessoa")).toBeVisible();
-    await expect(page.locator('label:text-is("Valor Total")')).toBeVisible();
-    await expect(page.locator('label:text-is("Cartão de Crédito")')).toBeVisible();
+    await expect(page.locator('label:text-is("Valor")')).toBeVisible();
+    await expect(page.locator('label:text-is("Cartão de crédito")')).toBeVisible();
     await expect(page.locator('label:text-is("Parcelas")')).toBeVisible();
     await expect(page.locator('label:text-is("Categoria")')).toBeVisible();
     await expect(page.getByLabel("Descrição")).toBeVisible();
@@ -202,12 +202,11 @@ test.describe("fatura cartão", () => {
       .getAttribute("value");
     await cardSelect.selectOption(fixtureCardValue ?? "");
 
-    await page.getByRole("button", { name: "Valor da parcela" }).click();
-
-    // The same amount field is reused for "Valor da Parcela"; the count-first
-    // "Parcelas" select is replaced by the total picker.
-    await page.locator("#u-amount").fill("50,00");
-    await page.locator("#u-total-picker").selectOption({ label: "3x = R$ 150,00" });
+    // The count is selectable before any amount exists, and typing the installment amount
+    // derives the total — there is no entry mode to pick first.
+    await page.locator("#u-installments").selectOption("3");
+    await page.locator("#u-installment-amount").fill("50,00");
+    await expect(page.locator("#u-amount")).toHaveValue("150,00");
 
     const description = `E2E parcela-first ${Date.now()}`;
     await page.locator("#u-description").fill(description);

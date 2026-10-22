@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
 import type { Category, Person } from "../../transactions/types";
-import { PurchaseRowForm } from "./PurchaseRowForm";
+import { PURCHASE_COLUMNS, PURCHASE_GRID, PurchaseRowForm } from "./PurchaseRowForm";
+import { ColumnHeaders } from "./RowField";
 import type { ClosureType, PurchaseRow } from "./types";
 
 type CreditCard = { id: string; name: string; closureType: ClosureType };
@@ -27,6 +28,7 @@ type Props = {
   disabled?: boolean;
 };
 
+/** One card's purchases: a header with who and which bill, then flat rows, then add. */
 export function CardSection({
   card,
   rows,
@@ -47,27 +49,20 @@ export function CardSection({
     disabled || rows.some((r) => r.status === "loading" || r.status === "success");
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium text-sm">{card.name}</span>
-        <button
-          type="button"
-          aria-label={`Remover cartão ${card.name}`}
-          onClick={onRemoveSection}
-          disabled={sectionLocked}
-          className="text-muted-foreground hover:text-destructive disabled:opacity-50 disabled:pointer-events-none shrink-0"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
+    <section
+      aria-label={`Compras no ${card.name}`}
+      className="rounded-xl border border-border bg-card"
+    >
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-t-xl border-b border-border bg-secondary/40 px-3 py-2">
+        <h3 className="order-1 flex-1 text-sm font-semibold tracking-tight sm:order-none sm:flex-none">
+          {card.name}
+        </h3>
         <Select
           aria-label="Pessoa"
           value={personId}
           onChange={(e) => onPersonChange(e.target.value)}
           disabled={disabled}
-          className="max-w-xs"
+          className="order-3 w-full sm:order-none sm:w-44"
         >
           <option value="">Pessoa</option>
           {people.map((p) => (
@@ -82,9 +77,22 @@ export function CardSection({
           onChange={onBillingMonthChange}
           disabled={disabled}
         />
-      </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Remover cartão ${card.name}`}
+          title="Remover este cartão e suas compras"
+          onClick={onRemoveSection}
+          disabled={sectionLocked}
+          className="order-2 ml-auto sm:order-none"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </header>
 
-      <div className="flex flex-col gap-2">
+      <ColumnHeaders template={PURCHASE_GRID} labels={PURCHASE_COLUMNS} />
+      <div className="divide-y divide-border">
         {rows.map((row) => (
           <PurchaseRowForm
             key={row.rowId}
@@ -99,17 +107,19 @@ export function CardSection({
         ))}
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onAddRow}
-        disabled={disabled}
-        className="self-start gap-1.5"
-      >
-        <Plus className="w-4 h-4" />
-        Adicionar compra
-      </Button>
-    </div>
+      <div className="border-t border-border px-3 py-2">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onAddRow}
+          disabled={disabled}
+          className="gap-1.5"
+        >
+          <Plus className="w-4 h-4" />
+          Adicionar compra
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -125,7 +135,7 @@ function SectionBillingMonth({
   disabled: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="order-4 flex items-center gap-2 text-sm sm:order-none">
       <span className="text-muted-foreground">Fatura</span>
       <MonthPicker
         ariaLabel="Fatura das compras"

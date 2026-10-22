@@ -51,12 +51,17 @@ jest.mock("@/components/ui/currency-input", () => ({
   CurrencyInput: ({
     disabled,
     onChange,
+    value,
+    "aria-label": ariaLabel,
   }: {
     disabled?: boolean;
     onChange: (v: string) => void;
+    value: string;
+    "aria-label"?: string;
   }) => (
     <input
-      aria-label="Valor"
+      aria-label={ariaLabel ?? "Valor"}
+      value={value}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
     />
@@ -79,6 +84,8 @@ jest.mock("@/components/ui/date-picker", () => ({
 const baseRow: PurchaseRow = {
   rowId: "row-1",
   amount: "10,00",
+  installmentAmount: "5,00",
+  lastEdited: "total",
   date: "2026-08-17",
   categoryId: "",
   description: "Mercado",
@@ -108,7 +115,8 @@ describe("PurchaseRowForm", () => {
   it("locks every editable field after the row succeeds", () => {
     renderRow({ ...baseRow, status: "success" });
 
-    expect(screen.getByLabelText("Valor")).toBeDisabled();
+    expect(screen.getByLabelText("Valor total")).toBeDisabled();
+    expect(screen.getByLabelText("Valor da parcela")).toBeDisabled();
     expect(screen.getByLabelText("Data")).toBeDisabled();
     expect(screen.getByLabelText("Número de parcelas")).toBeDisabled();
     expect(screen.getByLabelText("Descrição")).toBeDisabled();
@@ -123,24 +131,24 @@ describe("PurchaseRowForm", () => {
   it("disables editing and removal while the batch is submitting", () => {
     renderRow(baseRow, true);
 
-    expect(screen.getByLabelText("Valor")).toBeDisabled();
+    expect(screen.getByLabelText("Valor total")).toBeDisabled();
     expect(screen.getByLabelText("Remover compra")).toBeDisabled();
   });
 
   it("forwards edits from every field", () => {
     const { onChange, onRemove } = renderRow(baseRow);
 
-    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "20,00" } });
+    fireEvent.change(screen.getByLabelText("Valor total"), { target: { value: "20,00" } });
     fireEvent.click(screen.getByLabelText("Data"));
     fireEvent.click(screen.getByRole("button", { name: "Categoria" }));
     fireEvent.change(screen.getByLabelText("Número de parcelas"), { target: { value: "6" } });
     fireEvent.change(screen.getByLabelText("Descrição"), { target: { value: "Farmácia" } });
     fireEvent.click(screen.getByLabelText("Remover compra"));
 
-    expect(onChange).toHaveBeenCalledWith({ amount: "20,00" });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ amount: "20,00" }));
     expect(onChange).toHaveBeenCalledWith({ date: "2026-08-18" });
     expect(onChange).toHaveBeenCalledWith({ categoryId: "category-1" });
-    expect(onChange).toHaveBeenCalledWith({ numberOfInstallments: "6" });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ numberOfInstallments: "6" }));
     expect(onChange).toHaveBeenCalledWith({ description: "Farmácia" });
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
@@ -152,7 +160,76 @@ describe("PurchaseRowForm", () => {
     expect(within(select).getByRole("option", { name: "1x" })).toBeInTheDocument();
 
     fireEvent.change(select, { target: { value: "1" } });
-    expect(onChange).toHaveBeenCalledWith({ numberOfInstallments: "1" });
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ numberOfInstallments: "1" }));
+  });
+
+  it("links the total and the installment amount", () => {
+    const { onChange } = renderRow({
+      ...baseRow,
+      amount: "",
+      installmentAmount: "",
+      numberOfInstallments: "4",
+    });
+
+    fireEvent.change(screen.getByLabelText("Valor total"), { target: { value: "100,00" } });
+    expect(onChange).toHaveBeenLastCalledWith({
+      amount: "100,00",
+      installmentAmount: "25,00",
+      numberOfInstallments: "4",
+      lastEdited: "total",
+    });
+
+    fireEvent.change(screen.getByLabelText("Valor da parcela"), { target: { value: "30,00" } });
+    expect(onChange).toHaveBeenLastCalledWith({
+      amount: "120,00",
+      installmentAmount: "30,00",
+      numberOfInstallments: "4",
+      lastEdited: "installment",
+    });
+  });
+
+  it("moves the amount that was not typed last when the count changes", () => {
+    const { onChange } = renderRow({
+      ...baseRow,
+      amount: "100,00",
+      installmentAmount: "50,00",
+      lastEdited: "installment",
+    });
+
+    fireEvent.change(screen.getByLabelText("Número de parcelas"), { target: { value: "5" } });
+
+    expect(onChange).toHaveBeenCalledWith({
+      amount: "250,00",
+      installmentAmount: "50,00",
+      numberOfInstallments: "5",
+      lastEdited: "installment",
+    });
+  });
+
+  it("shows one Valor field for a single installment, marked à vista", () => {
+    renderRow({ ...baseRow, numberOfInstallments: "1", installmentAmount: "" });
+
+    expect(screen.getByLabelText("Valor")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Valor total")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Valor da parcela")).not.toBeInTheDocument();
+    expect(screen.getByText("à vista")).toBeVisible();
+  });
+
+  it("states how the purchase splits, including the uneven last installment", () => {
+    renderRow({
+      ...baseRow,
+      amount: "100,00",
+      installmentAmount: "33,33",
+      numberOfInstallments: "3",
+    });
+
+    expect(screen.getByText(/^3× R\$\s33,33 · última R\$\s33,34$/)).toBeVisible();
+  });
+
+  it("has no split note for a single installment", () => {
+    renderRow({ ...baseRow, numberOfInstallments: "1" });
+
+    expect(screen.queryByText(/×/)).not.toBeInTheDocument();
   });
 
   it("copies the row through the button next to the trash icon", () => {

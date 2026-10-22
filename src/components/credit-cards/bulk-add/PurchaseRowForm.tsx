@@ -1,24 +1,29 @@
 "use client";
 
-import {
-  AlertTriangle,
-  CalendarClock,
-  CheckCircle2,
-  Copy,
-  Loader2,
-  Trash2,
-  X,
-  XCircle,
-} from "lucide-react";
+import { CalendarClock, Copy, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
-import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { MonthPicker } from "@/components/ui/month-picker";
-import { Select } from "@/components/ui/select";
 import type { Category } from "../../transactions/types";
+import { describeInstallmentSplit } from "./installmentNote";
+import { PurchaseAmountFields } from "./PurchaseAmountFields";
+import { RowField } from "./RowField";
+import { RowError, RowStatusIcon } from "./RowStatus";
 import type { PurchaseRow } from "./types";
+
+/** Parcelas · Valor total · Valor da parcela · Data · Categoria · Descrição · ações */
+export const PURCHASE_GRID = "xl:grid-cols-[84px_140px_140px_150px_1fr_1fr_auto]";
+export const PURCHASE_COLUMNS = [
+  "Parcelas",
+  "Valor total",
+  "Valor da parcela",
+  "Data",
+  "Categoria",
+  "Descrição",
+  "",
+];
 
 type Props = {
   row: PurchaseRow;
@@ -44,67 +49,48 @@ export function PurchaseRowForm({
   return (
     <div
       data-testid="purchase-row"
-      className="grid grid-cols-1 gap-2 rounded-md border border-border bg-card p-3 sm:grid-cols-2 xl:grid-cols-[150px_150px_1fr_130px_1fr_auto] xl:items-start"
+      className={`grid grid-cols-2 items-start gap-x-2 gap-y-2 px-3 py-3 transition-colors duration-100 hover:bg-muted/50 motion-reduce:transition-none ${PURCHASE_GRID}`}
     >
-      <CurrencyInput
-        value={row.amount}
-        onChange={(v) => onChange({ amount: v })}
-        placeholder="Valor"
-        disabled={locked}
-      />
+      <PurchaseAmountFields row={row} locked={locked} onChange={onChange} />
 
-      <DatePicker
-        value={row.date}
-        onChange={(v) => onChange({ date: v })}
-        ariaLabel="Data"
-        disabled={locked}
-      />
+      <RowField label="Data">
+        <DatePicker
+          value={row.date}
+          onChange={(v) => onChange({ date: v })}
+          ariaLabel="Data"
+          disabled={locked}
+        />
+      </RowField>
 
-      <CategoryCombobox
-        categories={categories}
-        value={row.categoryId}
-        onChange={(v) => onChange({ categoryId: v })}
-        disabled={locked}
-      />
+      <RowField label="Categoria" className="col-span-2 xl:col-span-1">
+        <CategoryCombobox
+          categories={categories}
+          value={row.categoryId}
+          onChange={(v) => onChange({ categoryId: v })}
+          disabled={locked}
+        />
+      </RowField>
 
-      <Select
-        aria-label="Número de parcelas"
-        value={row.numberOfInstallments}
-        onChange={(e) => onChange({ numberOfInstallments: e.target.value })}
-        disabled={locked}
-      >
-        {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-          <option key={n} value={String(n)}>
-            {n}x
-          </option>
-        ))}
-      </Select>
-
-      <Input
-        aria-label="Descrição"
-        value={row.description}
-        onChange={(e) => onChange({ description: e.target.value })}
-        placeholder="Descrição (opcional)"
-        disabled={locked}
-      />
+      <RowField label="Descrição" className="col-span-2 xl:col-span-1">
+        <Input
+          aria-label="Descrição"
+          value={row.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          placeholder="Descrição (opcional)"
+          disabled={locked}
+        />
+      </RowField>
 
       <RowActions
         row={row}
         locked={locked}
+        duplicateDisabled={disabled || row.status === "loading"}
         onRemove={onRemove}
         onDuplicate={onDuplicate}
         onOverrideBillingMonth={() => onChange({ billingMonth: sectionBillingMonth })}
-        duplicateDisabled={disabled || row.status === "loading"}
       />
 
-      {row.billingMonth !== undefined && (
-        <RowBillingMonth
-          value={row.billingMonth}
-          onChange={(v) => onChange({ billingMonth: v })}
-          onClear={() => onChange({ billingMonth: undefined })}
-          locked={locked}
-        />
-      )}
+      <RowMeta row={row} locked={locked} onChange={onChange} />
     </div>
   );
 }
@@ -112,21 +98,21 @@ export function PurchaseRowForm({
 function RowActions({
   row,
   locked,
+  duplicateDisabled,
   onRemove,
   onDuplicate,
   onOverrideBillingMonth,
-  duplicateDisabled,
 }: {
   row: PurchaseRow;
   locked: boolean;
+  duplicateDisabled: boolean;
   onRemove: () => void;
   onDuplicate: () => void;
   onOverrideBillingMonth: () => void;
-  duplicateDisabled: boolean;
 }) {
   return (
-    <div className="flex items-center justify-end gap-2 sm:col-span-2 xl:col-span-1">
-      <RowStatus row={row} />
+    <div className="col-span-2 flex items-center justify-end gap-1 xl:col-span-1">
+      <RowStatusIcon status={row.status} isDuplicate={row.isDuplicate} />
       {row.billingMonth === undefined && (
         <Button
           type="button"
@@ -165,6 +151,40 @@ function RowActions({
   );
 }
 
+/** The line under the fields: how the purchase splits, its own bill if any, and what went wrong. */
+function RowMeta({
+  row,
+  locked,
+  onChange,
+}: {
+  row: PurchaseRow;
+  locked: boolean;
+  onChange: (patch: Partial<PurchaseRow>) => void;
+}) {
+  const note = describeInstallmentSplit(row.amount, row.numberOfInstallments);
+  const ownBill = row.billingMonth !== undefined;
+  if (!note && !ownBill && row.status !== "error") return null;
+
+  return (
+    <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs xl:col-span-full">
+      {note && <span className="tabular-nums text-muted-foreground">{note}</span>}
+      {ownBill && (
+        <RowBillingMonth
+          value={row.billingMonth ?? ""}
+          onChange={(v) => onChange({ billingMonth: v })}
+          onClear={() => onChange({ billingMonth: undefined })}
+          locked={locked}
+        />
+      )}
+      <RowError
+        status={row.status}
+        error={row.error}
+        fallback="Não foi possível salvar esta compra."
+      />
+    </div>
+  );
+}
+
 function RowBillingMonth({
   value,
   onChange,
@@ -177,7 +197,7 @@ function RowBillingMonth({
   locked: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm sm:col-span-2 xl:col-span-6">
+    <div className="flex items-center gap-2">
       <span className="text-muted-foreground">Fatura desta compra</span>
       <MonthPicker
         ariaLabel="Fatura desta compra"
@@ -199,29 +219,4 @@ function RowBillingMonth({
       </Button>
     </div>
   );
-}
-
-function RowStatus({ row }: { row: PurchaseRow }) {
-  if (row.status === "loading") {
-    return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
-  }
-  if (row.status === "success") {
-    return (
-      <span className="flex items-center gap-1">
-        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-        {row.isDuplicate && (
-          <AlertTriangle className="w-4 h-4 text-amber-500" aria-label="Possível duplicata" />
-        )}
-      </span>
-    );
-  }
-  if (row.status === "error") {
-    return (
-      <span className="flex items-center gap-1.5 text-xs text-destructive" role="alert">
-        <XCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-        <span>{row.error ?? "Não foi possível salvar esta compra."}</span>
-      </span>
-    );
-  }
-  return null;
 }

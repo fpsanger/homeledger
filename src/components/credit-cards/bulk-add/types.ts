@@ -1,4 +1,10 @@
-import { parseCurrencyBR } from "@/lib/utils";
+import {
+  type AmountLink,
+  linkFromInstallment,
+  linkFromTotal,
+  linkWithCount,
+} from "../../transactions/unifiedTransactionForm/billing";
+import { hasInvalidAmount } from "./amountValidation";
 
 export type RowStatus = "pending" | "loading" | "success" | "error";
 
@@ -6,7 +12,11 @@ export type ClosureType = "FIXED" | "VARIABLE";
 
 export type PurchaseRow = {
   rowId: string;
+  /** The purchase total: what is submitted. The installment amount is derived from it. */
   amount: string;
+  installmentAmount: string;
+  /** Which of the two amounts the user typed last; it stays put when the count changes. */
+  lastEdited: AmountLink["lastEdited"];
   date: string;
   categoryId: string;
   description: string;
@@ -22,10 +32,12 @@ export function createEmptyRow(defaultDate: string): PurchaseRow {
   return {
     rowId: crypto.randomUUID(),
     amount: "",
+    installmentAmount: "",
+    lastEdited: "total",
     date: defaultDate,
     categoryId: "",
     description: "",
-    numberOfInstallments: "2",
+    numberOfInstallments: "1",
     status: "pending",
   };
 }
@@ -38,6 +50,33 @@ export function duplicateRow(row: PurchaseRow, defaultDate: string): PurchaseRow
     numberOfInstallments: row.numberOfInstallments,
     ...(row.billingMonth !== undefined ? { billingMonth: row.billingMonth } : {}),
   };
+}
+
+/** An untouched starter row: nothing that makes it a purchase has been entered. */
+export function isBlankPurchaseRow(row: PurchaseRow): boolean {
+  return !row.amount && !row.installmentAmount && !row.description && !row.categoryId;
+}
+
+function linkOf(row: PurchaseRow): AmountLink {
+  return {
+    amount: row.amount,
+    installmentAmount: row.installmentAmount,
+    numberOfInstallments: row.numberOfInstallments,
+    lastEdited: row.lastEdited,
+  };
+}
+
+/** The total and the per-installment amount are two views of one figure; a patch moves both. */
+export function totalPatch(row: PurchaseRow, value: string): AmountLink {
+  return linkFromTotal(value, row.numberOfInstallments);
+}
+
+export function installmentPatch(row: PurchaseRow, value: string): AmountLink {
+  return linkFromInstallment(value, row.numberOfInstallments);
+}
+
+export function countPatch(row: PurchaseRow, value: string): AmountLink {
+  return linkWithCount(linkOf(row), value);
 }
 
 export function resolveRowBillingMonth(row: PurchaseRow, sectionBillingMonth: string): string {
@@ -58,12 +97,6 @@ export function validateBillingMonth(
   if (!billingMonth) return closureType === "VARIABLE" ? "Informe a fatura (mês)." : null;
   if (!BILLING_MONTH_PATTERN.test(billingMonth)) return "Fatura inválida.";
   return null;
-}
-
-function hasInvalidAmount(value: string): boolean {
-  if (!value) return true;
-  const amount = parseCurrencyBR(value);
-  return !Number.isFinite(amount) || amount <= 0;
 }
 
 export function validateRow(row: PurchaseRow): string | null {

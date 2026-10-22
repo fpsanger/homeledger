@@ -50,24 +50,6 @@ describe("submitRow", () => {
         description: "Mercado",
       },
     ],
-    [
-      "installment",
-      row({
-        type: "installment",
-        creditCardId: "card-1",
-        numberOfInstallments: "6",
-      }),
-      "/api/installments",
-      {
-        personId: "person-1",
-        creditCardId: "card-1",
-        totalAmount: 1234.56,
-        numberOfInstallments: 6,
-        purchaseDate: "2026-08-17",
-        categoryId: "category-1",
-        description: "Mercado",
-      },
-    ],
   ])("posts the %s contract", async (_name, input, expectedUrl, expectedBody) => {
     await submitRow(input);
 
@@ -78,18 +60,18 @@ describe("submitRow", () => {
     });
   });
 
-  it("sends the installment bill when one is chosen", async () => {
-    await submitRow(row({ type: "installment", creditCardId: "card-1", billingMonth: "2026-09" }));
+  it("reports a duplicate warning from the API", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ isDuplicate: true }) });
 
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).billingMonth).toBe("2026-09");
+    await expect(submitRow(row({ type: "expense" }))).resolves.toEqual({ isDuplicate: true });
   });
 
   it("surfaces the API error message", async () => {
     fetchMock.mockResolvedValue({
       ok: false,
-      json: async () => ({ error: "Cartão não encontrado." }),
+      json: async () => ({ error: "Pessoa não encontrada." }),
     });
 
-    await expect(submitRow(row({ type: "expense" }))).rejects.toThrow("Cartão não encontrado.");
+    await expect(submitRow(row({ type: "expense" }))).rejects.toThrow("Pessoa não encontrada.");
   });
 });

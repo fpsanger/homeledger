@@ -6,48 +6,35 @@ function fixtureName(key: "E2E_FIXTURE_CARD_NAME" | "E2E_FIXTURE_PERSON_NAME") {
   return value;
 }
 
-test.describe("bulk add credit card purchase", () => {
+test.describe("bulk add credit card purchases", () => {
   const fixtureCardName = fixtureName("E2E_FIXTURE_CARD_NAME");
   const fixturePersonName = fixtureName("E2E_FIXTURE_PERSON_NAME");
 
   test.beforeEach(async ({ page }) => {
-    await page.goto("/credit-cards/bulk-add");
-  });
-
-  test("page loads with header and controls", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: "Adicionar Compra em Lote" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Voltar" })).toHaveAttribute(
-      "href",
-      "/transactions",
-    );
-    await expect(page.getByRole("button", { name: "Enviar tudo" })).toBeVisible();
-  });
-
-  test("entry point navigates from the transactions bulk-add page", async ({ page }) => {
     await page.goto("/transactions/bulk-add");
-    await page.getByRole("link", { name: "Comprar em vários cartões" }).click();
-    await expect(page).toHaveURL(/\/credit-cards\/bulk-add$/);
-    await expect(page.getByRole("heading", { name: "Adicionar Compra em Lote" })).toBeVisible();
   });
 
-  test("add two purchases to the same card, then clean up", async ({ page }) => {
-    async function addCardSection(name: string) {
-      await page.getByRole("button", { name: "Selecione o cartão" }).click();
-      await page.locator("[cmdk-item]", { hasText: name }).click();
-      await page.getByRole("button", { name: "Adicionar cartão" }).click();
-    }
+  test("the old credit-card bulk page redirects to the unified page", async ({ page }) => {
+    await page.goto("/credit-cards/bulk-add");
 
+    await expect(page).toHaveURL(/\/transactions\/bulk-add$/);
+    await expect(page.getByRole("heading", { name: "Compras no cartão" })).toBeVisible();
+  });
+
+  test("add a single and a 3x purchase to the same card, then clean up", async ({ page }) => {
     await page.getByRole("button", { name: "Selecione o cartão" }).click();
     await expect
       .poll(() => page.locator("[cmdk-item]", { hasText: fixtureCardName }).count(), {
         message: "the E2E credit-card fixture should be available",
       })
       .toBeGreaterThan(0);
-    const cardName = await page.locator("[cmdk-item]", { hasText: fixtureCardName }).textContent();
-    await page.keyboard.press("Escape");
-    await addCardSection(cardName ?? "");
+    const cardName =
+      (await page.locator("[cmdk-item]", { hasText: fixtureCardName }).textContent()) ?? "";
+    await page.locator("[cmdk-item]", { hasText: fixtureCardName }).click();
+    await page.getByRole("button", { name: "Adicionar cartão" }).click();
 
-    const personSelect = page.getByLabel("Pessoa");
+    const section = page.getByRole("region", { name: `Compras no ${cardName}` });
+    const personSelect = section.getByLabel("Pessoa");
     await expect
       .poll(() => personSelect.locator("option").count(), {
         message: "the E2E person fixture should be available",
@@ -58,24 +45,26 @@ test.describe("bulk add credit card purchase", () => {
       .getAttribute("value");
     await personSelect.selectOption(fixturePersonValue ?? "");
 
-    const rows = page.getByTestId("purchase-row");
+    const rows = section.getByTestId("purchase-row");
     await expect(rows).toHaveCount(1);
 
     const descriptionA = `E2E bulk purchase A ${Date.now()}`;
     await rows.nth(0).getByPlaceholder("Valor").fill("111,00");
     await rows.nth(0).getByPlaceholder("Descrição (opcional)").fill(descriptionA);
 
-    // Only one card section exists on the page at this point.
-    await page.getByRole("button", { name: "Adicionar compra" }).click();
+    await section.getByRole("button", { name: "Adicionar compra" }).click();
     await expect(rows).toHaveCount(2);
 
     const descriptionB = `E2E bulk purchase B ${Date.now()}`;
-    await rows.nth(1).getByPlaceholder("Valor").fill("222,00");
+    await rows.nth(1).getByLabel("Número de parcelas").selectOption("3");
+    await rows.nth(1).getByLabel("Valor total").fill("300,00");
+    await expect(rows.nth(1).getByLabel("Valor da parcela")).toHaveValue("R$ 100,00");
     await rows.nth(1).getByPlaceholder("Descrição (opcional)").fill(descriptionB);
 
+    // The untouched starter row of the normal section is skipped, not reported as an error.
     await page.getByRole("button", { name: "Enviar tudo" }).click();
 
-    await expect(page.getByText(/compra\(s\) salva\(s\)\./)).toBeVisible();
+    await expect(page.getByText(/lançamento\(s\) salvo\(s\)\./)).toBeVisible();
     await expect(page).toHaveURL(/\/transactions$/);
 
     const purchasesResponse = await page.request.get("/api/credit-card-purchases");

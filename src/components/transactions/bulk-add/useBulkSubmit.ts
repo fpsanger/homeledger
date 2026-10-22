@@ -54,5 +54,9 @@ function reportOutcome(
     if (succeeded > 0) router.refresh();
     return;
   }
-  if (succeeded > 0) router.push("/transactions");
+  if (succeeded > 0) {
+    // The router cache can still hold the list from before the save; drop it so the new entries show.
+    router.push("/transactions");
+    router.refresh();
+  }
 }

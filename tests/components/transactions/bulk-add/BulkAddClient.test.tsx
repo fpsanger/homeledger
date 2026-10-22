@@ -453,6 +453,7 @@ describe("BulkAddClient", () => {
 
       await waitFor(() => expect(push).toHaveBeenCalledWith("/transactions"));
       expect(order).toEqual(["normal", "card-1", "card-2"]);
+      expect(refresh).toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith("3 lançamento(s) salvo(s).");
     });
 

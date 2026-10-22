@@ -1,7 +1,6 @@
-import { parseCurrencyBR } from "@/lib/utils";
-import { type ClosureType, validateBillingMonth } from "../../credit-cards/bulk-add/types";
+import { hasInvalidAmount } from "../../credit-cards/bulk-add/amountValidation";
 
-export type BulkRowType = "expense" | "income" | "installment";
+export type BulkRowType = "expense" | "income";
 export type BulkRowStatus = "pending" | "loading" | "success" | "error";
 
 export type BulkRow = {
@@ -13,10 +12,6 @@ export type BulkRow = {
   paymentMethod: string;
   source: string;
   categoryId: string;
-  creditCardId: string;
-  numberOfInstallments: string;
-  /** "YYYY-MM" bill for installment rows; empty lets a FIXED card compute it. */
-  billingMonth: string;
   description: string;
   status: BulkRowStatus;
   error?: string;
@@ -33,31 +28,19 @@ export function createEmptyRow(defaultPersonId: string, defaultDate: string): Bu
     paymentMethod: "CASH",
     source: "SALARY",
     categoryId: "",
-    creditCardId: "",
-    numberOfInstallments: "2",
-    billingMonth: "",
     description: "",
     status: "pending",
   };
 }
 
-function validateInstallmentRow(row: BulkRow, closureType: ClosureType): string | null {
-  if (!row.creditCardId) return "Selecione o cartão.";
-  const n = parseInt(row.numberOfInstallments, 10);
-  if (!n || n < 2) return "Informe o número de parcelas.";
-  return validateBillingMonth(row.billingMonth, closureType);
+/** An untouched starter row: nothing that makes it an entry has been typed or picked. */
+export function isBlankRow(row: BulkRow): boolean {
+  return !row.amount && !row.description && !row.categoryId;
 }
 
-function hasInvalidAmount(value: string): boolean {
-  if (!value) return true;
-  const amount = parseCurrencyBR(value);
-  return !Number.isFinite(amount) || amount <= 0;
-}
-
-export function validateRow(row: BulkRow, closureType: ClosureType = "FIXED"): string | null {
+export function validateRow(row: BulkRow): string | null {
   if (!row.personId) return "Selecione a pessoa.";
   if (hasInvalidAmount(row.amount)) return "Informe um valor válido.";
   if (!row.date) return "Informe a data.";
-  if (row.type === "installment") return validateInstallmentRow(row, closureType);
   return null;
 }

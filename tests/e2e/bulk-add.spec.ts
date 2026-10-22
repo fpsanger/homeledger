@@ -13,6 +13,13 @@ test.describe("bulk add", () => {
     await expect(page.getByRole("button", { name: "Enviar tudo" })).toBeVisible();
   });
 
+  test("shows the normal entries and the card purchases as two sections", async ({ page }) => {
+    await expect(page.getByRole("heading", { name: "Despesas e receitas" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Compras no cartão" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Adicionar cartão" })).toBeVisible();
+    await expect(page.getByLabel("Tipo").locator("option")).toHaveText(["Despesa", "Receita"]);
+  });
+
   test("entry point navigates from the transactions page", async ({ page }) => {
     await page.goto("/transactions");
     await page.getByRole("button", { name: "Adicionar em Lote" }).click();
@@ -57,9 +64,7 @@ test.describe("bulk add", () => {
     await page.getByRole("button", { name: "Enviar tudo" }).click();
 
     await expect(page.getByText(/lançamento\(s\) salvo\(s\)\./)).toBeVisible();
-    await expect(firstRow.locator('svg[aria-label="Possível duplicata"]')).toHaveCount(0);
-
-    await page.goto("/transactions");
+    await expect(page).toHaveURL(/\/transactions$/);
 
     for (const description of [expenseDescription, incomeDescription]) {
       const row = page.getByRole("row").filter({ hasText: description });

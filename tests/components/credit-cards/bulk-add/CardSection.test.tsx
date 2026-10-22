@@ -34,6 +34,7 @@ jest.mock("@/components/ui/month-picker", () => ({
 }));
 
 jest.mock("@/components/credit-cards/bulk-add/PurchaseRowForm", () => ({
+  ...jest.requireActual("@/components/credit-cards/bulk-add/PurchaseRowForm"),
   PurchaseRowForm: ({
     row,
     onChange,
@@ -67,6 +68,8 @@ function row(patch: Partial<PurchaseRow> = {}): PurchaseRow {
   return {
     rowId: "row-1",
     amount: "",
+    installmentAmount: "",
+    lastEdited: "total",
     date: "2026-08-17",
     categoryId: "",
     description: "",

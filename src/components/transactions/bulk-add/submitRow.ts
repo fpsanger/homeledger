@@ -15,37 +15,20 @@ async function post(url: string, body: unknown): Promise<{ isDuplicate: boolean 
   return { isDuplicate: Boolean(data.isDuplicate) };
 }
 
-export async function submitRow(row: BulkRow): Promise<{ isDuplicate: boolean }> {
-  if (row.type === "expense") {
-    return post("/api/expenses", {
-      personId: row.personId,
-      amount: parseCurrencyBR(row.amount),
-      date: row.date,
-      paymentMethod: row.paymentMethod,
-      categoryId: row.categoryId || null,
-      description: row.description,
-    });
-  }
-
-  if (row.type === "income") {
-    return post("/api/incomes", {
-      personId: row.personId,
-      amount: parseCurrencyBR(row.amount),
-      date: row.date,
-      source: row.source,
-      categoryId: row.categoryId || null,
-      description: row.description,
-    });
-  }
-
-  return post("/api/installments", {
+function entryBody(row: BulkRow, typeSpecific: Record<string, string>) {
+  return {
     personId: row.personId,
-    creditCardId: row.creditCardId,
-    totalAmount: parseCurrencyBR(row.amount),
-    numberOfInstallments: parseInt(row.numberOfInstallments, 10),
-    purchaseDate: row.date,
-    ...(row.billingMonth ? { billingMonth: row.billingMonth } : {}),
+    amount: parseCurrencyBR(row.amount),
+    date: row.date,
+    ...typeSpecific,
     categoryId: row.categoryId || null,
     description: row.description,
-  });
+  };
+}
+
+export async function submitRow(row: BulkRow): Promise<{ isDuplicate: boolean }> {
+  if (row.type === "income") {
+    return post("/api/incomes", entryBody(row, { source: row.source }));
+  }
+  return post("/api/expenses", entryBody(row, { paymentMethod: row.paymentMethod }));
 }

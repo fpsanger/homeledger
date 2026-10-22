@@ -1,23 +1,20 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Loader2, Trash2, XCircle } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
-import { MonthPicker } from "@/components/ui/month-picker";
 import { Select } from "@/components/ui/select";
-import type { ClosureType } from "../../credit-cards/bulk-add/types";
+import { RowField } from "../../credit-cards/bulk-add/RowField";
+import { RowError, RowStatusIcon } from "../../credit-cards/bulk-add/RowStatus";
 import type { Category, Person } from "../types";
 import type { BulkRow } from "./types";
-
-type CreditCard = { id: string; name: string; closureType: ClosureType };
 
 const ROW_TYPES = [
   { value: "expense", label: "Despesa" },
   { value: "income", label: "Receita" },
-  { value: "installment", label: "Parcelamento" },
 ];
 
 const PAYMENT_METHODS = [
@@ -38,31 +35,32 @@ const INCOME_SOURCES = [
   { value: "OTHER", label: "Outro" },
 ];
 
+/** Tipo · Pessoa · Valor · Data · Categoria · Forma/Fonte · Descrição · ações */
+export const BULK_ROW_GRID = "xl:grid-cols-[120px_140px_140px_150px_1fr_170px_1fr_auto]";
+export const BULK_ROW_COLUMNS = [
+  "Tipo",
+  "Pessoa",
+  "Valor",
+  "Data",
+  "Categoria",
+  "Forma de pagamento / fonte",
+  "Descrição",
+  "",
+];
+
 type Props = {
   row: BulkRow;
   people: Person[];
   categories: Category[];
-  creditCards: CreditCard[];
   onChange: (patch: Partial<BulkRow>) => void;
   onRemove: () => void;
   disabled?: boolean;
 };
 
-function cardChangePatch(
-  row: BulkRow,
-  creditCards: CreditCard[],
-  creditCardId: string,
-): Partial<BulkRow> {
-  const card = creditCards.find((c) => c.id === creditCardId);
-  if (card?.closureType !== "VARIABLE" || row.billingMonth) return { creditCardId };
-  return { creditCardId, billingMonth: row.date.slice(0, 7) };
-}
-
 export function BulkAddRow({
   row,
   people,
   categories,
-  creditCards,
   onChange,
   onRemove,
   disabled = false,
@@ -72,137 +70,127 @@ export function BulkAddRow({
   return (
     <div
       data-testid="bulk-add-row"
-      className="grid grid-cols-1 gap-2 rounded-md border border-border bg-card p-3 sm:grid-cols-2 xl:grid-cols-[130px_150px_130px_150px_170px_1fr_1fr_auto] xl:items-start"
+      className={`grid grid-cols-2 items-start gap-x-2 gap-y-2 px-3 py-3 transition-colors duration-100 hover:bg-muted/50 motion-reduce:transition-none ${BULK_ROW_GRID}`}
     >
-      <Select
-        aria-label="Tipo"
-        value={row.type}
-        onChange={(e) => onChange({ type: e.target.value as BulkRow["type"] })}
-        disabled={locked}
-      >
-        {ROW_TYPES.map((t) => (
-          <option key={t.value} value={t.value}>
-            {t.label}
-          </option>
-        ))}
-      </Select>
-
-      <Select
-        aria-label="Pessoa"
-        value={row.personId}
-        onChange={(e) => onChange({ personId: e.target.value })}
-        disabled={locked}
-        required
-      >
-        <option value="">Pessoa</option>
-        {people.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </Select>
-
-      <CurrencyInput
-        value={row.amount}
-        onChange={(v) => onChange({ amount: v })}
-        placeholder="Valor"
-        disabled={locked}
-      />
-
-      <DatePicker
-        value={row.date}
-        onChange={(v) => onChange({ date: v })}
-        ariaLabel="Data"
-        disabled={locked}
-      />
-
-      <CategoryCombobox
-        categories={categories}
-        value={row.categoryId}
-        onChange={(v) => onChange({ categoryId: v })}
-        disabled={locked}
-      />
-
-      {row.type === "expense" && (
+      <RowField label="Tipo">
         <Select
-          aria-label="Forma de pagamento"
-          value={row.paymentMethod}
-          onChange={(e) => onChange({ paymentMethod: e.target.value })}
+          aria-label="Tipo"
+          value={row.type}
+          onChange={(e) => onChange({ type: e.target.value as BulkRow["type"] })}
           disabled={locked}
         >
-          {PAYMENT_METHODS.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
+          {ROW_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
             </option>
           ))}
         </Select>
-      )}
-      {row.type === "income" && (
+      </RowField>
+
+      <RowField label="Pessoa">
         <Select
-          aria-label="Fonte"
-          value={row.source}
-          onChange={(e) => onChange({ source: e.target.value })}
+          aria-label="Pessoa"
+          value={row.personId}
+          onChange={(e) => onChange({ personId: e.target.value })}
           disabled={locked}
+          required
         >
-          {INCOME_SOURCES.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
+          <option value="">Pessoa</option>
+          {people.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
             </option>
           ))}
         </Select>
-      )}
-      {row.type === "installment" && (
-        <div className="flex flex-col gap-1.5">
-          <Select
-            aria-label="Cartão de crédito"
-            value={row.creditCardId}
-            onChange={(e) => onChange(cardChangePatch(row, creditCards, e.target.value))}
-            disabled={locked}
-          >
-            <option value="">Cartão</option>
-            {creditCards.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            aria-label="Número de parcelas"
-            value={row.numberOfInstallments}
-            onChange={(e) => onChange({ numberOfInstallments: e.target.value })}
-            disabled={locked}
-          >
-            {Array.from({ length: 11 }, (_, i) => i + 2).map((n) => (
-              <option key={n} value={String(n)}>
-                {n}x
-              </option>
-            ))}
-          </Select>
-          <MonthPicker
-            ariaLabel="Fatura (mês)"
-            value={row.billingMonth}
-            onChange={(v) => onChange({ billingMonth: v })}
-            placeholder="Fatura automática"
-            clearLabel="Automática pelo fechamento"
-            disabled={locked}
+      </RowField>
+
+      <RowField label="Valor">
+        <CurrencyInput
+          value={row.amount}
+          onChange={(v) => onChange({ amount: v })}
+          placeholder="Valor"
+          disabled={locked}
+          className="font-semibold tracking-tight tabular-nums"
+        />
+      </RowField>
+
+      <RowField label="Data">
+        <DatePicker
+          value={row.date}
+          onChange={(v) => onChange({ date: v })}
+          ariaLabel="Data"
+          disabled={locked}
+        />
+      </RowField>
+
+      <RowField label="Categoria" className="col-span-2 xl:col-span-1">
+        <CategoryCombobox
+          categories={categories}
+          value={row.categoryId}
+          onChange={(v) => onChange({ categoryId: v })}
+          disabled={locked}
+        />
+      </RowField>
+
+      <TypeSpecificField row={row} locked={locked} onChange={onChange} />
+
+      <RowField label="Descrição" className="col-span-2 xl:col-span-1">
+        <Input
+          aria-label="Descrição"
+          value={row.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          placeholder="Descrição (opcional)"
+          disabled={locked}
+        />
+      </RowField>
+
+      <RowActions row={row} locked={locked} onRemove={onRemove} />
+      {row.status === "error" && (
+        <div className="col-span-2 xl:col-span-full">
+          <RowError
+            status={row.status}
+            error={row.error}
+            fallback="Não foi possível salvar esta linha."
           />
         </div>
       )}
-
-      <Input
-        aria-label="Descrição"
-        value={row.description}
-        onChange={(e) => onChange({ description: e.target.value })}
-        placeholder="Descrição (opcional)"
-        disabled={locked}
-      />
-
-      <BulkAddRowActions row={row} locked={locked} onRemove={onRemove} />
     </div>
   );
 }
 
-function BulkAddRowActions({
+function TypeSpecificField({
+  row,
+  locked,
+  onChange,
+}: {
+  row: BulkRow;
+  locked: boolean;
+  onChange: (patch: Partial<BulkRow>) => void;
+}) {
+  const income = row.type === "income";
+  const options = income ? INCOME_SOURCES : PAYMENT_METHODS;
+
+  return (
+    <RowField label={income ? "Fonte" : "Forma de pagamento"} className="col-span-2 xl:col-span-1">
+      <Select
+        aria-label={income ? "Fonte" : "Forma de pagamento"}
+        value={income ? row.source : row.paymentMethod}
+        onChange={(e) =>
+          onChange(income ? { source: e.target.value } : { paymentMethod: e.target.value })
+        }
+        disabled={locked}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </Select>
+    </RowField>
+  );
+}
+
+function RowActions({
   row,
   locked,
   onRemove,
@@ -212,8 +200,8 @@ function BulkAddRowActions({
   onRemove: () => void;
 }) {
   return (
-    <div className="flex items-center justify-end gap-2 sm:col-span-2 xl:col-span-1">
-      <RowStatus row={row} />
+    <div className="col-span-2 flex items-center justify-end gap-1 xl:col-span-1">
+      <RowStatusIcon status={row.status} isDuplicate={row.isDuplicate} />
       <Button
         type="button"
         variant="ghost"
@@ -226,29 +214,4 @@ function BulkAddRowActions({
       </Button>
     </div>
   );
-}
-
-function RowStatus({ row }: { row: BulkRow }) {
-  if (row.status === "loading") {
-    return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
-  }
-  if (row.status === "success") {
-    return (
-      <span className="flex items-center gap-1">
-        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-        {row.isDuplicate && (
-          <AlertTriangle className="w-4 h-4 text-amber-500" aria-label="Possível duplicata" />
-        )}
-      </span>
-    );
-  }
-  if (row.status === "error") {
-    return (
-      <span className="flex items-center gap-1.5 text-xs text-destructive" role="alert">
-        <XCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-        <span>{row.error ?? "Não foi possível salvar esta linha."}</span>
-      </span>
-    );
-  }
-  return null;
 }

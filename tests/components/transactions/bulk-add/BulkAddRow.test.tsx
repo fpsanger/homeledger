@@ -6,33 +6,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { BulkAddRow } from "@/components/transactions/bulk-add/BulkAddRow";
 import type { BulkRow } from "@/components/transactions/bulk-add/types";
 
-jest.mock("@/components/ui/month-picker", () => ({
-  MonthPicker: ({
-    id,
-    ariaLabel,
-    value,
-    onChange,
-    clearLabel,
-    disabled,
-  }: {
-    id?: string;
-    ariaLabel?: string;
-    value: string;
-    onChange: (value: string) => void;
-    clearLabel?: string;
-    disabled?: boolean;
-  }) => (
-    <input
-      id={id}
-      aria-label={ariaLabel}
-      value={value}
-      data-clear-label={clearLabel}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
-}));
-
 jest.mock("@/components/ui/category-combobox", () => ({
   CategoryCombobox: ({
     disabled,
@@ -85,9 +58,6 @@ const baseRow: BulkRow = {
   paymentMethod: "PIX",
   source: "SALARY",
   categoryId: "",
-  creditCardId: "",
-  numberOfInstallments: "2",
-  billingMonth: "",
   description: "Mercado",
   status: "pending",
 };
@@ -100,7 +70,6 @@ function renderRow(row: BulkRow, disabled = false) {
       row={row}
       people={[{ id: "person-1", name: "Felipe" }]}
       categories={[]}
-      creditCards={[]}
       onChange={onChange}
       onRemove={onRemove}
       disabled={disabled}
@@ -158,52 +127,12 @@ describe("BulkAddRow", () => {
     expect(onChange).toHaveBeenCalledWith({ source: "FREELANCE" });
   });
 
-  it("forwards installment card and count edits", () => {
-    const onChange = jest.fn();
-    render(
-      <BulkAddRow
-        row={{ ...baseRow, type: "installment" }}
-        people={[{ id: "person-1", name: "Felipe" }]}
-        categories={[]}
-        creditCards={[{ id: "card-1", name: "Visa", closureType: "FIXED" }]}
-        onChange={onChange}
-        onRemove={jest.fn()}
-      />,
-    );
+  it("has no installment type: card purchases live in their own section", () => {
+    renderRow(baseRow);
 
-    fireEvent.change(screen.getByLabelText("Cartão de crédito"), {
-      target: { value: "card-1" },
-    });
-    fireEvent.change(screen.getByLabelText("Número de parcelas"), { target: { value: "6" } });
-
-    expect(onChange).toHaveBeenCalledWith({ creditCardId: "card-1" });
-    expect(onChange).toHaveBeenCalledWith({ numberOfInstallments: "6" });
-  });
-
-  it("pre-fills the bill with the purchase month when a VARIABLE card is picked", () => {
-    const onChange = jest.fn();
-    render(
-      <BulkAddRow
-        row={{ ...baseRow, type: "installment", date: "2026-08-17" }}
-        people={[]}
-        categories={[]}
-        creditCards={[{ id: "card-2", name: "C6", closureType: "VARIABLE" }]}
-        onChange={onChange}
-        onRemove={jest.fn()}
-      />,
-    );
-
-    fireEvent.change(screen.getByLabelText("Cartão de crédito"), { target: { value: "card-2" } });
-
-    expect(onChange).toHaveBeenCalledWith({ creditCardId: "card-2", billingMonth: "2026-08" });
-  });
-
-  it("forwards bill edits for installment rows", () => {
-    const { onChange } = renderRow({ ...baseRow, type: "installment" });
-
-    fireEvent.change(screen.getByLabelText("Fatura (mês)"), { target: { value: "2026-10" } });
-
-    expect(onChange).toHaveBeenCalledWith({ billingMonth: "2026-10" });
+    const options = Array.from(screen.getByLabelText("Tipo").querySelectorAll("option"));
+    expect(options.map((o) => o.textContent)).toEqual(["Despesa", "Receita"]);
+    expect(screen.queryByLabelText("Cartão de crédito")).not.toBeInTheDocument();
   });
 
   it("shows loading and duplicate-success states", () => {
@@ -212,7 +141,6 @@ describe("BulkAddRow", () => {
         row={{ ...baseRow, status: "loading" }}
         people={[]}
         categories={[]}
-        creditCards={[]}
         onChange={jest.fn()}
         onRemove={jest.fn()}
       />,
@@ -224,7 +152,6 @@ describe("BulkAddRow", () => {
         row={{ ...baseRow, status: "success", isDuplicate: true }}
         people={[]}
         categories={[]}
-        creditCards={[]}
         onChange={jest.fn()}
         onRemove={jest.fn()}
       />,

@@ -200,9 +200,18 @@ export function deriveDuplicateMatch<A, B, C>(
 
 export function getFieldLabels(type: FormType) {
   return {
-    amountLabel: type === "credit" ? "Valor Total" : "Valor",
-    dateLabel: type === "credit" ? "Data da Compra" : "Data",
+    amountLabel: type === "credit" ? "Valor total" : "Valor",
+    dateLabel: type === "credit" ? "Data da compra" : "Data",
   };
+}
+
+/** A split that does not add up to the total must not be submitted. */
+export function isSubmitDisabled(
+  loading: boolean,
+  splitMode: boolean,
+  isSplitValid: boolean,
+): boolean {
+  return loading || (splitMode && !isSplitValid);
 }
 
 export function getSubmitButtonLabel(loading: boolean, isEditMode: boolean, typeLabel: string) {

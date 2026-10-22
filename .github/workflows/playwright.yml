@@ -50,7 +50,14 @@ jobs:
       - name: Apply migrations
         run: npx prisma migrate deploy
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        # cdn.playwright.dev fronts Azure CDN and has served a certificate covering only
+        # *.azureedge.net, which fails the download with ERR_TLS_CERT_ALTNAME_INVALID and
+        # blocks the whole job. Fall back to Playwright's own Microsoft mirror so a bad
+        # edge on either host cannot stop the suite from running.
+        run: |
+          npx playwright install --with-deps ||
+            PLAYWRIGHT_DOWNLOAD_HOST=https://playwright.download.prss.microsoft.com \
+              npx playwright install --with-deps
       - name: Run Playwright tests
         run: npx playwright test
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

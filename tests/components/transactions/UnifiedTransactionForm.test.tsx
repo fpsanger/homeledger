@@ -164,7 +164,7 @@ describe("UnifiedTransactionForm — billing month (Fatura)", () => {
     renderCreditForm(variableCard.id);
 
     fireEvent.change(screen.getByLabelText("Fatura (mês)"), { target: { value: "2026-03" } });
-    expect(screen.getByText(/Mar\/2026/)).toBeInTheDocument();
+    expect(screen.getByText(/mar\/2026/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Adicionar Compra com Cartão" }));
 
@@ -178,17 +178,17 @@ describe("UnifiedTransactionForm — billing month (Fatura)", () => {
   });
 });
 
-describe("UnifiedTransactionForm — installment amount mode", () => {
-  it("clears the hidden total and installment count when entering installment amount mode", () => {
-    const card = {
-      id: "card-1",
-      name: "Card",
-      closureType: "FIXED" as const,
-      fixedClosureDay: 20,
-      fixedClosurePreviousMonth: false,
-      closureNextMonth: false,
-    };
+describe("UnifiedTransactionForm — linked total and installment amounts", () => {
+  const card = {
+    id: "card-1",
+    name: "Card",
+    closureType: "FIXED" as const,
+    fixedClosureDay: 20,
+    fixedClosurePreviousMonth: false,
+    closureNextMonth: false,
+  };
 
+  function renderCreditForm() {
     render(
       <UnifiedTransactionForm
         people={people}
@@ -198,19 +198,152 @@ describe("UnifiedTransactionForm — installment amount mode", () => {
           ...baseInitialValues,
           type: "credit",
           personId: "p1",
-          amount: "300,00",
           date: "2026-01-15",
           creditCardId: card.id,
         }}
       />,
     );
+  }
+
+  it("shows a single amount field while the purchase is not split into installments", () => {
+    renderCreditForm();
+
+    expect(screen.getByLabelText("Parcelas")).toHaveValue("1");
+    expect(screen.getByLabelText("Valor")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Valor da parcela")).not.toBeInTheDocument();
+  });
+
+  it("lets the installment count be chosen before any amount is entered", () => {
+    renderCreditForm();
 
     fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
-    fireEvent.click(screen.getByRole("button", { name: "Valor da parcela" }));
 
-    expect(screen.getByLabelText("Selecione o total")).toHaveValue("");
+    expect(screen.getByLabelText("Parcelas")).toHaveValue("3");
+    expect(screen.getByLabelText("Valor total")).toHaveValue("");
+    expect(screen.getByLabelText("Valor da parcela")).toHaveValue("");
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Valor total" }));
-    expect(screen.getByLabelText("Valor Total")).toHaveValue("");
+  it("derives the installment amount from the total", () => {
+    renderCreditForm();
+
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Valor total"), { target: { value: "300,00" } });
+
+    expect(screen.getByLabelText("Valor da parcela")).toHaveValue("100,00");
+  });
+
+  it("derives the total from the installment amount", () => {
+    renderCreditForm();
+
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Valor da parcela"), { target: { value: "50,00" } });
+
+    expect(screen.getByLabelText("Valor total")).toHaveValue("150,00");
+  });
+
+  it("keeps the installment amount and moves the total when the count changes", () => {
+    renderCreditForm();
+
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Valor da parcela"), { target: { value: "50,00" } });
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "6" } });
+
+    expect(screen.getByLabelText("Valor da parcela")).toHaveValue("50,00");
+    expect(screen.getByLabelText("Valor total")).toHaveValue("300,00");
+  });
+
+  it("keeps the total and moves the installment amount when the count changes", () => {
+    renderCreditForm();
+
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "300,00" } });
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "4" } });
+
+    expect(screen.getByLabelText("Valor total")).toHaveValue("300,00");
+    expect(screen.getByLabelText("Valor da parcela")).toHaveValue("75,00");
+  });
+
+  it("submits the total derived from the installment amount", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    global.fetch = fetchMock;
+    renderCreditForm();
+
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Valor da parcela"), { target: { value: "50,00" } });
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar Compra com Cartão" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/installments");
+    expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
+      totalAmount: 150,
+      numberOfInstallments: 3,
+    });
+  });
+
+  it("surfaces the uneven last installment instead of hiding the rounding", () => {
+    renderCreditForm();
+
+    fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Valor total"), { target: { value: "100,00" } });
+
+    expect(screen.getByLabelText("Valor da parcela")).toHaveValue("33,33");
+    expect(screen.getByText(/última parcela R\$\s33,34/)).toBeInTheDocument();
+  });
+});
+
+describe("UnifiedTransactionForm — split credit card purchase", () => {
+  const card = {
+    id: "card-1",
+    name: "Card",
+    closureType: "FIXED" as const,
+    fixedClosureDay: 10,
+    fixedClosurePreviousMonth: false,
+    closureNextMonth: false,
+  };
+
+  it("sends one installment and both split rows for the seeded person", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    global.fetch = fetchMock;
+
+    render(
+      <UnifiedTransactionForm
+        people={people}
+        categories={categories}
+        creditCards={[card]}
+        defaultPersonId="p1"
+        initialValues={{
+          ...baseInitialValues,
+          type: "credit",
+          personId: "p1",
+          date: "2026-10-21",
+          creditCardId: card.id,
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "300,00" } });
+    fireEvent.click(screen.getByRole("button", { name: "Dividir" }));
+    expect(screen.getByLabelText("Valor de Alice")).toHaveValue("300,00");
+
+    fireEvent.change(screen.getByLabelText("Adicionar pessoa"), { target: { value: "p2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    expect(screen.getByLabelText("Valor de Alice")).toHaveValue("150,00");
+    expect(screen.getByLabelText("Valor de Bob")).toHaveValue("150,00");
+
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar Compra com Cartão" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/installments");
+    expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
+      creditCardId: card.id,
+      totalAmount: 300,
+      numberOfInstallments: 1,
+      billingMonth: "2026-11",
+      splits: [
+        { personId: "p1", amount: 150 },
+        { personId: "p2", amount: 150 },
+      ],
+    });
   });
 });

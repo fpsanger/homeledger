@@ -16,24 +16,23 @@ import { useDuplicateCheck } from "@/hooks/useDuplicateCheck";
 import { parseCurrencyBR } from "@/lib/utils";
 import {
   type CreditCard,
-  fromCents,
-  isCreditEntryMode,
   isCreditFlagActive,
+  isInstallmentEntry,
   toCents,
   useBillingMonth,
+  useInstallmentAmounts,
   useSplitRows,
 } from "./unifiedTransactionForm/billing";
 import { CreditTypeFields } from "./unifiedTransactionForm/creditFields";
 import {
+  AmountField,
   type Category,
   type FormType,
-  getAmountFieldProps,
   INCOME_SOURCES,
   PAYMENT_METHODS,
   type Person,
-  PersonAndAmountFields,
+  PersonField,
   TypeToggle,
-  ValueModeSelector,
 } from "./unifiedTransactionForm/fields";
 import {
   computeDuplicateCheckValues,
@@ -43,6 +42,7 @@ import {
   getInitialFormState,
   getSubmitButtonLabel,
   type InitialValues,
+  isSubmitDisabled,
   resolveSubmitTarget,
 } from "./unifiedTransactionForm/submit";
 
@@ -74,7 +74,8 @@ export function UnifiedTransactionForm({
   const initial = getInitialFormState(initialValues, defaultPersonId, today);
   const [type, setType] = useState<FormType>(initial.type);
   const [personId, setPersonId] = useState(initial.personId);
-  const [amount, setAmount] = useState(initial.amount);
+  const amounts = useInstallmentAmounts(initial.amount);
+  const { amount, installmentAmount, numberOfInstallments } = amounts;
   const [date, setDate] = useState(initial.date);
   const [description, setDescription] = useState(initial.description);
 
@@ -82,7 +83,6 @@ export function UnifiedTransactionForm({
   const [paymentMethod, setPaymentMethod] = useState(initial.paymentMethod);
   const [source, setSource] = useState(initial.source);
   const [creditCardId, setCreditCardId] = useState(initial.creditCardId);
-  const [numberOfInstallments, setNumberOfInstallments] = useState("2");
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -90,9 +90,6 @@ export function UnifiedTransactionForm({
     date,
     creditCards.find((c) => c.id === creditCardId),
   );
-  const [parcelaMode, setParcelaMode] = useState(false);
-  const [installmentAmount, setInstallmentAmount] = useState("");
-
   const splitTotalCents = toCents(amount);
   const {
     splitMode,
@@ -107,27 +104,9 @@ export function UnifiedTransactionForm({
     reset: resetSplit,
   } = useSplitRows(splitTotalCents, personId);
   const isCreditSplit = isCreditFlagActive(type, isEditMode, splitMode);
-  const isParcelaMode = isCreditFlagActive(type, isEditMode, parcelaMode);
-  const showValueModeSelector = isCreditEntryMode(type, isEditMode);
+  const showInstallmentFields = isInstallmentEntry(type, isEditMode);
 
-  function setValueMode(mode: "total" | "parcela") {
-    const next = mode === "parcela";
-    if (next === parcelaMode) return;
-    if (next) {
-      setAmount("");
-      setNumberOfInstallments("");
-      if (splitMode) rebalanceForNewTotal(0);
-    }
-    setParcelaMode(next);
-    setInstallmentAmount("");
-  }
-
-  function handleTotalPicked(value: string) {
-    const n = parseInt(value, 10);
-    if (!n) return;
-    const totalCents = toCents(installmentAmount) * n;
-    setAmount(fromCents(totalCents));
-    setNumberOfInstallments(value);
+  function applyTotalCents(totalCents: number) {
     if (splitMode) rebalanceForNewTotal(totalCents);
   }
 
@@ -159,7 +138,7 @@ export function UnifiedTransactionForm({
 
   function reset() {
     setPersonId("");
-    setAmount("");
+    amounts.reset();
     setDate(today);
     setCategoryId("");
     setDescription("");
@@ -167,17 +146,8 @@ export function UnifiedTransactionForm({
     setSource("SALARY");
     setCreditCardId("");
     resetBillingMonth();
-    setNumberOfInstallments("2");
     resetSplit();
-    setParcelaMode(false);
-    setInstallmentAmount("");
     setRefreshKey((k) => k + 1);
-  }
-
-  function handleAmountChange(v: string) {
-    setAmount(v);
-    setNumberOfInstallments("1");
-    if (splitMode) rebalanceForNewTotal(toCents(v));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -249,32 +219,22 @@ export function UnifiedTransactionForm({
           typeLabels={typeLabels}
           onSelect={(t) => {
             setType(t);
-            if (t !== "credit") {
-              resetSplit();
-              setParcelaMode(false);
-            }
+            if (t !== "credit") resetSplit();
           }}
         />
       )}
 
-      {showValueModeSelector && (
-        <ValueModeSelector parcelaMode={parcelaMode} onChange={setValueMode} />
+      {!isCreditSplit && (
+        <PersonField personId={personId} setPersonId={setPersonId} people={people} />
       )}
 
-      <PersonAndAmountFields
-        showPerson={!isCreditSplit}
-        personId={personId}
-        setPersonId={setPersonId}
-        people={people}
-        {...getAmountFieldProps(
-          isParcelaMode,
-          amountLabel,
-          amount,
-          installmentAmount,
-          handleAmountChange,
-          setInstallmentAmount,
-        )}
-      />
+      {!showInstallmentFields && (
+        <AmountField
+          label={amountLabel}
+          amount={amount}
+          onAmountChange={(v) => applyTotalCents(amounts.setTotal(v))}
+        />
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label>{dateLabel}</Label>
@@ -323,8 +283,11 @@ export function UnifiedTransactionForm({
           }}
           creditCards={creditCards}
           numberOfInstallments={numberOfInstallments}
-          setNumberOfInstallments={setNumberOfInstallments}
+          onCountChange={(v) => applyTotalCents(amounts.setCount(v))}
           amount={amount}
+          installmentAmount={installmentAmount}
+          onTotalChange={(v) => applyTotalCents(amounts.setTotal(v))}
+          onInstallmentChange={(v) => applyTotalCents(amounts.setInstallment(v))}
           billingMonth={billingMonth}
           setBillingMonth={setBillingMonth}
           splitMode={splitMode}
@@ -335,9 +298,6 @@ export function UnifiedTransactionForm({
           addSplitPerson={addSplitPerson}
           removeSplitPerson={removeSplitPerson}
           setSplitAmount={setSplitAmount}
-          parcelaMode={parcelaMode}
-          installmentAmount={installmentAmount}
-          onTotalPicked={handleTotalPicked}
         />
       )}
 
@@ -363,7 +323,7 @@ export function UnifiedTransactionForm({
         />
       )}
 
-      <Button type="submit" disabled={loading || (splitMode && !isSplitValid)}>
+      <Button type="submit" disabled={isSubmitDisabled(loading, splitMode, isSplitValid)}>
         {getSubmitButtonLabel(loading, isEditMode, typeLabels[type])}
       </Button>
     </form>

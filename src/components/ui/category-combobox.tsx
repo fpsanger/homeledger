@@ -11,6 +11,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useComboboxPopup } from "@/components/ui/use-combobox-popup";
 import { getFullPath } from "@/lib/categoryUtils";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export function CategoryCombobox({
   className,
 }: CategoryComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const { searchRef, listReady, initialFocus } = useComboboxPopup(open);
 
   const rootCategories = categories.filter((c) => c.parentId === null);
   const selected = categories.find((c) => c.id === value);
@@ -63,55 +65,61 @@ export function CategoryCombobox({
         <span className="truncate">{displayLabel}</span>
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </PopoverTrigger>
-      <PopoverContent className="w-[--anchor-width] p-0 bg-white dark:bg-zinc-950" align="start">
+      <PopoverContent
+        className="w-[--anchor-width] p-0 bg-white dark:bg-zinc-950"
+        align="start"
+        initialFocus={initialFocus}
+      >
         <Command>
-          <CommandInput placeholder="Buscar categoria..." />
-          <CommandList>
-            <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
-            <CommandItem value="__none__" onSelect={() => handleSelect("")}>
-              <Check className={cn("mr-2 h-4 w-4", value === "" ? "opacity-100" : "opacity-0")} />
-              Nenhuma
-            </CommandItem>
-            {rootCategories.map((parent) => {
-              const children = categories.filter((c) => c.parentId === parent.id);
-              if (children.length === 0) {
-                return (
-                  <CommandItem
-                    key={parent.id}
-                    value={parent.name}
-                    onSelect={() => handleSelect(parent.id)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === parent.id ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {parent.name}
-                  </CommandItem>
-                );
-              }
-              return (
-                <CommandGroup key={parent.id} heading={parent.name}>
-                  {children.map((child) => (
+          <CommandInput ref={searchRef} placeholder="Buscar categoria..." />
+          {listReady && (
+            <CommandList>
+              <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+              <CommandItem value="__none__" onSelect={() => handleSelect("")}>
+                <Check className={cn("mr-2 h-4 w-4", value === "" ? "opacity-100" : "opacity-0")} />
+                Nenhuma
+              </CommandItem>
+              {rootCategories.map((parent) => {
+                const children = categories.filter((c) => c.parentId === parent.id);
+                if (children.length === 0) {
+                  return (
                     <CommandItem
-                      key={child.id}
-                      value={`${parent.name} ${child.name}`}
-                      onSelect={() => handleSelect(child.id)}
+                      key={parent.id}
+                      value={parent.name}
+                      onSelect={() => handleSelect(parent.id)}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value === child.id ? "opacity-100" : "opacity-0",
+                          value === parent.id ? "opacity-100" : "opacity-0",
                         )}
                       />
-                      {child.name}
+                      {parent.name}
                     </CommandItem>
-                  ))}
-                </CommandGroup>
-              );
-            })}
-          </CommandList>
+                  );
+                }
+                return (
+                  <CommandGroup key={parent.id} heading={parent.name}>
+                    {children.map((child) => (
+                      <CommandItem
+                        key={child.id}
+                        value={`${parent.name} ${child.name}`}
+                        onSelect={() => handleSelect(child.id)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === child.id ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        {child.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                );
+              })}
+            </CommandList>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

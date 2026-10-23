@@ -44,6 +44,20 @@ describe("CardCombobox", () => {
     expect(onChange).toHaveBeenCalledWith("card-1");
   });
 
+  it("does not scroll an item into view until the popup has been positioned", async () => {
+    const scrollIntoView = Element.prototype.scrollIntoView as jest.Mock;
+    scrollIntoView.mockClear();
+    render(<CardCombobox cards={cards} value="" onChange={jest.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Selecione o cartão" }));
+    await screen.findByPlaceholderText("Buscar cartão...");
+
+    expect(screen.queryByText("Nubank")).not.toBeInTheDocument();
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    expect(await screen.findByText("Nubank")).toBeInTheDocument();
+  });
+
   it("only lists the cards it was given", async () => {
     render(<CardCombobox cards={[cards[0]]} value="" onChange={jest.fn()} />);
 

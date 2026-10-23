@@ -10,6 +10,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useComboboxPopup } from "@/components/ui/use-combobox-popup";
 import { cn } from "@/lib/utils";
 
 type CreditCard = { id: string; name: string };
@@ -30,6 +31,7 @@ export function CardCombobox({
   disabled = false,
 }: Props) {
   const [open, setOpen] = React.useState(false);
+  const { searchRef, listReady, initialFocus } = useComboboxPopup(open);
   const selected = cards.find((c) => c.id === value);
 
   function handleSelect(id: string) {
@@ -50,20 +52,26 @@ export function CardCombobox({
         <span className="truncate">{selected ? selected.name : placeholder}</span>
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </PopoverTrigger>
-      <PopoverContent className="w-[--anchor-width] p-0 bg-white dark:bg-zinc-950" align="start">
+      <PopoverContent
+        className="w-[--anchor-width] p-0 bg-white dark:bg-zinc-950"
+        align="start"
+        initialFocus={initialFocus}
+      >
         <Command>
-          <CommandInput placeholder="Buscar cartão..." />
-          <CommandList>
-            <CommandEmpty>Nenhum cartão encontrado.</CommandEmpty>
-            {cards.map((card) => (
-              <CommandItem key={card.id} value={card.name} onSelect={() => handleSelect(card.id)}>
-                <Check
-                  className={cn("mr-2 h-4 w-4", value === card.id ? "opacity-100" : "opacity-0")}
-                />
-                {card.name}
-              </CommandItem>
-            ))}
-          </CommandList>
+          <CommandInput ref={searchRef} placeholder="Buscar cartão..." />
+          {listReady && (
+            <CommandList>
+              <CommandEmpty>Nenhum cartão encontrado.</CommandEmpty>
+              {cards.map((card) => (
+                <CommandItem key={card.id} value={card.name} onSelect={() => handleSelect(card.id)}>
+                  <Check
+                    className={cn("mr-2 h-4 w-4", value === card.id ? "opacity-100" : "opacity-0")}
+                  />
+                  {card.name}
+                </CommandItem>
+              ))}
+            </CommandList>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

@@ -177,7 +177,6 @@ const creditCards = [
   { id: "card-1", name: "Nubank", closureType: "FIXED" as const },
   { id: "card-2", name: "Itaú", closureType: "VARIABLE" as const },
 ];
-const currentMonth = new Date().toISOString().slice(0, 7);
 
 function renderClient(defaultPersonId = "person-1") {
   return render(
@@ -190,10 +189,13 @@ function renderClient(defaultPersonId = "person-1") {
   );
 }
 
-function addCardSection(name: string) {
+/** The fatura starts empty and is required; pass "" to leave it unset. */
+function addCardSection(name: string, bill = "2026-09") {
   const id = creditCards.find((c) => c.name === name)?.id ?? "";
   fireEvent.change(screen.getByLabelText("Cartão"), { target: { value: id } });
   fireEvent.click(screen.getByRole("button", { name: "Adicionar cartão" }));
+  if (bill)
+    fireEvent.change(screen.getByLabelText(`Fatura de ${name}`), { target: { value: bill } });
 }
 
 function submitAll() {
@@ -349,13 +351,13 @@ describe("BulkAddClient", () => {
       expect(purchases[1]).toHaveAttribute("data-amount", "");
     });
 
-    it("defaults a VARIABLE block's bill to the current month and a FIXED one to automatic", () => {
+    it("starts every block's bill empty, FIXED and VARIABLE alike", () => {
       renderClient();
-      addCardSection("Nubank");
-      addCardSection("Itaú");
+      addCardSection("Nubank", "");
+      addCardSection("Itaú", "");
 
       expect(screen.getByLabelText("Fatura de Nubank")).toHaveValue("");
-      expect(screen.getByLabelText("Fatura de Itaú")).toHaveValue(currentMonth);
+      expect(screen.getByLabelText("Fatura de Itaú")).toHaveValue("");
     });
 
     it("gives each block the default person, changeable per block", () => {
@@ -380,12 +382,14 @@ describe("BulkAddClient", () => {
       expect(mockedSubmitPurchase).not.toHaveBeenCalled();
     });
 
-    it("flags a VARIABLE block without a bill instead of submitting it", async () => {
+    it.each([
+      "Nubank",
+      "Itaú",
+    ])("flags a %s block without a bill instead of submitting it", async (name) => {
       renderClient();
 
-      addCardSection("Itaú");
-      fireEvent.change(screen.getByLabelText("Fatura de Itaú"), { target: { value: "" } });
-      fireEvent.click(screen.getByRole("button", { name: "Editar valor de Itaú" }));
+      addCardSection(name, "");
+      fireEvent.click(screen.getByRole("button", { name: `Editar valor de ${name}` }));
       submitAll();
 
       expect(await screen.findByText("Informe a fatura (mês).")).toBeVisible();
@@ -428,7 +432,7 @@ describe("BulkAddClient", () => {
         "person-1",
         expect.objectContaining({ amount: "10,00" }),
         "card-1",
-        "",
+        "2026-09",
       );
     });
 

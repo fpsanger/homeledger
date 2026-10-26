@@ -16,6 +16,8 @@ export type InitialValues = {
   creditCardId: string;
   categoryId: string;
   description: string;
+  /** "YYYY-MM" fatura the credit purchase currently sits on (edit mode). */
+  billingMonth?: string;
 };
 
 export type SubmitFields = {
@@ -77,6 +79,7 @@ export function resolveEditTarget(
         purchaseDate: fields.date,
         categoryId: fields.categoryId || null,
         creditCardId: fields.creditCardId,
+        ...(fields.billingMonth ? { billingMonth: fields.billingMonth } : {}),
       },
     };
   }
@@ -184,6 +187,7 @@ export function getInitialFormState(
     paymentMethod: initialValues?.paymentMethod ?? "CASH",
     source: initialValues?.source ?? "SALARY",
     creditCardId: initialValues?.creditCardId ?? "",
+    billingMonth: initialValues?.billingMonth ?? "",
   };
 }
 

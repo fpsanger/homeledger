@@ -124,6 +124,7 @@ export function BillView({ initialPersonId = "" }: BillViewProps) {
               creditCardId: editingPurchase.creditCardId ?? "",
               categoryId: editingPurchase.categoryId ?? "",
               description: editingPurchase.description,
+              billingMonth: editingPurchase.billingMonth ?? "",
             }}
             onSuccess={() => {
               setEditingPurchaseId(null);

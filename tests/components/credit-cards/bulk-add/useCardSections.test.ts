@@ -24,12 +24,12 @@ function onlyRow(state: CardSectionsState, cardId = fixed.id): PurchaseRow {
 }
 
 describe("cardSectionsReducer", () => {
-  it("adds a section with one empty row, the default person and a bill by closure type", () => {
+  it("adds a section with one empty row, the default person and an empty bill", () => {
     const state = withSection(variable, withSection(fixed));
 
     expect(state.sections.map((s) => [s.cardId, s.personId, s.billingMonth])).toEqual([
       ["card-1", "person-1", ""],
-      ["card-2", "person-1", "2026-08"],
+      ["card-2", "person-1", ""],
     ]);
     expect(state.sections[0].rows).toHaveLength(1);
     expect(state.pendingCardId).toBe("");

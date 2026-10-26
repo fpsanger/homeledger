@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 import { UnifiedTransactionForm } from "@/components/transactions/UnifiedTransactionForm";
 
 jest.mock("@/components/ui/month-picker", () => ({
@@ -148,14 +149,56 @@ describe("UnifiedTransactionForm — billing month (Fatura)", () => {
     );
   }
 
-  it("pre-fills a FIXED card's bill computed from its closure day", () => {
-    renderCreditForm(fixedCard.id);
-    expect(screen.getByLabelText("Fatura (mês)")).toHaveValue("2026-02");
+  it.each([
+    ["FIXED", fixedCard.id],
+    ["VARIABLE", variableCard.id],
+  ])("starts empty for a %s card", (_type, cardId) => {
+    renderCreditForm(cardId);
+    expect(screen.getByLabelText("Fatura (mês)")).toHaveValue("");
   });
 
-  it("pre-fills a VARIABLE card's bill with the purchase month", () => {
-    renderCreditForm(variableCard.id);
-    expect(screen.getByLabelText("Fatura (mês)")).toHaveValue("2026-01");
+  it("requires a fatura before creating a purchase", async () => {
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock;
+    renderCreditForm(fixedCard.id);
+
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar Compra com Cartão" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Informe a fatura (mês)."));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("edits the fatura of an existing purchase, pre-filled with the current one", async () => {
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    global.fetch = fetchMock;
+    render(
+      <UnifiedTransactionForm
+        people={people}
+        categories={categories}
+        creditCards={[fixedCard]}
+        editMode={{ purchaseId: "pur-1" }}
+        initialValues={{
+          ...baseInitialValues,
+          type: "credit",
+          personId: "p1",
+          amount: "100,00",
+          date: "2026-01-15",
+          creditCardId: fixedCard.id,
+          billingMonth: "2026-04",
+        }}
+      />,
+    );
+    expect(screen.getByLabelText("Fatura (mês)")).toHaveValue("2026-04");
+
+    fireEvent.change(screen.getByLabelText("Fatura (mês)"), { target: { value: "2026-06" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/credit-card-purchases/pur-1");
+    expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
+      billingMonth: "2026-06",
+    });
   });
 
   it("previews installments from the chosen bill and sends it on submit", async () => {
@@ -267,6 +310,7 @@ describe("UnifiedTransactionForm — linked total and installment amounts", () =
     global.fetch = fetchMock;
     renderCreditForm();
 
+    fireEvent.change(screen.getByLabelText("Fatura (mês)"), { target: { value: "2026-02" } });
     fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
     fireEvent.change(screen.getByLabelText("Valor da parcela"), { target: { value: "50,00" } });
     fireEvent.click(screen.getByRole("button", { name: "Adicionar Compra com Cartão" }));
@@ -283,6 +327,7 @@ describe("UnifiedTransactionForm — linked total and installment amounts", () =
   it("surfaces the uneven last installment instead of hiding the rounding", () => {
     renderCreditForm();
 
+    fireEvent.change(screen.getByLabelText("Fatura (mês)"), { target: { value: "2026-02" } });
     fireEvent.change(screen.getByLabelText("Parcelas"), { target: { value: "3" } });
     fireEvent.change(screen.getByLabelText("Valor total"), { target: { value: "100,00" } });
 
@@ -321,6 +366,7 @@ describe("UnifiedTransactionForm — split credit card purchase", () => {
       />,
     );
 
+    fireEvent.change(screen.getByLabelText("Fatura (mês)"), { target: { value: "2026-11" } });
     fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "300,00" } });
     fireEvent.click(screen.getByRole("button", { name: "Dividir" }));
     expect(screen.getByLabelText("Valor de Alice")).toHaveValue("300,00");

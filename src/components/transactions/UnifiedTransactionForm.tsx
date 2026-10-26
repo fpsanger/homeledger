@@ -19,7 +19,6 @@ import {
   isCreditFlagActive,
   isInstallmentEntry,
   toCents,
-  useBillingMonth,
   useInstallmentAmounts,
   useSplitRows,
 } from "./unifiedTransactionForm/billing";
@@ -86,10 +85,8 @@ export function UnifiedTransactionForm({
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const { billingMonth, setBillingMonth, resetBillingMonth } = useBillingMonth(
-    date,
-    creditCards.find((c) => c.id === creditCardId),
-  );
+  // No date-based default: the user always picks the fatura (edits start on the current one).
+  const [billingMonth, setBillingMonth] = useState(initial.billingMonth);
   const splitTotalCents = toCents(amount);
   const {
     splitMode,
@@ -145,13 +142,17 @@ export function UnifiedTransactionForm({
     setPaymentMethod("CASH");
     setSource("SALARY");
     setCreditCardId("");
-    resetBillingMonth();
+    setBillingMonth("");
     resetSplit();
     setRefreshKey((k) => k + 1);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (type === "credit" && !billingMonth) {
+      toast.error("Informe a fatura (mês).");
+      return;
+    }
     setLoading(true);
 
     const target = resolveSubmitTarget(editMode, type, {
@@ -279,7 +280,6 @@ export function UnifiedTransactionForm({
           creditCardId={creditCardId}
           setCreditCardId={(id) => {
             setCreditCardId(id);
-            resetBillingMonth();
           }}
           creditCards={creditCards}
           numberOfInstallments={numberOfInstallments}

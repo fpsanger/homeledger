@@ -22,7 +22,7 @@ export function BulkAddClient({ people, categories, creditCards, defaultPersonId
   const today = new Date().toISOString().split("T")[0];
   const normal = useNormalRows(defaultPersonId, today);
   const cards = useCardSections(creditCards, defaultPersonId, today);
-  const { submitting, progress, submitAll } = useBulkSubmit(normal, cards, creditCards);
+  const { submitting, progress, submitAll } = useBulkSubmit(normal, cards);
 
   const normalTotals = summarizeNormal(normal.rows);
   const cardTotals = summarizeCards(cards.sections);

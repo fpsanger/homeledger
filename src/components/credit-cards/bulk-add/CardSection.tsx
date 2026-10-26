@@ -72,7 +72,6 @@ export function CardSection({
           ))}
         </Select>
         <SectionBillingMonth
-          closureType={card.closureType}
           value={billingMonth}
           onChange={onBillingMonthChange}
           disabled={disabled}
@@ -124,12 +123,10 @@ export function CardSection({
 }
 
 function SectionBillingMonth({
-  closureType,
   value,
   onChange,
   disabled,
 }: {
-  closureType: ClosureType;
   value: string;
   onChange: (value: string) => void;
   disabled: boolean;
@@ -141,14 +138,10 @@ function SectionBillingMonth({
         ariaLabel="Fatura das compras"
         value={value}
         onChange={onChange}
-        placeholder="Automática"
-        clearLabel={closureType === "FIXED" ? "Automática pelo fechamento" : undefined}
+        placeholder="Selecione a fatura"
         disabled={disabled}
         className="w-40"
       />
-      {closureType === "FIXED" && !value && (
-        <span className="text-xs text-muted-foreground">calculada pela data de fechamento</span>
-      )}
     </div>
   );
 }

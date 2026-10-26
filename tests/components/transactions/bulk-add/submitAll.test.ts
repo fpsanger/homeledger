@@ -59,21 +59,19 @@ describe("cardJobs", () => {
   it("skips blank purchase rows", () => {
     const blank = section([createPurchaseRow("2026-08-17")]);
 
-    expect(cardJobs([blank], {}, jest.fn())).toHaveLength(0);
+    expect(cardJobs([blank], jest.fn())).toHaveLength(0);
   });
 
   it("requires a person for each card block", () => {
-    const [job] = cardJobs([section(undefined, { personId: "" })], {}, jest.fn());
+    const [job] = cardJobs([section(undefined, { personId: "" })], jest.fn());
 
     expect(job.validationError).toBe("Selecione a pessoa.");
   });
 
-  it("requires a bill for a VARIABLE card and not for a FIXED one", () => {
-    const variable = cardJobs([section()], { "card-1": "VARIABLE" }, jest.fn());
-    const fixed = cardJobs([section()], { "card-1": "FIXED" }, jest.fn());
+  it("requires a bill for every card", () => {
+    const [job] = cardJobs([section()], jest.fn());
 
-    expect(variable[0].validationError).toBe("Informe a fatura (mês).");
-    expect(fixed[0].validationError).toBeNull();
+    expect(job.validationError).toBe("Informe a fatura (mês).");
   });
 
   it("sends the block's person and bill, and a row's own bill when overridden", async () => {
@@ -82,7 +80,6 @@ describe("cardJobs", () => {
     const plain = purchaseRow({ amount: "20,00" });
     const jobs = cardJobs(
       [section([plain, own], { personId: "person-2", billingMonth: "2026-11" })],
-      { "card-1": "VARIABLE" },
       jest.fn(),
     );
 

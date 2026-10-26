@@ -5,6 +5,7 @@ import { formatAmountBR } from "@/lib/utils";
 import { EditInstallmentForm } from "./EditInstallmentForm";
 import type { Category, CreditCard, Installment, Person, Transaction } from "./types";
 import { UnifiedTransactionForm } from "./UnifiedTransactionForm";
+import { toBillingMonthValue } from "./unifiedTransactionForm/billing";
 
 function toDateInput(date: Date | string): string {
   const d = new Date(date);
@@ -46,7 +47,14 @@ function mapPurchaseToInitialValues(purchase: Installment) {
     creditCardId: purchase.creditCardId ?? "",
     categoryId: purchase.categoryId ?? "",
     description: purchase.purchaseDescription ?? "",
+    billingMonth: firstBillingMonthValue(purchase),
   };
+}
+
+/** Fatura of installment 1, derived from the row being edited. */
+function firstBillingMonthValue(row: Installment): string {
+  const absolute = row.dueYear * 12 + (row.dueMonth - 1) - (row.installmentNumber - 1);
+  return toBillingMonthValue(Math.floor(absolute / 12), (absolute % 12) + 1);
 }
 
 export function EditTransactionDialog({

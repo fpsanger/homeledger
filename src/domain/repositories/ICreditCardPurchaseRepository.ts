@@ -65,7 +65,7 @@ export interface ICreditCardPurchaseRepository {
     data: Pick<
       CreditCardPurchaseRecord,
       "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId"
-    >,
+    > & { firstDue?: { year: number; month: number } },
   ): Promise<void>;
   deletePurchase(id: string): Promise<void>;
   markInstallmentPaid(installmentId: string): Promise<void>;

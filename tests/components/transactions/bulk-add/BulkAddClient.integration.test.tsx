@@ -19,7 +19,17 @@ jest.mock("@/components/credit-cards/bulk-add/submitPurchase", () => ({
 // Popover-based pickers need a real browser; the amount fields and sections under test are real.
 jest.mock("@/components/ui/category-combobox", () => ({ CategoryCombobox: () => null }));
 jest.mock("@/components/ui/date-picker", () => ({ DatePicker: () => null }));
-jest.mock("@/components/ui/month-picker", () => ({ MonthPicker: () => null }));
+jest.mock("@/components/ui/month-picker", () => ({
+  MonthPicker: ({
+    ariaLabel,
+    value,
+    onChange,
+  }: {
+    ariaLabel?: string;
+    value: string;
+    onChange: (v: string) => void;
+  }) => <input aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />,
+}));
 jest.mock("@/components/credit-cards/bulk-add/CardCombobox", () => ({
   CardCombobox: ({
     cards,
@@ -72,6 +82,7 @@ describe("card purchases on the unified bulk page", () => {
     const card = within(screen.getByRole("region", { name: "Compras no Nubank" }));
 
     expect(card.getByText("à vista")).toBeVisible();
+    fireEvent.change(card.getByLabelText("Fatura das compras"), { target: { value: "2026-09" } });
     fireEvent.change(card.getByLabelText("Número de parcelas"), { target: { value: "4" } });
     fireEvent.change(card.getByLabelText("Valor da parcela"), { target: { value: "25,00" } });
 
@@ -83,7 +94,7 @@ describe("card purchases on the unified bulk page", () => {
       "person-1",
       expect.objectContaining({ amount: "100,00", numberOfInstallments: "4" }),
       "card-1",
-      "",
+      "2026-09",
     );
   });
 

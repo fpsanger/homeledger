@@ -141,7 +141,7 @@ function SectionBillingMonth({
         ariaLabel="Fatura das compras"
         value={value}
         onChange={onChange}
-        placeholder="Automática"
+        placeholder={closureType === "FIXED" ? "Automática" : "Selecione a fatura"}
         clearLabel={closureType === "FIXED" ? "Automática pelo fechamento" : undefined}
         disabled={disabled}
         className="w-40"

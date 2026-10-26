@@ -177,18 +177,19 @@ export function getInitialFormState(
   defaultPersonId: string,
   today: string,
 ) {
-  return {
-    type: initialValues?.type ?? "expense",
-    personId: initialValues?.personId ?? defaultPersonId,
-    amount: initialValues?.amount ?? "",
-    date: initialValues?.date ?? today,
-    description: initialValues?.description ?? "",
-    categoryId: initialValues?.categoryId ?? "",
-    paymentMethod: initialValues?.paymentMethod ?? "CASH",
-    source: initialValues?.source ?? "SALARY",
-    creditCardId: initialValues?.creditCardId ?? "",
-    billingMonth: initialValues?.billingMonth ?? "",
+  const defaults: Required<InitialValues> = {
+    type: "expense",
+    personId: defaultPersonId,
+    amount: "",
+    date: today,
+    description: "",
+    categoryId: "",
+    paymentMethod: "CASH",
+    source: "SALARY",
+    creditCardId: "",
+    billingMonth: "",
   };
+  return { ...defaults, ...initialValues };
 }
 
 export function deriveDuplicateMatch<A, B, C>(

@@ -13,6 +13,7 @@ jest.mock("@/components/ui/month-picker", () => ({
     value,
     onChange,
     clearLabel,
+    placeholder,
     disabled,
   }: {
     id?: string;
@@ -20,6 +21,7 @@ jest.mock("@/components/ui/month-picker", () => ({
     value: string;
     onChange: (value: string) => void;
     clearLabel?: string;
+    placeholder?: string;
     disabled?: boolean;
   }) => (
     <input
@@ -27,6 +29,7 @@ jest.mock("@/components/ui/month-picker", () => ({
       aria-label={ariaLabel}
       value={value}
       data-clear-label={clearLabel}
+      placeholder={placeholder}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
     />
@@ -272,6 +275,31 @@ describe("CardSection", () => {
     );
 
     expect(screen.getByRole("button", { name: "Adicionar compra" })).toBeDisabled();
+  });
+
+  it.each([
+    ["FIXED", "Automática"],
+    ["VARIABLE", "Selecione a fatura"],
+  ] as const)("shows the %s card's empty bill as %s", (closureType, placeholder) => {
+    render(
+      <CardSection
+        card={{ ...card, closureType }}
+        rows={[row()]}
+        billingMonth=""
+        onBillingMonthChange={jest.fn()}
+        categories={[]}
+        people={[]}
+        personId=""
+        onPersonChange={jest.fn()}
+        onAddRow={jest.fn()}
+        onEditRow={jest.fn()}
+        onRemoveRow={jest.fn()}
+        onDuplicateRow={jest.fn()}
+        onRemoveSection={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Fatura das compras")).toHaveAttribute("placeholder", placeholder);
   });
 
   it("changes the bill used by every row of the section", () => {

@@ -316,9 +316,9 @@ export function CreditTypeFields({
         setCreditCardId={setCreditCardId}
         creditCards={creditCards}
       />
+      <BillingMonthField billingMonth={billingMonth} setBillingMonth={setBillingMonth} />
       {!isEditMode && (
         <>
-          <BillingMonthField billingMonth={billingMonth} setBillingMonth={setBillingMonth} />
           <InstallmentAmountFields
             amount={amount}
             installmentAmount={installmentAmount}

@@ -36,6 +36,8 @@ export type PurchaseRecord = {
   numberOfInstallments: number;
   purchaseDate: string;
   categoryId: string | null;
+  /** "YYYY-MM" fatura of installment 1. */
+  billingMonth?: string;
 };
 
 export type RefundItem = {

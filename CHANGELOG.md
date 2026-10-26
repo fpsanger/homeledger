@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- The fatura of an existing credit-card purchase can now be changed from both edit dialogs (transactions page and credit-card bill). The "Fatura (mês)" field is pre-filled with the purchase's current bill, and saving moves every installment (all people on a split purchase) to consecutive bills starting at the chosen month. `PUT /api/credit-card-purchases/[id]` accepts an optional `billingMonth` (`YYYY-MM`) and answers `409` when any installment is already paid; `GET` now returns the purchase's current `billingMonth`.
+
+### Changed
+
+- "Fatura (mês)" is now required and starts empty when adding a credit-card purchase in the transaction form (no date-based pre-fill). In both bulk-add pages the section fatura also starts empty: VARIABLE cards must pick one (it no longer defaults to the current month), while FIXED cards can still leave it on "Automática" and have each row's bill computed from the closing day. The "Outra fatura" row override is unchanged.
+
 - Pushes to `develop` that pass CI now deploy themselves to the self-hosted instance reached over Tailscale. `.github/workflows/deploy.yml` runs on a self-hosted GitHub Actions runner on that host and calls `deploy/deploy.sh`, which builds each commit into `/srv/homeledger/releases/<sha>`, runs `prisma migrate deploy`, repoints the `current` symlink atomically, restarts `homeledger.service`, and rolls back to the previous release if the service does not answer `/api/health` within 60 seconds. The build runs before migrations, so a failed build cannot leave the schema ahead of the running code; migrations must therefore be backward-compatible with the previous release, since a rollback reverts code and not schema. Manual redeploys and rollbacks are available from the workflow's `ref` input. Host setup, the systemd units and the operational caveats are documented in `docs/deployment.md`.
 - `GET /api/health` returns `200 {"status":"ok"}` once the database answers a `SELECT 1`, and `503 {"status":"error","error":...}` when it does not. It backs the deploy health gate and the uptime timer.
 - A `homeledger-healthcheck` systemd timer probes `/api/health` every five minutes, restarts the app once if the probe fails, and on success pings an optional `HOMELEDGER_HEARTBEAT_URL`. That heartbeat acts as a dead man's switch, so a host that is off or without power is also detected.

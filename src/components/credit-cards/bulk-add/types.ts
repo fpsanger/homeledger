@@ -83,9 +83,9 @@ export function resolveRowBillingMonth(row: PurchaseRow, sectionBillingMonth: st
   return row.billingMonth || sectionBillingMonth;
 }
 
-/** VARIABLE cards start on the current month's bill; FIXED cards compute it per purchase date. */
-export function defaultSectionBillingMonth(closureType: ClosureType, today: string): string {
-  return closureType === "VARIABLE" ? today.slice(0, 7) : "";
+/** Sections start empty: FIXED cards compute each bill from the purchase date, VARIABLE ones must be picked. */
+export function defaultSectionBillingMonth(_closureType: ClosureType, _today: string): string {
+  return "";
 }
 
 const BILLING_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;

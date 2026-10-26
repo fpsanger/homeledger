@@ -16,6 +16,8 @@ export type InitialValues = {
   creditCardId: string;
   categoryId: string;
   description: string;
+  /** "YYYY-MM" fatura the credit purchase currently sits on (edit mode). */
+  billingMonth?: string;
 };
 
 export type SubmitFields = {
@@ -77,6 +79,7 @@ export function resolveEditTarget(
         purchaseDate: fields.date,
         categoryId: fields.categoryId || null,
         creditCardId: fields.creditCardId,
+        ...(fields.billingMonth ? { billingMonth: fields.billingMonth } : {}),
       },
     };
   }
@@ -174,17 +177,19 @@ export function getInitialFormState(
   defaultPersonId: string,
   today: string,
 ) {
-  return {
-    type: initialValues?.type ?? "expense",
-    personId: initialValues?.personId ?? defaultPersonId,
-    amount: initialValues?.amount ?? "",
-    date: initialValues?.date ?? today,
-    description: initialValues?.description ?? "",
-    categoryId: initialValues?.categoryId ?? "",
-    paymentMethod: initialValues?.paymentMethod ?? "CASH",
-    source: initialValues?.source ?? "SALARY",
-    creditCardId: initialValues?.creditCardId ?? "",
+  const defaults: Required<InitialValues> = {
+    type: "expense",
+    personId: defaultPersonId,
+    amount: "",
+    date: today,
+    description: "",
+    categoryId: "",
+    paymentMethod: "CASH",
+    source: "SALARY",
+    creditCardId: "",
+    billingMonth: "",
   };
+  return { ...defaults, ...initialValues };
 }
 
 export function deriveDuplicateMatch<A, B, C>(

@@ -177,7 +177,6 @@ const creditCards = [
   { id: "card-1", name: "Nubank", closureType: "FIXED" as const },
   { id: "card-2", name: "Itaú", closureType: "VARIABLE" as const },
 ];
-const currentMonth = new Date().toISOString().slice(0, 7);
 
 function renderClient(defaultPersonId = "person-1") {
   return render(
@@ -349,13 +348,13 @@ describe("BulkAddClient", () => {
       expect(purchases[1]).toHaveAttribute("data-amount", "");
     });
 
-    it("defaults a VARIABLE block's bill to the current month and a FIXED one to automatic", () => {
+    it("starts every block's bill empty: automatic for FIXED, required for VARIABLE", () => {
       renderClient();
       addCardSection("Nubank");
       addCardSection("Itaú");
 
       expect(screen.getByLabelText("Fatura de Nubank")).toHaveValue("");
-      expect(screen.getByLabelText("Fatura de Itaú")).toHaveValue(currentMonth);
+      expect(screen.getByLabelText("Fatura de Itaú")).toHaveValue("");
     });
 
     it("gives each block the default person, changeable per block", () => {
@@ -448,6 +447,7 @@ describe("BulkAddClient", () => {
       addCardSection("Nubank");
       fireEvent.click(screen.getByRole("button", { name: "Editar valor de Nubank" }));
       addCardSection("Itaú");
+      fireEvent.change(screen.getByLabelText("Fatura de Itaú"), { target: { value: "2026-09" } });
       fireEvent.click(screen.getByRole("button", { name: "Editar valor de Itaú" }));
       submitAll();
 

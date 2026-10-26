@@ -216,7 +216,7 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
     data: Pick<
       CreditCardPurchaseRecord,
       "description" | "totalAmount" | "purchaseDate" | "categoryId" | "creditCardId"
-    >,
+    > & { firstDue?: { year: number; month: number } },
   ): Promise<void> {
     const installments = await this.prisma.installment.findMany({
       where: { creditCardPurchaseId: id },
@@ -235,6 +235,12 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
       throw new Error("Valor total muito pequeno para o número de parcelas");
     }
 
+    const { firstDue } = data;
+    if (firstDue && installments.some((inst) => inst.isPaid)) {
+      throw new Error("Não é possível mudar a fatura de uma compra com parcelas pagas");
+    }
+    const firstAbsolute = firstDue ? firstDue.year * 12 + (firstDue.month - 1) : 0;
+
     await this.prisma.$transaction([
       this.prisma.creditCardPurchase.update({
         where: { id },
@@ -246,19 +252,27 @@ export class PrismaCreditCardPurchaseRepository implements ICreditCardPurchaseRe
           creditCardId: data.creditCardId,
         },
       }),
-      ...(isSplit
-        ? []
-        : installments.map((inst, i) =>
-            this.prisma.installment.update({
-              where: { id: inst.id },
-              data: {
+      ...installments.flatMap((inst, i) => {
+        const fields = {
+          ...(isSplit
+            ? {}
+            : {
                 amount:
                   i === count - 1
                     ? Math.round((data.totalAmount - base * (count - 1)) * 100) / 100
                     : base,
-              },
-            }),
-          )),
+              }),
+          ...(firstDue
+            ? {
+                dueYear: Math.floor((firstAbsolute + inst.installmentNumber - 1) / 12),
+                dueMonth: ((firstAbsolute + inst.installmentNumber - 1) % 12) + 1,
+              }
+            : {}),
+        };
+        return Object.keys(fields).length === 0
+          ? []
+          : [this.prisma.installment.update({ where: { id: inst.id }, data: fields })];
+      }),
     ]);
   }
 

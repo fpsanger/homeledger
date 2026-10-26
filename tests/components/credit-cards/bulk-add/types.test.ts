@@ -169,8 +169,8 @@ describe("bulk-add credit card billing month", () => {
     );
   });
 
-  it("VARIABLE sections default to the current month, FIXED to automatic", () => {
-    expect(defaultSectionBillingMonth("VARIABLE", "2026-08-17")).toBe("2026-08");
+  it("sections start empty: FIXED is automatic, VARIABLE must be picked", () => {
+    expect(defaultSectionBillingMonth("VARIABLE", "2026-08-17")).toBe("");
     expect(defaultSectionBillingMonth("FIXED", "2026-08-17")).toBe("");
   });
 

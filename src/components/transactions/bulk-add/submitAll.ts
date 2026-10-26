@@ -1,5 +1,6 @@
 import { submitPurchase } from "../../credit-cards/bulk-add/submitPurchase";
 import {
+  type ClosureType,
   resolveRowBillingMonth,
   validateBillingMonth,
   validatePersonId,
@@ -37,15 +38,19 @@ export function normalJobs(
 
 export function cardJobs(
   sections: CardSectionState[],
+  closureTypes: Record<string, ClosureType>,
   update: (cardId: string, rowId: string, patch: RowPatch) => void,
 ): SubmitJob[] {
   return sections.flatMap((section) => {
+    const closureType = closureTypes[section.cardId] ?? "FIXED";
     const personError = validatePersonId(section.personId);
     return pendingCardRows(section).map((row) => {
       const billingMonth = resolveRowBillingMonth(row, section.billingMonth);
       return {
         validationError:
-          personError ?? validatePurchaseRow(row) ?? validateBillingMonth(billingMonth),
+          personError ??
+          validatePurchaseRow(row) ??
+          validateBillingMonth(billingMonth, closureType),
         send: () => submitPurchase(section.personId, row, section.cardId, billingMonth),
         update: (patch) => update(section.cardId, row.rowId, patch),
       };

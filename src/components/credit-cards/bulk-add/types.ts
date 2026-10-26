@@ -83,11 +83,18 @@ export function resolveRowBillingMonth(row: PurchaseRow, sectionBillingMonth: st
   return row.billingMonth || sectionBillingMonth;
 }
 
+/** Sections start empty: FIXED cards compute each bill from the purchase date, VARIABLE ones must be picked. */
+export function defaultSectionBillingMonth(_closureType: ClosureType, _today: string): string {
+  return "";
+}
+
 const BILLING_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-/** The fatura is always picked by the user, for every card. */
-export function validateBillingMonth(billingMonth: string): string | null {
-  if (!billingMonth) return "Informe a fatura (mês).";
+export function validateBillingMonth(
+  billingMonth: string,
+  closureType: ClosureType,
+): string | null {
+  if (!billingMonth) return closureType === "VARIABLE" ? "Informe a fatura (mês)." : null;
   if (!BILLING_MONTH_PATTERN.test(billingMonth)) return "Fatura inválida.";
   return null;
 }

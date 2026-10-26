@@ -189,13 +189,10 @@ function renderClient(defaultPersonId = "person-1") {
   );
 }
 
-/** The fatura starts empty and is required; pass "" to leave it unset. */
-function addCardSection(name: string, bill = "2026-09") {
+function addCardSection(name: string) {
   const id = creditCards.find((c) => c.name === name)?.id ?? "";
   fireEvent.change(screen.getByLabelText("Cartão"), { target: { value: id } });
   fireEvent.click(screen.getByRole("button", { name: "Adicionar cartão" }));
-  if (bill)
-    fireEvent.change(screen.getByLabelText(`Fatura de ${name}`), { target: { value: bill } });
 }
 
 function submitAll() {
@@ -351,10 +348,10 @@ describe("BulkAddClient", () => {
       expect(purchases[1]).toHaveAttribute("data-amount", "");
     });
 
-    it("starts every block's bill empty, FIXED and VARIABLE alike", () => {
+    it("starts every block's bill empty: automatic for FIXED, required for VARIABLE", () => {
       renderClient();
-      addCardSection("Nubank", "");
-      addCardSection("Itaú", "");
+      addCardSection("Nubank");
+      addCardSection("Itaú");
 
       expect(screen.getByLabelText("Fatura de Nubank")).toHaveValue("");
       expect(screen.getByLabelText("Fatura de Itaú")).toHaveValue("");
@@ -382,14 +379,12 @@ describe("BulkAddClient", () => {
       expect(mockedSubmitPurchase).not.toHaveBeenCalled();
     });
 
-    it.each([
-      "Nubank",
-      "Itaú",
-    ])("flags a %s block without a bill instead of submitting it", async (name) => {
+    it("flags a VARIABLE block without a bill instead of submitting it", async () => {
       renderClient();
 
-      addCardSection(name, "");
-      fireEvent.click(screen.getByRole("button", { name: `Editar valor de ${name}` }));
+      addCardSection("Itaú");
+      fireEvent.change(screen.getByLabelText("Fatura de Itaú"), { target: { value: "" } });
+      fireEvent.click(screen.getByRole("button", { name: "Editar valor de Itaú" }));
       submitAll();
 
       expect(await screen.findByText("Informe a fatura (mês).")).toBeVisible();
@@ -432,7 +427,7 @@ describe("BulkAddClient", () => {
         "person-1",
         expect.objectContaining({ amount: "10,00" }),
         "card-1",
-        "2026-09",
+        "",
       );
     });
 
@@ -452,6 +447,7 @@ describe("BulkAddClient", () => {
       addCardSection("Nubank");
       fireEvent.click(screen.getByRole("button", { name: "Editar valor de Nubank" }));
       addCardSection("Itaú");
+      fireEvent.change(screen.getByLabelText("Fatura de Itaú"), { target: { value: "2026-09" } });
       fireEvent.click(screen.getByRole("button", { name: "Editar valor de Itaú" }));
       submitAll();
 

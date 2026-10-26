@@ -301,7 +301,7 @@ describe("CardSection", () => {
     expect(onBillingMonthChange).toHaveBeenCalledWith("2026-09");
   });
 
-  it("offers no automatic option: the bill must be picked", () => {
+  it("explains that a FIXED card without a chosen bill computes it automatically", () => {
     render(
       <CardSection
         card={card}
@@ -320,7 +320,10 @@ describe("CardSection", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Fatura das compras")).not.toHaveAttribute("data-clear-label");
-    expect(screen.queryByText("calculada pela data de fechamento")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Fatura das compras")).toHaveAttribute(
+      "data-clear-label",
+      "Automática pelo fechamento",
+    );
+    expect(screen.getByText("calculada pela data de fechamento")).toBeVisible();
   });
 });

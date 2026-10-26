@@ -1,5 +1,11 @@
 import { useReducer } from "react";
-import { type ClosureType, createEmptyRow, duplicateRow, type PurchaseRow } from "./types";
+import {
+  type ClosureType,
+  createEmptyRow,
+  defaultSectionBillingMonth,
+  duplicateRow,
+  type PurchaseRow,
+} from "./types";
 
 export type BulkCreditCard = { id: string; name: string; closureType: ClosureType };
 
@@ -68,7 +74,7 @@ const handlers: Handlers = {
       {
         cardId: card.id,
         personId,
-        billingMonth: "",
+        billingMonth: defaultSectionBillingMonth(card.closureType, today),
         rows: [createEmptyRow(today)],
       },
     ],

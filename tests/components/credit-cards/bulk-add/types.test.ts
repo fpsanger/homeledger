@@ -1,6 +1,7 @@
 import {
   countPatch,
   createEmptyRow,
+  defaultSectionBillingMonth,
   duplicateRow,
   installmentPatch,
   isBlankPurchaseRow,
@@ -168,12 +169,18 @@ describe("bulk-add credit card billing month", () => {
     );
   });
 
-  it("requires a billing month", () => {
-    expect(validateBillingMonth("")).toBe("Informe a fatura (mês).");
-    expect(validateBillingMonth("2026-09")).toBeNull();
+  it("sections start empty: FIXED is automatic, VARIABLE must be picked", () => {
+    expect(defaultSectionBillingMonth("VARIABLE", "2026-08-17")).toBe("");
+    expect(defaultSectionBillingMonth("FIXED", "2026-08-17")).toBe("");
+  });
+
+  it("requires a billing month for VARIABLE cards only", () => {
+    expect(validateBillingMonth("", "VARIABLE")).toBe("Informe a fatura (mês).");
+    expect(validateBillingMonth("", "FIXED")).toBeNull();
+    expect(validateBillingMonth("2026-09", "VARIABLE")).toBeNull();
   });
 
   it("rejects a malformed billing month", () => {
-    expect(validateBillingMonth("2026-13")).toBe("Fatura inválida.");
+    expect(validateBillingMonth("2026-13", "FIXED")).toBe("Fatura inválida.");
   });
 });

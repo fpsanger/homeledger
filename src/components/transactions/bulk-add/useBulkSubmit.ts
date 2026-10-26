@@ -1,14 +1,23 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import type { ClosureType } from "../../credit-cards/bulk-add/types";
 import type { CardSections } from "../../credit-cards/bulk-add/useCardSections";
 import { cardJobs, normalJobs, type Outcome, runJobs } from "./submitAll";
 import type { NormalRows } from "./useNormalRows";
 
 type Progress = { current: number; total: number };
 
+function closureTypesOf(cards: { id: string; closureType: ClosureType }[]) {
+  return Object.fromEntries(cards.map((c) => [c.id, c.closureType]));
+}
+
 /** Sends every pending row of both sections, one request each, and reports the outcome once. */
-export function useBulkSubmit(normal: NormalRows, cards: CardSections) {
+export function useBulkSubmit(
+  normal: NormalRows,
+  cards: CardSections,
+  creditCards: { id: string; closureType: ClosureType }[],
+) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
@@ -18,7 +27,7 @@ export function useBulkSubmit(normal: NormalRows, cards: CardSections) {
 
     const jobs = [
       ...normalJobs(normal.rows, normal.updateRow),
-      ...cardJobs(cards.sections, cards.updateRow),
+      ...cardJobs(cards.sections, closureTypesOf(creditCards), cards.updateRow),
     ];
     if (jobs.length === 0) {
       toast.error("Nada para enviar.");

@@ -23,6 +23,17 @@ async function rowsForDescription(page: Page, description: string, expected = 1)
   return rows;
 }
 
+/**
+ * "Fatura (mês)" is required when entering a card purchase and starts empty, so every test that
+ * submits one must choose a bill. The current month keeps the purchase in the monthly view the
+ * tests already search from.
+ */
+async function pickBillingMonth(page: Page) {
+  await page.locator("#u-billing-month").click();
+  const label = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  await page.getByRole("button", { name: label, exact: true }).click();
+}
+
 function fixtureName(
   key: "E2E_FIXTURE_CARD_NAME" | "E2E_FIXTURE_PERSON_NAME" | "E2E_FIXTURE_PERSON2_NAME",
 ) {
@@ -99,6 +110,7 @@ test.describe("fatura cartão", () => {
 
     const description = `E2E ${Date.now()}`;
     await page.locator("#u-description").fill(description);
+    await pickBillingMonth(page);
 
     await page.getByRole("button", { name: "Adicionar Compra com Cartão" }).click();
 
@@ -162,6 +174,7 @@ test.describe("fatura cartão", () => {
 
     const description = `E2E split ${Date.now()}`;
     await page.locator("#u-description").fill(description);
+    await pickBillingMonth(page);
 
     const submitButton = page.getByRole("button", { name: "Adicionar Compra com Cartão" });
     await expect(submitButton).toBeEnabled();
@@ -220,6 +233,7 @@ test.describe("fatura cartão", () => {
 
     const description = `E2E parcela-first ${Date.now()}`;
     await page.locator("#u-description").fill(description);
+    await pickBillingMonth(page);
 
     await page.getByRole("button", { name: "Adicionar Compra com Cartão" }).click();
 
@@ -280,6 +294,7 @@ test.describe("fatura cartão", () => {
 
     const description = `E2E split default ${Date.now()}`;
     await page.locator("#u-description").fill(description);
+    await pickBillingMonth(page);
     await page.getByRole("button", { name: "Adicionar Compra com Cartão" }).click();
 
     await expect(page.getByText("Transação salva com sucesso.")).toBeVisible();

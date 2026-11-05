@@ -1,209 +1,196 @@
-# Homeledger
+# HomeLedger
 
-Homeledger is a personal finance app for a single household. It tracks people, incomes, expenses, categories, recurring transactions, credit card purchases, installments, and monthly/annual financial views.
+A household personal-finance application — people, incomes, expenses, hierarchical categories,
+recurring transactions, credit-card purchases with installments and statements, loyalty/miles
+programs, and monthly and annual reporting. Built end to end as a production-style system:
+Clean Architecture, strict TypeScript, test-first domain logic, mechanically enforced quality
+gates, and fully automated deployment.
 
-The project intentionally has no login, invitations, or multi-workspace model. The household is fixed, and every financial record belongs to one person.
+---
 
-## Status
+## Why it was built
 
-Homeledger is a private personal project. The basic product surface is implemented and the repository is currently in the `2.1.x` phase: useful for local development, still evolving, and not yet hardened as a public SaaS product.
+Households that share money (and especially ones using Brazilian credit cards, with their
+installment-heavy "parcelado" purchases and monthly *faturas*) are poorly served by generic
+budgeting apps. The questions that matter are simple to ask and hard to answer:
 
-## Features
+- What have we actually spent this month, **including installments from purchases made months ago**?
+- What do we still owe on cards, per person and combined?
+- How is the year trending?
 
-- Manage household people.
-- Register expenses and incomes.
-- Organize transactions with hierarchical categories.
-- Validate expense categories as leaf categories.
-- Detect possible duplicate expenses and credit card purchases.
-- Manage recurring monthly transactions.
-- Manage credit cards with fixed or variable closure dates.
-- Register credit card purchases with installments.
-- Mark installments as paid or unpaid, including bulk actions.
-- Cancel installment purchases without affecting historical records incorrectly.
-- View monthly movements across transactions and credit card installments.
-- View annual reports and dashboard cards.
-- Install the app as a PWA.
-- Use toast notifications for user feedback.
+HomeLedger answers those directly. It is deliberately scoped as a **single fixed household with no
+login or multi-tenant model**; every financial record belongs to one person, and "my expenses" vs.
+"household" are equally first-class views. The product principles (numbers first, unambiguous
+paid/unpaid and income/expense states that never rely on colour alone, WCAG AA) are written down in
+[PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md); the business rules in [SPEC.md](SPEC.md).
 
-## Tech Stack
+It is also a deliberate engineering exercise: a real domain with non-trivial money rules, treated
+with the discipline of a production system.
 
-- TypeScript
-- Next.js 14 with App Router
-- React 18
-- Tailwind CSS
-- Prisma 7
-- PostgreSQL 16
-- Jest with ts-jest
-- Biome
-- Docker Compose
+## How it works
 
-## Getting Started
+| Concept | Behaviour |
+| --- | --- |
+| **Person** | A household member. Every record belongs to exactly one person. |
+| **Transaction** | An income or expense with amount, date, description, payment method (cash, debit, credit, PIX, bank transfer, boleto) and an optional category. Expenses must use a *leaf* category. |
+| **Category** | Hierarchical tree; validated so expenses never land on a parent node. |
+| **Credit card** | Fixed- or variable-closure cards. A purchase's *fatura* (bill month) is computed from the closing day, or chosen explicitly for variable cards. |
+| **Purchase & installments** | A R$ 1,200 purchase in 12x becomes 12 monthly installments. Rounding is stated, never hidden (R$ 100 in 3x → 33,33 · 33,33 · 33,34). Purchases can be split across people and moved between bills until an installment is paid. |
+| **Recurring transactions** | A rule with a period, calculated per month, editable "from month X onward" with a confirmation step that shows the before/after periods. |
+| **Monthly view** | One page combining normal transactions, income, recurring occurrences and installments due that month — without duplicating a purchase across views. |
+| **Annual report / dashboard** | Aggregations over the same domain services. |
+| **Statement import** | Parses card statements (Bradesco, BTG, C6 CSV, plus PDF text via `unpdf`), classifies and reconciles rows against existing purchases. A hybrid regex-first parser can fall back to a local LLM (Ollama). |
+| **Auto-categorization** | A pipeline: merchant rules → merchant history → optional local LLM. |
+| **Duplicate detection** | Domain services flag likely duplicate expenses, card purchases, recurring rules and loyalty entries, including across entity types. |
+| **Loyalty programs** | Points/miles programs, transfers between programs and FIFO lot accounting. |
+| **Bulk entry** | One page for many expenses, incomes and multi-card purchases submitted together, with partial-failure handling and retry. |
 
-Use Node.js 22:
+## Technologies
 
-```bash
-nvm use
+**Application**
+- TypeScript (strict), Node.js 22
+- Next.js 14 (App Router, route handlers) · React 18
+- Tailwind CSS · shadcn/ui · Base UI · Recharts · cmdk · Sonner
+- PWA support (`@ducanh2912/next-pwa`)
+- date-fns · unpdf (PDF text extraction)
+
+**Data**
+- PostgreSQL 16 · Prisma 7 (driver adapter `@prisma/adapter-pg`)
+- Versioned, backward-compatible SQL migrations (25 and counting)
+
+**Quality & testing**
+- Jest + ts-jest + React Testing Library (unit, component, repository and API-route tests)
+- Playwright (end-to-end flows and API contracts)
+- Stryker mutation testing on the financial-critical code (weekly, advisory)
+- Biome (lint + format) · `tsc --noEmit`
+- A custom **quality ratchet** (`scripts/quality/*.cjs`) that fails the build if layering,
+  circular dependencies, cyclomatic complexity, file/function size or coverage regress
+
+**Delivery & operations**
+- GitHub Actions CI: tests, lint, typecheck, ratchet, build, Prisma validation, migrations applied
+  to an empty Postgres 16, Playwright, and a PR-diff risk reviewer
+- Automatic release tagging; Dependabot for npm and Actions
+- Continuous deployment of `develop` to a self-hosted Linux host over **Tailscale**, using a
+  self-hosted GitHub runner, atomic release symlink swaps, `prisma migrate deploy`, and
+  **automatic rollback** if `/api/health` does not answer within 60 seconds
+- `systemd` service plus a health-check timer with dead-man's-switch heartbeat
+- Docker Compose for local Postgres
+
+## Code structure
+
+```text
+src/
+  domain/          Pure business rules. No React, Next.js, Prisma or outer-layer imports.
+    entities/        Person, Category, CreditCard, Transaction, Loyalty*, ...
+    services/        MonthlyView, AnnualReport, InstallmentPurchase, RecurringTransaction,
+                     CategoryTree, LoyaltyFifo, duplicate-detection rules
+    repositories/    Interfaces (ports) only
+  application/     Use cases orchestrating domain contracts (≈35: CreateInstallmentPurchase,
+                   GetMonthlyView, ReconcileStatement, MarkInstallmentsPaid, ...)
+  infrastructure/  Adapters: Prisma repositories, schema + migrations, statement parsers,
+                   categorization pipeline, optional Ollama integration
+  app/             Next.js pages and REST route handlers (/api/...), incl. /api/health
+  components/      Feature-organised UI (transactions, credit-cards, monthly-view, dashboard, ...)
+  hooks/ lib/      Client hooks and small utilities
+tests/             Mirrors src/ — domain, application, infrastructure, components, app/api,
+                   plus e2e (Playwright) and quality-tooling tests
+scripts/           Quality ratchet, mutation report, PR diff analyzer
+deploy/            deploy.sh, systemd units, health check
+docs/              Deployment guide and PR workflow
 ```
 
-Install dependencies:
+The dependency rule is enforced by tooling, not just convention: the domain layer cannot import
+outward, and the CI ratchet fails if that (or complexity, size or coverage) gets worse.
+
+## What this project demonstrates
+
+- **Domain modelling of money**: installments, rounding, billing cycles, recurring rules,
+  FIFO lots — developed test-first, covered by mutation testing.
+- **Clean/Hexagonal Architecture** in a full-stack Next.js codebase, with ports in the domain and
+  Prisma adapters in infrastructure.
+- **Engineering discipline**: strict typing, a ratcheting quality baseline, conventional commits,
+  PR-based flow into `develop`, changelog kept current, ~400 commits of incremental history.
+- **Safe database evolution**: every schema change ships a versioned migration, validated in CI
+  against an empty database, and designed to be compatible with the previous release so rollbacks
+  are safe.
+- **DevOps ownership**: CI/CD, self-hosted runner, zero-downtime-style release swaps, rollback,
+  health checks, private networking — no public exposure by design.
+- **Product and UX judgment**: documented principles, accessibility targets, and iterative UX
+  refinement (linked amount fields, bulk entry, bill-month handling) recorded in
+  [CHANGELOG.md](CHANGELOG.md).
+- **AI-assisted development with guardrails**: [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md)
+  define a completion contract (`npm run agent:check`) that coding agents must pass — an example
+  of making AI tooling accountable to the same gates as humans.
+- **Pragmatic use of LLMs**: local Ollama as an optional fallback for statement parsing and
+  categorization, behind deterministic rules first.
+
+## Skills demonstrated
+
+| Area | Keywords |
+| --- | --- |
+| Languages | TypeScript, JavaScript, SQL, Bash |
+| Frontend | Next.js, React, App Router, Tailwind CSS, shadcn/ui, Recharts, PWA, accessibility (WCAG AA) |
+| Backend | Node.js, REST APIs, input validation, use cases, repository pattern |
+| Data | PostgreSQL, Prisma, schema migrations, data modelling |
+| Architecture | Clean Architecture, Hexagonal / Ports & Adapters, DDD, SOLID |
+| Testing | TDD, Jest, React Testing Library, Playwright, mutation testing (Stryker), coverage |
+| Quality | Biome, static analysis, complexity and circular-dependency checks, quality gates |
+| DevOps | GitHub Actions, CI/CD, self-hosted runners, Docker, systemd, Tailscale, rollback, health checks |
+| Domain | Fintech, credit-card billing, installments, recurring payments, reconciliation, statement parsing, FIFO accounting |
+| AI | LLM integration (Ollama), classification, AI-assisted development with guardrails |
+| Practices | Conventional Commits, semantic versioning, changelog, PR-based flow |
+
+## Design decisions worth discussing
+
+- **Installments and rounding:** a purchase becomes monthly records; the remainder goes on the last installment and is always shown.
+- **Backward-compatible migrations:** rollback reverts code, not schema, so every migration must work with the previous release.
+- **Quality ratchet instead of fixed thresholds:** metrics may only improve, so legacy code is not blocked but cannot get worse.
+- **Domain isolation:** the domain layer cannot import Next.js, React or Prisma, and tooling enforces it.
+- **LLMs behind deterministic rules:** rules and history categorize first; a local model is only a fallback.
+
+## Getting started
+
+Requires Node.js 22 (`nvm use`) and Docker.
 
 ```bash
 npm install
-```
-
-Create a local environment file:
-
-```bash
 cp .env.example .env
-```
-
-Start PostgreSQL:
-
-```bash
-docker compose up -d
-```
-
-Apply database migrations:
-
-```bash
+docker compose up -d          # PostgreSQL 16 on port 5433
 npx prisma migrate dev
+npm run dev                   # http://localhost:3000
 ```
 
-Start the development server:
+Default local connection: `postgresql://homeledger:homeledger@localhost:5433/homeledger`.
+
+### Scripts
 
 ```bash
-npm run dev
-```
-
-The app runs at `http://localhost:3000`.
-
-## Environment
-
-The local database defaults to:
-
-```env
-DATABASE_URL="postgresql://homeledger:homeledger@localhost:5433/homeledger"
-```
-
-The Prisma schema lives at:
-
-```text
-src/infrastructure/database/schema.prisma
-```
-
-Migrations live at:
-
-```text
-src/infrastructure/database/migrations
-```
-
-## Scripts
-
-```bash
-npm run dev      # Start the Next.js dev server
-npm run build    # Build the production app
-npm run start    # Start the production server
-npm run lint     # Run Biome checks against src and tests
-npm run format   # Format src and tests with Biome
-npm test         # Run Jest tests
-npm run agent:check # Run all non-E2E quality gates, including Prisma validation
-npm run verify   # Run agent:check plus Playwright
+npm run dev            # Next.js dev server
+npm run build          # production build
+npm test               # Jest
+npm run lint           # Biome
+npm run typecheck      # tsc --noEmit
+npm run agent:check    # lint, typecheck, quality ratchet, build, Prisma validation
+npm run verify         # agent:check + Playwright e2e (needs Postgres + browsers)
+npm run mutation:test  # Stryker on financial-critical scope
 ```
 
 ### Quality ratchet
 
-Run `npm run quality:ratchet` to generate the current quality snapshot and compare it with the
-versioned baseline. Regressions fail the command, while improvements are reported without changing
-the baseline automatically.
+`npm run quality:ratchet` snapshots current metrics and compares them to `quality-baseline.json`;
+regressions fail, improvements are reported. After reviewing an improvement,
+`npm run quality:baseline:update` promotes it.
 
-After reviewing an improvement, run `npm run quality:baseline:update` to generate a fresh snapshot
-and promote it. The command refuses snapshots containing regressions and copies only the protected
-coverage and violation metrics into `quality-baseline.json`. Review and commit the baseline diff
-with the change that produced the improvement.
-
-## CI and Releases
-
-GitHub Actions validates pull requests targeting `develop` or `master`. The repository treats the
-following checks as mandatory procedure:
-
-- Jest tests.
-- Prisma schema validation.
-- Applying every Prisma migration to an empty PostgreSQL 16 database.
-- Biome linting and formatting checks.
-- TypeScript checks.
-- Quality-ratchet validation.
-- Building the production application.
-- Playwright tests for pull requests targeting `develop`.
-
-This private repository's current GitHub plan does not provide branch protection. CI failures are
-therefore reported but do not technically prevent a maintainer from merging; the maintainer must
-confirm every applicable check before merge.
-
-Pushes to `develop` that pass CI are deployed automatically to the self-hosted
-instance reached over Tailscale, by `.github/workflows/deploy.yml` running on a self-hosted runner
-on that host. See [docs/deployment.md](docs/deployment.md) for the host setup, the rollback path and
-the operational caveats.
-
-Changes normally flow through:
+### Delivery flow
 
 ```text
-feature/* or fix/* -> pull request -> develop -> pull request -> master
+feature/* or fix/* → PR → develop (CI green → auto-deploy) → PR → master (tag + GitHub Release)
 ```
 
-Direct pushes to `develop` and `master` should be blocked with GitHub rulesets. Before merging
-`develop` into `master`, update the version in `package.json` and move the relevant changelog
-entries from `[Unreleased]` into that version. A successful merge from `develop` into `master`
-creates the matching Git tag and GitHub Release automatically. The version must be newer than the
-latest existing Git tag.
+Details in [docs/deployment.md](docs/deployment.md). The deployed instance has **no authentication**
+— the tailnet is the access control — so it must never be exposed publicly.
 
-Dependabot checks npm and GitHub Actions updates weekly without adding a noisy vulnerability gate
-to every pull request.
+## Status
 
-## Architecture
-
-The project follows Clean Architecture:
-
-```text
-src/domain          Pure business rules, entities, services, repository contracts
-src/application     Use cases that orchestrate domain behavior
-src/infrastructure  Prisma client, database schema, repository implementations
-src/app             Next.js pages, layouts, and API routes
-src/components      UI components
-tests               Domain, application, and repository tests
-```
-
-Rules of thumb:
-
-- Domain code must not depend on application, infrastructure, or UI code.
-- Application code depends on the domain layer and coordinates use cases.
-- Infrastructure implements domain repository interfaces.
-- UI and API routes should call application use cases instead of embedding business rules.
-
-## Development Notes
-
-- Domain behavior should be developed with TDD.
-- Schema changes must go through Prisma migrations.
-- Keep financial rules in `src/domain` or `src/application`.
-- Keep UI components focused on collecting input and displaying results.
-- Update `CHANGELOG.md` when user-visible behavior, domain rules, database schema, or operational workflows change.
-
-## Product Model
-
-Homeledger is built around a few core concepts:
-
-- **Person:** a household member who owns financial records.
-- **Transaction:** an income or expense.
-- **Category:** an optional hierarchical classification for financial records.
-- **Credit card purchase:** a purchase that can generate one or more installments.
-- **Installment:** a monthly amount that affects a specific monthly view.
-- **Recurring transaction:** a monthly rule for repeated income or expense.
-- **Monthly view:** the financial picture for one month, including transactions and due installments.
-
-## Roadmap
-
-Near-term ideas:
-
-- Improve seed/import workflows.
-- Add more confidence around UI behavior with focused tests.
-- Refine dashboards and reporting flows.
-- Keep documentation aligned with the current product surface.
+Private personal project in active development (`2.x`). Functional and deployed to the author's
+self-hosted instance; not hardened as a public multi-user SaaS.

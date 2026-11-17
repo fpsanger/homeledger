@@ -3,6 +3,8 @@
 import { Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import { useCreditCardsAndPeople } from "@/hooks/useCreditCardsAndPeople";
@@ -117,9 +119,9 @@ function FileDropzone({
 }) {
   return (
     <div>
-      <label htmlFor="billing-file-input" className="block text-sm font-medium mb-1">
+      <Label htmlFor="billing-file-input" className="block mb-1">
         Arquivo (PDF ou CSV)
-      </label>
+      </Label>
       <button
         type="button"
         className="w-full border-2 border-dashed border-muted rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
@@ -205,9 +207,9 @@ function CreditCardSelect({
 }) {
   return (
     <div>
-      <label htmlFor="billing-credit-card" className="block text-sm font-medium mb-1">
+      <Label htmlFor="billing-credit-card" className="block mb-1">
         Cartão de Crédito
-      </label>
+      </Label>
       <Select
         id="billing-credit-card"
         value={creditCardId}
@@ -238,9 +240,9 @@ function PersonSelect({
 }) {
   return (
     <div>
-      <label htmlFor="billing-person" className="block text-sm font-medium mb-1">
+      <Label htmlFor="billing-person" className="block mb-1">
         Pessoa
-      </label>
+      </Label>
       <Select id="billing-person" value={personId} onChange={(e) => onChange(e.target.value)}>
         <option value="">Selecione uma pessoa</option>
         {people.map((p) => (
@@ -285,9 +287,9 @@ function MonthYearFields({
   return (
     <div className="flex gap-4">
       <div className="flex-1">
-        <label htmlFor="billing-month" className="block text-sm font-medium mb-1">
+        <Label htmlFor="billing-month" className="block mb-1">
           Mês
-        </label>
+        </Label>
         <Select
           id="billing-month"
           value={month}
@@ -301,17 +303,16 @@ function MonthYearFields({
         </Select>
       </div>
       <div className="flex-1">
-        <label htmlFor="billing-year" className="block text-sm font-medium mb-1">
+        <Label htmlFor="billing-year" className="block mb-1">
           Ano
-        </label>
-        <input
+        </Label>
+        <Input
           id="billing-year"
           type="number"
           value={year}
           onChange={(e) => onYearChange(Number(e.target.value))}
           min={2000}
           max={2100}
-          className="w-full border rounded-md px-3 py-2 text-sm bg-background"
         />
       </div>
     </div>
@@ -331,9 +332,9 @@ function BankSelectField({
 }) {
   return (
     <div>
-      <label htmlFor="billing-bank" className="block text-sm font-medium mb-1">
+      <Label htmlFor="billing-bank" className="block mb-1">
         Banco (opcional)
-      </label>
+      </Label>
       <Select id="billing-bank" value={bank} onChange={(e) => onChange(e.target.value)}>
         {BANK_OPTIONS.map((b) => (
           <option key={b.value} value={b.value}>

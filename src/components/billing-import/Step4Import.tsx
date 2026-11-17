@@ -3,6 +3,7 @@
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { InstallmentBillingItem } from "@/domain/entities/BillingItem";
@@ -299,149 +300,182 @@ export function Step4Import({
               {form.kind === "installment" ? (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-descricao-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Descrição
-                      <input
-                        type="text"
-                        value={form.description}
-                        onChange={(e) => updateForm(i, { description: e.target.value })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-descricao-${i}`}
+                      type="text"
+                      value={form.description}
+                      onChange={(e) => updateForm(i, { description: e.target.value })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-valor-total-r-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Valor Total (R$)
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={form.totalAmount}
-                        onChange={(e) =>
-                          updateForm(i, { totalAmount: parseFloat(e.target.value) || 0 })
-                        }
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-valor-total-r-${i}`}
+                      type="number"
+                      step="0.01"
+                      value={form.totalAmount}
+                      onChange={(e) =>
+                        updateForm(i, { totalAmount: parseFloat(e.target.value) || 0 })
+                      }
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-no-de-parcelas-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Nº de Parcelas
-                      <input
-                        type="number"
-                        min={1}
-                        value={form.numberOfInstallments}
-                        onChange={(e) =>
-                          updateForm(i, { numberOfInstallments: parseInt(e.target.value, 10) || 1 })
-                        }
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-no-de-parcelas-${i}`}
+                      type="number"
+                      min={1}
+                      value={form.numberOfInstallments}
+                      onChange={(e) =>
+                        updateForm(i, { numberOfInstallments: parseInt(e.target.value, 10) || 1 })
+                      }
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-data-da-compra-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Data da Compra
-                      <input
-                        type="date"
-                        value={form.purchaseDate}
-                        onChange={(e) => updateForm(i, { purchaseDate: e.target.value })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-data-da-compra-${i}`}
+                      type="date"
+                      value={form.purchaseDate}
+                      onChange={(e) => updateForm(i, { purchaseDate: e.target.value })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-parcela-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Parcela
-                      <input
-                        type="text"
-                        value={`${(item as InstallmentBillingItem).installmentNumber}/${(item as InstallmentBillingItem).totalInstallments}`}
-                        disabled
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-parcela-${i}`}
+                      type="text"
+                      value={`${(item as InstallmentBillingItem).installmentNumber}/${(item as InstallmentBillingItem).totalInstallments}`}
+                      disabled
+                    />
                   </div>
                 </div>
               ) : form.kind === "refund" ? (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-descricao-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Descrição
-                      <input
-                        type="text"
-                        value={form.description}
-                        onChange={(e) => updateForm(i, { description: e.target.value })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-descricao-${i}`}
+                      type="text"
+                      value={form.description}
+                      onChange={(e) => updateForm(i, { description: e.target.value })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-valor-r-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Valor (R$)
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={form.amount}
-                        onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-valor-r-${i}`}
+                      type="number"
+                      step="0.01"
+                      value={form.amount}
+                      onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-data-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Data
-                      <input
-                        type="date"
-                        value={form.date}
-                        onChange={(e) => updateForm(i, { date: e.target.value })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-data-${i}`}
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => updateForm(i, { date: e.target.value })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="col-span-2">
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-descricao-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Descrição
-                      <input
-                        type="text"
-                        value={form.description}
-                        onChange={(e) => updateForm(i, { description: e.target.value })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-descricao-${i}`}
+                      type="text"
+                      value={form.description}
+                      onChange={(e) => updateForm(i, { description: e.target.value })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-valor-r-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Valor (R$)
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={form.amount}
-                        onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-valor-r-${i}`}
+                      type="number"
+                      step="0.01"
+                      value={form.amount}
+                      onChange={(e) => updateForm(i, { amount: parseFloat(e.target.value) || 0 })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-data-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Data
-                      <input
-                        type="date"
-                        value={form.date}
-                        onChange={(e) => updateForm(i, { date: e.target.value })}
-                        disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
-                      />
-                    </label>
+                    </Label>
+                    <Input
+                      id={`import-data-${i}`}
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => updateForm(i, { date: e.target.value })}
+                      disabled={status !== "pending"}
+                    />
                   </div>
                   <div>
                     <Label

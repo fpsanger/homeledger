@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { findDuplicateLoyaltyTransaction } from "@/domain/services/isDuplicateLoyaltyTransaction";
 import { type Transaction, TYPE_LABELS } from "./loyaltyFormat";
@@ -103,17 +105,16 @@ export function EditTransactionModal({
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="edit-tx-points" className="text-xs font-medium text-muted-foreground">
+          <Label htmlFor="edit-tx-points" className="text-xs text-muted-foreground">
             Pontos
-          </label>
-          <input
+          </Label>
+          <Input
             id="edit-tx-points"
             type="number"
             value={points}
             onChange={(e) => setPoints(e.target.value)}
             required
             min="1"
-            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div
@@ -137,25 +138,24 @@ export function EditTransactionModal({
         </div>
         {tx.type === "PURCHASE" && (
           <div className="flex flex-col gap-1">
-            <label htmlFor="edit-tx-cost" className="text-xs font-medium text-muted-foreground">
+            <Label htmlFor="edit-tx-cost" className="text-xs text-muted-foreground">
               Custo (R$)
-            </label>
-            <input
+            </Label>
+            <Input
               id="edit-tx-cost"
               type="number"
               step="0.01"
               value={costBrl}
               onChange={(e) => setCostBrl(e.target.value)}
               placeholder="0,00"
-              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         )}
         {people.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label htmlFor="edit-tx-person" className="text-xs font-medium text-muted-foreground">
+            <Label htmlFor="edit-tx-person" className="text-xs text-muted-foreground">
               Pessoa
-            </label>
+            </Label>
             <Select
               id="edit-tx-person"
               value={personId}
@@ -171,18 +171,14 @@ export function EditTransactionModal({
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <label
-            htmlFor="edit-tx-description"
-            className="text-xs font-medium text-muted-foreground"
-          >
+          <Label htmlFor="edit-tx-description" className="text-xs text-muted-foreground">
             Descrição
-          </label>
-          <input
+          </Label>
+          <Input
             id="edit-tx-description"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <DuplicateWarning match={duplicateMatch} />

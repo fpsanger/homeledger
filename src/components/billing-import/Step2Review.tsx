@@ -4,6 +4,7 @@ import { Loader2, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { CategorySource, ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./types";
@@ -201,21 +202,21 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                 return (
                   <tr key={rowIds[i]} className="hover:bg-muted/30">
                     <td className="py-2 pr-4">
-                      <input
+                      <Input
                         type="text"
                         value={item.description}
                         onChange={(e) => updateItem(i, { description: e.target.value })}
-                        className="w-full border rounded px-2 py-1 text-sm bg-background min-w-[180px]"
+                        className="h-8 min-w-[180px] px-2 text-sm"
                       />
                     </td>
                     <td className="py-2 pr-4">
-                      <input
+                      <Input
                         type="number"
                         value={item.amount}
                         step="0.01"
                         min="0"
                         onChange={(e) => updateItem(i, { amount: parseFloat(e.target.value) || 0 })}
-                        className="w-28 border rounded px-2 py-1 text-sm bg-background"
+                        className="h-8 w-28 px-2 text-sm"
                       />
                     </td>
                     <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">

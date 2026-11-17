@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 
 const TYPES = [
@@ -58,24 +60,19 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="prog-name">
-          Nome
-        </label>
-        <input
+        <Label htmlFor="prog-name">Nome</Label>
+        <Input
           id="prog-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Ex: Smiles, Livelo..."
           required
-          className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="prog-type">
-          Tipo
-        </label>
+        <Label htmlFor="prog-type">Tipo</Label>
         <Select id="prog-type" value={type} onChange={(e) => setType(e.target.value)}>
           {TYPES.map((t) => (
             <option key={t.value} value={t.value}>
@@ -86,9 +83,7 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="prog-color">
-          Cor
-        </label>
+        <Label htmlFor="prog-color">Cor</Label>
         <div className="flex items-center gap-2 flex-wrap">
           {PRESET_COLORS.map((c) => (
             <button

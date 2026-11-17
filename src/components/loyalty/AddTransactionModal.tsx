@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { findDuplicateLoyaltyTransaction } from "@/domain/services/isDuplicateLoyaltyTransaction";
 import { TRANSACTION_TYPES, type Transaction } from "./loyaltyFormat";
@@ -86,9 +88,9 @@ export function AddTransactionModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label htmlFor="new-tx-type" className="text-xs font-medium text-muted-foreground">
+            <Label htmlFor="new-tx-type" className="text-xs text-muted-foreground">
               Tipo
-            </label>
+            </Label>
             <Select id="new-tx-type" value={type} onChange={(e) => setType(e.target.value)}>
               {TRANSACTION_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -98,17 +100,16 @@ export function AddTransactionModal({
             </Select>
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="new-tx-points" className="text-xs font-medium text-muted-foreground">
+            <Label htmlFor="new-tx-points" className="text-xs text-muted-foreground">
               Pontos
-            </label>
-            <input
+            </Label>
+            <Input
               id="new-tx-points"
               type="number"
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               required
               min="1"
-              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -133,25 +134,24 @@ export function AddTransactionModal({
         </div>
         {type === "PURCHASE" && (
           <div className="flex flex-col gap-1">
-            <label htmlFor="new-tx-cost" className="text-xs font-medium text-muted-foreground">
+            <Label htmlFor="new-tx-cost" className="text-xs text-muted-foreground">
               Custo (R$)
-            </label>
-            <input
+            </Label>
+            <Input
               id="new-tx-cost"
               type="number"
               step="0.01"
               value={costBrl}
               onChange={(e) => setCostBrl(e.target.value)}
               placeholder="0,00"
-              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         )}
         {people.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label htmlFor="new-tx-person" className="text-xs font-medium text-muted-foreground">
+            <Label htmlFor="new-tx-person" className="text-xs text-muted-foreground">
               Pessoa
-            </label>
+            </Label>
             <Select
               id="new-tx-person"
               value={personId}
@@ -167,15 +167,14 @@ export function AddTransactionModal({
           </div>
         )}
         <div className="flex flex-col gap-1">
-          <label htmlFor="new-tx-description" className="text-xs font-medium text-muted-foreground">
+          <Label htmlFor="new-tx-description" className="text-xs text-muted-foreground">
             Descrição
-          </label>
-          <input
+          </Label>
+          <Input
             id="new-tx-description"
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <DuplicateWarning match={duplicateMatch} />

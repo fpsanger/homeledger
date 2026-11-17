@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { maskCurrency } from "@/lib/maskCurrency";
 
@@ -109,9 +111,7 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-from">
-            De
-          </label>
+          <Label htmlFor="transfer-from">De</Label>
           <Select
             id="transfer-from"
             value={fromProgramId}
@@ -131,9 +131,7 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-to">
-            Para
-          </label>
+          <Label htmlFor="transfer-to">Para</Label>
           <Select
             id="transfer-to"
             value={toProgramId}
@@ -156,31 +154,25 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-points">
-            Pontos enviados
-          </label>
-          <input
+          <Label htmlFor="transfer-points">Pontos enviados</Label>
+          <Input
             id="transfer-points"
             type="number"
             min="1"
             value={pointsSent}
             onChange={(e) => setPointsSent(e.target.value)}
             required
-            className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" htmlFor="transfer-bonus">
-            Bônus (%)
-          </label>
-          <input
+          <Label htmlFor="transfer-bonus">Bônus (%)</Label>
+          <Input
             id="transfer-bonus"
             type="number"
             min="0"
             step="1"
             value={bonusPercent}
             onChange={(e) => setBonusPercent(e.target.value)}
-            className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
@@ -206,15 +198,12 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium" htmlFor="transfer-desc">
-          Descrição
-        </label>
-        <input
+        <Label htmlFor="transfer-desc">Descrição</Label>
+        <Input
           id="transfer-desc"
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 

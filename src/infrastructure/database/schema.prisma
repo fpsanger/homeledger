@@ -18,6 +18,7 @@ model Person {
   loyaltyTransactions   LoyaltyTransaction[]
   loyaltyTransfers      LoyaltyTransfer[]
   installments          Installment[]
+  pendingTransactions   PendingTransaction[]
 }
 
 model Category {
@@ -33,6 +34,7 @@ model Category {
   recurringTransactions RecurringTransaction[]
   transactions          Transaction[]
   merchantHistories     MerchantCategoryHistory[]
+  pendingTransactions   PendingTransaction[]
 }
 
 model CreditCard {
@@ -46,6 +48,7 @@ model CreditCard {
   closureNextMonth          Boolean              @default(false)
   purchases        CreditCardPurchase[]
   refunds          CreditCardRefund[]
+  pendingTransactions PendingTransaction[]
 }
 
 model Transaction {
@@ -187,6 +190,33 @@ enum LoyaltyTransactionType {
   TRANSFER_IN
   EXPIRE
   ADJUSTMENT
+}
+
+enum PendingTransactionStatus {
+  PENDING
+  CONFIRMED
+  DISCARDED
+}
+
+model PendingTransaction {
+  id                  String                   @id @default(uuid())
+  personId            String
+  amount              Decimal                  @db.Decimal(15, 2)
+  occurredAt          DateTime
+  occurredOn          DateTime
+  merchant            String
+  cardName            String
+  creditCardId        String?
+  suggestedCategoryId String?
+  status              PendingTransactionStatus @default(PENDING)
+  createdAt           DateTime                 @default(now())
+  resolvedAt          DateTime?
+  person              Person                   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  creditCard          CreditCard?              @relation(fields: [creditCardId], references: [id], onDelete: SetNull)
+  suggestedCategory   Category?                @relation(fields: [suggestedCategoryId], references: [id], onDelete: SetNull)
+
+  @@unique([personId, amount, occurredAt, merchant, cardName])
+  @@index([status, occurredOn])
 }
 
 model MerchantCategoryHistory {

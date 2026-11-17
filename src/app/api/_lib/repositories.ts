@@ -1,3 +1,9 @@
+import { MerchantCategoryMemory } from "../../../infrastructure/categorization/MerchantCategoryMemory";
+import {
+  MerchantHistoryCategorizer,
+  upsertMerchantHistory,
+} from "../../../infrastructure/categorization/MerchantHistoryCategorizer";
+import { MerchantRuleCategorizer } from "../../../infrastructure/categorization/MerchantRuleCategorizer";
 import { prisma } from "../../../infrastructure/database/client";
 import { PrismaCategoryRepository } from "../../../infrastructure/repositories/PrismaCategoryRepository";
 import { PrismaCreditCardPurchaseRepository } from "../../../infrastructure/repositories/PrismaCreditCardPurchaseRepository";
@@ -6,14 +12,23 @@ import { PrismaCreditCardRepository } from "../../../infrastructure/repositories
 import { PrismaLoyaltyProgramRepository } from "../../../infrastructure/repositories/PrismaLoyaltyProgramRepository";
 import { PrismaLoyaltyTransactionRepository } from "../../../infrastructure/repositories/PrismaLoyaltyTransactionRepository";
 import { PrismaLoyaltyTransferRepository } from "../../../infrastructure/repositories/PrismaLoyaltyTransferRepository";
+import { PrismaPendingTransactionRepository } from "../../../infrastructure/repositories/PrismaPendingTransactionRepository";
 import { PrismaPersonRepository } from "../../../infrastructure/repositories/PrismaPersonRepository";
 import { PrismaRecurringTransactionRepository } from "../../../infrastructure/repositories/PrismaRecurringTransactionRepository";
 import { PrismaTransactionRepository } from "../../../infrastructure/repositories/PrismaTransactionRepository";
 
 export function createRepositories() {
+  const category = new PrismaCategoryRepository(prisma);
+
   return {
     person: new PrismaPersonRepository(prisma),
-    category: new PrismaCategoryRepository(prisma),
+    category,
+    pendingTransaction: new PrismaPendingTransactionRepository(prisma),
+    categoryMemory: new MerchantCategoryMemory(
+      category,
+      [new MerchantRuleCategorizer(), new MerchantHistoryCategorizer()],
+      upsertMerchantHistory,
+    ),
     transaction: new PrismaTransactionRepository(prisma),
     creditCardPurchase: new PrismaCreditCardPurchaseRepository(prisma),
     creditCardRefund: new PrismaCreditCardRefundRepository(prisma),

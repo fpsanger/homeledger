@@ -12,6 +12,13 @@ export class DuplicateCategoryError extends Error {
   }
 }
 
+export class PendingTransactionResolvedError extends Error {
+  constructor() {
+    super("Pending transaction was already resolved");
+    this.name = "PendingTransactionResolvedError";
+  }
+}
+
 export class InvalidBillingItemError extends Error {
   constructor(message: string) {
     super(message);

@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Select } from "@/components/ui/select";
+import { usePendingCount } from "@/hooks/usePendingCount";
 import { lockBodyScroll } from "@/lib/scroll-lock";
+import { PENDING_HREF, PendingCountBadge } from "./PendingCountBadge";
 import { usePrivacy } from "./PrivacyProvider";
 import { useTheme } from "./ThemeProvider";
 
@@ -14,6 +16,7 @@ type Person = { id: string; name: string };
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", primary: true },
   { href: "/transactions", label: "Transações", primary: true },
+  { href: PENDING_HREF, label: "A revisar", primary: true },
   { href: "/installments", label: "Fatura cartão", primary: true },
   { href: "/credit-cards", label: "Cartões de Crédito", primary: true },
   { href: "/loyalty", label: "Milhas", primary: true },
@@ -42,6 +45,7 @@ export function TopNav() {
   const { hidden, toggle: togglePrivacy } = usePrivacy();
   const [moreOpen, setMoreOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const pendingCount = usePendingCount(pathname);
   const moreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -101,6 +105,7 @@ export function TopNav() {
                     }`}
                   >
                     {link.label}
+                    {link.href === PENDING_HREF && <PendingCountBadge count={pendingCount} />}
                     {active && (
                       <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-primary" />
                     )}
@@ -275,6 +280,7 @@ export function TopNav() {
                 }`}
               >
                 {link.label}
+                {link.href === PENDING_HREF && <PendingCountBadge count={pendingCount} />}
               </Link>
             );
           })}

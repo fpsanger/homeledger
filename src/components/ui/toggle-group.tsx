@@ -11,8 +11,8 @@ type Variant = "muted" | "primary";
 const VariantContext = React.createContext<Variant>("muted");
 
 const PRESSED: Record<Variant, string> = {
-  muted: "data-pressed:bg-muted data-pressed:text-foreground",
-  primary: "data-pressed:bg-primary data-pressed:text-primary-foreground",
+  muted: "data-[pressed]:bg-muted data-[pressed]:text-foreground",
+  primary: "data-[pressed]:bg-primary data-[pressed]:text-primary-foreground",
 };
 
 type ToggleGroupProps = Omit<
@@ -54,7 +54,7 @@ function ToggleGroupItem({ className, ...props }: TogglePrimitive.Props<string>)
     <TogglePrimitive
       data-slot="toggle-group-item"
       className={cn(
-        "flex items-center justify-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 not-first:border-l",
+        "flex items-center justify-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&:not(:first-child)]:border-l",
         PRESSED[variant],
         className,
       )}

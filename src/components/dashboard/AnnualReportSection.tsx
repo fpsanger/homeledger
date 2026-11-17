@@ -25,11 +25,11 @@ export function AnnualReportSection({ report }: Props) {
           onValueChange={(next) => setView(next as "table" | "chart")}
           aria-label="Visualização"
         >
-          <ToggleGroupItem value="table" className="px-3 py-3 data-pressed:font-medium">
+          <ToggleGroupItem value="table" className="px-3 py-3 data-[pressed]:font-medium">
             <Table2 className="w-3.5 h-3.5" />
             Tabela
           </ToggleGroupItem>
-          <ToggleGroupItem value="chart" className="px-3 py-3 data-pressed:font-medium">
+          <ToggleGroupItem value="chart" className="px-3 py-3 data-[pressed]:font-medium">
             <BarChart2 className="w-3.5 h-3.5" />
             Gráfico
           </ToggleGroupItem>

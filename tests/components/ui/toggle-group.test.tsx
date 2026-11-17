@@ -28,6 +28,12 @@ describe("ToggleGroup", () => {
     expect(screen.getByRole("button", { name: "Tabela" })).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("exposes data-pressed on the selected item only, which the styles key off", () => {
+    renderGroup("chart");
+    expect(screen.getByRole("button", { name: "Gráfico" })).toHaveAttribute("data-pressed");
+    expect(screen.getByRole("button", { name: "Tabela" })).not.toHaveAttribute("data-pressed");
+  });
+
   it("reports the value of the clicked item", () => {
     const { onValueChange } = renderGroup("table");
     fireEvent.click(screen.getByRole("button", { name: "Gráfico" }));

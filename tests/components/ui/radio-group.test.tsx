@@ -41,6 +41,14 @@ describe("RadioGroup", () => {
     expect(screen.getByRole("radio", { name: "Cartão de Crédito" })).not.toBeChecked();
   });
 
+  it("exposes data-checked on the selected radio, which the styles key off", () => {
+    renderGroup("debit");
+    expect(screen.getByRole("radio", { name: "Débito" })).toHaveAttribute("data-checked");
+    expect(screen.getByRole("radio", { name: "Cartão de Crédito" })).not.toHaveAttribute(
+      "data-checked",
+    );
+  });
+
   it("reports the value of the clicked item", () => {
     const { onValueChange } = renderGroup("credit-card");
     fireEvent.click(screen.getByRole("radio", { name: "Débito" }));

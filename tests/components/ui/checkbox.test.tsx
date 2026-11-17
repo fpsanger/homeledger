@@ -33,6 +33,11 @@ describe("Checkbox", () => {
     expect(screen.getByRole("checkbox", { name: "Aceito" })).toBeChecked();
   });
 
+  it("exposes data-checked while checked, which the styles key off", () => {
+    renderCheckbox({ checked: true });
+    expect(screen.getByRole("checkbox", { name: "Aceito" })).toHaveAttribute("data-checked");
+  });
+
   it("reports the new value when clicked", () => {
     const { onCheckedChange } = renderCheckbox();
     fireEvent.click(screen.getByRole("checkbox", { name: "Aceito" }));

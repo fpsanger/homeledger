@@ -11,6 +11,15 @@ export const dynamic = "force-dynamic";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
 
+// `new Date("2026-02-30")` rolls over to March 2, so the written day must survive a round trip.
+function isRealCalendarDay(value: string): boolean {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return (
+    utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day
+  );
+}
+
 const PayloadSchema = z.object({
   amount: z.union([z.string(), z.number()]),
   merchant: z.string(),
@@ -19,7 +28,10 @@ const PayloadSchema = z.object({
   date: z
     .string()
     .regex(DATE_PATTERN, "date must be an ISO 8601 date")
-    .refine((value) => !Number.isNaN(new Date(value).getTime()), "date is not a valid date"),
+    .refine(
+      (value) => !Number.isNaN(new Date(value).getTime()) && isRealCalendarDay(value),
+      "date is not a valid date",
+    ),
 });
 
 export async function POST(request: NextRequest) {

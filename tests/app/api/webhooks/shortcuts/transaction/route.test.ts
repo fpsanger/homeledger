@@ -87,6 +87,8 @@ describe("POST /api/webhooks/shortcuts/transaction", () => {
     ["no date", { ...VALID_BODY, date: undefined }],
     ["a malformed date", { ...VALID_BODY, date: "yesterday" }],
     ["an impossible date", { ...VALID_BODY, date: "2026-13-45" }],
+    ["a day that does not exist in the month", { ...VALID_BODY, date: "2026-02-30" }],
+    ["a day that does not exist with a time", { ...VALID_BODY, date: "2026-04-31T10:00:00-03:00" }],
     ["an amount that is neither text nor number", { ...VALID_BODY, amount: { v: 1 } }],
   ])("rejects %s with 400", async (_label, body) => {
     const res = await POST(request(body));

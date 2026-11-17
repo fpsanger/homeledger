@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { AddTransactionModal } from "./AddTransactionModal";
 import { EditTransactionModal } from "./EditTransactionModal";
@@ -170,10 +171,10 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
           </p>
         ) : (
           <div className="hidden md:block rounded-xl border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
                     <button
                       type="button"
                       onClick={() => handleSort("date")}
@@ -181,14 +182,20 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
                     >
                       Data <SortIndicator active={sortKey === "date"} dir={sortDir} />
                     </button>
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pontos</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
+                    Tipo
+                  </TableHead>
+                  <TableHead className="text-right px-4 py-3 font-medium text-muted-foreground h-auto">
+                    Pontos
+                  </TableHead>
+                  <TableHead className="text-right px-4 py-3 font-medium text-muted-foreground h-auto">
                     Valor do milheiro (Custo/1k PTS)
-                  </th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">ROI</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-right px-4 py-3 font-medium text-muted-foreground h-auto">
+                    ROI
+                  </TableHead>
+                  <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
                     <button
                       type="button"
                       onClick={() => handleSort("expiresAt")}
@@ -196,14 +203,14 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
                     >
                       Expiração <SortIndicator active={sortKey === "expiresAt"} dir={sortDir} />
                     </button>
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                  </TableHead>
+                  <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
                     Descrição
-                  </th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                  <TableHead className="w-8 h-auto px-0" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {sorted.map((tx) => (
                   <TransactionRow
                     key={tx.id}
@@ -213,8 +220,8 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
                     onDelete={handleDelete}
                   />
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

@@ -6,6 +6,14 @@ import { toast } from "sonner";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { CategorySource, ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./types";
 
@@ -185,31 +193,41 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
         </div>
       ) : (
         <div className="overflow-x-auto mt-6">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Descrição</th>
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Valor</th>
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Data</th>
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Tipo</th>
-                <th className="pb-3 pr-4 font-medium text-muted-foreground">Categoria</th>
-                <th className="pb-3 font-medium text-muted-foreground" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b text-left hover:bg-transparent">
+                <TableHead className="pb-3 pr-4 font-medium text-muted-foreground h-auto pl-0">
+                  Descrição
+                </TableHead>
+                <TableHead className="pb-3 pr-4 font-medium text-muted-foreground h-auto pl-0">
+                  Valor
+                </TableHead>
+                <TableHead className="pb-3 pr-4 font-medium text-muted-foreground h-auto pl-0">
+                  Data
+                </TableHead>
+                <TableHead className="pb-3 pr-4 font-medium text-muted-foreground h-auto pl-0">
+                  Tipo
+                </TableHead>
+                <TableHead className="pb-3 pr-4 font-medium text-muted-foreground h-auto pl-0">
+                  Categoria
+                </TableHead>
+                <TableHead className="pb-3 font-medium text-muted-foreground h-auto px-0" />
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y">
               {reconciledItems.map((ri, i) => {
                 const item = ri.billingItem;
                 return (
-                  <tr key={rowIds[i]} className="hover:bg-muted/30">
-                    <td className="py-2 pr-4">
+                  <TableRow key={rowIds[i]} className="hover:bg-muted/30">
+                    <TableCell className="py-2 pr-4 pl-0">
                       <Input
                         type="text"
                         value={item.description}
                         onChange={(e) => updateItem(i, { description: e.target.value })}
                         className="h-8 min-w-[180px] px-2 text-sm"
                       />
-                    </td>
-                    <td className="py-2 pr-4">
+                    </TableCell>
+                    <TableCell className="py-2 pr-4 pl-0">
                       <Input
                         type="number"
                         value={item.amount}
@@ -218,11 +236,11 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                         onChange={(e) => updateItem(i, { amount: parseFloat(e.target.value) || 0 })}
                         className="h-8 w-28 px-2 text-sm"
                       />
-                    </td>
-                    <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">
+                    </TableCell>
+                    <TableCell className="py-2 pr-4 text-muted-foreground whitespace-nowrap pl-0">
                       {formatDate(item.date)}
-                    </td>
-                    <td className="py-2 pr-4">
+                    </TableCell>
+                    <TableCell className="py-2 pr-4 pl-0">
                       {item.kind === "installment" ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                           Parcela {item.installmentNumber}/{item.totalInstallments}
@@ -253,8 +271,8 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                           <option value="INVESTMENT">Investimento</option>
                         </Select>
                       )}
-                    </td>
-                    <td className="py-2 pr-4 min-w-[180px]">
+                    </TableCell>
+                    <TableCell className="py-2 pr-4 min-w-[180px] pl-0">
                       <div className="flex items-center gap-1.5">
                         <CategoryCombobox
                           categories={categories}
@@ -276,8 +294,8 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                             );
                           })()}
                       </div>
-                    </td>
-                    <td className="py-2">
+                    </TableCell>
+                    <TableCell className="py-2 px-0">
                       <button
                         type="button"
                         onClick={() => deleteItem(i)}
@@ -286,12 +304,12 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

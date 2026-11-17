@@ -3,6 +3,7 @@
 import { MoreHorizontal } from "lucide-react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { maskCurrency } from "@/lib/maskCurrency";
 import {
   EDITABLE_TYPES,
@@ -53,16 +54,22 @@ export function TransactionRow({
   const { hidden } = usePrivacy();
   const roi = formatRoi(tx);
   return (
-    <tr className="border-t hover:bg-muted/30 transition-colors">
-      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
-      <td className="px-4 py-3">
+    <TableRow className="hover:bg-muted/30">
+      <TableCell className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+        {formatDate(tx.date)}
+      </TableCell>
+      <TableCell className="px-4 py-3">
         <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
           {TYPE_LABELS[tx.type] ?? tx.type}
         </span>
-      </td>
-      <td className="px-4 py-3 text-right font-mono">{pointsSign(tx.type, tx.points)}</td>
-      <td className="px-4 py-3 text-right text-muted-foreground">{formatCostPer1k(tx, hidden)}</td>
-      <td className="px-4 py-3 text-right">
+      </TableCell>
+      <TableCell className="px-4 py-3 text-right font-mono">
+        {pointsSign(tx.type, tx.points)}
+      </TableCell>
+      <TableCell className="px-4 py-3 text-right text-muted-foreground">
+        {formatCostPer1k(tx, hidden)}
+      </TableCell>
+      <TableCell className="px-4 py-3 text-right">
         {roi ? (
           <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>
             {roi.text}
@@ -70,17 +77,17 @@ export function TransactionRow({
         ) : (
           "—"
         )}
-      </td>
-      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+      </TableCell>
+      <TableCell className="px-4 py-3 text-muted-foreground whitespace-nowrap">
         {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
-      </td>
-      <td className="px-4 py-3 text-muted-foreground text-xs">
+      </TableCell>
+      <TableCell className="px-4 py-3 text-muted-foreground text-xs">
         {tx.description ?? ""}
         {tx.costBrl && tx.type === "PURCHASE"
           ? ` · ${maskCurrency(formatBrl(tx.costBrl), hidden)}`
           : ""}
-      </td>
-      <td className="px-4 py-3 text-right">
+      </TableCell>
+      <TableCell className="px-4 py-3 text-right">
         <DropdownMenu
           align="right"
           trigger={
@@ -95,7 +102,7 @@ export function TransactionRow({
           }
           items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

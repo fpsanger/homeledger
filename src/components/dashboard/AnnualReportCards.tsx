@@ -2,6 +2,14 @@
 
 import { Scale, TrendingDown, TrendingUp } from "lucide-react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { AnnualReportResult } from "@/domain/services/AnnualReport";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { cn } from "@/lib/utils";
@@ -90,44 +98,46 @@ export function AnnualReportCards({ report }: Props) {
         />
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr>
-              <th className="text-left py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="text-left py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide h-auto px-0">
                 Mês
-              </th>
-              <th className="text-right py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide">
+              </TableHead>
+              <TableHead className="text-right py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide h-auto px-0">
                 Receita
-              </th>
-              <th className="text-right py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide">
+              </TableHead>
+              <TableHead className="text-right py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide h-auto px-0">
                 Despesas
-              </th>
-              <th className="text-right py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide">
+              </TableHead>
+              <TableHead className="text-right py-1.5 font-medium text-xs text-muted-foreground uppercase tracking-wide h-auto px-0">
                 Saldo
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {report.months.map((m) => (
-              <tr key={m.month} className="border-t border-border">
-                <td className="py-1.5 text-muted-foreground">{MONTH_NAMES[m.month - 1]}</td>
-                <td className="py-1.5 text-right tabular-nums">
+              <TableRow key={m.month} className="border-border">
+                <TableCell className="py-1.5 text-muted-foreground px-0">
+                  {MONTH_NAMES[m.month - 1]}
+                </TableCell>
+                <TableCell className="py-1.5 text-right tabular-nums px-0">
                   <Amount value={m.income} />
-                </td>
-                <td className="py-1.5 text-right tabular-nums">
+                </TableCell>
+                <TableCell className="py-1.5 text-right tabular-nums px-0">
                   <Amount value={m.expenses} />
-                </td>
-                <td
-                  className={`py-1.5 text-right font-medium tabular-nums ${
+                </TableCell>
+                <TableCell
+                  className={`px-0 py-1.5 text-right font-medium tabular-nums ${
                     m.balance >= 0 ? "amount-positive" : "amount-negative"
                   }`}
                 >
                   <Amount value={m.balance} />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

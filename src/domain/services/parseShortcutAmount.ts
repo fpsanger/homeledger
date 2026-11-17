@@ -34,7 +34,8 @@ function toPositiveCents(value: number): number {
  */
 export function parseShortcutAmount(raw: string | number): number {
   if (typeof raw === "number") return toPositiveCents(raw);
-  if (raw.trim().startsWith("-")) throw new Error(INVALID_AMOUNT);
+  // A minus anywhere ("-5,00", "R$ -5,00", "5,00-", "−5,00") means a refund, not a purchase.
+  if (/[-−‒-―]/.test(raw)) throw new Error(INVALID_AMOUNT);
 
   const numeric = raw.replace(/[^\d.,]/g, "");
   if (!/\d/.test(numeric)) throw new Error(INVALID_AMOUNT);

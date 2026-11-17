@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -85,6 +86,7 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="prog-color">Cor</Label>
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Native on purpose: the round colour swatches are not Button-shaped. */}
           {PRESET_COLORS.map((c) => (
             <button
               key={c}
@@ -108,13 +110,9 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
+      <Button type="submit" disabled={loading}>
         {loading ? "Salvando..." : "Salvar"}
-      </button>
+      </Button>
     </form>
   );
 }

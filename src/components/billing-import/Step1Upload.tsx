@@ -3,6 +3,7 @@
 import { Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -123,6 +124,7 @@ function FileDropzone({
       <Label htmlFor="billing-file-input" className="block mb-1">
         Arquivo (PDF ou CSV)
       </Label>
+      {/* Native on purpose: a full-width drop zone that wraps the hidden file input. */}
       <button
         type="button"
         className="w-full border-2 border-dashed border-muted rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
@@ -456,14 +458,14 @@ export function Step1Upload({ onSuccess }: Props) {
           </div>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full flex items-center justify-center gap-2"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           {loading ? "Processando..." : "Processar Extrato"}
-        </button>
+        </Button>
       </form>
     </div>
   );

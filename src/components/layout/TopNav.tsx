@@ -4,9 +4,11 @@ import { ChevronDown, Eye, EyeOff, Home, Menu, Moon, Sun, User, X } from "lucide
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { usePendingCount } from "@/hooks/usePendingCount";
 import { lockBodyScroll } from "@/lib/scroll-lock";
+import { cn } from "@/lib/utils";
 import { PENDING_HREF, PendingCountBadge } from "./PendingCountBadge";
 import { usePrivacy } from "./PrivacyProvider";
 import { useTheme } from "./ThemeProvider";
@@ -121,21 +123,23 @@ export function TopNav() {
                 );
                 return (
                   <>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => setMoreOpen((o) => !o)}
-                      className={`relative flex items-center gap-1 px-3 py-2 text-sm rounded-md transition-colors whitespace-nowrap ${
+                      className={cn(
+                        "relative h-auto gap-1 whitespace-nowrap px-3 py-2 font-normal",
                         anySecondaryActive
-                          ? "text-foreground font-medium"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
+                          ? "font-medium text-foreground hover:bg-transparent"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
                     >
                       Mais
                       <ChevronDown className="w-3 h-3" />
                       {anySecondaryActive && (
                         <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-primary" />
                       )}
-                    </button>
+                    </Button>
 
                     {moreOpen && (
                       <div className="absolute top-full left-0 mt-1 w-48 rounded-md border bg-card shadow-md z-50 py-1">
@@ -167,22 +171,26 @@ export function TopNav() {
 
           {/* Desktop right side */}
           <div className="hidden lg:flex ml-auto items-center gap-2 shrink-0">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={togglePrivacy}
               aria-label={hidden ? "Show values" : "Hide values"}
-              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="h-8 w-8 text-muted-foreground"
             >
               {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={toggle}
               aria-label="Toggle theme"
-              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="h-8 w-8 text-muted-foreground"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
+            </Button>
             <User className="w-4 h-4 text-muted-foreground" />
             <Select
               value={globalPersonId}
@@ -200,36 +208,43 @@ export function TopNav() {
 
           {/* Mobile right side */}
           <div className="flex lg:hidden ml-auto items-center gap-2 shrink-0">
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={togglePrivacy}
               aria-label={hidden ? "Show values" : "Hide values"}
-              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="h-8 w-8 text-muted-foreground"
             >
               {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={toggle}
               aria-label="Toggle theme"
-              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="h-8 w-8 text-muted-foreground"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={() => setDrawerOpen(true)}
               aria-label="Open menu"
-              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="h-8 w-8 text-muted-foreground"
             >
               <Menu className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Mobile drawer overlay */}
       {drawerOpen && (
+        // Native on purpose: an invisible full-screen backdrop, not a styled control.
         <button
           type="button"
           aria-label="Close menu"
@@ -255,14 +270,16 @@ export function TopNav() {
             </span>
             <span className="font-semibold text-sm tracking-tight">HomeLedger</span>
           </Link>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             type="button"
             onClick={() => setDrawerOpen(false)}
             aria-label="Close menu"
-            className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="h-8 w-8 text-muted-foreground"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         <nav className="flex flex-col px-2 py-3 gap-1 flex-1 overflow-y-auto">

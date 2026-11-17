@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { type FormType, fromCents, type SplitRow } from "./billing";
 
 export type { FormType };
@@ -82,23 +83,19 @@ export function TypeToggle({
 }) {
   const types = allowedTypes ?? (["expense", "income", "credit"] as FormType[]);
   return (
-    <div className="flex rounded-lg border overflow-hidden">
+    <ToggleGroup
+      value={type}
+      onValueChange={(next) => onSelect(next as FormType)}
+      variant="primary"
+      aria-label="Tipo"
+      className="rounded-lg"
+    >
       {types.map((t) => (
-        <button
-          key={t}
-          type="button"
-          onClick={() => onSelect(t)}
-          aria-pressed={type === t}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${
-            type === t
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-          }`}
-        >
+        <ToggleGroupItem key={t} value={t} className="flex-1 py-2 font-medium">
           {typeLabels[t]}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 

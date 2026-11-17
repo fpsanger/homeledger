@@ -3,6 +3,7 @@
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -509,23 +510,18 @@ export function Step4Import({
       </div>
 
       <div className="flex gap-3 mt-6">
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={importing}
-          className="px-4 py-2 rounded-md text-sm border hover:bg-muted transition-colors disabled:opacity-50"
-        >
+        <Button variant="outline" type="button" onClick={onBack} disabled={importing}>
           Voltar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleImportAll}
           disabled={importing || itemsToImport.length === 0}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 flex items-center gap-2"
+          className="flex items-center gap-2"
         >
           {importing && <Loader2 className="w-4 h-4 animate-spin" />}
           Importar todos ({itemsToImport.length})
-        </button>
+        </Button>
       </div>
     </div>
   );

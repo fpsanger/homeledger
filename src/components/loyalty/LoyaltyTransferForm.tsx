@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -209,13 +210,9 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={loading || isAirlineSource}
-        className="w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
+      <Button type="submit" disabled={loading || isAirlineSource} className="w-full sm:w-auto">
         {loading ? "Salvando..." : "Registrar Transferência"}
-      </button>
+      </Button>
     </form>
   );
 }

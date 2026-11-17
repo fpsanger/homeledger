@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
+import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -180,13 +181,9 @@ export function AddTransactionModal({
         <DuplicateWarning match={duplicateMatch} />
         {error && <p className="text-xs text-destructive">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
+          <Button size="sm" type="submit" disabled={loading} className="w-full sm:w-auto text-sm">
             {loading ? "Salvando..." : "Salvar"}
-          </button>
+          </Button>
         </div>
       </form>
     </Dialog>

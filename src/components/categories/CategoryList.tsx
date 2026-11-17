@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { getFullPath } from "@/lib/categoryUtils";
 import { CategoryCreateDialog } from "./CategoryCreateDialog";
 import { CategoryEditDialog } from "./CategoryEditDialog";
@@ -366,32 +367,19 @@ export function CategoryList({ categories }: { categories: Category[] }) {
         }}
         className="flex-1 min-w-0 max-w-xs"
       />
-      <div className="flex items-center border rounded-md overflow-hidden shrink-0">
-        <button
-          type="button"
-          onClick={() => setView("cards")}
-          className={`p-2 transition-colors ${
-            view === "cards"
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          }`}
-          aria-label="Visualização em cards"
-        >
+      <ToggleGroup
+        value={view}
+        onValueChange={(next) => setView(next as "cards" | "table")}
+        aria-label="Visualização"
+        className="shrink-0"
+      >
+        <ToggleGroupItem value="cards" className="p-2" aria-label="Visualização em cards">
           <LayoutGrid className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setView("table")}
-          className={`p-2 transition-colors ${
-            view === "table"
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-          }`}
-          aria-label="Visualização em tabela"
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="table" className="p-2" aria-label="Visualização em tabela">
           <List className="w-4 h-4" />
-        </button>
-      </div>
+        </ToggleGroupItem>
+      </ToggleGroup>
       <Button size="sm" onClick={() => openCreate()} className="shrink-0 whitespace-nowrap">
         <Plus className="w-3.5 h-3.5 mr-1.5" /> Nova Categoria
       </Button>

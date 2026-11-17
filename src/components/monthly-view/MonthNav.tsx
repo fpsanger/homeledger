@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
 
 const MONTH_NAMES = [
   "Janeiro",
@@ -57,27 +58,31 @@ export function MonthNav({ year, month, basePath = "/dashboard", paramPrefix = "
       className={`flex items-center gap-1 transition-opacity duration-200 ${isPending ? "opacity-50" : ""}`}
       aria-busy={isPending}
     >
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
         onClick={prev}
         disabled={isPending}
-        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
+        className="h-auto w-auto p-3.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         aria-label="Mês anterior"
       >
         <ChevronLeft className="w-4 h-4" />
-      </button>
+      </Button>
       <span className="font-semibold text-sm w-36 text-center select-none">
         {MONTH_NAMES[month - 1]} {year}
       </span>
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
         onClick={next}
         disabled={isPending}
-        className="p-3.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
+        className="h-auto w-auto p-3.5 text-muted-foreground hover:bg-muted hover:text-foreground"
         aria-label="Próximo mês"
       >
         <ChevronRight className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 }

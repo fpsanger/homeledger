@@ -2,6 +2,7 @@
 
 import { MoreHorizontal } from "lucide-react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Button } from "@/components/ui/button";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { maskCurrency } from "@/lib/maskCurrency";
@@ -91,14 +92,16 @@ export function TransactionRow({
         <DropdownMenu
           align="right"
           trigger={
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               disabled={deletingId === tx.id}
-              className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              className="h-7 w-7 text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Ações"
             >
               <MoreHorizontal className="w-4 h-4" />
-            </button>
+            </Button>
           }
           items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
         />

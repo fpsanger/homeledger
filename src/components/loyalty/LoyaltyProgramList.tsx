@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 type Program = {
   id: string;
@@ -61,10 +62,11 @@ export function LoyaltyProgramList({ programs, onAdd }: Props) {
           ))}
         </div>
       )}
-      <button
+      <Button
+        variant="outline"
         type="button"
         onClick={onAdd}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed text-sm text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+        className="h-auto w-full gap-2 rounded-xl border-dashed px-4 py-2.5 text-muted-foreground hover:border-foreground/40 hover:bg-transparent hover:text-foreground"
       >
         <svg
           className="w-4 h-4"
@@ -76,7 +78,7 @@ export function LoyaltyProgramList({ programs, onAdd }: Props) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
         </svg>
         Adicionar Programa
-      </button>
+      </Button>
     </div>
   );
 }

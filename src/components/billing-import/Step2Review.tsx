@@ -3,6 +3,7 @@
 import { Loader2, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -172,11 +173,13 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
             {reconciledItems.length} itens encontrados. Edite ou remova conforme necessário.
           </p>
         </div>
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           type="button"
           onClick={autoCategorize}
           disabled={categorizing || reconciledItems.length === 0}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border hover:bg-muted transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5"
         >
           {categorizing ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -184,7 +187,7 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
             <Sparkles className="w-3 h-3" />
           )}
           Auto-categorizar
-        </button>
+        </Button>
       </div>
 
       {reconciledItems.length === 0 ? (
@@ -296,14 +299,16 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                       </div>
                     </TableCell>
                     <TableCell className="py-2 px-0">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         type="button"
                         onClick={() => deleteItem(i)}
-                        className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        className="h-auto w-auto p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         title="Remover item"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -314,21 +319,12 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
       )}
 
       <div className="flex gap-3 mt-6">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 rounded-md text-sm border hover:bg-muted transition-colors"
-        >
+        <Button variant="outline" type="button" onClick={onBack}>
           Voltar
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          disabled={reconciledItems.length === 0}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
-        >
+        </Button>
+        <Button type="button" onClick={onNext} disabled={reconciledItems.length === 0}>
           Parece bom, continuar
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -97,14 +97,15 @@ export function InstallmentSchedule({
       <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
         <span id="u-schedule-summary">{schedule.summary}</span>
         {schedule.count > 1 && (
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => setExpanded((value) => !value)}
             aria-expanded={expanded}
-            className="shrink-0 underline underline-offset-2 hover:text-foreground transition-colors"
+            className="h-auto shrink-0 p-0 text-xs font-normal underline underline-offset-2 hover:bg-transparent hover:text-foreground"
           >
             {expanded ? "ocultar parcelas" : "ver parcelas"}
-          </button>
+          </Button>
         )}
       </div>
       {expanded && <InstallmentList months={schedule.months} count={schedule.count} />}

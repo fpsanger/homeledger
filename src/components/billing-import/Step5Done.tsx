@@ -2,6 +2,7 @@
 
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import type { ImportSummary } from "./types";
 
 type Props = {
@@ -35,13 +36,9 @@ export function Step5Done({ summary, onReset }: Props) {
         )}
       </div>
       <div className="flex gap-3 justify-center">
-        <button
-          type="button"
-          onClick={onReset}
-          className="px-4 py-2 rounded-md text-sm border hover:bg-muted transition-colors"
-        >
+        <Button variant="outline" type="button" onClick={onReset}>
           Importar outro extrato
-        </button>
+        </Button>
         <Link
           href="/installments"
           className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"

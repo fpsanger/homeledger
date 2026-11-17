@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoyaltyTransferDialog } from "./LoyaltyTransferDialog";
 import { LoyaltyTransferTable } from "./LoyaltyTransferTable";
@@ -41,13 +42,13 @@ export function TransfersPageClient({ transfers, programs }: Props) {
           transfers.length > 0 ? `${transfers.length} transferências registradas` : undefined
         }
       >
-        <button
+        <Button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2"
         >
           + Transferências entre parceiros
-        </button>
+        </Button>
       </PageHeader>
 
       <LoyaltyTransferDialog

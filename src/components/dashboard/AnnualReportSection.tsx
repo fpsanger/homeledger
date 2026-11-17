@@ -3,6 +3,7 @@
 import { BarChart2, Table2 } from "lucide-react";
 import { useState } from "react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AnnualReportResult } from "@/domain/services/AnnualReport";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { AnnualBalanceChart, fmtSigned } from "./AnnualBalanceCard";
@@ -19,34 +20,20 @@ export function AnnualReportSection({ report }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
-        <div className="flex rounded-md border overflow-hidden text-sm">
-          <button
-            type="button"
-            onClick={() => setView("table")}
-            aria-pressed={view === "table"}
-            className={`flex items-center gap-1.5 px-3 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 ${
-              view === "table"
-                ? "bg-muted text-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
+        <ToggleGroup
+          value={view}
+          onValueChange={(next) => setView(next as "table" | "chart")}
+          aria-label="Visualização"
+        >
+          <ToggleGroupItem value="table" className="px-3 py-3 data-pressed:font-medium">
             <Table2 className="w-3.5 h-3.5" />
             Tabela
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("chart")}
-            aria-pressed={view === "chart"}
-            className={`flex items-center gap-1.5 px-3 py-3 border-l transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:z-10 ${
-              view === "chart"
-                ? "bg-muted text-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
+          </ToggleGroupItem>
+          <ToggleGroupItem value="chart" className="px-3 py-3 data-pressed:font-medium">
             <BarChart2 className="w-3.5 h-3.5" />
             Gráfico
-          </button>
-        </div>
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       {view === "table" ? (

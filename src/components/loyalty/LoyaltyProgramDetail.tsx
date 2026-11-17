@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { AddTransactionModal } from "./AddTransactionModal";
@@ -156,13 +157,14 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
             Transações
           </h2>
           <div className="flex items-center gap-2 ml-auto">
-            <button
+            <Button
+              size="sm"
               type="button"
               onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-1.5"
             >
               + Adicionar
-            </button>
+            </Button>
           </div>
         </div>
         {sorted.length === 0 ? (
@@ -175,13 +177,14 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
               <TableHeader className="bg-muted/50">
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
-                    <button
+                    <Button
+                      variant="ghost"
                       type="button"
                       onClick={() => handleSort("date")}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      className="h-auto gap-1 p-0 hover:bg-transparent hover:text-foreground"
                     >
                       Data <SortIndicator active={sortKey === "date"} dir={sortDir} />
-                    </button>
+                    </Button>
                   </TableHead>
                   <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
                     Tipo
@@ -196,13 +199,14 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
                     ROI
                   </TableHead>
                   <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
-                    <button
+                    <Button
+                      variant="ghost"
                       type="button"
                       onClick={() => handleSort("expiresAt")}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      className="h-auto gap-1 p-0 hover:bg-transparent hover:text-foreground"
                     >
                       Expiração <SortIndicator active={sortKey === "expiresAt"} dir={sortDir} />
-                    </button>
+                    </Button>
                   </TableHead>
                   <TableHead className="text-left px-4 py-3 font-medium text-muted-foreground h-auto">
                     Descrição

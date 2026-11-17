@@ -2,6 +2,7 @@
 
 import { CheckCircle2, ChevronDown, Clock, CreditCard, Wallet } from "lucide-react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
+import { Button } from "@/components/ui/button";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { SummaryCard } from "./SummaryCard";
 
@@ -24,14 +25,15 @@ export function InstallmentSummaryPanel({
 
   return (
     <>
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={onToggle}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+        className="h-auto w-fit gap-1.5 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
       >
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "" : "-rotate-90"}`} />
         {open ? "Ocultar resumo" : "Ver resumo"}
-      </button>
+      </Button>
 
       {open && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -2,6 +2,7 @@
 
 import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./types";
@@ -51,20 +52,12 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
           </p>
         </div>
         <div className="flex gap-3 justify-center">
-          <button
-            type="button"
-            onClick={onBack}
-            className="px-4 py-2 rounded-md text-sm border hover:bg-muted transition-colors"
-          >
+          <Button variant="outline" type="button" onClick={onBack}>
             Voltar
-          </button>
-          <button
-            type="button"
-            onClick={onAllMatched}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium"
-          >
+          </Button>
+          <Button type="button" onClick={onAllMatched}>
             Concluir
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -135,21 +128,16 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
       </div>
 
       <div className="flex gap-3 mt-6">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 rounded-md text-sm border hover:bg-muted transition-colors"
-        >
+        <Button variant="outline" type="button" onClick={onBack}>
           Voltar
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => onNext(Array.from(selected))}
           disabled={selected.size === 0}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
         >
           Importar selecionados ({selected.size})
-        </button>
+        </Button>
       </div>
     </div>
   );

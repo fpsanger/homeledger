@@ -10,6 +10,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { parseCurrencyBR } from "@/lib/utils";
 
 type Person = { id: string; name: string };
@@ -104,22 +105,19 @@ export function RecurringTransactionForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex rounded-lg border overflow-hidden">
+      <ToggleGroup
+        value={type}
+        onValueChange={(next) => setType(next as "EXPENSE" | "INCOME")}
+        variant="primary"
+        aria-label="Tipo"
+        className="rounded-lg"
+      >
         {(["EXPENSE", "INCOME"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setType(t)}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              type === t
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-          >
+          <ToggleGroupItem key={t} value={t} className="flex-1 py-2 font-medium">
             {t === "EXPENSE" ? "Despesa" : "Receita"}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="rt-person">Pessoa</Label>

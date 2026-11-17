@@ -163,16 +163,17 @@ export function TransactionTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={() => setSummaryOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
+        className="h-auto w-fit gap-1.5 p-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
       >
         <ChevronDown
           className={`w-3.5 h-3.5 transition-transform ${summaryOpen ? "" : "-rotate-90"}`}
         />
         {summaryOpen ? "Ocultar resumo" : "Ver resumo"}
-      </button>
+      </Button>
 
       {summaryOpen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

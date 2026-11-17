@@ -2,6 +2,7 @@
 
 import { CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./types";
 
@@ -93,11 +94,10 @@ export function Step3Reconcile({ reconciledItems, onNext, onBack, onAllMatched }
               }`}
             >
               {isMissing ? (
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selected.has(i)}
-                  onChange={() => toggleItem(i)}
-                  className="accent-primary w-4 h-4 shrink-0"
+                  onCheckedChange={() => toggleItem(i)}
+                  aria-label={`Selecionar ${item.description}`}
                 />
               ) : (
                 <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />

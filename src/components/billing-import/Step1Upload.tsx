@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select } from "@/components/ui/select";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import { useCreditCardsAndPeople } from "@/hooks/useCreditCardsAndPeople";
@@ -175,23 +176,22 @@ function StatementTypeFieldset({
   return (
     <fieldset>
       <legend className="block text-sm font-medium mb-2">Tipo de Extrato</legend>
-      <div className="flex gap-4">
+      <RadioGroup
+        value={statementType}
+        onValueChange={(value) => onChange(value as "credit-card" | "debit")}
+        className="flex-row gap-4"
+      >
         {(["credit-card", "debit"] as const).map((type) => (
-          <label key={type} className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="statementType"
-              value={type}
-              checked={statementType === type}
-              onChange={() => onChange(type)}
-              className="accent-primary"
-            />
-            <span className="text-sm">
-              {type === "credit-card" ? "Cartão de Crédito" : "Débito"}
-            </span>
-          </label>
+          <Label
+            key={type}
+            htmlFor={`statement-type-${type}`}
+            className="flex items-center gap-2 cursor-pointer font-normal"
+          >
+            <RadioGroupItem id={`statement-type-${type}`} value={type} />
+            {type === "credit-card" ? "Cartão de Crédito" : "Débito"}
+          </Label>
         ))}
-      </div>
+      </RadioGroup>
     </fieldset>
   );
 }

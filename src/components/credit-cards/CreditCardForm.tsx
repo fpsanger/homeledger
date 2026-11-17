@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -137,22 +138,20 @@ export function CreditCardForm({ card, onSaved, onCancel }: Props) {
             />
           </div>
           <div className="flex items-center gap-2">
-            <input
+            <Checkbox
               id="cc-fixed-prev-month"
-              type="checkbox"
               checked={fixedClosurePreviousMonth}
-              onChange={(e) => setFixedClosurePreviousMonth(e.target.checked)}
+              onCheckedChange={setFixedClosurePreviousMonth}
             />
             <Label htmlFor="cc-fixed-prev-month">
               Fechamento no mês anterior ao período de cobrança
             </Label>
           </div>
           <div className="flex items-center gap-2">
-            <input
+            <Checkbox
               id="cc-closure-next-month"
-              type="checkbox"
               checked={closureNextMonth}
-              onChange={(e) => setClosureNextMonth(e.target.checked)}
+              onCheckedChange={setClosureNextMonth}
             />
             <Label htmlFor="cc-closure-next-month">
               Dia de fechamento é no mês seguinte à compra

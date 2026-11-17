@@ -90,4 +90,39 @@ test.describe("API input contracts", () => {
       await request.delete(`/api/credit-cards/${card.id}`);
     }
   });
+
+  test("the Shortcuts webhook never accepts a request without the token", async ({ request }) => {
+    const response = await request.post("/api/webhooks/shortcuts/transaction", {
+      data: { amount: "12,50", merchant: "Contract test", date: "2026-11-16" },
+    });
+
+    // 503 while WEBHOOK_TOKEN is unset, 401 once it is configured: never a 2xx.
+    expect([401, 503]).toContain(response.status());
+  });
+
+  test("pending transactions list the purchases waiting for review", async ({ request }) => {
+    const response = await request.get("/api/pending-transactions");
+
+    expect(response.status()).toBe(200);
+    const { pending } = (await response.json()) as { pending: unknown[] };
+    expect(Array.isArray(pending)).toBe(true);
+  });
+
+  test("confirming a pending transaction validates the body and the id", async ({ request }) => {
+    const invalid = await request.post("/api/pending-transactions/unknown-id/confirm", {
+      data: { creditCardId: null },
+    });
+    expect(invalid.status()).toBe(400);
+
+    const unknown = await request.post("/api/pending-transactions/unknown-id/confirm", {
+      data: { categoryId: null, creditCardId: null },
+    });
+    expect(unknown.status()).toBe(404);
+  });
+
+  test("discarding an unknown pending transaction is a 404", async ({ request }) => {
+    const response = await request.post("/api/pending-transactions/unknown-id/discard");
+
+    expect(response.status()).toBe(404);
+  });
 });

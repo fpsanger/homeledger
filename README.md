@@ -41,6 +41,7 @@ with the discipline of a production system.
 | **Annual report / dashboard** | Aggregations over the same domain services. |
 | **Statement import** | Parses card statements (Bradesco, BTG, C6 CSV, plus PDF text via `unpdf`), classifies and reconciles rows against existing purchases. A hybrid regex-first parser can fall back to a local LLM (Ollama). |
 | **Auto-categorization** | A pipeline: merchant rules → merchant history → optional local LLM. |
+| **Apple Pay webhook** | An iOS Shortcuts automation posts each Apple Pay purchase over Tailscale. It waits on an "A revisar" screen until you confirm the category and payment, then becomes an expense or card purchase. See `docs/shortcuts-webhook.md`. |
 | **Duplicate detection** | Domain services flag likely duplicate expenses, card purchases, recurring rules and loyalty entries, including across entity types. |
 | **Loyalty programs** | Points/miles programs, transfers between programs and FIFO lot accounting. |
 | **Bulk entry** | One page for many expenses, incomes and multi-card purchases submitted together, with partial-failure handling and retry. |

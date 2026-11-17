@@ -3,6 +3,7 @@
 import { Loader2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { Select } from "@/components/ui/select";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import { useCreditCardsAndPeople } from "@/hooks/useCreditCardsAndPeople";
 import type { Step1Data } from "./types";
@@ -207,11 +208,10 @@ function CreditCardSelect({
       <label htmlFor="billing-credit-card" className="block text-sm font-medium mb-1">
         Cartão de Crédito
       </label>
-      <select
+      <Select
         id="billing-credit-card"
         value={creditCardId}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
       >
         <option value="">Selecione um cartão</option>
         {creditCards.map((c) => (
@@ -219,7 +219,7 @@ function CreditCardSelect({
             {c.name}
           </option>
         ))}
-      </select>
+      </Select>
       {creditCards.length === 0 && (
         <p className="text-xs text-amber-600 mt-1">Não foi possível carregar cartões.</p>
       )}
@@ -241,19 +241,14 @@ function PersonSelect({
       <label htmlFor="billing-person" className="block text-sm font-medium mb-1">
         Pessoa
       </label>
-      <select
-        id="billing-person"
-        value={personId}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-      >
+      <Select id="billing-person" value={personId} onChange={(e) => onChange(e.target.value)}>
         <option value="">Selecione uma pessoa</option>
         {people.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name}
           </option>
         ))}
-      </select>
+      </Select>
       {people.length === 0 && (
         <p className="text-xs text-amber-600 mt-1">Não foi possível carregar pessoas.</p>
       )}
@@ -293,18 +288,17 @@ function MonthYearFields({
         <label htmlFor="billing-month" className="block text-sm font-medium mb-1">
           Mês
         </label>
-        <select
+        <Select
           id="billing-month"
           value={month}
           onChange={(e) => onMonthChange(Number(e.target.value))}
-          className="w-full border rounded-md px-3 py-2 text-sm bg-background"
         >
           {MONTH_ABBREVIATIONS.map((m, i) => (
             <option key={m} value={i + 1}>
               {m}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <div className="flex-1">
         <label htmlFor="billing-year" className="block text-sm font-medium mb-1">
@@ -340,18 +334,13 @@ function BankSelectField({
       <label htmlFor="billing-bank" className="block text-sm font-medium mb-1">
         Banco (opcional)
       </label>
-      <select
-        id="billing-bank"
-        value={bank}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full border rounded-md px-3 py-2 text-sm bg-background"
-      >
+      <Select id="billing-bank" value={bank} onChange={(e) => onChange(e.target.value)}>
         {BANK_OPTIONS.map((b) => (
           <option key={b.value} value={b.value}>
             {b.label}
           </option>
         ))}
-      </select>
+      </Select>
       <BankMismatchHint bank={bank} selectedCard={creditCards.find((c) => c.id === creditCardId)} />
     </div>
   );

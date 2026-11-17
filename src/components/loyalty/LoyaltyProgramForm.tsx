@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Select } from "@/components/ui/select";
 
 const TYPES = [
   { value: "AIRLINE", label: "Aérea" },
@@ -75,18 +76,13 @@ export function LoyaltyProgramForm({ onSuccess }: Props) {
         <label className="text-sm font-medium" htmlFor="prog-type">
           Tipo
         </label>
-        <select
-          id="prog-type"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        >
+        <Select id="prog-type" value={type} onChange={(e) => setType(e.target.value)}>
           {TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1.5">

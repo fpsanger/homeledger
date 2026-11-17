@@ -3,6 +3,8 @@
 import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import type { InstallmentBillingItem } from "@/domain/entities/BillingItem";
 import type { ReconciledItem } from "@/domain/entities/ReconciledItem";
 import { statementBillingMonth } from "./statementBillingMonth";
@@ -442,9 +444,15 @@ export function Step4Import({
                     </label>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground mb-1">
+                    <Label
+                      htmlFor={`import-type-${i}`}
+                      className="block text-xs text-muted-foreground mb-1"
+                    >
                       Tipo
-                      <select
+                    </Label>
+                    <div className="mt-1">
+                      <Select
+                        id={`import-type-${i}`}
                         value={form.transactionType}
                         onChange={(e) =>
                           updateForm(i, {
@@ -452,13 +460,12 @@ export function Step4Import({
                           })
                         }
                         disabled={status !== "pending"}
-                        className="mt-1 w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-60"
                       >
                         <option value="EXPENSE">Despesa</option>
                         <option value="INCOME">Receita</option>
                         <option value="INVESTMENT">Investimento</option>
-                      </select>
-                    </label>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { DuplicateWarning } from "@/components/transactions/DuplicateWarning";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog } from "@/components/ui/dialog";
+import { Select } from "@/components/ui/select";
 import { findDuplicateLoyaltyTransaction } from "@/domain/services/isDuplicateLoyaltyTransaction";
 import { type Transaction, TYPE_LABELS } from "./loyaltyFormat";
 
@@ -155,11 +156,10 @@ export function EditTransactionModal({
             <label htmlFor="edit-tx-person" className="text-xs font-medium text-muted-foreground">
               Pessoa
             </label>
-            <select
+            <Select
               id="edit-tx-person"
               value={personId}
               onChange={(e) => setPersonId(e.target.value)}
-              className="rounded-md border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Todos</option>
               {people.map((p) => (
@@ -167,7 +167,7 @@ export function EditTransactionModal({
                   {p.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
         <div className="flex flex-col gap-1">

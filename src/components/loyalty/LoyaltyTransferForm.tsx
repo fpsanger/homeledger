@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Select } from "@/components/ui/select";
 import { maskCurrency } from "@/lib/maskCurrency";
 
 type Program = { id: string; name: string; type: string };
@@ -111,7 +112,7 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
           <label className="text-sm font-medium" htmlFor="transfer-from">
             De
           </label>
-          <select
+          <Select
             id="transfer-from"
             value={fromProgramId}
             onChange={(e) => {
@@ -121,31 +122,29 @@ export function LoyaltyTransferForm({ programs, onSuccess, personId }: Props) {
                 setToProgramId(other?.id ?? "");
               }
             }}
-            className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {programs.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium" htmlFor="transfer-to">
             Para
           </label>
-          <select
+          <Select
             id="transfer-to"
             value={toProgramId}
             onChange={(e) => setToProgramId(e.target.value)}
-            className="rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {destinationPrograms.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import { Loader2, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CategoryCombobox } from "@/components/ui/category-combobox";
+import { Select } from "@/components/ui/select";
 import type { CategorySource, ReconciledItem } from "@/domain/entities/ReconciledItem";
 import type { Step1Data } from "./types";
 
@@ -234,7 +235,7 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                           Parcela 1/1
                         </span>
                       ) : (
-                        <select
+                        <Select
                           value={item.transactionType}
                           onChange={(e) =>
                             updateItem(i, {
@@ -244,12 +245,12 @@ export function Step2Review({ reconciledItems, step1Data, onUpdate, onNext, onBa
                                 | "INVESTMENT",
                             })
                           }
-                          className="border rounded px-2 py-1 text-xs bg-background"
+                          className="h-8 px-2 text-xs"
                         >
                           <option value="EXPENSE">Despesa</option>
                           <option value="INCOME">Receita</option>
                           <option value="INVESTMENT">Investimento</option>
-                        </select>
+                        </Select>
                       )}
                     </td>
                     <td className="py-2 pr-4 min-w-[180px]">

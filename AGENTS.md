@@ -105,6 +105,12 @@ Two consequences for any change you make:
 
 ## Git and pull requests
 
+**Never commit directly on `develop`, `master` or `main`.** Run `git branch --show-current` before
+every commit; if it names one of those branches, create a branch from it first
+(`git switch -c <type>/<scope>-<description>`). This also applies right after a PR is merged, when
+the checkout may be back on `develop`. If commits already landed on a protected branch and were
+not pushed, move them to a new branch and reset the protected branch to its remote.
+
 Use `<type>/<scope>-<description>` branches, Conventional Commit subjects, and PRs against
 `develop`. Never auto-merge; a human owns the merge decision. Independent Codex review is
 recommended for financial rules, migrations/backfills, security-sensitive APIs, broad cross-layer

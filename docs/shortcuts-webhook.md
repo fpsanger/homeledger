@@ -96,10 +96,9 @@ Trigger the automation and read what appears:
 | ----------------------------- | -------------------------------------------------------------------------------- |
 | nothing at all                | The request never reached the server: Tailscale off on the iPhone, or wrong URL. |
 | `received`                    | The request arrived. `userAgent` and `hasAuthorization` help spot a missing header. |
-| `not configured`              | `missing` lists the variable absent from `.env`; restart the service after fixing. |
-| `unauthorized`                | `reason` is `no authorization header`, `not a bearer header` or `token mismatch`. |
+| `unauthorized`                | `reason` is `no authorization header`, `not a bearer header` or `unknown or revoked token` (generate a new one in **Pessoas**). |
 | `invalid body`                | `issues` lists the fields that failed, without their values.                     |
-| `stored` / `duplicate`        | Done. `ms` is the time spent; a large value points at the database waking up.    |
+| `stored` / `duplicate`        | Done. `personId` is whose purchase it is; `ms` is the time spent, and a large value points at the database waking up. |
 | `error`                       | `message` and `ms` of the failure.                                               |
 
 The log never contains the token, the amount, the merchant or the card.

@@ -166,25 +166,15 @@ describe("POST /api/webhooks/shortcuts/transaction logging", () => {
     });
   });
 
-  it("names the missing variable when not configured", async () => {
-    delete process.env.WEBHOOK_PERSON_ID;
-
-    await POST(request(VALID_BODY));
-
-    expect(warn).toHaveBeenCalledWith("[webhook/shortcuts] not configured", {
-      missing: ["WEBHOOK_PERSON_ID"],
-    });
-  });
-
   it.each([
     ["no authorization header", null],
     ["not a bearer header", "Basic abc"],
-    ["token mismatch", "Bearer nope-nope"],
+    ["unknown or revoked token", "Bearer nope-nope"],
   ])("logs why a request is unauthorized: %s", async (reason, authorization) => {
     await POST(request(VALID_BODY, authorization));
 
     expect(warn).toHaveBeenCalledWith("[webhook/shortcuts] unauthorized", { reason });
-    expect(logged()).not.toContain("s3cret");
+    expect(logged()).not.toContain("ana-token");
     expect(logged()).not.toContain("nope-nope");
   });
 
@@ -196,11 +186,12 @@ describe("POST /api/webhooks/shortcuts/transaction logging", () => {
     expect(details.issues).toEqual([{ path: "merchant", message: expect.any(String) }]);
   });
 
-  it("logs the stored purchase id and how long it took", async () => {
-    await POST(request(VALID_BODY));
+  it("logs the stored purchase id, whose it is and how long it took", async () => {
+    await POST(request(VALID_BODY, "Bearer bia-token"));
 
     expect(info).toHaveBeenCalledWith("[webhook/shortcuts] stored", {
       id: "pending-1",
+      personId: "person-2",
       ms: expect.any(Number),
     });
   });
@@ -212,6 +203,7 @@ describe("POST /api/webhooks/shortcuts/transaction logging", () => {
 
     expect(info).toHaveBeenCalledWith("[webhook/shortcuts] duplicate", {
       id: "pending-0",
+      personId: "person-1",
       ms: expect.any(Number),
     });
   });
@@ -231,7 +223,7 @@ describe("POST /api/webhooks/shortcuts/transaction logging", () => {
     await POST(request(VALID_BODY));
     await POST(request({ ...VALID_BODY, amount: "abc" }));
 
-    for (const secret of ["s3cret", "Padaria", "12,50", "Nubank"]) {
+    for (const secret of ["ana-token", "Padaria", "12,50", "Nubank"]) {
       expect(logged()).not.toContain(secret);
     }
   });

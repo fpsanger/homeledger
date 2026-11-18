@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The fatura of an existing credit-card purchase can now be changed from both edit dialogs (transactions page and credit-card bill). The "Fatura (mês)" field is pre-filled with the purchase's current bill, and saving moves every installment (all people on a split purchase) to consecutive bills starting at the chosen month. `PUT /api/credit-card-purchases/[id]` accepts an optional `billingMonth` (`YYYY-MM`) and answers `409` when any installment is already paid; `GET` now returns the purchase's current `billingMonth`.
 
-- The Shortcuts webhook now logs each call under the `[webhook/shortcuts]` prefix (`journalctl -u homeledger -f`): that the request arrived, why it was refused (`503` missing variable, `401` reason, `400` invalid fields), and the outcome with its duration. The token and the purchase details are never logged. See the Debugging section of `docs/shortcuts-webhook.md`.
+- The Shortcuts webhook now logs each call under the `[webhook/shortcuts]` prefix (`journalctl -u homeledger -f`): that the request arrived, why it was refused (`401` reason, `400` invalid fields), and the outcome with the owner and its duration. The token and the purchase details are never logged. See the Debugging section of `docs/shortcuts-webhook.md`.
 
 ### Changed
 

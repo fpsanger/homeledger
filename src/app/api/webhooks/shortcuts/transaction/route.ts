@@ -34,11 +34,37 @@ const PayloadSchema = z.object({
     ),
 });
 
+const LOG = "[webhook/shortcuts]";
+
+// Why a request was refused, for the log only. Never includes any part of the token.
+function unauthorizedReason(authorization: string | null): string {
+  if (!authorization) return "no authorization header";
+  if (!/^bearer .+/i.test(authorization)) return "not a bearer header";
+  return "unknown or revoked token";
+}
+
+// Field names and messages only: the values are purchase details and stay out of the log.
+function logInvalidBody(issues: z.ZodIssue[]): void {
+  console.warn(`${LOG} invalid body`, {
+    issues: issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })),
+  });
+}
+
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now();
+  const authorization = request.headers.get("authorization");
+  console.info(`${LOG} received`, {
+    userAgent: request.headers.get("user-agent"),
+    hasAuthorization: authorization !== null,
+  });
+
   try {
     const { pendingTransaction, creditCard, categoryMemory, webhookToken } = createRepositories();
-    const personId = await resolveWebhookPerson(request.headers.get("authorization"), webhookToken);
-    if (!personId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    const personId = await resolveWebhookPerson(authorization, webhookToken);
+    if (!personId) {
+      console.warn(`${LOG} unauthorized`, { reason: unauthorizedReason(authorization) });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const parsed = PayloadSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -64,6 +90,7 @@ export async function POST(request: NextRequest) {
     );
     console.info(`${LOG} ${created ? "stored" : "duplicate"}`, {
       id: record.id,
+      personId,
       ms: Date.now() - startedAt,
     });
     return Response.json({ id: record.id, created }, { status: created ? 201 : 200 });

@@ -83,9 +83,6 @@ DATABASE_URL="postgresql://<host-role>:<password>@<neon-host>/neondb?sslmode=req
 NODE_ENV=production
 # Optional, see "Uptime monitoring" below:
 # HOMELEDGER_HEARTBEAT_URL="https://hc-ping.com/<your-uuid>"
-# Optional, see docs/shortcuts-webhook.md (both are needed for the Apple Pay webhook):
-# WEBHOOK_TOKEN="<openssl rand -hex 32>"
-# WEBHOOK_PERSON_ID="<id of the person the purchases belong to>"
 ```
 
 ```bash

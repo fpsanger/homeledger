@@ -4,9 +4,9 @@ import { registerShortcutTransactionUseCase } from "../../../../../application/u
 import { parseDateUTC } from "../../../_lib/date";
 import { errorResponse } from "../../../_lib/errorResponse";
 import { createRepositories } from "../../../_lib/repositories";
-import { isAuthorizedWebhook } from "../../../_lib/webhookAuth";
+import { resolveWebhookPerson } from "../../../_lib/webhookAuth";
 
-// Reads the environment and the request on every call, so Next must not evaluate it at build time.
+// Reads the database and the request on every call, so Next must not evaluate it at build time.
 export const dynamic = "force-dynamic";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
@@ -40,23 +40,7 @@ const LOG = "[webhook/shortcuts]";
 function unauthorizedReason(authorization: string | null): string {
   if (!authorization) return "no authorization header";
   if (!/^bearer .+/i.test(authorization)) return "not a bearer header";
-  return "token mismatch";
-}
-
-// The person the purchases belong to, or the response that refuses the request.
-function authorize(authorization: string | null): { personId: string } | Response {
-  const token = process.env.WEBHOOK_TOKEN;
-  const personId = process.env.WEBHOOK_PERSON_ID;
-  if (!token || !personId) {
-    const missing = [!token && "WEBHOOK_TOKEN", !personId && "WEBHOOK_PERSON_ID"].filter(Boolean);
-    console.warn(`${LOG} not configured`, { missing });
-    return Response.json({ error: "Webhook is not configured" }, { status: 503 });
-  }
-  if (!isAuthorizedWebhook(authorization, token)) {
-    console.warn(`${LOG} unauthorized`, { reason: unauthorizedReason(authorization) });
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  return { personId };
+  return "unknown or revoked token";
 }
 
 // Field names and messages only: the values are purchase details and stay out of the log.
@@ -74,11 +58,14 @@ export async function POST(request: NextRequest) {
     hasAuthorization: authorization !== null,
   });
 
-  const access = authorize(authorization);
-  if (access instanceof Response) return access;
-  const { personId } = access;
-
   try {
+    const { pendingTransaction, creditCard, categoryMemory, webhookToken } = createRepositories();
+    const personId = await resolveWebhookPerson(authorization, webhookToken);
+    if (!personId) {
+      console.warn(`${LOG} unauthorized`, { reason: unauthorizedReason(authorization) });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const parsed = PayloadSchema.safeParse(await request.json());
     if (!parsed.success) {
       logInvalidBody(parsed.error.issues);
@@ -89,7 +76,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { amount, merchant, card, date } = parsed.data;
-    const { pendingTransaction, creditCard, categoryMemory } = createRepositories();
     const { record, created } = await registerShortcutTransactionUseCase(
       {
         id: crypto.randomUUID(),
@@ -104,6 +90,7 @@ export async function POST(request: NextRequest) {
     );
     console.info(`${LOG} ${created ? "stored" : "duplicate"}`, {
       id: record.id,
+      personId,
       ms: Date.now() - startedAt,
     });
     return Response.json({ id: record.id, created }, { status: created ? 201 : 200 });

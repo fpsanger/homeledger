@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDatePtBR } from "@/lib/format-date";
+import { WebhookTokenDialog } from "./WebhookTokenDialog";
 
 type Person = {
   id: string;
@@ -25,6 +26,23 @@ type Person = {
 export function PersonList({ people }: { people: Person[] }) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [issued, setIssued] = useState<{ personName: string; token: string } | null>(null);
+
+  async function handleIssueToken(person: Person) {
+    const res = await fetch(`/api/people/${person.id}/webhook-token`, { method: "POST" });
+    if (!res.ok) {
+      toast.error("Não foi possível gerar o token.");
+      return;
+    }
+    const { token } = (await res.json()) as { token: string };
+    setIssued({ personName: person.name, token });
+  }
+
+  async function handleRevokeToken(person: Person) {
+    const res = await fetch(`/api/people/${person.id}/webhook-token`, { method: "DELETE" });
+    if (res.ok) toast.success(`Token de ${person.name} revogado.`);
+    else toast.error("Não foi possível revogar o token.");
+  }
 
   async function handleDelete(id: string) {
     setDeletingId(id);
@@ -76,6 +94,14 @@ export function PersonList({ people }: { people: Person[] }) {
                   }
                   items={[
                     {
+                      label: "Gerar token do Atalho",
+                      onClick: () => handleIssueToken(person),
+                    },
+                    {
+                      label: "Revogar token do Atalho",
+                      onClick: () => handleRevokeToken(person),
+                    },
+                    {
                       label: deletingId === person.id ? "Excluindo..." : "Excluir",
                       onClick: () => handleDelete(person.id),
                       variant: "destructive",
@@ -87,6 +113,11 @@ export function PersonList({ people }: { people: Person[] }) {
           ))}
         </TableBody>
       </Table>
+      <WebhookTokenDialog
+        personName={issued?.personName ?? ""}
+        token={issued?.token ?? null}
+        onClose={() => setIssued(null)}
+      />
     </div>
   );
 }

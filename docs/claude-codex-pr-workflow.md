@@ -41,15 +41,19 @@ For documentation, repository configuration, UI copy/style, dependency metadata,
 well-contained changes, passing CI plus human review is sufficient. Codex findings are advisory;
 deterministic checks and the human merge decision remain authoritative.
 
-## GitHub enforcement limitation
+## GitHub enforcement
 
-The repository is private and its current GitHub plan does not support branch protection. GitHub
-Actions reports failures but cannot prevent a maintainer from merging. Until protection becomes
-available, the maintainer must manually confirm the applicable Tests and quality ratchet, Database,
-Lint, Typecheck, Build, and Playwright statuses.
+The repository ruleset "no direct commits" is active on `master` and `develop`. It requires every
+change to arrive through a pull request and blocks force pushes and branch deletion. There are no
+bypass actors, so the rule also binds maintainers and agents: a push to either branch is rejected
+with `GH013`.
 
-If branch protection becomes available, require a PR, one human approval, conversation resolution,
-up-to-date required checks, and no force pushes or agent bypass identities.
+The ruleset does **not** require approvals (0 required) or passing status checks, so GitHub Actions
+reports failures but cannot stop a merge. The maintainer must manually confirm the applicable Tests
+and quality ratchet, Database, Lint, Typecheck, Build, and Playwright statuses before merging.
+
+Still to enable when available: one required human approval, conversation resolution, up-to-date
+required checks, and no agent bypass identities.
 
 ## Credentials and failures
 

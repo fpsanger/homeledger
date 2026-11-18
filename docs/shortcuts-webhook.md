@@ -18,24 +18,25 @@ HomeLedger has no login. The iPhone reaches it over Tailscale, through the same
 - The iPhone must be connected to Tailscale when the purchase happens. If the VPN is off, the
   Shortcut fails and that purchase is **not** recorded; enter it by hand. Turn on "Connect on demand"
   in the Tailscale iOS app to make this rare.
-- The webhook also requires a bearer token, so another device on the tailnet cannot post purchases.
+- The webhook also requires a personal token, so another device on the tailnet cannot post purchases.
+  The token also tells the server **whose** purchase it is, so each person uses their own Shortcut
+  and their own token.
 - Never expose it with `tailscale funnel`. See `docs/deployment.md`.
 
-## Server setup
+## Generate your token
 
-Add two variables to `/srv/homeledger/shared/.env` (or your local `.env`), then restart the service:
+Nothing goes in the server `.env`. Each person generates their own token in the app:
 
-```
-WEBHOOK_TOKEN="<output of: openssl rand -hex 32>"
-WEBHOOK_PERSON_ID="<id of the person the purchases belong to>"
-```
+1. Open **Pessoas**, open the actions menu on your row and choose **Gerar token do Atalho**.
+2. Copy the token from the dialog. It is shown **once**; only its hash is stored.
+3. Paste it into your Shortcut (see below). Generating another token for the same person
+   invalidates the previous one; **Revogar token do Atalho** turns it off without replacing it.
 
-Find the person id with `curl https://<host>.<tailnet>.ts.net/api/people`. Without both variables
-the endpoint answers `503`.
+Do this on the phone that will run the Shortcut, or send the token over a private channel.
 
 ## Request
 
-`POST /api/webhooks/shortcuts/transaction` with `Authorization: Bearer <WEBHOOK_TOKEN>` and a JSON
+`POST /api/webhooks/shortcuts/transaction` with `Authorization: Bearer <your token>` and a JSON
 body:
 
 | Field      | Required | Notes                                                                                                   |
@@ -52,14 +53,13 @@ Responses:
 | `201`  | Stored for review. Body: `{ "id": "...", "created": true }`.                   |
 | `200`  | The same purchase (person, amount, exact time, merchant, card) was already stored. |
 | `400`  | The body is invalid; `error` says why.                                         |
-| `401`  | Missing or wrong token.                                                        |
-| `503`  | `WEBHOOK_TOKEN` or `WEBHOOK_PERSON_ID` is not set.                             |
+| `401`  | Missing, unknown or revoked token.                                             |
 
 Test it from any device on the tailnet:
 
 ```bash
 curl -X POST "https://<host>.<tailnet>.ts.net/api/webhooks/shortcuts/transaction" \
-  -H "Authorization: Bearer $WEBHOOK_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"amount":"12,50","merchant":"Padaria","card":"Nubank","date":"2026-11-16T22:30:00-03:00"}'
 ```
@@ -74,7 +74,7 @@ a guide rather than a script.
 2. Add the action **Get Contents of URL**:
    - URL: `https://<host>.<tailnet>.ts.net/api/webhooks/shortcuts/transaction`
    - Method: `POST`
-   - Headers: `Authorization` = `Bearer <WEBHOOK_TOKEN>`
+   - Headers: `Authorization` = `Bearer <your token>`
    - Request Body: `JSON`, with `amount`, `merchant` and `card` taken from the transaction details
      the trigger provides, and `date` set to the current date formatted as ISO 8601.
 3. Make a real purchase, or run the automation by hand, and check that it appears on **A revisar**.

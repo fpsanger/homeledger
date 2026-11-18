@@ -96,8 +96,7 @@ test.describe("API input contracts", () => {
       data: { amount: "12,50", merchant: "Contract test", date: "2026-11-16" },
     });
 
-    // 503 while WEBHOOK_TOKEN is unset, 401 once it is configured: never a 2xx.
-    expect([401, 503]).toContain(response.status());
+    expect(response.status()).toBe(401);
   });
 
   test("pending transactions list the purchases waiting for review", async ({ request }) => {

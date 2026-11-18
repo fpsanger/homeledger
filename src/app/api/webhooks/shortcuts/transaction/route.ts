@@ -4,9 +4,9 @@ import { registerShortcutTransactionUseCase } from "../../../../../application/u
 import { parseDateUTC } from "../../../_lib/date";
 import { errorResponse } from "../../../_lib/errorResponse";
 import { createRepositories } from "../../../_lib/repositories";
-import { isAuthorizedWebhook } from "../../../_lib/webhookAuth";
+import { resolveWebhookPerson } from "../../../_lib/webhookAuth";
 
-// Reads the environment and the request on every call, so Next must not evaluate it at build time.
+// Reads the database and the request on every call, so Next must not evaluate it at build time.
 export const dynamic = "force-dynamic";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
@@ -35,16 +35,11 @@ const PayloadSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const token = process.env.WEBHOOK_TOKEN;
-  const personId = process.env.WEBHOOK_PERSON_ID;
-  if (!token || !personId) {
-    return Response.json({ error: "Webhook is not configured" }, { status: 503 });
-  }
-  if (!isAuthorizedWebhook(request.headers.get("authorization"), token)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const { pendingTransaction, creditCard, categoryMemory, webhookToken } = createRepositories();
+    const personId = await resolveWebhookPerson(request.headers.get("authorization"), webhookToken);
+    if (!personId) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
     const parsed = PayloadSchema.safeParse(await request.json());
     if (!parsed.success) {
       return Response.json(
@@ -54,7 +49,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { amount, merchant, card, date } = parsed.data;
-    const { pendingTransaction, creditCard, categoryMemory } = createRepositories();
     const { record, created } = await registerShortcutTransactionUseCase(
       {
         id: crypto.randomUUID(),

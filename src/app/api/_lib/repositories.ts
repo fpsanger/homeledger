@@ -16,6 +16,7 @@ import { PrismaPendingTransactionRepository } from "../../../infrastructure/repo
 import { PrismaPersonRepository } from "../../../infrastructure/repositories/PrismaPersonRepository";
 import { PrismaRecurringTransactionRepository } from "../../../infrastructure/repositories/PrismaRecurringTransactionRepository";
 import { PrismaTransactionRepository } from "../../../infrastructure/repositories/PrismaTransactionRepository";
+import { PrismaWebhookTokenRepository } from "../../../infrastructure/repositories/PrismaWebhookTokenRepository";
 
 export function createRepositories() {
   const category = new PrismaCategoryRepository(prisma);
@@ -24,6 +25,7 @@ export function createRepositories() {
     person: new PrismaPersonRepository(prisma),
     category,
     pendingTransaction: new PrismaPendingTransactionRepository(prisma),
+    webhookToken: new PrismaWebhookTokenRepository(prisma),
     categoryMemory: new MerchantCategoryMemory(
       category,
       [new MerchantRuleCategorizer(), new MerchantHistoryCategorizer()],

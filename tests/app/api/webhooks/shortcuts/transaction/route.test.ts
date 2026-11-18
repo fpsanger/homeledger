@@ -1,19 +1,28 @@
 import type { NextRequest } from "next/server";
 
 const mockRegister = jest.fn();
+const mockFindActiveByHash = jest.fn();
 
 jest.mock("../../../../../../src/app/api/_lib/repositories", () => ({
   createRepositories: () => ({
     pendingTransaction: { name: "pending" },
     creditCard: { name: "cards" },
     categoryMemory: { name: "memory" },
+    webhookToken: { findActiveByHash: (...args: unknown[]) => mockFindActiveByHash(...args) },
   }),
 }));
 jest.mock("../../../../../../src/application/use-cases/RegisterShortcutTransactionUseCase", () => ({
   registerShortcutTransactionUseCase: (...args: unknown[]) => mockRegister(...args),
 }));
 
+import { hashWebhookToken } from "../../../../../../src/app/api/_lib/webhookAuth";
 import { POST } from "../../../../../../src/app/api/webhooks/shortcuts/transaction/route";
+
+// Active tokens by the hash the route looks up; "revoked" is simply absent.
+const ACTIVE_TOKENS: Record<string, string> = {
+  [hashWebhookToken("ana-token")]: "person-1",
+  [hashWebhookToken("bia-token")]: "person-2",
+};
 
 const VALID_BODY = {
   amount: "R$ 12,50",
@@ -22,7 +31,7 @@ const VALID_BODY = {
   date: "2026-11-16T22:30:00-03:00",
 };
 
-function request(body: unknown, authorization: string | null = "Bearer s3cret"): NextRequest {
+function request(body: unknown, authorization: string | null = "Bearer ana-token"): NextRequest {
   const headers = new Headers();
   if (authorization !== null) headers.set("authorization", authorization);
   return {
@@ -36,42 +45,28 @@ function request(body: unknown, authorization: string | null = "Bearer s3cret"):
 
 beforeEach(() => {
   jest.clearAllMocks();
-  process.env.WEBHOOK_TOKEN = "s3cret";
-  process.env.WEBHOOK_PERSON_ID = "person-1";
+  mockFindActiveByHash.mockImplementation(async (hash: string) =>
+    ACTIVE_TOKENS[hash] ? { personId: ACTIVE_TOKENS[hash] } : null,
+  );
   mockRegister.mockResolvedValue({ record: { id: "pending-1" }, created: true });
 });
 
-afterAll(() => {
-  delete process.env.WEBHOOK_TOKEN;
-  delete process.env.WEBHOOK_PERSON_ID;
-});
-
 describe("POST /api/webhooks/shortcuts/transaction", () => {
-  it("reports 503 while the webhook is not configured", async () => {
-    delete process.env.WEBHOOK_TOKEN;
-
-    const res = await POST(request(VALID_BODY));
-
-    expect(res.status).toBe(503);
-    expect(mockRegister).not.toHaveBeenCalled();
-  });
-
-  it("reports 503 when no person is configured", async () => {
-    delete process.env.WEBHOOK_PERSON_ID;
-
-    const res = await POST(request(VALID_BODY));
-
-    expect(res.status).toBe(503);
-  });
-
   it.each([
     ["a missing token", null],
-    ["a wrong token", "Bearer nope"],
+    ["a malformed header", "ana-token"],
+    ["an unknown or revoked token", "Bearer nope"],
   ])("rejects %s with 401 before reading the body", async (_label, authorization) => {
     const res = await POST(request(VALID_BODY, authorization));
 
     expect(res.status).toBe(401);
     expect(mockRegister).not.toHaveBeenCalled();
+  });
+
+  it("looks the token up by its hash, never by the plain value", async () => {
+    await POST(request(VALID_BODY));
+
+    expect(mockFindActiveByHash).toHaveBeenCalledWith(hashWebhookToken("ana-token"));
   });
 
   it("rejects a body that is not JSON", async () => {
@@ -97,7 +92,13 @@ describe("POST /api/webhooks/shortcuts/transaction", () => {
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
-  it("registers the purchase for the configured person and answers 201", async () => {
+  it("registers the purchase for the person who owns the token", async () => {
+    await POST(request(VALID_BODY, "Bearer bia-token"));
+
+    expect(mockRegister.mock.calls[0][0]).toMatchObject({ personId: "person-2" });
+  });
+
+  it("registers the purchase and answers 201", async () => {
     const res = await POST(request(VALID_BODY));
 
     expect(res.status).toBe(201);

@@ -82,6 +82,28 @@ a guide rather than a script.
 The trigger covers purchases made with Apple Pay in Wallet only; online purchases made without it
 are not reported.
 
+## Debugging
+
+The webhook logs every call with the `[webhook/shortcuts]` prefix. On the host:
+
+```bash
+journalctl -u homeledger -f | grep webhook/shortcuts
+```
+
+Trigger the automation and read what appears:
+
+| Log line                      | Meaning                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| nothing at all                | The request never reached the server: Tailscale off on the iPhone, or wrong URL. |
+| `received`                    | The request arrived. `userAgent` and `hasAuthorization` help spot a missing header. |
+| `not configured`              | `missing` lists the variable absent from `.env`; restart the service after fixing. |
+| `unauthorized`                | `reason` is `no authorization header`, `not a bearer header` or `token mismatch`. |
+| `invalid body`                | `issues` lists the fields that failed, without their values.                     |
+| `stored` / `duplicate`        | Done. `ms` is the time spent; a large value points at the database waking up.    |
+| `error`                       | `message` and `ms` of the failure.                                               |
+
+The log never contains the token, the amount, the merchant or the card.
+
 ## Reviewing
 
 Open **A revisar** (the nav link shows how many purchases are waiting). For each one:

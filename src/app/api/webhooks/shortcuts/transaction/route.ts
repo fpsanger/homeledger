@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
 
     const parsed = PayloadSchema.safeParse(await request.json());
     if (!parsed.success) {
+      logInvalidBody(parsed.error.issues);
       return Response.json(
         { error: "Invalid request body", details: parsed.error.issues },
         { status: 400 },
@@ -61,8 +62,16 @@ export async function POST(request: NextRequest) {
       },
       { pending: pendingTransaction, creditCards: creditCard, categoryMemory },
     );
+    console.info(`${LOG} ${created ? "stored" : "duplicate"}`, {
+      id: record.id,
+      ms: Date.now() - startedAt,
+    });
     return Response.json({ id: record.id, created }, { status: created ? 201 : 200 });
   } catch (error) {
+    console.error(`${LOG} error`, {
+      message: error instanceof Error ? error.message : String(error),
+      ms: Date.now() - startedAt,
+    });
     return errorResponse(error);
   }
 }

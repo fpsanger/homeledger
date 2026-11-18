@@ -140,3 +140,99 @@ describe("POST /api/webhooks/shortcuts/transaction", () => {
     await expect(res.json()).resolves.toEqual({ error: "Amount must be a positive number" });
   });
 });
+
+describe("POST /api/webhooks/shortcuts/transaction logging", () => {
+  let info: jest.SpyInstance;
+  let warn: jest.SpyInstance;
+  let error: jest.SpyInstance;
+
+  const logged = () =>
+    JSON.stringify([...info.mock.calls, ...warn.mock.calls, ...error.mock.calls]);
+
+  beforeEach(() => {
+    info = jest.spyOn(console, "info").mockImplementation(() => {});
+    warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    error = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  it("logs that a request arrived", async () => {
+    await POST(request(VALID_BODY));
+
+    expect(info).toHaveBeenCalledWith("[webhook/shortcuts] received", {
+      userAgent: null,
+      hasAuthorization: true,
+    });
+  });
+
+  it("names the missing variable when not configured", async () => {
+    delete process.env.WEBHOOK_PERSON_ID;
+
+    await POST(request(VALID_BODY));
+
+    expect(warn).toHaveBeenCalledWith("[webhook/shortcuts] not configured", {
+      missing: ["WEBHOOK_PERSON_ID"],
+    });
+  });
+
+  it.each([
+    ["no authorization header", null],
+    ["not a bearer header", "Basic abc"],
+    ["token mismatch", "Bearer nope-nope"],
+  ])("logs why a request is unauthorized: %s", async (reason, authorization) => {
+    await POST(request(VALID_BODY, authorization));
+
+    expect(warn).toHaveBeenCalledWith("[webhook/shortcuts] unauthorized", { reason });
+    expect(logged()).not.toContain("s3cret");
+    expect(logged()).not.toContain("nope-nope");
+  });
+
+  it("logs which fields of the body are invalid without echoing their values", async () => {
+    await POST(request({ ...VALID_BODY, merchant: undefined }));
+
+    const [message, details] = warn.mock.calls[0];
+    expect(message).toBe("[webhook/shortcuts] invalid body");
+    expect(details.issues).toEqual([{ path: "merchant", message: expect.any(String) }]);
+  });
+
+  it("logs the stored purchase id and how long it took", async () => {
+    await POST(request(VALID_BODY));
+
+    expect(info).toHaveBeenCalledWith("[webhook/shortcuts] stored", {
+      id: "pending-1",
+      ms: expect.any(Number),
+    });
+  });
+
+  it("logs a repeated purchase as a duplicate", async () => {
+    mockRegister.mockResolvedValue({ record: { id: "pending-0" }, created: false });
+
+    await POST(request(VALID_BODY));
+
+    expect(info).toHaveBeenCalledWith("[webhook/shortcuts] duplicate", {
+      id: "pending-0",
+      ms: expect.any(Number),
+    });
+  });
+
+  it("logs a failure with its duration", async () => {
+    mockRegister.mockRejectedValue(new Error("db down"));
+
+    await POST(request(VALID_BODY));
+
+    expect(error).toHaveBeenCalledWith("[webhook/shortcuts] error", {
+      message: "db down",
+      ms: expect.any(Number),
+    });
+  });
+
+  it("never writes the purchase details or the token to the log", async () => {
+    await POST(request(VALID_BODY));
+    await POST(request({ ...VALID_BODY, amount: "abc" }));
+
+    for (const secret of ["s3cret", "Padaria", "12,50", "Nubank"]) {
+      expect(logged()).not.toContain(secret);
+    }
+  });
+});

@@ -34,19 +34,54 @@ const PayloadSchema = z.object({
     ),
 });
 
-export async function POST(request: NextRequest) {
+const LOG = "[webhook/shortcuts]";
+
+// Why a request was refused, for the log only. Never includes any part of the token.
+function unauthorizedReason(authorization: string | null): string {
+  if (!authorization) return "no authorization header";
+  if (!/^bearer .+/i.test(authorization)) return "not a bearer header";
+  return "token mismatch";
+}
+
+// The person the purchases belong to, or the response that refuses the request.
+function authorize(authorization: string | null): { personId: string } | Response {
   const token = process.env.WEBHOOK_TOKEN;
   const personId = process.env.WEBHOOK_PERSON_ID;
   if (!token || !personId) {
+    const missing = [!token && "WEBHOOK_TOKEN", !personId && "WEBHOOK_PERSON_ID"].filter(Boolean);
+    console.warn(`${LOG} not configured`, { missing });
     return Response.json({ error: "Webhook is not configured" }, { status: 503 });
   }
-  if (!isAuthorizedWebhook(request.headers.get("authorization"), token)) {
+  if (!isAuthorizedWebhook(authorization, token)) {
+    console.warn(`${LOG} unauthorized`, { reason: unauthorizedReason(authorization) });
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  return { personId };
+}
+
+// Field names and messages only: the values are purchase details and stay out of the log.
+function logInvalidBody(issues: z.ZodIssue[]): void {
+  console.warn(`${LOG} invalid body`, {
+    issues: issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })),
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const startedAt = Date.now();
+  const authorization = request.headers.get("authorization");
+  console.info(`${LOG} received`, {
+    userAgent: request.headers.get("user-agent"),
+    hasAuthorization: authorization !== null,
+  });
+
+  const access = authorize(authorization);
+  if (access instanceof Response) return access;
+  const { personId } = access;
 
   try {
     const parsed = PayloadSchema.safeParse(await request.json());
     if (!parsed.success) {
+      logInvalidBody(parsed.error.issues);
       return Response.json(
         { error: "Invalid request body", details: parsed.error.issues },
         { status: 400 },
@@ -67,8 +102,16 @@ export async function POST(request: NextRequest) {
       },
       { pending: pendingTransaction, creditCards: creditCard, categoryMemory },
     );
+    console.info(`${LOG} ${created ? "stored" : "duplicate"}`, {
+      id: record.id,
+      ms: Date.now() - startedAt,
+    });
     return Response.json({ id: record.id, created }, { status: created ? 201 : 200 });
   } catch (error) {
+    console.error(`${LOG} error`, {
+      message: error instanceof Error ? error.message : String(error),
+      ms: Date.now() - startedAt,
+    });
     return errorResponse(error);
   }
 }

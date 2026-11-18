@@ -19,6 +19,7 @@ model Person {
   loyaltyTransfers      LoyaltyTransfer[]
   installments          Installment[]
   pendingTransactions   PendingTransaction[]
+  webhookTokens         WebhookToken[]
 }
 
 model Category {
@@ -217,6 +218,17 @@ model PendingTransaction {
 
   @@unique([personId, amount, occurredAt, merchant, cardName])
   @@index([status, occurredOn])
+}
+
+model WebhookToken {
+  id        String    @id @default(uuid())
+  personId  String
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+  person    Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([personId])
 }
 
 model MerchantCategoryHistory {

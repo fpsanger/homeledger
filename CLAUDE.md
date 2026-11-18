@@ -10,7 +10,8 @@ contract, and PR/git conventions — this file only adds Claude-Code-specific wo
    refactor while green.
 3. Obtain human approval before material financial-rule, architecture, or schema decisions that
    are not already explicit in the request.
-4. Avoid unrelated refactors and scope expansion.
+4. Avoid unrelated refactors and scope expansion. Never commit on `develop`, `master` or `main`:
+   check `git branch --show-current` and branch off first (see `AGENTS.md`).
 5. Run `npm run agent:check` before declaring the task complete (see `AGENTS.md`'s completion
    contract).
 6. Update `CHANGELOG.md` for user-visible, domain, schema, or operational changes.

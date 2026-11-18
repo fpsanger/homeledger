@@ -6,6 +6,9 @@ export class PrismaWebhookTokenRepository implements IWebhookTokenRepository {
 
   async issue(token: { id: string; personId: string; tokenHash: string }): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
+      // Two overlapping issues for one person would both revoke before either creates, leaving two
+      // active tokens. The lock makes the second wait for the first to commit, then revoke it.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${token.personId}))`;
       await tx.webhookToken.updateMany({
         where: { personId: token.personId, revokedAt: null },
         data: { revokedAt: new Date() },

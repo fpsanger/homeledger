@@ -1,8 +1,17 @@
 import {
+  buildBonusBreakdown,
   describeTransferInCost,
   type Transaction,
   transferBonusPercent,
+  transferPointsLabel,
 } from "@/components/loyalty/loyaltyFormat";
+
+const TRANSFER = {
+  pointsSent: 0,
+  pointsReceived: 0,
+  fromProgramName: "Livelo",
+  toProgramName: "LATAM Pass",
+};
 
 function tx(overrides: Partial<Transaction>): Transaction {
   return {
@@ -16,7 +25,7 @@ function tx(overrides: Partial<Transaction>): Transaction {
     valueBrl: null,
     transferId: "tr1",
     personId: null,
-    transfer: { pointsSent: 30000, pointsReceived: 38100 },
+    transfer: { ...TRANSFER, pointsSent: 30000, pointsReceived: 38100 },
     ...overrides,
   };
 }
@@ -28,7 +37,9 @@ describe("transferBonusPercent", () => {
 
   it("returns null when there is no bonus", () => {
     expect(
-      transferBonusPercent(tx({ transfer: { pointsSent: 1000, pointsReceived: 1000 } })),
+      transferBonusPercent(
+        tx({ transfer: { ...TRANSFER, pointsSent: 1000, pointsReceived: 1000 } }),
+      ),
     ).toBeNull();
   });
 
@@ -59,7 +70,11 @@ describe("describeTransferInCost", () => {
 
   it("omits originText when there is no bonus", () => {
     const result = describeTransferInCost(
-      tx({ costBrl: 100, points: 1000, transfer: { pointsSent: 1000, pointsReceived: 1000 } }),
+      tx({
+        costBrl: 100,
+        points: 1000,
+        transfer: { ...TRANSFER, pointsSent: 1000, pointsReceived: 1000 },
+      }),
       false,
     );
 
@@ -69,5 +84,51 @@ describe("describeTransferInCost", () => {
 
   it("returns 'unknown' when the inherited cost is null", () => {
     expect(describeTransferInCost(tx({ costBrl: null }), false)).toEqual({ kind: "unknown" });
+  });
+});
+
+describe("buildBonusBreakdown", () => {
+  it("splits a 10k transfer with 20% bonus into transferred points and bonus points", () => {
+    const result = buildBonusBreakdown(
+      tx({ points: 12000, transfer: { ...TRANSFER, pointsSent: 10000, pointsReceived: 12000 } }),
+    );
+
+    expect(result).toEqual({
+      transferredPoints: 10000,
+      bonusPoints: 2000,
+      bonusPercent: 20,
+      fromProgramName: "Livelo",
+    });
+  });
+
+  it("returns null when there is no bonus, no transfer data or the type is not transfer-in", () => {
+    expect(
+      buildBonusBreakdown(
+        tx({ transfer: { ...TRANSFER, pointsSent: 1000, pointsReceived: 1000 } }),
+      ),
+    ).toBeNull();
+    expect(buildBonusBreakdown(tx({ transfer: undefined }))).toBeNull();
+    expect(buildBonusBreakdown(tx({ type: "TRANSFER_OUT" }))).toBeNull();
+  });
+});
+
+describe("transferPointsLabel", () => {
+  it("shows only the transferred points when the transfer carries a bonus", () => {
+    expect(
+      transferPointsLabel(
+        tx({ points: 12000, transfer: { ...TRANSFER, pointsSent: 10000, pointsReceived: 12000 } }),
+      ),
+    ).toBe("+10.000");
+  });
+
+  it("falls back to the regular signed points otherwise", () => {
+    expect(
+      transferPointsLabel(
+        tx({ points: 1000, transfer: { ...TRANSFER, pointsSent: 1000, pointsReceived: 1000 } }),
+      ),
+    ).toBe("+1.000");
+    expect(transferPointsLabel(tx({ type: "REDEEM", points: 500, transfer: undefined }))).toBe(
+      "-500",
+    );
   });
 });

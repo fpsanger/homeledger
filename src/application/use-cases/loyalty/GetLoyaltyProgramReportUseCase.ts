@@ -20,23 +20,38 @@ export async function getLoyaltyProgramReportUseCase(
     : await transactionRepo.findByProgramId(programId);
 
   const result = computeLoyaltyFifo(transactions);
-  return { ...result, transactions: await attachTransfers(result.transactions, transferRepo) };
+  return {
+    ...result,
+    transactions: await attachTransfers(result.transactions, transferRepo, programRepo),
+  };
 }
 
 async function attachTransfers(
   transactions: EnrichedTransaction[],
   transferRepo: ILoyaltyTransferRepository,
+  programRepo: ILoyaltyProgramRepository,
 ): Promise<EnrichedTransaction[]> {
   if (!transactions.some((tx) => tx.transferId)) return transactions;
 
-  const transfers = new Map((await transferRepo.findAll()).map((t) => [t.id, t]));
+  const [allTransfers, allPrograms] = await Promise.all([
+    transferRepo.findAll(),
+    programRepo.findAll(),
+  ]);
+  const transfers = new Map(allTransfers.map((t) => [t.id, t]));
+  const names = new Map(allPrograms.map((p) => [p.id, p.name]));
+  const nameOf = (id: string) => names.get(id) ?? id;
+
   return transactions.map((tx) => {
     const transfer = tx.transferId ? transfers.get(tx.transferId) : undefined;
-    return transfer
-      ? {
-          ...tx,
-          transfer: { pointsSent: transfer.pointsSent, pointsReceived: transfer.pointsReceived },
-        }
-      : tx;
+    if (!transfer) return tx;
+    return {
+      ...tx,
+      transfer: {
+        pointsSent: transfer.pointsSent,
+        pointsReceived: transfer.pointsReceived,
+        fromProgramName: nameOf(transfer.fromProgramId),
+        toProgramName: nameOf(transfer.toProgramId),
+      },
+    };
   });
 }

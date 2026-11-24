@@ -15,6 +15,8 @@ export type FifoData = {
 export type TransferInfo = {
   pointsSent: number;
   pointsReceived: number;
+  fromProgramName: string;
+  toProgramName: string;
 };
 
 export type EnrichedTransaction = LoyaltyTransactionRecord & {

@@ -8,17 +8,18 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { maskCurrency } from "@/lib/maskCurrency";
 import {
+  type BonusBreakdown,
+  buildBonusBreakdown,
   describeTransferInCost,
   EDITABLE_TYPES,
   formatBrl,
   formatCostPer1k,
   formatDate,
   formatRoi,
-  pointsSign,
   type Transaction,
   TYPE_COLORS,
   TYPE_LABELS,
-  transferBonusPercent,
+  transferPointsLabel,
 } from "./loyaltyFormat";
 
 type SortDir = "asc" | "desc";
@@ -44,16 +45,6 @@ export function buildTransactionRowActions(
   ];
 }
 
-function BonusBadge({ tx }: { tx: Transaction }) {
-  const bonus = transferBonusPercent(tx);
-  if (bonus == null) return null;
-  return (
-    <span className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
-      +{bonus}% bônus
-    </span>
-  );
-}
-
 function NoCostLabel() {
   return (
     <span className="text-muted-foreground/70" title="Origem sem custo registrado">
@@ -76,6 +67,54 @@ function CostPer1kCell({ tx, hidden }: { tx: Transaction; hidden: boolean }) {
     );
   }
   return <>{formatCostPer1k(tx, hidden)}</>;
+}
+
+function bonusReference(breakdown: BonusBreakdown): string {
+  return `Bônus da transferência de ${breakdown.transferredPoints.toLocaleString("pt-BR")} pts de ${breakdown.fromProgramName}`;
+}
+
+function BonusSubRow({ tx }: { tx: Transaction }) {
+  const breakdown = buildBonusBreakdown(tx);
+  if (!breakdown) return null;
+  return (
+    <tr data-testid="loyalty-bonus-row" className="border-t border-dashed bg-muted/20">
+      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <span className="font-medium text-indigo-500 dark:text-indigo-300">
+          ↳ Bônus ({breakdown.bonusPercent}%)
+        </span>
+      </td>
+      <td className="px-4 py-3 text-right font-mono">
+        +{breakdown.bonusPoints.toLocaleString("pt-BR")}
+      </td>
+      <td className="px-4 py-3 text-right text-muted-foreground">—</td>
+      <td className="px-4 py-3 text-right">—</td>
+      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">—</td>
+      <td className="px-4 py-3 text-muted-foreground text-xs">{bonusReference(breakdown)}</td>
+      <td className="px-4 py-3" />
+    </tr>
+  );
+}
+
+function BonusNote({ tx }: { tx: Transaction }) {
+  const breakdown = buildBonusBreakdown(tx);
+  if (!breakdown) return null;
+  return (
+    <div
+      data-testid="loyalty-bonus-breakdown"
+      className="ml-3 rounded-lg border-l-2 border-indigo-500/40 bg-muted/20 px-3 py-2 text-xs flex flex-col gap-0.5"
+    >
+      <span className="flex items-center justify-between gap-2">
+        <span className="font-medium text-indigo-500 dark:text-indigo-300">
+          ↳ Bônus ({breakdown.bonusPercent}%)
+        </span>
+        <span className="font-mono font-semibold">
+          +{breakdown.bonusPoints.toLocaleString("pt-BR")} pts
+        </span>
+      </span>
+      <span className="text-muted-foreground">{bonusReference(breakdown)}</span>
+    </div>
+  );
 }
 
 function buildCardDescription(tx: Transaction, hidden: boolean): string {
@@ -117,53 +156,55 @@ export function TransactionCard({
   const stats = buildCardStats(tx, hidden);
 
   return (
-    <div
-      data-testid="loyalty-transaction-card"
-      data-tx-id={tx.id}
-      className="rounded-xl border bg-card p-4 flex flex-col gap-2"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col min-w-0">
-          <span className="flex flex-wrap items-center gap-1.5">
-            <span className={`font-semibold text-sm ${TYPE_COLORS[tx.type] ?? ""}`}>
-              {TYPE_LABELS[tx.type] ?? tx.type}
+    <>
+      <div
+        data-testid="loyalty-transaction-card"
+        data-tx-id={tx.id}
+        className="rounded-xl border bg-card p-4 flex flex-col gap-2"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col min-w-0">
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span className={`font-semibold text-sm ${TYPE_COLORS[tx.type] ?? ""}`}>
+                {TYPE_LABELS[tx.type] ?? tx.type}
+              </span>
             </span>
-            <BonusBadge tx={tx} />
-          </span>
-          <span className="text-xs text-muted-foreground">{formatDate(tx.date)}</span>
+            <span className="text-xs text-muted-foreground">{formatDate(tx.date)}</span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <span className="font-mono text-sm font-semibold">{transferPointsLabel(tx)}</span>
+            <DropdownMenu
+              align="right"
+              trigger={
+                <button
+                  type="button"
+                  disabled={deletingId === tx.id}
+                  className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                  aria-label="Ações"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+              }
+              items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="font-mono text-sm font-semibold">{pointsSign(tx.type, tx.points)}</span>
-          <DropdownMenu
-            align="right"
-            trigger={
-              <button
-                type="button"
-                disabled={deletingId === tx.id}
-                className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                aria-label="Ações"
+        {description && <p className="text-xs text-muted-foreground break-words">{description}</p>}
+        {stats.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 border-t pt-2">
+            {stats.map((s) => (
+              <span
+                key={s.label}
+                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground"
               >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            }
-            items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
-          />
-        </div>
+                {s.label}: {s.value}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-      {description && <p className="text-xs text-muted-foreground break-words">{description}</p>}
-      {stats.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 border-t pt-2">
-          {stats.map((s) => (
-            <span
-              key={s.label}
-              className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border bg-muted/50 text-muted-foreground"
-            >
-              {s.label}: {s.value}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+      <BonusNote tx={tx} />
+    </>
   );
 }
 
@@ -241,54 +282,56 @@ export function TransactionRow({
   const { hidden } = usePrivacy();
   const roi = formatRoi(tx);
   return (
-    <tr className="border-t hover:bg-muted/30 transition-colors">
-      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
-      <td className="px-4 py-3">
-        <span className="flex flex-wrap items-center gap-1.5">
-          <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
-            {TYPE_LABELS[tx.type] ?? tx.type}
+    <>
+      <tr className="border-t hover:bg-muted/30 transition-colors">
+        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
+        <td className="px-4 py-3">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
+              {TYPE_LABELS[tx.type] ?? tx.type}
+            </span>
           </span>
-          <BonusBadge tx={tx} />
-        </span>
-      </td>
-      <td className="px-4 py-3 text-right font-mono">{pointsSign(tx.type, tx.points)}</td>
-      <td className="px-4 py-3 text-right text-muted-foreground">
-        <CostPer1kCell tx={tx} hidden={hidden} />
-      </td>
-      <td className="px-4 py-3 text-right">
-        {roi ? (
-          <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>
-            {roi.text}
-          </span>
-        ) : (
-          "—"
-        )}
-      </td>
-      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-        {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
-      </td>
-      <td className="px-4 py-3 text-muted-foreground text-xs">
-        {tx.description ?? ""}
-        {tx.costBrl && tx.type === "PURCHASE"
-          ? ` · ${maskCurrency(formatBrl(tx.costBrl), hidden)}`
-          : ""}
-      </td>
-      <td className="px-4 py-3 text-right">
-        <DropdownMenu
-          align="right"
-          trigger={
-            <button
-              type="button"
-              disabled={deletingId === tx.id}
-              className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-              aria-label="Ações"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          }
-          items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
-        />
-      </td>
-    </tr>
+        </td>
+        <td className="px-4 py-3 text-right font-mono">{transferPointsLabel(tx)}</td>
+        <td className="px-4 py-3 text-right text-muted-foreground">
+          <CostPer1kCell tx={tx} hidden={hidden} />
+        </td>
+        <td className="px-4 py-3 text-right">
+          {roi ? (
+            <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>
+              {roi.text}
+            </span>
+          ) : (
+            "—"
+          )}
+        </td>
+        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+          {tx.expiresAt ? formatDate(tx.expiresAt) : "—"}
+        </td>
+        <td className="px-4 py-3 text-muted-foreground text-xs">
+          {tx.description ?? ""}
+          {tx.costBrl && tx.type === "PURCHASE"
+            ? ` · ${maskCurrency(formatBrl(tx.costBrl), hidden)}`
+            : ""}
+        </td>
+        <td className="px-4 py-3 text-right">
+          <DropdownMenu
+            align="right"
+            trigger={
+              <button
+                type="button"
+                disabled={deletingId === tx.id}
+                className="h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+                aria-label="Ações"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            }
+            items={buildTransactionRowActions(tx, deletingId, onEdit, onDelete)}
+          />
+        </td>
+      </tr>
+      <BonusSubRow tx={tx} />
+    </>
   );
 }

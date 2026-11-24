@@ -48,6 +48,10 @@ function makeTransfer(overrides: Partial<LoyaltyTransferRecord> = {}): LoyaltyTr
 function setup(transactions: LoyaltyTransactionRecord[], transfers: LoyaltyTransferRecord[]) {
   const programRepo = {
     findById: jest.fn().mockResolvedValue({ id: "latam" }),
+    findAll: jest.fn().mockResolvedValue([
+      { id: "livelo", name: "Livelo" },
+      { id: "latam", name: "LATAM Pass" },
+    ]),
   } as unknown as ILoyaltyProgramRepository;
   const transactionRepo = {
     findByProgramId: jest.fn().mockResolvedValue(transactions),
@@ -77,9 +81,30 @@ describe("getLoyaltyProgramReportUseCase", () => {
     );
 
     const transferIn = report.transactions.find((t) => t.type === "TRANSFER_IN");
-    expect(transferIn?.transfer).toEqual({ pointsSent: 30000, pointsReceived: 38100 });
+    expect(transferIn?.transfer).toEqual({
+      pointsSent: 30000,
+      pointsReceived: 38100,
+      fromProgramName: "Livelo",
+      toProgramName: "LATAM Pass",
+    });
     const purchase = report.transactions.find((t) => t.type === "PURCHASE");
     expect(purchase?.transfer).toBeUndefined();
+  });
+
+  it("falls back to the program id when the program no longer exists", async () => {
+    const { programRepo, transactionRepo, transferRepo } = setup(
+      [makeTx({ type: "TRANSFER_IN", points: 100, transferId: "transfer-1", costBrl: 1 })],
+      [makeTransfer({ fromProgramId: "deleted-program" })],
+    );
+
+    const report = await getLoyaltyProgramReportUseCase(
+      "latam",
+      programRepo,
+      transactionRepo,
+      transferRepo,
+    );
+
+    expect(report.transactions[0].transfer?.fromProgramName).toBe("deleted-program");
   });
 
   it("leaves transfer undefined when the transfer record is missing", async () => {

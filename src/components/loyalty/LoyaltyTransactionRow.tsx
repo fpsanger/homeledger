@@ -8,6 +8,7 @@ import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { Select } from "@/components/ui/select";
 import { maskCurrency } from "@/lib/maskCurrency";
 import {
+  describeTransferInCost,
   EDITABLE_TYPES,
   formatBrl,
   formatCostPer1k,
@@ -17,6 +18,7 @@ import {
   type Transaction,
   TYPE_COLORS,
   TYPE_LABELS,
+  transferBonusPercent,
 } from "./loyaltyFormat";
 
 type SortDir = "asc" | "desc";
@@ -42,6 +44,40 @@ export function buildTransactionRowActions(
   ];
 }
 
+function BonusBadge({ tx }: { tx: Transaction }) {
+  const bonus = transferBonusPercent(tx);
+  if (bonus == null) return null;
+  return (
+    <span className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+      +{bonus}% bônus
+    </span>
+  );
+}
+
+function NoCostLabel() {
+  return (
+    <span className="text-muted-foreground/70" title="Origem sem custo registrado">
+      Sem custo
+    </span>
+  );
+}
+
+function CostPer1kCell({ tx, hidden }: { tx: Transaction; hidden: boolean }) {
+  const cost = describeTransferInCost(tx, hidden);
+  if (cost?.kind === "none") return <NoCostLabel />;
+  if (cost?.kind === "value" && cost.originText) {
+    return (
+      <span className="flex flex-col items-end leading-tight">
+        <span>{cost.text}</span>
+        <span className="text-[10px] text-muted-foreground/70">
+          origem {cost.originText} → {cost.text}
+        </span>
+      </span>
+    );
+  }
+  return <>{formatCostPer1k(tx, hidden)}</>;
+}
+
 function buildCardDescription(tx: Transaction, hidden: boolean): string {
   const cost =
     tx.costBrl && tx.type === "PURCHASE" ? maskCurrency(formatBrl(tx.costBrl), hidden) : "";
@@ -50,9 +86,13 @@ function buildCardDescription(tx: Transaction, hidden: boolean): string {
 
 function buildCardStats(tx: Transaction, hidden: boolean): { label: string; value: ReactNode }[] {
   const costPer1k = formatCostPer1k(tx, hidden);
+  const transferCost = describeTransferInCost(tx, hidden);
   const roi = formatRoi(tx);
   const stats: { label: string; value: ReactNode }[] = [];
-  if (costPer1k !== "—") stats.push({ label: "Custo/1k", value: costPer1k });
+  if (transferCost?.kind === "none") stats.push({ label: "Custo/1k", value: <NoCostLabel /> });
+  else if (costPer1k !== "—") stats.push({ label: "Custo/1k", value: costPer1k });
+  if (transferCost?.kind === "value" && transferCost.originText)
+    stats.push({ label: "Origem/1k", value: transferCost.originText });
   if (roi) {
     const color = roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500";
     stats.push({ label: "ROI", value: <span className={color}>{roi.text}</span> });
@@ -84,8 +124,11 @@ export function TransactionCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col min-w-0">
-          <span className={`font-semibold text-sm ${TYPE_COLORS[tx.type] ?? ""}`}>
-            {TYPE_LABELS[tx.type] ?? tx.type}
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className={`font-semibold text-sm ${TYPE_COLORS[tx.type] ?? ""}`}>
+              {TYPE_LABELS[tx.type] ?? tx.type}
+            </span>
+            <BonusBadge tx={tx} />
           </span>
           <span className="text-xs text-muted-foreground">{formatDate(tx.date)}</span>
         </div>
@@ -201,12 +244,17 @@ export function TransactionRow({
     <tr className="border-t hover:bg-muted/30 transition-colors">
       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
       <td className="px-4 py-3">
-        <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
-          {TYPE_LABELS[tx.type] ?? tx.type}
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className={`font-medium ${TYPE_COLORS[tx.type] ?? ""}`}>
+            {TYPE_LABELS[tx.type] ?? tx.type}
+          </span>
+          <BonusBadge tx={tx} />
         </span>
       </td>
       <td className="px-4 py-3 text-right font-mono">{pointsSign(tx.type, tx.points)}</td>
-      <td className="px-4 py-3 text-right text-muted-foreground">{formatCostPer1k(tx, hidden)}</td>
+      <td className="px-4 py-3 text-right text-muted-foreground">
+        <CostPer1kCell tx={tx} hidden={hidden} />
+      </td>
       <td className="px-4 py-3 text-right">
         {roi ? (
           <span className={roi.positive ? "text-green-600 dark:text-green-400" : "text-red-500"}>

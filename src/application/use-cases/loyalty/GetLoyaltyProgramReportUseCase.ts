@@ -1,13 +1,15 @@
 import { NotFoundError } from "../../../domain/errors";
 import type { ILoyaltyProgramRepository } from "../../../domain/repositories/ILoyaltyProgramRepository";
 import type { ILoyaltyTransactionRepository } from "../../../domain/repositories/ILoyaltyTransactionRepository";
-import type { LoyaltyFifoResult } from "../../../domain/services/LoyaltyFifo";
+import type { ILoyaltyTransferRepository } from "../../../domain/repositories/ILoyaltyTransferRepository";
+import type { EnrichedTransaction, LoyaltyFifoResult } from "../../../domain/services/LoyaltyFifo";
 import { computeLoyaltyFifo } from "../../../domain/services/LoyaltyFifo";
 
 export async function getLoyaltyProgramReportUseCase(
   programId: string,
   programRepo: ILoyaltyProgramRepository,
   transactionRepo: ILoyaltyTransactionRepository,
+  transferRepo: ILoyaltyTransferRepository,
   personId?: string,
 ): Promise<LoyaltyFifoResult> {
   const program = await programRepo.findById(programId);
@@ -17,5 +19,24 @@ export async function getLoyaltyProgramReportUseCase(
     ? await transactionRepo.findByProgramIdAndPersonId(programId, personId)
     : await transactionRepo.findByProgramId(programId);
 
-  return computeLoyaltyFifo(transactions);
+  const result = computeLoyaltyFifo(transactions);
+  return { ...result, transactions: await attachTransfers(result.transactions, transferRepo) };
+}
+
+async function attachTransfers(
+  transactions: EnrichedTransaction[],
+  transferRepo: ILoyaltyTransferRepository,
+): Promise<EnrichedTransaction[]> {
+  if (!transactions.some((tx) => tx.transferId)) return transactions;
+
+  const transfers = new Map((await transferRepo.findAll()).map((t) => [t.id, t]));
+  return transactions.map((tx) => {
+    const transfer = tx.transferId ? transfers.get(tx.transferId) : undefined;
+    return transfer
+      ? {
+          ...tx,
+          transfer: { pointsSent: transfer.pointsSent, pointsReceived: transfer.pointsReceived },
+        }
+      : tx;
+  });
 }

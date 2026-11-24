@@ -7,11 +7,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const personId = request.nextUrl.searchParams.get("personId") ?? undefined;
-    const { loyaltyProgram, loyaltyTransaction } = createRepositories();
+    const { loyaltyProgram, loyaltyTransaction, loyaltyTransfer } = createRepositories();
     const report = await getLoyaltyProgramReportUseCase(
       id,
       loyaltyProgram,
       loyaltyTransaction,
+      loyaltyTransfer,
       personId,
     );
     return Response.json(report);

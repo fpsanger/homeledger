@@ -125,4 +125,38 @@ describe("LoyaltyProgramDetail mobile transaction list", () => {
     expect(screen.getByText("Nenhuma transação registrada.")).toBeInTheDocument();
     expect(screen.queryByTestId("loyalty-transaction-cards")).not.toBeInTheDocument();
   });
+
+  it("shows the bonus badge and the origin cost for a bonus transfer-in", () => {
+    const cards = renderDetail([
+      tx({
+        id: "t-bonus",
+        type: "TRANSFER_IN",
+        points: 38100,
+        costBrl: 857.6,
+        transferId: "tr1",
+        transfer: { pointsSent: 30000, pointsReceived: 38100 },
+      }),
+    ]);
+
+    expect(within(cards).getByText("+27% bônus")).toBeInTheDocument();
+    expect(within(cards).getByText(/origem/i)).toHaveTextContent("28,59");
+    expect(within(cards).queryByText("Sem custo")).not.toBeInTheDocument();
+  });
+
+  it("shows 'Sem custo' instead of R$ 0,00 when the inherited cost is zero", () => {
+    const cards = renderDetail([
+      tx({
+        id: "t-zero",
+        type: "TRANSFER_IN",
+        points: 13125,
+        costBrl: 0,
+        transferId: "tr2",
+        transfer: { pointsSent: 10500, pointsReceived: 13125 },
+      }),
+    ]);
+
+    expect(within(cards).getByText("+25% bônus")).toBeInTheDocument();
+    expect(within(cards).getByText(/Sem custo/)).toBeInTheDocument();
+    expect(within(cards).queryByText(/0,00/)).not.toBeInTheDocument();
+  });
 });

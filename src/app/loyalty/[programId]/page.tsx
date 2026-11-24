@@ -32,6 +32,9 @@ type Summary = {
   totalValueRedeemed: number;
   totalExpired: number;
   overallRoi: number | null;
+  currentLotsPoints: number;
+  currentLotsCostBrl: number;
+  avgRedeemValuePer1k: number | null;
 };
 
 type Report = {
@@ -44,6 +47,8 @@ type Program = {
   name: string;
   type: string;
   color: string;
+  referenceMinPer1kBrl: number | null;
+  referenceMaxPer1kBrl: number | null;
 };
 
 async function getProgram(id: string): Promise<Program | null> {

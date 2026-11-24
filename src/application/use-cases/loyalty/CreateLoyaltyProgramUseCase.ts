@@ -10,6 +10,8 @@ type Input = {
   name: string;
   type: LoyaltyProgramType;
   color: string;
+  referenceMinPer1kBrl?: number | null;
+  referenceMaxPer1kBrl?: number | null;
 };
 
 export async function createLoyaltyProgramUseCase(

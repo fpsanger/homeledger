@@ -6,6 +6,8 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { LoyaltyProgramDetail } from "@/components/loyalty/LoyaltyProgramDetail";
 import type { Transaction } from "@/components/loyalty/loyaltyFormat";
 
+// jsdom has no window.scrollTo, which the dialog scroll lock calls on cleanup.
+jest.mock("@/lib/scroll-lock", () => ({ lockBodyScroll: () => () => {} }));
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn() }) }));
 jest.mock("@/components/loyalty/AddTransactionModal", () => ({ AddTransactionModal: () => null }));
@@ -15,7 +17,14 @@ jest.mock("@/components/loyalty/EditTransactionModal", () => ({
   ),
 }));
 
-const program = { id: "p1", name: "Smiles", type: "AIRLINE", color: "#f60" };
+const program = {
+  id: "p1",
+  name: "Smiles",
+  type: "AIRLINE",
+  color: "#f60",
+  referenceMinPer1kBrl: null,
+  referenceMaxPer1kBrl: null,
+};
 
 const summary = {
   currentBalance: 1000,
@@ -24,6 +33,9 @@ const summary = {
   totalValueRedeemed: 0,
   totalExpired: 0,
   overallRoi: null,
+  currentLotsPoints: 1000,
+  currentLotsCostBrl: 25,
+  avgRedeemValuePer1k: null,
 };
 
 function tx(overrides: Partial<Transaction>): Transaction {
@@ -65,6 +77,10 @@ const transactions: Transaction[] = [
 function renderDetail(list: Transaction[] = transactions) {
   render(<LoyaltyProgramDetail program={program} report={{ summary, transactions: list }} />);
   return screen.getByTestId("loyalty-transaction-cards");
+}
+
+function renderEmptyDetail() {
+  render(<LoyaltyProgramDetail program={program} report={{ summary, transactions: [] }} />);
 }
 
 describe("LoyaltyProgramDetail mobile transaction list", () => {
@@ -246,5 +262,36 @@ describe("LoyaltyProgramDetail mobile transaction list", () => {
     ]);
 
     expect(within(cards).queryByTestId("loyalty-bonus-breakdown")).not.toBeInTheDocument();
+  });
+
+  describe("program toolbar", () => {
+    it("shows the reference range for the program", () => {
+      render(
+        <LoyaltyProgramDetail
+          program={{ ...program, referenceMinPer1kBrl: 24, referenceMaxPer1kBrl: 26 }}
+          report={{ summary, transactions: [] }}
+        />,
+      );
+      expect(
+        screen.getByText(/Referência do milheiro: R\$\s24,00 – R\$\s26,00/),
+      ).toBeInTheDocument();
+    });
+
+    it("says when the reference is not set", () => {
+      renderEmptyDetail();
+      expect(screen.getByText("Referência do milheiro não definida")).toBeInTheDocument();
+    });
+
+    it("opens the purchase simulator and the program editor", () => {
+      renderEmptyDetail();
+      expect(screen.queryByLabelText(/Valor pago/)).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Simular compra" }));
+      expect(screen.getByLabelText(/Valor pago/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+      fireEvent.click(screen.getByRole("button", { name: "Editar programa" }));
+      expect(screen.getByLabelText("Referência mínima por milheiro")).toBeInTheDocument();
+    });
   });
 });

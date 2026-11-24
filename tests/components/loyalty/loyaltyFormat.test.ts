@@ -1,6 +1,7 @@
 import {
   buildBonusBreakdown,
   describeTransferInCost,
+  formatReferenceRange,
   type Transaction,
   transferBonusPercent,
   transferPointsLabel,
@@ -130,5 +131,24 @@ describe("transferPointsLabel", () => {
     expect(transferPointsLabel(tx({ type: "REDEEM", points: 500, transfer: undefined }))).toBe(
       "-500",
     );
+  });
+});
+
+describe("formatReferenceRange", () => {
+  // toLocaleString uses a non-breaking space after "R$".
+  const plain = (value: string | null) => value?.replace(/\u00a0/g, " ") ?? null;
+
+  it("formats a range", () => {
+    expect(plain(formatReferenceRange(24, 26))).toBe("R$ 24,00 – R$ 26,00");
+  });
+
+  it("formats a single bound as a fixed value", () => {
+    expect(plain(formatReferenceRange(16, null))).toBe("R$ 16,00");
+    expect(plain(formatReferenceRange(null, 16))).toBe("R$ 16,00");
+    expect(plain(formatReferenceRange(16, 16))).toBe("R$ 16,00");
+  });
+
+  it("returns null when nothing is set", () => {
+    expect(formatReferenceRange(null, null)).toBeNull();
   });
 });

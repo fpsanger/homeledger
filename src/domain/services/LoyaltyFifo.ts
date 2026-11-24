@@ -32,6 +32,13 @@ export type LoyaltyFifoSummary = {
   totalValueRedeemed: number;
   totalExpired: number;
   overallRoi: number | null;
+  /** Points still sitting in cost lots (free points without a lot are not counted). */
+  currentLotsPoints: number;
+  currentLotsCostBrl: number;
+  /** Average cost per 1k of the lots left after FIFO consumption; null when no lots remain. */
+  currentCostPer1kPoints: number | null;
+  /** Weighted average BRL value obtained per 1k redeemed points; null when nothing was redeemed. */
+  avgRedeemValuePer1k: number | null;
 };
 
 export type LoyaltyFifoResult = {
@@ -47,7 +54,9 @@ function consumeLots(lots: CostLot[], points: number): number {
     const lot = lots[0];
     const consumed = Math.min(lot.remainingPoints, remaining);
     const costPerPoint = lot.remainingPoints > 0 ? lot.costBrl / lot.remainingPoints : 0;
-    totalCost += consumed * costPerPoint;
+    const consumedCost = consumed * costPerPoint;
+    totalCost += consumedCost;
+    lot.costBrl -= consumedCost;
     lot.remainingPoints -= consumed;
     remaining -= consumed;
     if (lot.remainingPoints <= 0) lots.shift();
@@ -61,6 +70,7 @@ type FifoState = {
   totalInvested: number;
   totalPurchasedPoints: number;
   totalValueRedeemed: number;
+  totalRedeemedPoints: number;
   totalExpired: number;
 };
 
@@ -124,6 +134,7 @@ function applyRedeem(tx: LoyaltyTransactionRecord, lots: CostLot[], state: FifoS
   const costPer1kPoints = (costBrl / tx.points) * 1000;
   const roi = costBrl > 0 ? ((tx.valueBrl! - costBrl) / costBrl) * 100 : null;
   state.totalValueRedeemed += tx.valueBrl!;
+  state.totalRedeemedPoints += tx.points;
   return { costBrl, costPer1kPoints, roi };
 }
 
@@ -157,6 +168,35 @@ const TRANSACTION_HANDLERS: Record<LoyaltyTransactionType, TransactionHandler> =
   EXPIRE: applyExpire,
 };
 
+function buildSummary(state: FifoState, lots: CostLot[]): LoyaltyFifoSummary {
+  const currentLotsPoints = lots.reduce((sum, lot) => sum + lot.remainingPoints, 0);
+  const currentLotsCostBrl = lots.reduce((sum, lot) => sum + lot.costBrl, 0);
+
+  return {
+    currentBalance: state.balance,
+    totalInvested: state.totalInvested,
+    totalPurchasedPoints: state.totalPurchasedPoints,
+    avgCostPer1kPoints:
+      state.totalPurchasedPoints > 0
+        ? (state.totalInvested / state.totalPurchasedPoints) * 1000
+        : 0,
+    totalValueRedeemed: state.totalValueRedeemed,
+    totalExpired: state.totalExpired,
+    overallRoi:
+      state.totalInvested > 0
+        ? ((state.totalValueRedeemed - state.totalInvested) / state.totalInvested) * 100
+        : null,
+    currentLotsPoints,
+    currentLotsCostBrl,
+    currentCostPer1kPoints:
+      currentLotsPoints > 0 ? (currentLotsCostBrl / currentLotsPoints) * 1000 : null,
+    avgRedeemValuePer1k:
+      state.totalRedeemedPoints > 0
+        ? (state.totalValueRedeemed / state.totalRedeemedPoints) * 1000
+        : null,
+  };
+}
+
 export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): LoyaltyFifoResult {
   const sorted = [...transactions].sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -166,6 +206,7 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     totalInvested: 0,
     totalPurchasedPoints: 0,
     totalValueRedeemed: 0,
+    totalRedeemedPoints: 0,
     totalExpired: 0,
   };
 
@@ -176,23 +217,5 @@ export function computeLoyaltyFifo(transactions: LoyaltyTransactionRecord[]): Lo
     enriched.push(fifoData !== undefined ? { ...tx, fifoData } : tx);
   }
 
-  const avgCostPer1kPoints =
-    state.totalPurchasedPoints > 0 ? (state.totalInvested / state.totalPurchasedPoints) * 1000 : 0;
-  const overallRoi =
-    state.totalInvested > 0
-      ? ((state.totalValueRedeemed - state.totalInvested) / state.totalInvested) * 100
-      : null;
-
-  return {
-    summary: {
-      currentBalance: state.balance,
-      totalInvested: state.totalInvested,
-      totalPurchasedPoints: state.totalPurchasedPoints,
-      avgCostPer1kPoints,
-      totalValueRedeemed: state.totalValueRedeemed,
-      totalExpired: state.totalExpired,
-      overallRoi,
-    },
-    transactions: enriched,
-  };
+  return { summary: buildSummary(state, lots), transactions: enriched };
 }

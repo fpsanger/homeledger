@@ -4,6 +4,7 @@ import { listLoyaltyProgramsUseCase } from "../../../../application/use-cases/lo
 import type { LoyaltyProgramType } from "../../../../domain/entities/LoyaltyProgram";
 import { errorResponse } from "../../_lib/errorResponse";
 import { createRepositories } from "../../_lib/repositories";
+import { pickReferenceFields, validateReferenceBody } from "../_lib/referenceBody";
 
 const VALID_TYPES: LoyaltyProgramType[] = ["AIRLINE", "HOTEL", "BANK", "OTHER"];
 
@@ -32,9 +33,19 @@ export async function POST(request: NextRequest) {
     if (typeof body.color !== "string" || !body.color.trim()) {
       return Response.json({ error: "color is required" }, { status: 400 });
     }
+    const referenceError = validateReferenceBody(body);
+    if (referenceError) {
+      return Response.json({ error: referenceError }, { status: 400 });
+    }
     const { loyaltyProgram } = createRepositories();
     const result = await createLoyaltyProgramUseCase(
-      { id: crypto.randomUUID(), name: body.name, type: body.type, color: body.color },
+      {
+        id: crypto.randomUUID(),
+        name: body.name,
+        type: body.type,
+        color: body.color,
+        ...pickReferenceFields(body),
+      },
       loyaltyProgram,
     );
     return Response.json(result, { status: 201 });

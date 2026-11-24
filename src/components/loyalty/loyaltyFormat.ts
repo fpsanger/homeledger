@@ -143,3 +143,10 @@ export function transferPointsLabel(tx: Transaction): string {
     ? `+${breakdown.transferredPoints.toLocaleString("pt-BR")}`
     : pointsSign(tx.type, tx.points);
 }
+
+/** "R$ 24,00 – R$ 26,00", "R$ 16,00" for a single bound, or null when no reference is set. */
+export function formatReferenceRange(min: number | null, max: number | null): string | null {
+  if (min === null && max === null) return null;
+  if (min === null || max === null || min === max) return formatBrl((min ?? max) as number);
+  return `${formatBrl(min)} – ${formatBrl(max)}`;
+}

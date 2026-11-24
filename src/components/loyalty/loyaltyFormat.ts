@@ -19,6 +19,12 @@ export type Transaction = {
   transferId: string | null;
   personId: string | null;
   fifoData?: FifoData;
+  transfer?: {
+    pointsSent: number;
+    pointsReceived: number;
+    fromProgramName: string;
+    toProgramName: string;
+  };
 };
 
 export const TYPE_LABELS: Record<string, string> = {
@@ -87,4 +93,53 @@ export function formatCostPer1k(tx: Transaction, hidden: boolean): string {
 export function formatRoi(tx: Transaction): { text: string; positive: boolean } | null {
   if (tx.fifoData?.roi == null || !Number.isFinite(tx.fifoData.roi)) return null;
   return { text: `${tx.fifoData.roi.toFixed(1)}%`, positive: tx.fifoData.roi >= 0 };
+}
+
+export function transferBonusPercent(tx: Transaction): number | null {
+  if (tx.type !== "TRANSFER_IN" || !tx.transfer || tx.transfer.pointsSent <= 0) return null;
+  const pct = Math.round((tx.transfer.pointsReceived / tx.transfer.pointsSent - 1) * 100);
+  return pct > 0 ? pct : null;
+}
+
+export type TransferInCost =
+  | { kind: "unknown" }
+  | { kind: "none" }
+  | { kind: "value"; text: string; originText?: string };
+
+export function describeTransferInCost(tx: Transaction, hidden: boolean): TransferInCost | null {
+  if (tx.type !== "TRANSFER_IN") return null;
+  if (tx.costBrl == null) return { kind: "unknown" };
+  if (tx.costBrl === 0) return { kind: "none" };
+
+  const text =
+    tx.points > 0 ? maskCurrency(formatBrl((tx.costBrl / tx.points) * 1000), hidden) : "—";
+  const { transfer } = tx;
+  if (transferBonusPercent(tx) == null || !transfer) return { kind: "value", text };
+  const originText = maskCurrency(formatBrl((tx.costBrl / transfer.pointsSent) * 1000), hidden);
+  return { kind: "value", text, originText };
+}
+
+export type BonusBreakdown = {
+  transferredPoints: number;
+  bonusPoints: number;
+  bonusPercent: number;
+  fromProgramName: string;
+};
+
+export function buildBonusBreakdown(tx: Transaction): BonusBreakdown | null {
+  const bonusPercent = transferBonusPercent(tx);
+  if (bonusPercent == null || !tx.transfer) return null;
+  return {
+    transferredPoints: tx.transfer.pointsSent,
+    bonusPoints: tx.transfer.pointsReceived - tx.transfer.pointsSent,
+    bonusPercent,
+    fromProgramName: tx.transfer.fromProgramName,
+  };
+}
+
+export function transferPointsLabel(tx: Transaction): string {
+  const breakdown = buildBonusBreakdown(tx);
+  return breakdown
+    ? `+${breakdown.transferredPoints.toLocaleString("pt-BR")}`
+    : pointsSign(tx.type, tx.points);
 }

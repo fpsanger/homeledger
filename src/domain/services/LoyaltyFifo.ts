@@ -12,8 +12,16 @@ export type FifoData = {
   roi: number | null;
 };
 
+export type TransferInfo = {
+  pointsSent: number;
+  pointsReceived: number;
+  fromProgramName: string;
+  toProgramName: string;
+};
+
 export type EnrichedTransaction = LoyaltyTransactionRecord & {
   fifoData?: FifoData;
+  transfer?: TransferInfo;
 };
 
 export type LoyaltyFifoSummary = {

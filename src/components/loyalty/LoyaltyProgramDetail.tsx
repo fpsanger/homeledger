@@ -7,7 +7,7 @@ import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { AddTransactionModal } from "./AddTransactionModal";
 import { EditTransactionModal } from "./EditTransactionModal";
-import { SortIndicator, TransactionRow } from "./LoyaltyTransactionRow";
+import { SortIndicator, TransactionCardList, TransactionRow } from "./LoyaltyTransactionRow";
 import { formatBrl, formatPts, type Transaction } from "./loyaltyFormat";
 
 type Summary = {
@@ -169,53 +169,70 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
             Nenhuma transação registrada.
           </p>
         ) : (
-          <div className="hidden md:block rounded-xl border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    <button
-                      type="button"
-                      onClick={() => handleSort("date")}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      Data <SortIndicator active={sortKey === "date"} dir={sortDir} />
-                    </button>
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pontos</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">
-                    Valor do milheiro (Custo/1k PTS)
-                  </th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">ROI</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    <button
-                      type="button"
-                      onClick={() => handleSort("expiresAt")}
-                      className="flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      Expiração <SortIndicator active={sortKey === "expiresAt"} dir={sortDir} />
-                    </button>
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Descrição
-                  </th>
-                  <th className="w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((tx) => (
-                  <TransactionRow
-                    key={tx.id}
-                    tx={tx}
-                    deletingId={deletingId}
-                    onEdit={setEditingTx}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="hidden md:block rounded-xl border overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("date")}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        Data <SortIndicator active={sortKey === "date"} dir={sortDir} />
+                      </button>
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tipo</th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
+                      Pontos
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">
+                      Valor do milheiro (Custo/1k PTS)
+                    </th>
+                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">ROI</th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                      <button
+                        type="button"
+                        onClick={() => handleSort("expiresAt")}
+                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        Expiração <SortIndicator active={sortKey === "expiresAt"} dir={sortDir} />
+                      </button>
+                    </th>
+                    <th className="text-left px-4 py-3 font-medium text-muted-foreground">
+                      Descrição
+                    </th>
+                    <th className="w-8" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {sorted.map((tx) => (
+                    <TransactionRow
+                      key={tx.id}
+                      tx={tx}
+                      deletingId={deletingId}
+                      onEdit={setEditingTx}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <TransactionCardList
+              transactions={sorted}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSortKeyChange={(key) => {
+                setSortKey(key);
+                setSortDir("desc");
+              }}
+              onToggleSortDir={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              deletingId={deletingId}
+              onEdit={setEditingTx}
+              onDelete={handleDelete}
+            />
+          </>
         )}
       </div>
 

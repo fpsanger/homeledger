@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The transaction list of each miles program (`/loyalty/[programId]`) no longer disappears on small screens. Below the `md` breakpoint (mobile) the table was hidden with no replacement; it now shows one card per transaction (type, date, points, description, cost per 1k, ROI, expiration and the edit/delete menu) with a sort control for date or expiration and an ascending/descending toggle. The table is unchanged on larger screens.
+
 - Opening a category dropdown, or the credit-card dropdown on the bulk-add page, no longer scrolls the page back to the top. The category list scrolled its first item into view before the popup had been positioned (it sits at the top of the page until then), so on a long bulk-add list (many rows, page taller than the screen) the browser jumped to the top. The list now mounts once the popup is placed, and the search box is focused without scrolling.
 - Entering a credit-card purchase by its installment amount could submit a stale total. After picking a total, editing the installment value again updated only the displayed figure, leaving the purchase's `totalAmount` at the previously derived value. The total and the installment amount are now derived from each other, so the submitted total always matches what is on screen.
 - Dialogs no longer close when the dimmed area around them is clicked, so a stray click can no longer discard a half-filled form. They still close with Escape, the header close button, and their own Cancel/Save actions. The mobile navigation drawer keeps its tap-outside dismiss.

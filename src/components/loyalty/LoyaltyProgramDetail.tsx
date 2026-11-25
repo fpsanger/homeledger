@@ -7,6 +7,7 @@ import { usePrivacy } from "@/components/layout/PrivacyProvider";
 import { maskCurrency } from "@/lib/maskCurrency";
 import { AddTransactionModal } from "./AddTransactionModal";
 import { EditTransactionModal } from "./EditTransactionModal";
+import { LoyaltyProgramToolbar } from "./LoyaltyProgramToolbar";
 import { SortIndicator, TransactionCardList, TransactionRow } from "./LoyaltyTransactionRow";
 import { formatBrl, formatPts, type Transaction } from "./loyaltyFormat";
 
@@ -17,6 +18,9 @@ type Summary = {
   totalValueRedeemed: number;
   totalExpired: number;
   overallRoi: number | null;
+  currentLotsPoints: number;
+  currentLotsCostBrl: number;
+  avgRedeemValuePer1k: number | null;
 };
 
 type Program = {
@@ -24,6 +28,8 @@ type Program = {
   name: string;
   type: string;
   color: string;
+  referenceMinPer1kBrl: number | null;
+  referenceMaxPer1kBrl: number | null;
 };
 
 type Props = {
@@ -92,6 +98,8 @@ export function LoyaltyProgramDetail({ program, report, defaultPersonId = "" }: 
 
   return (
     <div className="flex flex-col gap-8">
+      <LoyaltyProgramToolbar program={program} summary={summary} />
+
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <SummaryCard label="Saldo" value={formatPts(summary.currentBalance)} />

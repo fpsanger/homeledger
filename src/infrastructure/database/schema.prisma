@@ -245,6 +245,8 @@ model LoyaltyProgram {
   name          String
   type          LoyaltyProgramType
   color         String
+  referenceMinPer1kBrl Decimal?      @db.Decimal(15, 2)
+  referenceMaxPer1kBrl Decimal?      @db.Decimal(15, 2)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   transactions  LoyaltyTransaction[]

@@ -267,4 +267,74 @@ describe("LoyaltyFifo service", () => {
       expect(result.summary.overallRoi).toBeNull();
     });
   });
+
+  describe("partial lot consumption", () => {
+    it("charges the same per-point cost when a lot is consumed across two redemptions", () => {
+      const result = computeLoyaltyFifo([
+        tx({ type: "PURCHASE", points: 10000, costBrl: 100, date: "2024-01-01" }),
+        tx({ type: "REDEEM", points: 5000, valueBrl: 200, date: "2024-02-01" }),
+        tx({ type: "REDEEM", points: 5000, valueBrl: 200, date: "2024-03-01" }),
+      ]);
+      const [first, second] = result.transactions.filter((t) => t.type === "REDEEM");
+      expect(first.fifoData!.costBrl).toBeCloseTo(50);
+      expect(second.fifoData!.costBrl).toBeCloseTo(50);
+      expect(second.fifoData!.costPer1kPoints).toBeCloseTo(10);
+    });
+  });
+
+  describe("remaining lots and redemption average", () => {
+    it("exposes zero lots and null averages for an empty program", () => {
+      const { summary } = computeLoyaltyFifo([]);
+      expect(summary.currentLotsPoints).toBe(0);
+      expect(summary.currentLotsCostBrl).toBe(0);
+      expect(summary.currentCostPer1kPoints).toBeNull();
+      expect(summary.avgRedeemValuePer1k).toBeNull();
+    });
+
+    it("computes current cost per 1k from the lots left after a partial redemption", () => {
+      const result = computeLoyaltyFifo([
+        tx({ type: "PURCHASE", points: 10000, costBrl: 100, date: "2024-01-01" }),
+        tx({ type: "PURCHASE", points: 10000, costBrl: 300, date: "2024-02-01" }),
+        tx({ type: "REDEEM", points: 15000, valueBrl: 500, date: "2024-03-01" }),
+      ]);
+      // lot 1 fully consumed, lot 2 has 5000 pts left costing 150
+      expect(result.summary.currentLotsPoints).toBe(5000);
+      expect(result.summary.currentLotsCostBrl).toBeCloseTo(150);
+      expect(result.summary.currentCostPer1kPoints).toBeCloseTo(30);
+    });
+
+    it("includes zero-cost adjustment lots in the current average", () => {
+      const result = computeLoyaltyFifo([
+        tx({ type: "PURCHASE", points: 10000, costBrl: 200, date: "2024-01-01" }),
+        tx({ type: "ADJUSTMENT", points: 10000, date: "2024-01-02" }),
+      ]);
+      expect(result.summary.currentCostPer1kPoints).toBeCloseTo(10);
+    });
+
+    it("ignores free points that never created a lot", () => {
+      const result = computeLoyaltyFifo([
+        tx({ type: "PURCHASE", points: 10000, costBrl: 200, date: "2024-01-01" }),
+        tx({ type: "BONUS", points: 10000, date: "2024-01-02" }),
+      ]);
+      expect(result.summary.currentLotsPoints).toBe(10000);
+      expect(result.summary.currentCostPer1kPoints).toBeCloseTo(20);
+    });
+
+    it("weights the average redemption value per 1k by redeemed points", () => {
+      const result = computeLoyaltyFifo([
+        tx({ type: "PURCHASE", points: 30000, costBrl: 300, date: "2024-01-01" }),
+        tx({ type: "REDEEM", points: 10000, valueBrl: 400, date: "2024-02-01" }), // 40/k
+        tx({ type: "REDEEM", points: 20000, valueBrl: 400, date: "2024-03-01" }), // 20/k
+      ]);
+      // (400 + 400) / 30000 * 1000
+      expect(result.summary.avgRedeemValuePer1k).toBeCloseTo(26.6667, 3);
+    });
+
+    it("keeps avgRedeemValuePer1k null when nothing was redeemed", () => {
+      const result = computeLoyaltyFifo([
+        tx({ type: "PURCHASE", points: 10000, costBrl: 100, date: "2024-01-01" }),
+      ]);
+      expect(result.summary.avgRedeemValuePer1k).toBeNull();
+    });
+  });
 });

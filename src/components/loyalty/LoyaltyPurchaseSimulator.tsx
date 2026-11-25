@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/dialog";
 import {
   type PurchaseSimulation,
   type PurchaseVerdict,
+  type ReferencePosition,
   simulateLoyaltyPurchase,
 } from "@/domain/services/simulateLoyaltyPurchase";
 import { maskCurrency } from "@/lib/maskCurrency";
@@ -34,41 +35,44 @@ type Props = {
 const INPUT_CLASS =
   "rounded-md border bg-background px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-ring";
 
-const VERDICTS: Record<
-  PurchaseVerdict,
-  { title: string; detail: string; tone: string; Icon: typeof Info }
-> = {
-  GREAT: {
-    title: "Vale a pena",
-    detail: "Custo abaixo da faixa de referência.",
-    tone: "text-primary",
-    Icon: CheckCircle2,
-  },
-  OK: {
-    title: "Vale a pena",
-    detail: "Custo dentro da referência.",
-    tone: "text-primary",
-    Icon: CheckCircle2,
-  },
-  CAUTION: {
-    title: "Atenção",
-    detail: "Dentro da referência, mas a média dos seus resgates não cobre esse custo.",
-    tone: "text-foreground",
-    Icon: AlertTriangle,
-  },
-  NOT_WORTH: {
-    title: "Não vale a pena",
-    detail: "Custo acima do que você considera bom para este programa.",
-    tone: "text-destructive",
-    Icon: XCircle,
-  },
-  NO_REFERENCE: {
-    title: "Sem referência",
-    detail: "Defina a referência do milheiro no programa ou registre resgates para comparar.",
-    tone: "text-muted-foreground",
-    Icon: Info,
-  },
+const VERDICTS: Record<PurchaseVerdict, { title: string; tone: string; Icon: typeof Info }> = {
+  GREAT: { title: "Vale a pena", tone: "text-primary", Icon: CheckCircle2 },
+  OK: { title: "Vale a pena", tone: "text-primary", Icon: CheckCircle2 },
+  CAUTION: { title: "Atenção", tone: "text-foreground", Icon: AlertTriangle },
+  NOT_WORTH: { title: "Não vale a pena", tone: "text-destructive", Icon: XCircle },
+  NO_REFERENCE: { title: "Sem referência", tone: "text-muted-foreground", Icon: Info },
 };
+
+const REDEEM_NOT_COVERING = "mas a média dos seus resgates não cobre esse custo.";
+
+const REFERENCE_PHRASE: Record<ReferencePosition, string> = {
+  BELOW: "abaixo da faixa de referência",
+  WITHIN: "dentro da faixa de referência",
+  ABOVE: "acima da faixa de referência",
+  NONE: "",
+};
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Explains the verdict with the comparison that actually produced it. */
+function describeVerdict(sim: PurchaseSimulation): string {
+  const reference = REFERENCE_PHRASE[sim.referencePosition];
+  switch (sim.verdict) {
+    case "GREAT":
+    case "OK":
+      return reference ? `Custo ${reference}.` : "Custo abaixo da média dos seus resgates.";
+    case "CAUTION":
+      return `${capitalize(reference)}, ${REDEEM_NOT_COVERING}`;
+    case "NOT_WORTH":
+      return reference
+        ? `Custo ${reference}.`
+        : "Custo não fica abaixo da média dos seus resgates.";
+    default:
+      return "Defina a referência do milheiro no programa ou registre resgates para comparar.";
+  }
+}
 
 function parseDecimal(value: string): number {
   return Number(value.trim().replace(",", "."));
@@ -111,18 +115,20 @@ function Row({
   );
 }
 
-function VerdictBanner({ verdict }: { verdict: PurchaseVerdict }) {
-  const { title, detail, tone, Icon } = VERDICTS[verdict];
+function VerdictBanner({ sim }: { sim: PurchaseSimulation }) {
+  const { title, tone, Icon } = VERDICTS[sim.verdict];
   return (
     <div
       data-testid="simulator-verdict"
-      data-verdict={verdict}
+      data-verdict={sim.verdict}
       className="flex items-start gap-3 rounded-lg border bg-muted/40 p-3"
     >
       <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${tone}`} aria-hidden="true" />
       <div className="flex flex-col gap-0.5">
         <span className={`text-sm font-semibold ${tone}`}>{title}</span>
-        <span className="text-xs text-muted-foreground">{detail}</span>
+        <span data-testid="simulator-verdict-detail" className="text-xs text-muted-foreground">
+          {describeVerdict(sim)}
+        </span>
       </div>
     </div>
   );
@@ -152,7 +158,7 @@ function SimulationResult({ sim, program, avgRedeemValuePer1k, hidden }: ResultP
   const money = (value: number) => maskCurrency(formatBrl(value), hidden);
   return (
     <div className="flex flex-col gap-3">
-      <VerdictBanner verdict={sim.verdict} />
+      <VerdictBanner sim={sim} />
       <dl className="divide-y">
         <Row
           label="Custo efetivo / milheiro"

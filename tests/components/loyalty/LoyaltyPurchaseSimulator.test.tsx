@@ -112,4 +112,53 @@ describe("LoyaltyPurchaseSimulator", () => {
     expect(screen.getByTestId("simulator-verdict")).toHaveAttribute("data-verdict", "OK");
     expect(plain(screen.getByTestId("simulator-reference"))).toBe("R$ 16,00");
   });
+
+  describe("verdict detail names the comparison actually made", () => {
+    const noRange = { referenceMinPer1kBrl: null, referenceMaxPer1kBrl: null };
+    const detail = () => screen.getByTestId("simulator-verdict-detail");
+
+    it("OK inside the range cites the reference range", () => {
+      renderSimulator();
+      fill("10000", "250");
+      expect(detail()).toHaveTextContent("dentro da faixa de referência");
+    });
+
+    it("OK without a range cites the redemption average, not a reference", () => {
+      renderSimulator({ program: noRange, summary: { avgRedeemValuePer1k: 30 } });
+      fill("10000", "200");
+      expect(screen.getByTestId("simulator-verdict")).toHaveAttribute("data-verdict", "OK");
+      expect(detail()).toHaveTextContent("abaixo da média dos seus resgates");
+      expect(detail()).not.toHaveTextContent("referência");
+    });
+
+    it("CAUTION below the range says it is below, not within", () => {
+      renderSimulator({ summary: { avgRedeemValuePer1k: 18 } });
+      fill("10000", "200"); // R$ 20 < min 24, but >= avg 18
+      expect(screen.getByTestId("simulator-verdict")).toHaveAttribute("data-verdict", "CAUTION");
+      expect(detail()).toHaveTextContent(/abaixo da faixa de referência/i);
+      expect(detail()).not.toHaveTextContent(/dentro/i);
+      expect(detail()).toHaveTextContent("não cobre");
+    });
+
+    it("CAUTION inside the range says it is within", () => {
+      renderSimulator({ summary: { avgRedeemValuePer1k: 24 } });
+      fill("10000", "250");
+      expect(detail()).toHaveTextContent(/dentro da faixa de referência/i);
+      expect(detail()).toHaveTextContent("não cobre");
+    });
+
+    it("NOT_WORTH above the range cites the range", () => {
+      renderSimulator();
+      fill("10000", "300");
+      expect(detail()).toHaveTextContent("acima da faixa de referência");
+    });
+
+    it("NOT_WORTH without a range cites the redemption average", () => {
+      renderSimulator({ program: noRange, summary: { avgRedeemValuePer1k: 20 } });
+      fill("10000", "200");
+      expect(screen.getByTestId("simulator-verdict")).toHaveAttribute("data-verdict", "NOT_WORTH");
+      expect(detail()).toHaveTextContent("não fica abaixo da média dos seus resgates");
+      expect(detail()).not.toHaveTextContent("faixa");
+    });
+  });
 });
